@@ -1,0 +1,2353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClearSky | Counterparty Onboarding</title>
+<link rel="icon" href="/assets/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="/assets/jszip.min.js"></script>
+<style>
+:root {
+  --navy: #0A1628;
+  --navy-light: #0F1D32;
+  --navy-mid: #142540;
+  --gold: #C8A951;
+  --gold-dim: rgba(200,169,81,0.15);
+  --gold-glow: rgba(200,169,81,0.3);
+  --white: #F0F0F0;
+  --gray: #8899AA;
+  --gray-dark: #4A5568;
+  --green: #48BB78;
+  --green-dim: rgba(72,187,120,0.15);
+  --orange: #ED8936;
+  --orange-dim: rgba(237,137,54,0.15);
+  --red: #FC8181;
+  --red-dim: rgba(252,129,129,0.15);
+  --blue: #63B3ED;
+  --blue-dim: rgba(99,179,237,0.15);
+  --purple: #B794F6;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow: 0 4px 20px rgba(0,0,0,0.3);
+  --transition: 0.2s ease;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  background: var(--navy);
+  color: var(--white);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ============ TOP NAV ============ */
+.topnav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: var(--navy-light);
+  border-bottom: 1px solid rgba(200,169,81,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topnav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.topnav-brand img { height: 28px; }
+
+.topnav-brand span {
+  color: var(--gold);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.topnav-title {
+  font-size: 15px;
+  color: var(--white);
+  font-weight: 500;
+}
+
+.topnav-back {
+  color: var(--gray);
+  text-decoration: none;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--transition);
+}
+
+.topnav-back:hover { color: var(--gold); }
+
+/* ============ TABS ============ */
+.tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 24px;
+  background: var(--navy-light);
+  border-bottom: 1px solid rgba(200,169,81,0.08);
+}
+
+.tab {
+  padding: 14px 24px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: var(--transition);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.tab:hover { color: var(--white); }
+
+.tab.active {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+}
+
+/* ============ MAIN CONTENT ============ */
+.main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ============ CARDS ============ */
+.card {
+  background: var(--navy-light);
+  border: 1px solid rgba(200,169,81,0.08);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--white);
+}
+
+.card-subtitle {
+  font-size: 12px;
+  color: var(--gray);
+  margin-top: 4px;
+}
+
+/* ============ FORM ELEMENTS ============ */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+.form-group { margin-bottom: 0; }
+
+.form-group.full { grid-column: 1 / -1; }
+
+.form-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--navy);
+  border: 1px solid rgba(200,169,81,0.15);
+  border-radius: var(--radius);
+  color: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  transition: var(--transition);
+  outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-dim);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--gray-dark);
+}
+
+.form-group select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238899AA' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* ============ CHECKBOXES ============ */
+.doc-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.doc-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--navy);
+  border: 1px solid rgba(200,169,81,0.12);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--transition);
+  user-select: none;
+}
+
+.doc-check:hover {
+  border-color: rgba(200,169,81,0.3);
+}
+
+.doc-check.checked {
+  background: var(--gold-dim);
+  border-color: var(--gold);
+}
+
+.doc-check input { display: none; }
+
+.doc-check-box {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--gray-dark);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  flex-shrink: 0;
+}
+
+.doc-check.checked .doc-check-box {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.doc-check.checked .doc-check-box::after {
+  content: '✓';
+  color: var(--navy);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.doc-check-label {
+  font-size: 13px;
+  color: var(--white);
+  font-weight: 500;
+}
+
+/* ============ CONDITIONAL SECTIONS ============ */
+.conditional-section {
+  display: none;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(200,169,81,0.08);
+}
+
+.conditional-section.visible { display: block; }
+
+.section-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ============ BUTTONS ============ */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: var(--gold);
+  color: var(--navy);
+}
+
+.btn-primary:hover {
+  background: #D4B85C;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(200,169,81,0.3);
+}
+
+.btn-secondary {
+  background: rgba(200,169,81,0.1);
+  color: var(--gold);
+  border: 1px solid rgba(200,169,81,0.2);
+}
+
+.btn-secondary:hover {
+  background: rgba(200,169,81,0.2);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--gray);
+  border: 1px solid rgba(136,153,170,0.2);
+}
+
+.btn-ghost:hover {
+  color: var(--white);
+  border-color: rgba(136,153,170,0.4);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.btn-danger {
+  background: var(--red-dim);
+  color: var(--red);
+  border: 1px solid rgba(252,129,129,0.2);
+}
+
+.btn-danger:hover { background: rgba(252,129,129,0.25); }
+
+.btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+/* ============ PIPELINE TABLE ============ */
+.pipeline-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.pipeline-search {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 14px 8px 36px;
+  background: var(--navy);
+  border: 1px solid rgba(200,169,81,0.12);
+  border-radius: var(--radius);
+  color: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: var(--transition);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234A5568' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 12px center;
+}
+
+.pipeline-search:focus { border-color: var(--gold); }
+
+.filter-chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid rgba(200,169,81,0.12);
+  background: var(--navy);
+  color: var(--gray);
+  transition: var(--transition);
+}
+
+.filter-chip:hover { border-color: rgba(200,169,81,0.3); color: var(--white); }
+.filter-chip.active { background: var(--gold-dim); color: var(--gold); border-color: var(--gold); }
+
+.pipeline-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+.pipeline-table th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(200,169,81,0.08);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pipeline-table th:hover { color: var(--gold); }
+
+.pipeline-table td {
+  padding: 12px 14px;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(200,169,81,0.05);
+  vertical-align: middle;
+}
+
+.pipeline-table tr:hover td {
+  background: rgba(200,169,81,0.03);
+}
+
+.pipeline-table .company-cell {
+  font-weight: 600;
+  color: var(--white);
+}
+
+.pipeline-table .id-cell {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--gold);
+}
+
+/* ============ STATUS CHIPS ============ */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-chip.not_started { background: rgba(74,85,104,0.3); color: var(--gray); }
+.status-chip.draft_ready { background: var(--blue-dim); color: var(--blue); }
+.status-chip.sent { background: var(--orange-dim); color: var(--orange); }
+.status-chip.processing { background: var(--orange-dim); color: var(--orange); }
+.status-chip.redlines { background: rgba(183,148,246,0.15); color: var(--purple); }
+.status-chip.executed { background: var(--green-dim); color: var(--green); }
+.status-chip.declined { background: var(--red-dim); color: var(--red); }
+
+.doc-type-chip {
+  display: inline-flex;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.doc-type-chip.nda { background: rgba(99,179,237,0.12); color: var(--blue); }
+.doc-type-chip.kyc { background: rgba(72,187,120,0.12); color: var(--green); }
+.doc-type-chip.marketing { background: rgba(200,169,81,0.12); color: var(--gold); }
+.doc-type-chip.advisory { background: rgba(183,148,246,0.12); color: var(--purple); }
+.doc-type-chip.cross_referral { background: rgba(237,137,54,0.12); color: var(--orange); }
+
+/* ============ DAYS INDICATOR ============ */
+.days-indicator {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+
+.days-indicator.ok { color: var(--green); }
+.days-indicator.warn { color: var(--orange); }
+.days-indicator.alert { color: var(--red); }
+
+/* ============ EMAIL TEMPLATE PANEL ============ */
+.email-preview {
+  background: var(--navy);
+  border: 1px solid rgba(200,169,81,0.1);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-top: 12px;
+}
+
+.email-field {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+  align-items: flex-start;
+}
+
+.email-field-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray);
+  text-transform: uppercase;
+  min-width: 60px;
+  padding-top: 2px;
+}
+
+.email-field-value {
+  font-size: 13px;
+  color: var(--white);
+  flex: 1;
+  line-height: 1.5;
+}
+
+.email-body {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(200,169,81,0.08);
+  font-size: 13px;
+  color: var(--white);
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+/* ============ MODAL ============ */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.visible {
+  display: flex;
+}
+
+.modal {
+  background: var(--navy-light);
+  border: 1px solid rgba(200,169,81,0.15);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  max-width: 700px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 20px;
+}
+
+/* ============ TOAST ============ */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  animation: toastIn 0.3s ease, toastOut 0.3s ease 3s forwards;
+  box-shadow: var(--shadow);
+}
+
+.toast.success { background: var(--green); color: var(--navy); }
+.toast.error { background: var(--red); color: var(--navy); }
+.toast.info { background: var(--blue); color: var(--navy); }
+
+@keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+
+/* ============ EMPTY STATE ============ */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--gray);
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state-text {
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.empty-state-sub {
+  font-size: 13px;
+  color: var(--gray-dark);
+}
+
+/* ============ STATS ROW ============ */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--navy-light);
+  border: 1px solid rgba(200,169,81,0.08);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--gold);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-top: 4px;
+}
+
+/* ============ ACTION CELL ============ */
+.action-cell {
+  display: flex;
+  gap: 6px;
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 768px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .form-grid-3 { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .tabs { overflow-x: auto; }
+  .pipeline-table { font-size: 12px; }
+}
+
+/* ============ LOADING SPINNER ============ */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--gold-dim);
+  border-top: 2px solid var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============ DETAIL SIDEBAR ============ */
+.detail-panel {
+  display: none;
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 480px;
+  height: 100vh;
+  background: var(--navy-light);
+  border-left: 1px solid rgba(200,169,81,0.12);
+  z-index: 500;
+  overflow-y: auto;
+  padding: 24px;
+  box-shadow: -10px 0 40px rgba(0,0,0,0.3);
+}
+
+.detail-panel.open { display: block; }
+
+.detail-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: var(--gray);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.detail-close:hover { color: var(--white); }
+
+.activity-item {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(200,169,81,0.05);
+}
+
+.activity-date {
+  font-size: 11px;
+  color: var(--gray);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.activity-desc {
+  font-size: 13px;
+  color: var(--white);
+  margin-top: 4px;
+}
+
+.activity-actor {
+  font-size: 11px;
+  color: var(--gold);
+}
+
+/* Quick-add note */
+.quick-note {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.quick-note input {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--navy);
+  border: 1px solid rgba(200,169,81,0.12);
+  border-radius: var(--radius);
+  color: var(--white);
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+}
+
+.quick-note input:focus { border-color: var(--gold); }
+</style>
+</head>
+<body>
+
+<!-- ============ TOP NAVIGATION ============ -->
+<nav class="topnav">
+  <a class="topnav-brand" href="/">
+    <img src="/assets/logos/clearsky-logo-nav.png" alt="ClearSky" onerror="this.style.display='none'">
+    <span>ClearSky</span>
+  </a>
+  <div class="topnav-title">Counterparty Onboarding</div>
+  <a class="topnav-back" href="/">← Dashboard</a>
+</nav>
+
+<!-- ============ TAB BAR ============ -->
+<div class="tabs" id="tabBar">
+  <div class="tab active" data-tab="pipeline">📋 Pipeline</div>
+  <div class="tab" data-tab="new-request">＋ New Request</div>
+  <div class="tab" data-tab="email-templates">✉️ Email Templates</div>
+  <div class="tab" data-tab="generate-docs">📄 Quick Doc Gen</div>
+</div>
+
+<!-- ============ MAIN CONTENT ============ -->
+<div class="main">
+
+  <!-- ============ PIPELINE TAB ============ -->
+  <div class="tab-panel active" id="panel-pipeline">
+    <!-- Stats -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card"><div class="stat-value" id="statTotal">0</div><div class="stat-label">Total</div></div>
+      <div class="stat-card"><div class="stat-value" id="statActive">0</div><div class="stat-label">Active</div></div>
+      <div class="stat-card"><div class="stat-value" id="statExecuted">0</div><div class="stat-label">Executed</div></div>
+      <div class="stat-card"><div class="stat-value" id="statOverdue">0</div><div class="stat-label">Overdue (7d+)</div></div>
+      <div class="stat-card"><div class="stat-value" id="statThisWeek">0</div><div class="stat-label">New This Week</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Onboarding Pipeline</div>
+          <div class="card-subtitle">All counterparties and their document status</div>
+        </div>
+        <div class="pipeline-controls">
+          <input class="pipeline-search" id="pipelineSearch" placeholder="Search companies..." type="text">
+          <div class="filter-chip active" data-filter="all">All</div>
+          <div class="filter-chip" data-filter="active">Active</div>
+          <div class="filter-chip" data-filter="overdue">Overdue</div>
+          <div class="filter-chip" data-filter="executed">Executed</div>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table class="pipeline-table" id="pipelineTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Company</th>
+              <th>Owner</th>
+              <th>NDA</th>
+              <th>KYC</th>
+              <th>Marketing</th>
+              <th>Advisory</th>
+              <th>X-Ref</th>
+              <th>Last Action</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="pipelineBody"></tbody>
+        </table>
+      </div>
+
+      <div class="empty-state" id="pipelineEmpty" style="display:none">
+        <div class="empty-state-icon">📋</div>
+        <div class="empty-state-text">No counterparties yet</div>
+        <div class="empty-state-sub">Click "+ New Request" to onboard a counterparty</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ NEW REQUEST TAB ============ -->
+  <div class="tab-panel" id="panel-new-request">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">New Counterparty Request</div>
+          <div class="card-subtitle">Fill in details once — documents auto-generate</div>
+        </div>
+      </div>
+
+      <form id="newRequestForm">
+        <!-- Core Info -->
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Company Name *</label>
+            <input type="text" id="fCompanyName" required placeholder="e.g. Charm Industrial">
+          </div>
+          <div class="form-group">
+            <label>General ID</label>
+            <input type="text" id="fGeneralId" placeholder="Auto-generated (e.g. CHA-2026)" readonly style="color:var(--gold);background:var(--navy-mid)">
+          </div>
+          <div class="form-group full">
+            <label>Company Official Address *</label>
+            <input type="text" id="fAddress" required placeholder="Full registered address">
+          </div>
+          <div class="form-group">
+            <label>Country</label>
+            <input type="text" id="fCountry" placeholder="e.g. United States">
+          </div>
+          <div class="form-group">
+            <label>Jurisdiction (for legal docs)</label>
+            <input type="text" id="fJurisdiction" placeholder="e.g. State of Delaware, USA">
+          </div>
+        </div>
+
+        <!-- Signatory -->
+        <div style="margin-top:20px;padding-top:20px;border-top:1px solid rgba(200,169,81,0.08)">
+          <div class="section-label">👤 Signatory</div>
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="fSignName" placeholder="e.g. Vince Green">
+            </div>
+            <div class="form-group">
+              <label>Title</label>
+              <input type="text" id="fSignTitle" placeholder="e.g. Chief Development Officer">
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="fSignEmail" placeholder="e.g. vince@company.com">
+            </div>
+          </div>
+        </div>
+
+        <!-- Backoffice Contact -->
+        <div style="margin-top:20px;padding-top:20px;border-top:1px solid rgba(200,169,81,0.08)">
+          <div class="section-label">📧 Backoffice Contact</div>
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="fBackName" placeholder="Day-to-day contact name">
+            </div>
+            <div class="form-group">
+              <label>Title</label>
+              <input type="text" id="fBackTitle" placeholder="Contact title">
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="fBackEmail" placeholder="contact@company.com">
+            </div>
+          </div>
+        </div>
+
+        <!-- Request Details -->
+        <div style="margin-top:20px;padding-top:20px;border-top:1px solid rgba(200,169,81,0.08)">
+          <div class="section-label">📋 Request Details</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Requested By</label>
+              <select id="fRequester">
+                <option value="Emmanuel Mendoza">Emmanuel Mendoza</option>
+                <option value="Ana Avramovic">Ana Avramovic</option>
+                <option value="Carolina Martinez">Carolina Martinez</option>
+                <option value="Luis Adaime">Luis Adaime</option>
+                <option value="Brian Katz">Brian Katz</option>
+                <option value="Bobbie Armstrong">Bobbie Armstrong</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>ClearSky Owner</label>
+              <select id="fOwner">
+                <option value="emmanuel">Emmanuel Mendoza</option>
+                <option value="ana">Ana Avramovic</option>
+                <option value="carolina">Carolina Martinez</option>
+                <option value="luis">Luis Adaime</option>
+                <option value="brian">Brian Katz</option>
+              </select>
+            </div>
+            <div class="form-group full">
+              <label>Business Goal / Notes</label>
+              <textarea id="fNotes" placeholder="Why are we onboarding this counterparty? What's the commercial context?"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Documents Needed -->
+        <div style="margin-top:20px;padding-top:20px;border-top:1px solid rgba(200,169,81,0.08)">
+          <div class="section-label">📄 Documents to Generate</div>
+          <div class="doc-checkboxes" id="docCheckboxes">
+            <label class="doc-check checked" data-doc="nda">
+              <input type="checkbox" checked>
+              <div class="doc-check-box"></div>
+              <span class="doc-check-label">NDA</span>
+            </label>
+            <label class="doc-check" data-doc="kyc">
+              <input type="checkbox">
+              <div class="doc-check-box"></div>
+              <span class="doc-check-label">KYC</span>
+            </label>
+            <label class="doc-check" data-doc="marketing">
+              <input type="checkbox">
+              <div class="doc-check-box"></div>
+              <span class="doc-check-label">Marketing Agreement</span>
+            </label>
+            <label class="doc-check" data-doc="advisory">
+              <input type="checkbox">
+              <div class="doc-check-box"></div>
+              <span class="doc-check-label">Advisory / MSA</span>
+            </label>
+            <label class="doc-check" data-doc="cross_referral">
+              <input type="checkbox">
+              <div class="doc-check-box"></div>
+              <span class="doc-check-label">Cross-Referral</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Marketing-specific fields -->
+        <div class="conditional-section" id="sectionMarketing">
+          <div class="section-label">📊 Marketing Agreement Details</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Project Name</label>
+              <input type="text" id="fMktProject" placeholder="e.g. Sierra Leone REDD+">
+            </div>
+            <div class="form-group">
+              <label>Floor Price (USD)</label>
+              <input type="number" id="fMktFloor" placeholder="20.00" step="0.01">
+            </div>
+            <div class="form-group">
+              <label>Currency</label>
+              <select id="fMktCurrency">
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Commission Structure</label>
+              <select id="fMktCommission">
+                <option value="standard">Standard (Tiered: 10% floor + 40% above)</option>
+                <option value="flat_5">Flat 5%</option>
+                <option value="flat_10">Flat 10%</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Advisory-specific fields -->
+        <div class="conditional-section" id="sectionAdvisory">
+          <div class="section-label">📑 Advisory / MSA Details</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Scope of Services</label>
+              <textarea id="fAdvScope" placeholder="Describe the services ClearSky will provide..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Fee Structure</label>
+              <input type="text" id="fAdvFees" placeholder="e.g. $50,000 retainer + 5% commission">
+            </div>
+            <div class="form-group">
+              <label>Currency</label>
+              <select id="fAdvCurrency">
+                <option value="USD">US Dollars</option>
+                <option value="CAD">Canadian Dollars</option>
+                <option value="GBP">British Pounds</option>
+                <option value="EUR">Euros</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Term</label>
+              <select id="fAdvTerm">
+                <option value="1year">1 Year</option>
+                <option value="2year">2 Years</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cross-Referral-specific fields -->
+        <div class="conditional-section" id="sectionCrossRef">
+          <div class="section-label">🤝 Cross-Referral Details</div>
+          <div class="form-grid">
+            <div class="form-group full">
+              <label>Partner Description</label>
+              <textarea id="fXrefDesc" placeholder="Description of partner's business and expertise in carbon markets..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Fee Split</label>
+              <select id="fXrefSplit">
+                <option value="50/50">50/50 (Standard)</option>
+                <option value="60/40">60/40 (Referring gets 60%)</option>
+                <option value="70/30">70/30</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="btn-row">
+          <button type="submit" class="btn btn-primary">💾 Save & Generate Documents</button>
+          <button type="button" class="btn btn-secondary" id="btnSaveOnly">💾 Save Without Generating</button>
+          <button type="button" class="btn btn-ghost" id="btnClearForm">Clear Form</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============ EMAIL TEMPLATES TAB ============ -->
+  <div class="tab-panel" id="panel-email-templates">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Email Templates</div>
+          <div class="card-subtitle">Select a counterparty and template — copy to clipboard or open in mail client</div>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Select Counterparty</label>
+          <select id="emailCounterparty">
+            <option value="">— Select —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Email Template</label>
+          <select id="emailTemplate">
+            <option value="nda_initial">NDA — Initial Send</option>
+            <option value="kyc_send">KYC — Send for Completion</option>
+            <option value="marketing_send">Marketing Agreement — Initial Send</option>
+            <option value="advisory_send">Advisory Agreement — Initial Send</option>
+            <option value="cross_referral_send">Cross-Referral — Initial Send</option>
+            <option value="follow_up_7d">Follow-Up — 7 Days No Response</option>
+            <option value="follow_up_14d">Follow-Up — 14 Days No Response</option>
+            <option value="execution_confirm">Confirmation — Document Executed</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btn-row" style="margin-top:16px;margin-bottom:0">
+        <button class="btn btn-primary" id="btnGenerateEmail">Generate Email</button>
+      </div>
+
+      <div id="emailPreviewArea" style="display:none">
+        <div class="email-preview" id="emailPreview"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btnCopyEmail">📋 Copy to Clipboard</button>
+          <button class="btn btn-secondary" id="btnMailto">✉️ Open in Mail Client</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ QUICK DOC GEN TAB ============ -->
+  <div class="tab-panel" id="panel-generate-docs">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Quick Document Generator</div>
+          <div class="card-subtitle">Generate pre-filled documents for an existing counterparty</div>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Select Counterparty</label>
+          <select id="docGenCounterparty">
+            <option value="">— Select —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Document Type</label>
+          <select id="docGenType">
+            <option value="nda">NDA</option>
+            <option value="kyc">KYC (Counterparty Form)</option>
+            <option value="kyc_assessment">KYC (ClearSky Assessment)</option>
+            <option value="marketing">Marketing Agreement</option>
+            <option value="advisory">Advisory / MSA</option>
+            <option value="cross_referral">Cross-Referral Agreement</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="btn-row" style="margin-top:16px">
+        <button class="btn btn-primary" id="btnQuickGen">📄 Generate & Download</button>
+        <button class="btn btn-secondary" id="btnGenAll">📦 Generate All Documents (Zip)</button>
+      </div>
+
+      <div id="docGenStatus" style="margin-top:16px;display:none">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="spinner"></div>
+          <span style="color:var(--gray);font-size:13px">Generating document...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============ DETAIL PANEL (right sidebar) ============ -->
+<div class="detail-panel" id="detailPanel">
+  <button class="detail-close" onclick="closeDetail()">✕</button>
+  <div id="detailContent"></div>
+</div>
+
+<!-- ============ TOAST CONTAINER ============ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ============ MODAL ============ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURATION
+// ============================================================
+const API_BASE = 'https://api-tools.oga.earth';
+const CURRENT_YEAR = '2026';
+
+// ============================================================
+// STATE
+// ============================================================
+let counterparties = [];
+let documents = [];
+let activities = [];
+let currentFilter = 'all';
+
+// ============================================================
+// TAB NAVIGATION
+// ============================================================
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
+  });
+});
+
+// ============================================================
+// DOC CHECKBOX TOGGLE
+// ============================================================
+document.querySelectorAll('.doc-check').forEach(check => {
+  check.addEventListener('click', () => {
+    const input = check.querySelector('input');
+    input.checked = !input.checked;
+    check.classList.toggle('checked', input.checked);
+    updateConditionalSections();
+  });
+});
+
+function updateConditionalSections() {
+  const checked = getCheckedDocs();
+  document.getElementById('sectionMarketing').classList.toggle('visible', checked.includes('marketing'));
+  document.getElementById('sectionAdvisory').classList.toggle('visible', checked.includes('advisory'));
+  document.getElementById('sectionCrossRef').classList.toggle('visible', checked.includes('cross_referral'));
+}
+
+function getCheckedDocs() {
+  return Array.from(document.querySelectorAll('.doc-check input:checked'))
+    .map(input => input.closest('.doc-check').dataset.doc);
+}
+
+// ============================================================
+// AUTO-GENERATE ID
+// ============================================================
+document.getElementById('fCompanyName').addEventListener('input', (e) => {
+  const name = e.target.value.trim();
+  if (name.length >= 3) {
+    const prefix = name.replace(/[^A-Za-z]/g, '').substring(0, 3).toUpperCase();
+    document.getElementById('fGeneralId').value = `${prefix}-${CURRENT_YEAR}`;
+  } else {
+    document.getElementById('fGeneralId').value = '';
+  }
+});
+
+// ============================================================
+// TOAST NOTIFICATIONS
+// ============================================================
+function toast(message, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = message;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ============================================================
+// API CALLS
+// ============================================================
+async function apiCall(endpoint, method = 'GET', body = null) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  if (body) opts.body = JSON.stringify(body);
+
+  try {
+    const resp = await fetch(`${API_BASE}${endpoint}`, opts);
+    if (!resp.ok) throw new Error(`API error: ${resp.status}`);
+    return await resp.json();
+  } catch (err) {
+    console.error('API call failed:', err);
+    // Fall back to localStorage
+    return null;
+  }
+}
+
+// ============================================================
+// LOCAL STORAGE FALLBACK
+// (primary storage until worker endpoints are deployed)
+// ============================================================
+const STORAGE_KEY = 'clearsky_onboarding';
+
+function loadFromStorage() {
+  try {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    counterparties = data.counterparties || [];
+    documents = data.documents || [];
+    activities = data.activities || [];
+  } catch (e) {
+    counterparties = [];
+    documents = [];
+    activities = [];
+  }
+}
+
+function saveToStorage() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    counterparties,
+    documents,
+    activities,
+  }));
+}
+
+// ============================================================
+// LOAD DATA (try API first, fall back to localStorage)
+// ============================================================
+async function loadData() {
+  // Try API
+  const apiData = await apiCall('/api/onboarding/counterparties');
+  if (apiData && apiData.counterparties) {
+    counterparties = apiData.counterparties;
+    const docData = await apiCall('/api/onboarding/documents');
+    if (docData) documents = docData.documents || [];
+    const actData = await apiCall('/api/onboarding/activity');
+    if (actData) activities = actData.activities || [];
+  } else {
+    // Fallback to localStorage
+    loadFromStorage();
+  }
+
+  renderPipeline();
+  populateDropdowns();
+}
+
+// ============================================================
+// SAVE COUNTERPARTY
+// ============================================================
+async function saveCounterparty(cp) {
+  // Try API
+  const result = await apiCall('/api/onboarding/counterparties', 'POST', cp);
+  if (result && result.id) {
+    cp.id = result.id;
+  } else {
+    // Local fallback
+    cp.id = cp.id || crypto.randomUUID().substring(0, 16);
+    counterparties.push(cp);
+    saveToStorage();
+  }
+  return cp;
+}
+
+async function saveDocument(doc) {
+  const result = await apiCall('/api/onboarding/documents', 'POST', doc);
+  if (result && result.id) {
+    doc.id = result.id;
+  } else {
+    doc.id = doc.id || crypto.randomUUID().substring(0, 16);
+    documents.push(doc);
+    saveToStorage();
+  }
+  return doc;
+}
+
+async function saveActivity(act) {
+  const result = await apiCall('/api/onboarding/activity', 'POST', act);
+  if (!result) {
+    act.id = crypto.randomUUID().substring(0, 16);
+    activities.push(act);
+    saveToStorage();
+  }
+}
+
+async function updateDocument(docId, updates) {
+  const result = await apiCall(`/api/onboarding/documents/${docId}`, 'PUT', updates);
+  if (!result) {
+    const idx = documents.findIndex(d => d.id === docId);
+    if (idx >= 0) Object.assign(documents[idx], updates);
+    saveToStorage();
+  }
+}
+
+// ============================================================
+// FORM SUBMISSION
+// ============================================================
+document.getElementById('newRequestForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  await handleNewRequest(true);
+});
+
+document.getElementById('btnSaveOnly').addEventListener('click', async () => {
+  await handleNewRequest(false);
+});
+
+async function handleNewRequest(generateDocs) {
+  const companyName = document.getElementById('fCompanyName').value.trim();
+  const generalId = document.getElementById('fGeneralId').value.trim();
+
+  if (!companyName || !generalId) {
+    toast('Company name is required', 'error');
+    return;
+  }
+
+  // Check for duplicate
+  if (counterparties.find(c => c.general_id === generalId)) {
+    toast(`Counterparty ${generalId} already exists`, 'error');
+    return;
+  }
+
+  const cp = {
+    general_id: generalId,
+    company_name: companyName,
+    address: document.getElementById('fAddress').value.trim(),
+    country: document.getElementById('fCountry').value.trim(),
+    jurisdiction: document.getElementById('fJurisdiction').value.trim(),
+    signatory_name: document.getElementById('fSignName').value.trim(),
+    signatory_title: document.getElementById('fSignTitle').value.trim(),
+    signatory_email: document.getElementById('fSignEmail').value.trim(),
+    backoffice_name: document.getElementById('fBackName').value.trim(),
+    backoffice_title: document.getElementById('fBackTitle').value.trim(),
+    backoffice_email: document.getElementById('fBackEmail').value.trim(),
+    clearsky_owner: document.getElementById('fOwner').value,
+    requester: document.getElementById('fRequester').value,
+    notes: document.getElementById('fNotes').value.trim(),
+    created_at: new Date().toISOString(),
+  };
+
+  const savedCp = await saveCounterparty(cp);
+
+  // Create document records
+  const checkedDocs = getCheckedDocs();
+  for (const docType of checkedDocs) {
+    const docRecord = {
+      counterparty_id: savedCp.id,
+      general_id: generalId,
+      doc_type: docType,
+      status: 'not_started',
+      progress: 0,
+      requester: cp.requester,
+      request_date: new Date().toISOString().split('T')[0],
+      doc_params: JSON.stringify(getDocParams(docType)),
+    };
+    await saveDocument(docRecord);
+  }
+
+  // Log activity
+  await saveActivity({
+    counterparty_id: savedCp.id,
+    general_id: generalId,
+    action: 'created',
+    description: `Counterparty created with ${checkedDocs.length} document(s): ${checkedDocs.join(', ')}`,
+    actor: cp.requester,
+    created_at: new Date().toISOString(),
+  });
+
+  toast(`${companyName} added to pipeline`, 'success');
+
+  // Generate docs if requested
+  if (generateDocs && checkedDocs.length > 0) {
+    await generateDocuments(savedCp, checkedDocs);
+  }
+
+  // Reload
+  await loadData();
+
+  // Reset form
+  document.getElementById('newRequestForm').reset();
+  document.getElementById('fGeneralId').value = '';
+  document.querySelectorAll('.doc-check').forEach(c => {
+    const input = c.querySelector('input');
+    if (c.dataset.doc === 'nda') {
+      input.checked = true;
+      c.classList.add('checked');
+    } else {
+      input.checked = false;
+      c.classList.remove('checked');
+    }
+  });
+  updateConditionalSections();
+
+  // Switch to pipeline tab
+  document.querySelector('.tab[data-tab="pipeline"]').click();
+}
+
+function getDocParams(docType) {
+  switch (docType) {
+    case 'marketing':
+      return {
+        project_name: document.getElementById('fMktProject').value.trim(),
+        floor_price: document.getElementById('fMktFloor').value,
+        currency: document.getElementById('fMktCurrency').value,
+        commission: document.getElementById('fMktCommission').value,
+      };
+    case 'advisory':
+      return {
+        scope: document.getElementById('fAdvScope').value.trim(),
+        fees: document.getElementById('fAdvFees').value.trim(),
+        currency: document.getElementById('fAdvCurrency').value,
+        term: document.getElementById('fAdvTerm').value,
+      };
+    case 'cross_referral':
+      return {
+        partner_description: document.getElementById('fXrefDesc').value.trim(),
+        fee_split: document.getElementById('fXrefSplit').value,
+      };
+    default:
+      return {};
+  }
+}
+
+// ============================================================
+// DOCUMENT GENERATION (Client-side .docx manipulation)
+// ============================================================
+async function generateDocuments(counterparty, docTypes) {
+  const generatedFiles = [];
+
+  for (const docType of docTypes) {
+    try {
+      const blob = await generateSingleDoc(counterparty, docType);
+      if (blob) {
+        const filename = getDocFilename(counterparty, docType);
+        generatedFiles.push({ filename, blob });
+      }
+    } catch (err) {
+      console.error(`Error generating ${docType}:`, err);
+      toast(`Error generating ${docType}: ${err.message}`, 'error');
+    }
+  }
+
+  if (generatedFiles.length === 0) return;
+
+  if (generatedFiles.length === 1) {
+    // Single file — direct download
+    downloadBlob(generatedFiles[0].blob, generatedFiles[0].filename);
+  } else {
+    // Multiple files — zip
+    const zip = new JSZip();
+    const folderName = `${counterparty.general_id}_documents`;
+    const folder = zip.folder(folderName);
+    for (const f of generatedFiles) {
+      folder.file(f.filename, f.blob);
+    }
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    downloadBlob(zipBlob, `${folderName}.zip`);
+  }
+
+  toast(`${generatedFiles.length} document(s) generated`, 'success');
+
+  // Update doc statuses
+  for (const docType of docTypes) {
+    const doc = documents.find(d => d.general_id === counterparty.general_id && d.doc_type === docType);
+    if (doc) {
+      await updateDocument(doc.id, { status: 'draft_ready', progress: 25 });
+    }
+  }
+
+  await saveActivity({
+    counterparty_id: counterparty.id,
+    general_id: counterparty.general_id,
+    action: 'doc_generated',
+    description: `Documents generated: ${docTypes.join(', ')}`,
+    actor: 'System',
+    created_at: new Date().toISOString(),
+  });
+}
+
+function getDocFilename(cp, docType) {
+  const prefix = 'CSL';
+  const id = cp.general_id.replace('-', '_');
+  const names = {
+    nda: `${prefix}_NDA_${cp.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.docx`,
+    kyc: `${prefix}_KYC_${cp.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.docx`,
+    kyc_assessment: `${prefix}_KYC_Assessment_${cp.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.docx`,
+    marketing: `${prefix}_Marketing_Agreement_${cp.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.docx`,
+    advisory: `${prefix}_Advisory_MSA_${cp.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.docx`,
+    cross_referral: `${prefix}_Cross_Referral_${cp.company_name.replace(/[^a-zA-Z0-9]/g, '_')}.docx`,
+  };
+  return names[docType] || `${prefix}_${docType}_${id}.docx`;
+}
+
+// ============================================================
+// DOCX GENERATION ENGINE
+// Uses JSZip to open .docx templates (which are ZIP files),
+// find-and-replace XML content, and repack
+// ============================================================
+async function generateSingleDoc(cp, docType) {
+  // Fetch template from R2 storage (or embedded)
+  const templateUrl = getTemplateUrl(docType);
+  let templateData;
+
+  try {
+    const resp = await fetch(templateUrl);
+    if (!resp.ok) throw new Error('Template fetch failed');
+    templateData = await resp.arrayBuffer();
+  } catch (e) {
+    // Fallback: try the API
+    try {
+      const resp = await fetch(`${API_BASE}/api/onboarding/template/${docType}`);
+      if (!resp.ok) throw new Error('Template not available');
+      templateData = await resp.arrayBuffer();
+    } catch (e2) {
+      toast(`Template for ${docType} not found. Upload templates first.`, 'error');
+      return null;
+    }
+  }
+
+  // Open the .docx as a ZIP
+  const zip = await JSZip.loadAsync(templateData);
+
+  // Get the main document XML
+  const docXmlFile = zip.file('word/document.xml');
+  if (!docXmlFile) {
+    toast('Invalid template: no document.xml found', 'error');
+    return null;
+  }
+
+  let docXml = await docXmlFile.async('string');
+
+  // Perform replacements based on doc type
+  docXml = performReplacements(docXml, cp, docType);
+
+  // Write back
+  zip.file('word/document.xml', docXml);
+
+  // Generate the modified .docx
+  return await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+}
+
+function getTemplateUrl(docType) {
+  // Templates stored on R2 via the worker
+  const templates = {
+    nda: `${API_BASE}/api/onboarding/template/nda`,
+    kyc: `${API_BASE}/api/onboarding/template/kyc`,
+    kyc_assessment: `${API_BASE}/api/onboarding/template/kyc_assessment`,
+    marketing: `${API_BASE}/api/onboarding/template/marketing`,
+    advisory: `${API_BASE}/api/onboarding/template/advisory`,
+    cross_referral: `${API_BASE}/api/onboarding/template/cross_referral`,
+  };
+  return templates[docType];
+}
+
+function performReplacements(xml, cp, docType) {
+  const today = new Date();
+  const day = today.getDate();
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const month = monthNames[today.getMonth()];
+  const year = today.getFullYear();
+  const dateStr = `${month} ${day}, ${year}`;
+
+  // Helper: replace across XML runs (text may be split across <w:t> tags)
+  // We do simple string replacement which works when placeholders aren't split
+  // For split placeholders, we normalize the XML first
+  function xmlReplace(xml, find, replace) {
+    // Try direct replacement first
+    if (xml.includes(find)) {
+      return xml.replaceAll(find, escapeXml(replace));
+    }
+    return xml;
+  }
+
+  function escapeXml(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+  }
+
+  switch (docType) {
+    case 'nda':
+      // NDA: Replace XXX with company name, address, jurisdiction
+      // Paragraph 6: "XXX, a company incorporated and registered in XXX, whose office is located at _____ ("XXX")"
+      xml = xmlReplace(xml, 'XXX, a company incorporated and registered in XXX, whose office is located at _________________',
+        `${cp.company_name}, a company incorporated and registered in ${cp.jurisdiction || cp.country || '[Jurisdiction]'}, whose office is located at ${cp.address || '[Address]'}`);
+
+      // The ("XXX") short name
+      xml = xmlReplace(xml, '("XXX")', `("${cp.company_name}")`);
+
+      // Paragraph 53: notice address for counterparty: "If to XXXX.:"
+      xml = xmlReplace(xml, 'XXXX', cp.company_name);
+
+      // Complete address placeholder
+      xml = xmlReplace(xml, 'Complete address', cp.address || '[Address to be provided]');
+
+      // Attention line
+      if (cp.backoffice_email) {
+        xml = xmlReplace(xml, 'Attention: ', `Attention: ${cp.backoffice_name || cp.signatory_name || ''}`);
+      }
+
+      // Signature block - counterparty (P76: XXX heading, P80-82: By/Name/Title)
+      // The XXX in the signature block
+      xml = xml.replace(/>XXX<\/w:t>/, `>${escapeXml(cp.company_name.toUpperCase())}</w:t>`);
+
+      // Date
+      xml = xmlReplace(xml, 'Date:\t', `Date:\t${dateStr}`);
+
+      break;
+
+    case 'marketing':
+      // Marketing Agreement
+      // Effective date
+      xml = xmlReplace(xml, '__________day of ______________, 2026',
+        `${day}${getOrdinal(day)} day of ${month}, ${year}`);
+
+      // Client name: [] placeholder
+      xml = xmlReplace(xml, '>[]<', `>${escapeXml(cp.company_name)}<`);
+
+      // Project name
+      const params = getDocParamsFor(cp, 'marketing');
+      if (params.project_name) {
+        xml = xmlReplace(xml, 'Project XXX', `Project ${params.project_name}`);
+      }
+
+      // Floor price
+      if (params.floor_price) {
+        xml = xmlReplace(xml, '$20.00 per Carbon Credit', `$${parseFloat(params.floor_price).toFixed(2)} per Carbon Credit`);
+        xml = xmlReplace(xml, 'Floor price $20', `Floor price $${parseFloat(params.floor_price).toFixed(2)}`);
+      }
+
+      // Currency
+      if (params.currency) {
+        const currencyName = { USD: 'United States', EUR: 'Euro', GBP: 'British Pounds' }[params.currency] || params.currency;
+        xml = xmlReplace(xml, '[United States]', `${currencyName}`);
+      }
+
+      // Notice address for Client
+      xml = xmlReplace(xml, '[X]', cp.address || '[Address]');
+
+      // Notice email
+      xml = xmlReplace(xml, 'Email: [X]', `Email: ${cp.signatory_email || cp.backoffice_email || '[Email]'}`);
+
+      break;
+
+    case 'advisory':
+      // Advisory / MSA
+      xml = xmlReplace(xml, '__________day of ______________, 2025',
+        `${day}${getOrdinal(day)} day of ${month}, ${year}`);
+      xml = xmlReplace(xml, '>[]<', `>${escapeXml(cp.company_name)}<`);
+
+      const advParams = getDocParamsFor(cp, 'advisory');
+      const currName = { USD: 'US', CAD: 'Canadian', GBP: 'British', EUR: 'Euro' }[advParams.currency || 'USD'];
+      xml = xmlReplace(xml, '[Canadian / United States]', `${currName}`);
+      xml = xmlReplace(xml, '[US / Canadian dollars]', `${currName} dollars`);
+      break;
+
+    case 'cross_referral':
+      // Cross-Referral
+      xml = xmlReplace(xml, '________ day of _____________, 202__',
+        `${day}${getOrdinal(day)} day of ${month}, ${year}`);
+      xml = xmlReplace(xml, '[PARTNER NAME]', cp.company_name);
+      xml = xmlReplace(xml, '[JURISDICTION]', cp.jurisdiction || cp.country || '[Jurisdiction]');
+      xml = xmlReplace(xml, '[ADDRESS]', cp.address || '[Address]');
+
+      const xrefParams = getDocParamsFor(cp, 'cross_referral');
+      xml = xmlReplace(xml, '[description of partner\'s business and expertise]',
+        xrefParams.partner_description || '[description of partner\'s business and expertise]');
+      break;
+
+    case 'kyc':
+    case 'kyc_assessment':
+      // KYC forms: minimal replacement, mainly sent as-is
+      break;
+  }
+
+  return xml;
+}
+
+function getDocParamsFor(cp, docType) {
+  const doc = documents.find(d => d.general_id === cp.general_id && d.doc_type === docType);
+  if (doc && doc.doc_params) {
+    try { return JSON.parse(doc.doc_params); } catch (e) { return {}; }
+  }
+  return {};
+}
+
+function getOrdinal(n) {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// PIPELINE RENDERING
+// ============================================================
+function renderPipeline() {
+  const tbody = document.getElementById('pipelineBody');
+  const empty = document.getElementById('pipelineEmpty');
+  const search = document.getElementById('pipelineSearch').value.toLowerCase();
+
+  let filtered = [...counterparties];
+
+  // Search
+  if (search) {
+    filtered = filtered.filter(cp =>
+      cp.company_name.toLowerCase().includes(search) ||
+      cp.general_id.toLowerCase().includes(search) ||
+      (cp.clearsky_owner || '').toLowerCase().includes(search)
+    );
+  }
+
+  // Filter
+  if (currentFilter === 'active') {
+    filtered = filtered.filter(cp => {
+      const docs = getDocsForCp(cp.general_id);
+      return docs.some(d => !['executed', 'declined'].includes(d.status));
+    });
+  } else if (currentFilter === 'overdue') {
+    filtered = filtered.filter(cp => {
+      const docs = getDocsForCp(cp.general_id);
+      return docs.some(d => {
+        if (['executed', 'declined', 'not_started'].includes(d.status)) return false;
+        const lastAct = getLastActivity(cp.general_id);
+        if (!lastAct) return true;
+        const daysSince = Math.floor((Date.now() - new Date(lastAct.created_at).getTime()) / 86400000);
+        return daysSince >= 7;
+      });
+    });
+  } else if (currentFilter === 'executed') {
+    filtered = filtered.filter(cp => {
+      const docs = getDocsForCp(cp.general_id);
+      return docs.length > 0 && docs.every(d => d.status === 'executed');
+    });
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    document.querySelector('.pipeline-table').style.display = 'none';
+  } else {
+    empty.style.display = 'none';
+    document.querySelector('.pipeline-table').style.display = '';
+
+    tbody.innerHTML = filtered.map(cp => {
+      const docs = getDocsForCp(cp.general_id);
+      const lastAct = getLastActivity(cp.general_id);
+      const daysSince = lastAct ? Math.floor((Date.now() - new Date(lastAct.created_at).getTime()) / 86400000) : null;
+
+      const ownerMap = { ana: 'Ana', carolina: 'Carolina', luis: 'Luis', brian: 'Brian', emmanuel: 'Emmanuel', bobbie: 'Bobbie' };
+
+      return `<tr onclick="openDetail('${cp.general_id}')" style="cursor:pointer">
+        <td class="id-cell">${cp.general_id}</td>
+        <td class="company-cell">${cp.company_name}</td>
+        <td style="color:var(--gray);font-size:12px">${ownerMap[cp.clearsky_owner] || cp.clearsky_owner || '—'}</td>
+        <td>${renderDocStatus(docs, 'nda')}</td>
+        <td>${renderDocStatus(docs, 'kyc')}</td>
+        <td>${renderDocStatus(docs, 'marketing')}</td>
+        <td>${renderDocStatus(docs, 'advisory')}</td>
+        <td>${renderDocStatus(docs, 'cross_referral')}</td>
+        <td>${daysSince !== null ?
+          `<span class="days-indicator ${daysSince < 3 ? 'ok' : daysSince < 7 ? 'warn' : 'alert'}">${daysSince}d ago</span>` :
+          '<span style="color:var(--gray-dark)">—</span>'
+        }</td>
+        <td class="action-cell" onclick="event.stopPropagation()">
+          <button class="btn btn-sm btn-secondary" onclick="quickGenForCp('${cp.general_id}')" title="Generate docs">📄</button>
+          <button class="btn btn-sm btn-ghost" onclick="quickEmailForCp('${cp.general_id}')" title="Email draft">✉️</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Update stats
+  const allDocs = documents.filter(d => d.status !== 'not_started');
+  const activeDocs = documents.filter(d => !['executed','declined','not_started'].includes(d.status));
+  const executedDocs = documents.filter(d => d.status === 'executed');
+
+  const oneWeekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+  const newThisWeek = counterparties.filter(cp => cp.created_at > oneWeekAgo);
+
+  let overdueCount = 0;
+  counterparties.forEach(cp => {
+    const lastAct = getLastActivity(cp.general_id);
+    const cpDocs = getDocsForCp(cp.general_id).filter(d => !['executed','declined','not_started'].includes(d.status));
+    if (cpDocs.length > 0) {
+      if (!lastAct || Math.floor((Date.now() - new Date(lastAct.created_at).getTime()) / 86400000) >= 7) {
+        overdueCount++;
+      }
+    }
+  });
+
+  document.getElementById('statTotal').textContent = counterparties.length;
+  document.getElementById('statActive').textContent = activeDocs.length;
+  document.getElementById('statExecuted').textContent = executedDocs.length;
+  document.getElementById('statOverdue').textContent = overdueCount;
+  document.getElementById('statThisWeek').textContent = newThisWeek.length;
+}
+
+function getDocsForCp(generalId) {
+  return documents.filter(d => d.general_id === generalId);
+}
+
+function getLastActivity(generalId) {
+  const acts = activities.filter(a => a.general_id === generalId);
+  if (acts.length === 0) return null;
+  return acts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+}
+
+function renderDocStatus(docs, docType) {
+  const doc = docs.find(d => d.doc_type === docType);
+  if (!doc) return '<span style="color:var(--gray-dark);font-size:11px">—</span>';
+
+  const labels = {
+    not_started: '○',
+    draft_ready: '◐',
+    sent: '◑',
+    processing: '◑',
+    redlines: '◕',
+    executed: '●',
+    declined: '✕',
+  };
+
+  return `<span class="status-chip ${doc.status}" title="${doc.status.replace('_',' ')}">${labels[doc.status] || '?'} ${doc.status.replace('_',' ')}</span>`;
+}
+
+// ============================================================
+// FILTER CHIPS
+// ============================================================
+document.querySelectorAll('.filter-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    currentFilter = chip.dataset.filter;
+    renderPipeline();
+  });
+});
+
+document.getElementById('pipelineSearch').addEventListener('input', () => renderPipeline());
+
+// ============================================================
+// DETAIL PANEL
+// ============================================================
+function openDetail(generalId) {
+  const cp = counterparties.find(c => c.general_id === generalId);
+  if (!cp) return;
+
+  const docs = getDocsForCp(generalId);
+  const acts = activities.filter(a => a.general_id === generalId).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  const panel = document.getElementById('detailPanel');
+  const content = document.getElementById('detailContent');
+
+  content.innerHTML = `
+    <h2 style="font-size:20px;font-weight:700;color:var(--gold);margin-bottom:4px">${cp.company_name}</h2>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gray);margin-bottom:20px">${cp.general_id}</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+      <div><div style="font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:0.8px">Address</div><div style="font-size:13px;margin-top:4px">${cp.address || '—'}</div></div>
+      <div><div style="font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:0.8px">Country</div><div style="font-size:13px;margin-top:4px">${cp.country || '—'}</div></div>
+      <div><div style="font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:0.8px">Signatory</div><div style="font-size:13px;margin-top:4px">${cp.signatory_name || '—'}<br><span style="color:var(--gray);font-size:11px">${cp.signatory_title || ''}</span></div></div>
+      <div><div style="font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:0.8px">Backoffice</div><div style="font-size:13px;margin-top:4px">${cp.backoffice_name || '—'}<br><span style="color:var(--gray);font-size:11px">${cp.backoffice_email || ''}</span></div></div>
+    </div>
+
+    <h3 style="font-size:14px;font-weight:600;color:var(--white);margin-bottom:12px">Documents</h3>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px">
+      ${docs.map(d => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;background:var(--navy);border-radius:var(--radius);border:1px solid rgba(200,169,81,0.06)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="doc-type-chip ${d.doc_type}">${d.doc_type.replace('_',' ')}</span>
+            <span class="status-chip ${d.status}">${d.status.replace('_',' ')}</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-sm btn-secondary" onclick="generateSingleAndDownload('${generalId}','${d.doc_type}')">📄 Gen</button>
+            <select class="btn btn-sm btn-ghost" onchange="updateDocStatus('${d.id}',this.value)" style="font-size:11px;padding:4px 8px;background:var(--navy);color:var(--gray);border:1px solid rgba(136,153,170,0.2);border-radius:var(--radius);cursor:pointer">
+              ${['not_started','draft_ready','sent','processing','redlines','executed','declined'].map(s =>
+                `<option value="${s}" ${d.status === s ? 'selected' : ''}>${s.replace('_',' ')}</option>`
+              ).join('')}
+            </select>
+          </div>
+        </div>
+      `).join('')}
+      ${docs.length === 0 ? '<div style="color:var(--gray);font-size:13px;padding:10px">No documents created yet</div>' : ''}
+    </div>
+
+    <h3 style="font-size:14px;font-weight:600;color:var(--white);margin-bottom:12px">Activity Log</h3>
+    <div class="quick-note">
+      <input type="text" id="quickNoteInput" placeholder="Add a note..." onkeydown="if(event.key==='Enter')addQuickNote('${generalId}')">
+      <button class="btn btn-sm btn-primary" onclick="addQuickNote('${generalId}')">Add</button>
+    </div>
+    <div style="margin-top:12px">
+      ${acts.map(a => `
+        <div class="activity-item">
+          <div class="activity-date">${new Date(a.created_at).toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'})} — <span class="activity-actor">${a.actor || ''}</span></div>
+          <div class="activity-desc">${a.description}</div>
+        </div>
+      `).join('')}
+      ${acts.length === 0 ? '<div style="color:var(--gray);font-size:13px;padding:10px">No activity yet</div>' : ''}
+    </div>
+
+    <div style="margin-top:24px;padding-top:16px;border-top:1px solid rgba(200,169,81,0.08)">
+      <button class="btn btn-sm btn-danger" onclick="deleteCounterparty('${generalId}')">🗑️ Delete Counterparty</button>
+    </div>
+  `;
+
+  panel.classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detailPanel').classList.remove('open');
+}
+
+async function updateDocStatus(docId, newStatus) {
+  await updateDocument(docId, { status: newStatus, progress: getProgressForStatus(newStatus) });
+  await loadData();
+
+  // Re-open detail if it's open
+  const panel = document.getElementById('detailPanel');
+  if (panel.classList.contains('open')) {
+    const heading = panel.querySelector('h2');
+    if (heading) {
+      const generalId = panel.querySelector('div[style*="JetBrains"]')?.textContent;
+      if (generalId) openDetail(generalId.trim());
+    }
+  }
+  toast('Status updated', 'success');
+}
+
+function getProgressForStatus(status) {
+  const map = { not_started: 0, draft_ready: 25, sent: 50, processing: 50, redlines: 75, executed: 100, declined: 100 };
+  return map[status] || 0;
+}
+
+async function addQuickNote(generalId) {
+  const input = document.getElementById('quickNoteInput');
+  const note = input.value.trim();
+  if (!note) return;
+
+  const cp = counterparties.find(c => c.general_id === generalId);
+  await saveActivity({
+    counterparty_id: cp?.id || '',
+    general_id: generalId,
+    action: 'note',
+    description: note,
+    actor: 'Emmanuel Mendoza',
+    created_at: new Date().toISOString(),
+  });
+
+  input.value = '';
+  await loadData();
+  openDetail(generalId);
+  toast('Note added', 'success');
+}
+
+async function deleteCounterparty(generalId) {
+  if (!confirm(`Delete ${generalId} and all associated documents?`)) return;
+
+  // Remove from local state
+  counterparties = counterparties.filter(c => c.general_id !== generalId);
+  documents = documents.filter(d => d.general_id !== generalId);
+  activities = activities.filter(a => a.general_id !== generalId);
+  saveToStorage();
+
+  // Try API deletion
+  await apiCall(`/api/onboarding/counterparties/${generalId}`, 'DELETE');
+
+  closeDetail();
+  await loadData();
+  toast('Counterparty deleted', 'success');
+}
+
+// ============================================================
+// QUICK ACTIONS FROM PIPELINE
+// ============================================================
+function quickGenForCp(generalId) {
+  document.querySelector('.tab[data-tab="generate-docs"]').click();
+  document.getElementById('docGenCounterparty').value = generalId;
+}
+
+function quickEmailForCp(generalId) {
+  document.querySelector('.tab[data-tab="email-templates"]').click();
+  document.getElementById('emailCounterparty').value = generalId;
+}
+
+async function generateSingleAndDownload(generalId, docType) {
+  const cp = counterparties.find(c => c.general_id === generalId);
+  if (!cp) return;
+  await generateDocuments(cp, [docType]);
+}
+
+// ============================================================
+// EMAIL TEMPLATE ENGINE
+// ============================================================
+const emailTemplates = {
+  nda_initial: {
+    subject: (cp) => `ClearSky Limited — Mutual Non-Disclosure Agreement`,
+    body: (cp) => `Dear ${cp.backoffice_name || cp.signatory_name || '[Name]'},
+
+I hope this message finds you well.
+
+Further to our recent discussions, please find attached ClearSky Limited's standard Mutual Non-Disclosure Agreement (MNDA) for your review and consideration.
+
+We kindly request that you review the attached document and share any comments you may have at your earliest convenience. Once both parties are aligned on the terms, we can proceed with execution via DocuSign.
+
+Should you have any questions or require any clarification on the terms, please do not hesitate to reach out.
+
+We look forward to your response.
+
+Kind regards,
+Emmanuel Mendoza
+Clear Sky Limited
+103 Cannon Street, London, EC4N 5AG
+emmanuel.mendoza@clearskyltd.com`,
+  },
+
+  kyc_send: {
+    subject: (cp) => `ClearSky Limited — KYC / Client Onboarding Form`,
+    body: (cp) => `Dear ${cp.backoffice_name || cp.signatory_name || '[Name]'},
+
+As part of our standard onboarding process, we kindly request that you complete the attached Know Your Customer (KYC) form.
+
+This form is required for compliance purposes before we can proceed with any commercial arrangements. Please complete all applicable sections and return the form along with any supporting documentation at your earliest convenience.
+
+If you have any questions about the form or require assistance completing it, please do not hesitate to reach out.
+
+Kind regards,
+Emmanuel Mendoza
+Clear Sky Limited
+103 Cannon Street, London, EC4N 5AG
+emmanuel.mendoza@clearskyltd.com`,
+  },
+
+  marketing_send: {
+    subject: (cp) => `ClearSky Limited — Marketing Agreement`,
+    body: (cp) => {
+      const params = getDocParamsFor(cp, 'marketing');
+      return `Dear ${cp.signatory_name || cp.backoffice_name || '[Name]'},
+
+Further to our recent discussions, please find attached ClearSky Limited's Marketing Agreement for your review.
+
+${params.project_name ? `This agreement relates to the marketing and sale of carbon credits from ${params.project_name}.` : ''}
+
+We kindly request that you review the terms and share any comments at your earliest convenience. Once both parties are aligned, we can proceed with execution.
+
+Kind regards,
+Emmanuel Mendoza
+Clear Sky Limited
+103 Cannon Street, London, EC4N 5AG
+emmanuel.mendoza@clearskyltd.com`;
+    },
+  },
+
+  advisory_send: {
+    subject: (cp) => `ClearSky Limited — Master Consultancy Services Agreement`,
+    body: (cp) => `Dear ${cp.signatory_name || cp.backoffice_name || '[Name]'},
+
+Please find attached ClearSky Limited's Master Consultancy Services Agreement for your review.
+
+This agreement establishes the framework for the advisory services ClearSky will provide. A Statement of Work will accompany this agreement, detailing the specific scope, deliverables, and fee structure.
+
+We look forward to your review and comments.
+
+Kind regards,
+Emmanuel Mendoza
+Clear Sky Limited
+103 Cannon Street, London, EC4N 5AG
+emmanuel.mendoza@clearskyltd.com`,
+  },
+
+  cross_referral_send: {
+    subject: (cp) => `ClearSky Limited — Cross-Referral & Fee Sharing Agreement`,
+    body: (cp) => `Dear ${cp.signatory_name || cp.backoffice_name || '[Name]'},
+
+Please find attached a Cross-Referral and Fee Sharing Agreement between ClearSky Limited and ${cp.company_name}.
+
+This agreement establishes a non-exclusive framework for the mutual referral of prospective clients and the sharing of fees arising from successful engagements.
+
+We kindly request your review and look forward to your comments.
+
+Kind regards,
+Emmanuel Mendoza
+Clear Sky Limited
+103 Cannon Street, London, EC4N 5AG
+emmanuel.mendoza@clearskyltd.com`,
+  },
+
+  follow_up_7d: {
+    subject: (cp) => `Follow-Up: ClearSky Limited — Pending Documentation`,
+    body: (cp) => `Dear ${cp.backoffice_name || cp.signatory_name || '[Name]'},
+
+I hope this message finds you well. I am writing to follow up on the documentation we shared with you regarding our engagement with ${cp.company_name}.
+
+We understand you may be busy, but we would appreciate an update on the status of your review at your convenience. Please let us know if you have any questions or require any additional information.
+
+We look forward to hearing from you.
+
+Kind regards,
+Emmanuel Mendoza
+Clear Sky Limited
+103 Cannon Street, London, EC4N 5AG
+emmanuel.mendoza@clearskyltd.com`,
+  },
+
+  follow_up_14d: {
+    subject: (cp) => `Second Follow-Up: ClearSky Limited — Pending Documentation`,
+    body: (cp) => `Dear ${cp.backoffice_name || cp.signatory_name || '[Name]'},
+
+I am writing to follow up once more regarding the documentation we shared with ${cp.company_name} approximately two weeks ago.
+
+We remain very keen to progress our discussions and would be grateful for any update on your review. If there are any concerns or if you require any modifications, we are happy to accommodate.
+
+Please do not hesitate to reach out.
+
+Kind regards,
+Emmanuel Mendoza
+Clear Sky Limited
+103 Cannon Street, London, EC4N 5AG
+emmanuel.mendoza@clearskyltd.com`,
+  },
+
+  execution_confirm: {
+    subject: (cp) => `ClearSky Limited — Fully Executed Documentation`,
+    body: (cp) => `Dear ${cp.backoffice_name || cp.signatory_name || '[Name]'},
+
+Thank you for your cooperation throughout this process.
+
+Please find attached the fully executed documentation for your records. We are pleased to have completed this step and look forward to our collaboration with ${cp.company_name}.
+
+Should you have any questions, please do not hesitate to reach out.
+
+Kind regards,
+Emmanuel Mendoza
+Clear Sky Limited
+103 Cannon Street, London, EC4N 5AG
+emmanuel.mendoza@clearskyltd.com`,
+  },
+};
+
+document.getElementById('btnGenerateEmail').addEventListener('click', () => {
+  const cpId = document.getElementById('emailCounterparty').value;
+  const templateKey = document.getElementById('emailTemplate').value;
+
+  if (!cpId) {
+    toast('Please select a counterparty', 'error');
+    return;
+  }
+
+  const cp = counterparties.find(c => c.general_id === cpId);
+  if (!cp) return;
+
+  const template = emailTemplates[templateKey];
+  if (!template) return;
+
+  const subject = template.subject(cp);
+  const body = template.body(cp);
+  const toEmail = cp.backoffice_email || cp.signatory_email || '';
+
+  document.getElementById('emailPreviewArea').style.display = 'block';
+  document.getElementById('emailPreview').innerHTML = `
+    <div class="email-field">
+      <div class="email-field-label">To</div>
+      <div class="email-field-value">${toEmail || '<span style="color:var(--orange)">[Email not set — update counterparty details]</span>'}</div>
+    </div>
+    <div class="email-field">
+      <div class="email-field-label">Subject</div>
+      <div class="email-field-value" style="font-weight:600">${subject}</div>
+    </div>
+    <div class="email-body">${body}</div>
+  `;
+
+  // Store for copy/mailto
+  window._currentEmail = { to: toEmail, subject, body };
+});
+
+document.getElementById('btnCopyEmail').addEventListener('click', () => {
+  const email = window._currentEmail;
+  if (!email) return;
+  const text = `To: ${email.to}\nSubject: ${email.subject}\n\n${email.body}`;
+  navigator.clipboard.writeText(text).then(() => toast('Email copied to clipboard', 'success'));
+});
+
+document.getElementById('btnMailto').addEventListener('click', () => {
+  const email = window._currentEmail;
+  if (!email) return;
+  const mailto = `mailto:${encodeURIComponent(email.to)}?subject=${encodeURIComponent(email.subject)}&body=${encodeURIComponent(email.body)}`;
+  window.open(mailto, '_blank');
+});
+
+// ============================================================
+// QUICK DOC GEN TAB
+// ============================================================
+document.getElementById('btnQuickGen').addEventListener('click', async () => {
+  const cpId = document.getElementById('docGenCounterparty').value;
+  const docType = document.getElementById('docGenType').value;
+
+  if (!cpId) { toast('Select a counterparty', 'error'); return; }
+
+  const cp = counterparties.find(c => c.general_id === cpId);
+  if (!cp) return;
+
+  document.getElementById('docGenStatus').style.display = 'block';
+  await generateDocuments(cp, [docType]);
+  document.getElementById('docGenStatus').style.display = 'none';
+});
+
+document.getElementById('btnGenAll').addEventListener('click', async () => {
+  const cpId = document.getElementById('docGenCounterparty').value;
+  if (!cpId) { toast('Select a counterparty', 'error'); return; }
+
+  const cp = counterparties.find(c => c.general_id === cpId);
+  if (!cp) return;
+
+  const docs = getDocsForCp(cpId);
+  const docTypes = docs.map(d => d.doc_type);
+
+  if (docTypes.length === 0) {
+    toast('No documents assigned to this counterparty', 'error');
+    return;
+  }
+
+  document.getElementById('docGenStatus').style.display = 'block';
+  await generateDocuments(cp, docTypes);
+  document.getElementById('docGenStatus').style.display = 'none';
+});
+
+// ============================================================
+// POPULATE DROPDOWNS
+// ============================================================
+function populateDropdowns() {
+  const options = counterparties.map(cp =>
+    `<option value="${cp.general_id}">${cp.company_name} (${cp.general_id})</option>`
+  ).join('');
+
+  document.getElementById('emailCounterparty').innerHTML = '<option value="">— Select —</option>' + options;
+  document.getElementById('docGenCounterparty').innerHTML = '<option value="">— Select —</option>' + options;
+}
+
+// ============================================================
+// CLEAR FORM
+// ============================================================
+document.getElementById('btnClearForm').addEventListener('click', () => {
+  document.getElementById('newRequestForm').reset();
+  document.getElementById('fGeneralId').value = '';
+  document.querySelectorAll('.doc-check').forEach(c => {
+    c.classList.remove('checked');
+    c.querySelector('input').checked = false;
+  });
+  // Re-check NDA by default
+  const ndaCheck = document.querySelector('.doc-check[data-doc="nda"]');
+  ndaCheck.classList.add('checked');
+  ndaCheck.querySelector('input').checked = true;
+  updateConditionalSections();
+});
+
+// ============================================================
+// KEYBOARD SHORTCUTS
+// ============================================================
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeDetail();
+});
+
+// ============================================================
+// INIT
+// ============================================================
+loadData();
+</script>
+</body>
+</html>

@@ -1,0 +1,1778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social Agent — ClearSky Tools</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #0A1628;
+      --navy-light: #121F36;
+      --navy-mid: #1A2A45;
+      --gold: #C8A951;
+      --gold-light: #D4BC72;
+      --gold-dim: rgba(200, 169, 81, 0.15);
+      --white: #F8F8F8;
+      --gray-100: #E8E8E8;
+      --gray-200: #CCCCCC;
+      --gray-400: #888888;
+      --gray-600: #555555;
+      --green: #34D399;
+      --green-dim: rgba(52, 211, 153, 0.15);
+      --red: #F87171;
+      --red-dim: rgba(248, 113, 113, 0.15);
+      --blue: #60A5FA;
+      --blue-dim: rgba(96, 165, 250, 0.15);
+      --orange: #FBBF24;
+      --orange-dim: rgba(251, 191, 36, 0.15);
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow: 0 2px 8px rgba(0,0,0,0.3);
+      --transition: all 0.2s ease;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--navy);
+      color: var(--white);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* === HEADER === */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--navy-mid);
+      background: var(--navy-light);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-logo {
+      width: 32px;
+      height: 32px;
+      background: var(--gold);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--navy);
+    }
+
+    .header-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .header-title span { color: var(--gold); }
+
+    .brand-selector {
+      background: var(--navy-mid);
+      border: 1px solid rgba(200,169,81,0.3);
+      color: var(--white);
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .brand-selector:focus { outline: none; border-color: var(--gold); }
+
+    /* === NAV TABS === */
+    .nav-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 24px;
+      background: var(--navy-light);
+      border-bottom: 1px solid var(--navy-mid);
+    }
+
+    .nav-tab {
+      padding: 12px 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-400);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: var(--transition);
+    }
+
+    .nav-tab:hover { color: var(--white); }
+    .nav-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+    /* === MAIN LAYOUT === */
+    .main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--gold);
+      margin-bottom: 16px;
+    }
+
+    /* === KPI BAR === */
+    .kpi-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .kpi-card {
+      background: var(--navy-light);
+      border: 1px solid var(--navy-mid);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--gray-400);
+      margin-bottom: 4px;
+    }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .kpi-value.gold { color: var(--gold); }
+    .kpi-value.green { color: var(--green); }
+    .kpi-value.blue { color: var(--blue); }
+
+    .kpi-delta {
+      font-size: 11px;
+      margin-top: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .kpi-delta.up { color: var(--green); }
+    .kpi-delta.down { color: var(--red); }
+
+    /* === CONTENT CALENDAR === */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 24px;
+    }
+
+    .calendar-header-cell {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gray-400);
+      padding: 8px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .calendar-cell {
+      background: var(--navy-light);
+      border: 1px solid var(--navy-mid);
+      border-radius: var(--radius);
+      min-height: 100px;
+      padding: 8px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .calendar-cell:hover { border-color: var(--gold-dim); }
+    .calendar-cell.today { border-color: var(--gold); }
+    .calendar-cell.empty { background: transparent; border-color: transparent; cursor: default; }
+
+    .calendar-date {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--gray-400);
+      margin-bottom: 6px;
+    }
+
+    .calendar-post-tag {
+      font-size: 10px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tag-draft { background: var(--orange-dim); color: var(--orange); }
+    .tag-approved { background: var(--blue-dim); color: var(--blue); }
+    .tag-published { background: var(--green-dim); color: var(--green); }
+
+    /* === TOPIC BANK === */
+    .topics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .topic-card {
+      background: var(--navy-light);
+      border: 1px solid var(--navy-mid);
+      border-radius: var(--radius);
+      padding: 16px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .topic-card:hover { border-color: rgba(200,169,81,0.4); transform: translateY(-1px); }
+
+    .topic-pillar {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 8px;
+    }
+
+    .pillar-market_intelligence { background: var(--blue-dim); color: var(--blue); }
+    .pillar-regulatory { background: var(--orange-dim); color: var(--orange); }
+    .pillar-project_insights { background: var(--green-dim); color: var(--green); }
+    .pillar-thought_leadership { background: rgba(200,169,81,0.15); color: var(--gold); }
+    .pillar-behind_the_scenes { background: rgba(248,113,113,0.15); color: var(--red); }
+    .pillar-product { background: rgba(156,163,175,0.15); color: var(--gray-200); }
+
+    .topic-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+
+    .topic-angle {
+      font-size: 12px;
+      color: var(--gray-400);
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+
+    .topic-meta {
+      display: flex;
+      gap: 12px;
+      font-size: 11px;
+      color: var(--gray-600);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .topic-generate-btn {
+      background: var(--gold);
+      color: var(--navy);
+      border: none;
+      padding: 6px 12px;
+      border-radius: var(--radius);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: var(--transition);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .topic-generate-btn:hover { background: var(--gold-light); }
+
+    /* === POST EDITOR === */
+    .post-editor-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 22, 40, 0.9);
+      z-index: 200;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 24px;
+      overflow-y: auto;
+    }
+
+    .post-editor-overlay.visible { display: flex; }
+
+    .post-editor {
+      background: var(--navy-light);
+      border: 1px solid var(--navy-mid);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 900px;
+      padding: 24px;
+    }
+
+    .post-editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .post-editor-title { font-size: 18px; font-weight: 600; }
+    
+    .close-btn {
+      background: none;
+      border: 1px solid var(--gray-600);
+      color: var(--gray-400);
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .close-btn:hover { border-color: var(--red); color: var(--red); }
+
+    /* Hook selector */
+    .hooks-section { margin-bottom: 20px; }
+
+    .hooks-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .hook-option {
+      background: var(--navy);
+      border: 2px solid var(--navy-mid);
+      border-radius: var(--radius);
+      padding: 12px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .hook-option:hover { border-color: rgba(200,169,81,0.4); }
+    .hook-option.selected { border-color: var(--gold); background: var(--gold-dim); }
+
+    .hook-technique-badge {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-bottom: 6px;
+      display: inline-block;
+    }
+
+    .hook-text {
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .hook-char-count {
+      font-size: 10px;
+      color: var(--gray-600);
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 4px;
+    }
+
+    /* Post body editor */
+    .post-body-textarea {
+      width: 100%;
+      min-height: 200px;
+      background: var(--navy);
+      border: 1px solid var(--navy-mid);
+      border-radius: var(--radius);
+      color: var(--white);
+      padding: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      resize: vertical;
+    }
+
+    .post-body-textarea:focus { outline: none; border-color: var(--gold); }
+
+    /* LinkedIn Preview */
+    .linkedin-preview {
+      background: #FFFFFF;
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-top: 16px;
+      color: #000000;
+    }
+
+    .linkedin-preview-header {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+
+    .linkedin-preview-avatar {
+      width: 40px;
+      height: 40px;
+      background: var(--navy);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold);
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .linkedin-preview-name { font-weight: 600; font-size: 14px; color: #000; }
+    .linkedin-preview-tagline { font-size: 12px; color: #666; }
+    .linkedin-preview-time { font-size: 11px; color: #999; }
+
+    .linkedin-preview-text {
+      font-size: 14px;
+      line-height: 1.5;
+      color: #333;
+      white-space: pre-wrap;
+    }
+
+    .linkedin-preview-seemore {
+      color: #666;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* Action buttons */
+    .post-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: 'DM Sans', sans-serif;
+      border: none;
+    }
+
+    .btn-secondary {
+      background: var(--navy-mid);
+      color: var(--white);
+      border: 1px solid var(--gray-600);
+    }
+
+    .btn-secondary:hover { border-color: var(--white); }
+
+    .btn-primary {
+      background: var(--gold);
+      color: var(--navy);
+    }
+
+    .btn-primary:hover { background: var(--gold-light); }
+
+    .btn-danger {
+      background: var(--red-dim);
+      color: var(--red);
+      border: 1px solid rgba(248,113,113,0.3);
+    }
+
+    .btn-publish {
+      background: var(--green);
+      color: var(--navy);
+    }
+
+    .btn-publish:hover { background: #4ADE80; }
+
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* === DM QUEUE === */
+    .dm-queue { margin-top: 24px; }
+
+    .dm-card {
+      background: var(--navy-light);
+      border: 1px solid var(--navy-mid);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .dm-prospect-info { flex: 1; }
+
+    .dm-prospect-name {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .dm-prospect-title {
+      font-size: 12px;
+      color: var(--gray-400);
+      margin-bottom: 6px;
+    }
+
+    .dm-draft-preview {
+      font-size: 12px;
+      color: var(--gray-200);
+      background: var(--navy);
+      padding: 8px;
+      border-radius: var(--radius);
+      margin-top: 8px;
+      line-height: 1.4;
+      font-style: italic;
+    }
+
+    .dm-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-left: 16px;
+    }
+
+    .dm-status-badge {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .dm-status-drafted { background: var(--orange-dim); color: var(--orange); }
+    .dm-status-approved { background: var(--blue-dim); color: var(--blue); }
+    .dm-status-sent { background: var(--green-dim); color: var(--green); }
+
+    /* === PIPELINE IMPACT === */
+    .pipeline-panel {
+      background: var(--navy-light);
+      border: 1px solid rgba(200,169,81,0.3);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-top: 24px;
+    }
+
+    .pipeline-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gold);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pipeline-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+    }
+
+    .pipeline-stat-label {
+      font-size: 11px;
+      color: var(--gray-400);
+      margin-bottom: 4px;
+    }
+
+    .pipeline-stat-value {
+      font-size: 22px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* === LOADING / STATES === */
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--navy-mid);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--gray-400);
+    }
+
+    .empty-state-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 768px) {
+      .kpi-bar { grid-template-columns: repeat(2, 1fr); }
+      .topics-grid { grid-template-columns: 1fr; }
+      .hooks-grid { grid-template-columns: 1fr; }
+      .calendar-grid { font-size: 10px; }
+      .calendar-cell { min-height: 70px; padding: 4px; }
+      .nav-tabs { overflow-x: auto; }
+      .nav-tab { white-space: nowrap; }
+    }
+
+    /* === SOURCES PANEL === */
+    .editor-columns {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .editor-columns { grid-template-columns: 1fr; }
+    }
+
+    .sources-panel {
+      background: var(--navy);
+      border: 1px solid var(--navy-mid);
+      border-radius: var(--radius);
+      padding: 16px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .sources-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .source-item {
+      background: var(--navy-light);
+      border: 1px solid var(--navy-mid);
+      border-radius: var(--radius);
+      padding: 10px;
+      margin-bottom: 8px;
+      transition: var(--transition);
+    }
+
+    .source-item.excluded {
+      opacity: 0.4;
+      border-style: dashed;
+    }
+
+    .source-item.excluded .source-claim { text-decoration: line-through; }
+
+    .source-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .source-toggle {
+      background: none;
+      border: 1px solid var(--gray-600);
+      color: var(--gray-400);
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .source-toggle.included { background: var(--green-dim); border-color: var(--green); color: var(--green); }
+
+    .source-claim {
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.3;
+      margin-bottom: 4px;
+      flex: 1;
+    }
+
+    .source-url {
+      font-size: 10px;
+      color: var(--blue);
+      text-decoration: none;
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+
+    .source-url:hover { text-decoration: underline; }
+
+    .source-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .source-type-badge {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      padding: 2px 5px;
+      border-radius: 3px;
+    }
+
+    .source-type-registry { background: var(--green-dim); color: var(--green); }
+    .source-type-government { background: var(--blue-dim); color: var(--blue); }
+    .source-type-academic { background: rgba(200,169,81,0.15); color: var(--gold); }
+    .source-type-industry_report { background: var(--orange-dim); color: var(--orange); }
+    .source-type-web { background: rgba(156,163,175,0.15); color: var(--gray-200); }
+
+    .confidence-badge {
+      font-size: 9px;
+      padding: 2px 5px;
+      border-radius: 3px;
+    }
+
+    .confidence-high { background: var(--green-dim); color: var(--green); }
+    .confidence-medium { background: var(--orange-dim); color: var(--orange); }
+    .confidence-low { background: var(--red-dim); color: var(--red); }
+
+    .data-quality-banner {
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dq-green { background: var(--green-dim); border: 1px solid rgba(52,211,153,0.3); color: var(--green); }
+    .dq-yellow { background: var(--orange-dim); border: 1px solid rgba(251,191,36,0.3); color: var(--orange); }
+    .dq-red { background: var(--red-dim); border: 1px solid rgba(248,113,113,0.3); color: var(--red); }
+
+    .add-source-form {
+      background: var(--navy-light);
+      border: 1px dashed var(--gray-600);
+      border-radius: var(--radius);
+      padding: 10px;
+      margin-top: 8px;
+      display: none;
+    }
+
+    .add-source-form.visible { display: block; }
+
+    .add-source-form input {
+      width: 100%;
+      background: var(--navy);
+      border: 1px solid var(--navy-mid);
+      color: var(--white);
+      padding: 6px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: 'DM Sans', sans-serif;
+      margin-bottom: 6px;
+    }
+
+    .add-source-form input:focus { outline: none; border-color: var(--gold); }
+
+    .research-summary-box {
+      background: var(--navy);
+      border: 1px solid rgba(200,169,81,0.2);
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--gray-200);
+    }
+
+    .research-summary-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+
+    .suggested-links-box {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--navy-mid);
+    }
+
+    .suggested-link-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+      font-size: 12px;
+    }
+
+    .suggested-link-item a {
+      color: var(--blue);
+      text-decoration: none;
+      font-size: 11px;
+    }
+
+    .suggested-link-item a:hover { text-decoration: underline; }
+
+    /* Tab content visibility */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Add topic form */
+    .add-topic-form {
+      background: var(--navy-light);
+      border: 1px solid var(--gold-dim);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .add-topic-form.visible { display: block; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .form-group { margin-bottom: 12px; }
+
+    .form-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--gray-400);
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      background: var(--navy);
+      border: 1px solid var(--navy-mid);
+      color: var(--white);
+      padding: 8px 12px;
+      border-radius: var(--radius);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+    }
+
+    .form-textarea { min-height: 80px; resize: vertical; }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--gold); }
+
+    /* Notification toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--navy-light);
+      border: 1px solid var(--gold);
+      border-radius: var(--radius);
+      padding: 12px 20px;
+      font-size: 13px;
+      z-index: 300;
+      display: none;
+      animation: slideUp 0.3s ease;
+    }
+
+    .toast.visible { display: block; }
+    .toast.error { border-color: var(--red); }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">CS</div>
+      <div class="header-title">Social <span>Agent</span></div>
+    </div>
+    <select class="brand-selector" id="brandSelector">
+      <option value="clearsky001">ClearSky Limited</option>
+    </select>
+  </div>
+
+  <!-- NAV TABS -->
+  <div class="nav-tabs">
+    <div class="nav-tab active" data-tab="dashboard">Dashboard</div>
+    <div class="nav-tab" data-tab="calendar">Calendar</div>
+    <div class="nav-tab" data-tab="topics">Topics</div>
+    <div class="nav-tab" data-tab="posts">Posts</div>
+    <div class="nav-tab" data-tab="dms">DM Queue</div>
+    <div class="nav-tab" data-tab="analytics">Analytics</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- DASHBOARD TAB -->
+    <div class="tab-content active" id="tab-dashboard">
+      <div class="kpi-bar">
+        <div class="kpi-card">
+          <div class="kpi-label">Posts This Week</div>
+          <div class="kpi-value gold" id="kpi-posts">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Total Impressions (30d)</div>
+          <div class="kpi-value blue" id="kpi-impressions">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Engagement Rate</div>
+          <div class="kpi-value green" id="kpi-engagement">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">New HubSpot Contacts</div>
+          <div class="kpi-value gold" id="kpi-contacts">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">DMs Pending Approval</div>
+          <div class="kpi-value" id="kpi-dms">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Pipeline Influenced</div>
+          <div class="kpi-value green" id="kpi-pipeline">—</div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="section-title">Quick Actions</div>
+      <div style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+        <button class="btn btn-primary" onclick="openQuickGenerate()">⚡ Generate Post from Topic</button>
+        <button class="btn btn-secondary" onclick="switchTab('dms')">📨 Review DM Queue</button>
+        <button class="btn btn-secondary" onclick="switchTab('calendar')">📅 View Calendar</button>
+      </div>
+
+      <!-- Recent Posts -->
+      <div class="section-title">Recent Posts</div>
+      <div id="recent-posts-list">
+        <div class="empty-state">
+          <div class="empty-state-icon">📝</div>
+          <p>No posts yet. Generate your first post from the Topics tab.</p>
+        </div>
+      </div>
+
+      <!-- Pipeline Impact Panel -->
+      <div class="pipeline-panel">
+        <div class="pipeline-title">📊 Pipeline Impact (Last 30 Days)</div>
+        <div class="pipeline-grid">
+          <div>
+            <div class="pipeline-stat-label">Posts Published</div>
+            <div class="pipeline-stat-value gold" id="pipeline-posts">0</div>
+          </div>
+          <div>
+            <div class="pipeline-stat-label">Total Engagements</div>
+            <div class="pipeline-stat-value blue" id="pipeline-engagements">0</div>
+          </div>
+          <div>
+            <div class="pipeline-stat-label">Contacts Created</div>
+            <div class="pipeline-stat-value green" id="pipeline-contacts">0</div>
+          </div>
+          <div>
+            <div class="pipeline-stat-label">Pipeline Value</div>
+            <div class="pipeline-stat-value gold" id="pipeline-value">€0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALENDAR TAB -->
+    <div class="tab-content" id="tab-calendar">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div class="section-title" style="margin: 0;">Content Calendar</div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button class="btn btn-secondary" onclick="changeMonth(-1)">←</button>
+          <span id="calendar-month-label" style="font-weight: 600; min-width: 140px; text-align: center;"></span>
+          <button class="btn btn-secondary" onclick="changeMonth(1)">→</button>
+        </div>
+      </div>
+      <div class="calendar-grid" id="calendar-grid"></div>
+    </div>
+
+    <!-- TOPICS TAB -->
+    <div class="tab-content" id="tab-topics">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div class="section-title" style="margin: 0;">Topic Bank</div>
+        <button class="btn btn-primary" onclick="toggleAddTopic()">+ Add Topic</button>
+      </div>
+
+      <!-- Add Topic Form -->
+      <div class="add-topic-form" id="add-topic-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Title</label>
+            <input class="form-input" id="new-topic-title" placeholder="Topic title">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Pillar</label>
+            <select class="form-select" id="new-topic-pillar">
+              <option value="market_intelligence">Market Intelligence</option>
+              <option value="regulatory">Regulatory</option>
+              <option value="project_insights">Project Insights</option>
+              <option value="thought_leadership">Thought Leadership</option>
+              <option value="behind_the_scenes">Behind the Scenes</option>
+              <option value="product">Product</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Angle</label>
+          <textarea class="form-textarea" id="new-topic-angle" placeholder="What's the compelling angle for this topic?"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Target Audience</label>
+            <input class="form-input" id="new-topic-audience" placeholder="Who is this for?">
+          </div>
+          <div class="form-group">
+            <label class="form-label">CTA</label>
+            <input class="form-input" id="new-topic-cta" placeholder="Engagement-focused call to action">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Key Data Points</label>
+          <textarea class="form-textarea" id="new-topic-data" placeholder="Specific data, stats, and evidence to include"></textarea>
+        </div>
+        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+          <button class="btn btn-secondary" onclick="toggleAddTopic()">Cancel</button>
+          <button class="btn btn-primary" onclick="saveTopic()">Save Topic</button>
+        </div>
+      </div>
+
+      <!-- Filter -->
+      <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+        <button class="btn btn-secondary pillar-filter active" data-pillar="all" onclick="filterTopics('all')">All</button>
+        <button class="btn btn-secondary pillar-filter" data-pillar="market_intelligence" onclick="filterTopics('market_intelligence')">Market Intel</button>
+        <button class="btn btn-secondary pillar-filter" data-pillar="regulatory" onclick="filterTopics('regulatory')">Regulatory</button>
+        <button class="btn btn-secondary pillar-filter" data-pillar="project_insights" onclick="filterTopics('project_insights')">Projects</button>
+        <button class="btn btn-secondary pillar-filter" data-pillar="thought_leadership" onclick="filterTopics('thought_leadership')">Thought Leadership</button>
+        <button class="btn btn-secondary pillar-filter" data-pillar="behind_the_scenes" onclick="filterTopics('behind_the_scenes')">Behind Scenes</button>
+      </div>
+
+      <div class="topics-grid" id="topics-grid"></div>
+    </div>
+
+    <!-- POSTS TAB -->
+    <div class="tab-content" id="tab-posts">
+      <div class="section-title">Generated Posts</div>
+      <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+        <button class="btn btn-secondary post-filter active" data-status="all" onclick="filterPosts('all')">All</button>
+        <button class="btn btn-secondary post-filter" data-status="draft" onclick="filterPosts('draft')">Drafts</button>
+        <button class="btn btn-secondary post-filter" data-status="approved" onclick="filterPosts('approved')">Approved</button>
+        <button class="btn btn-secondary post-filter" data-status="published" onclick="filterPosts('published')">Published</button>
+      </div>
+      <div id="posts-list"></div>
+    </div>
+
+    <!-- DM QUEUE TAB -->
+    <div class="tab-content" id="tab-dms">
+      <div class="section-title">DM Queue — Pending Approval</div>
+      <div id="dm-queue-list">
+        <div class="empty-state">
+          <div class="empty-state-icon">📨</div>
+          <p>No DMs in queue. Engage with post commenters to generate DM drafts.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS TAB -->
+    <div class="tab-content" id="tab-analytics">
+      <div class="section-title">Content Performance Analytics</div>
+      <div class="kpi-bar">
+        <div class="kpi-card">
+          <div class="kpi-label">Best Hook Technique</div>
+          <div class="kpi-value gold" style="font-size: 16px;" id="analytics-best-hook">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Avg Engagement Rate</div>
+          <div class="kpi-value green" id="analytics-avg-engagement">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Posting Streak</div>
+          <div class="kpi-value blue" id="analytics-streak">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Follower Growth (30d)</div>
+          <div class="kpi-value gold" id="analytics-growth">—</div>
+        </div>
+      </div>
+      <div class="section-title" style="margin-top: 24px;">Hook Technique Performance</div>
+      <div id="hook-performance-chart">
+        <div class="empty-state">
+          <div class="empty-state-icon">📊</div>
+          <p>Publish 5+ posts to see hook technique performance data.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- POST EDITOR OVERLAY -->
+  <div class="post-editor-overlay" id="post-editor-overlay">
+    <div class="post-editor">
+      <div class="post-editor-header">
+        <div class="post-editor-title" id="editor-title">Generate Post</div>
+        <button class="close-btn" onclick="closeEditor()">✕</button>
+      </div>
+
+      <!-- Hook Selection -->
+      <div class="hooks-section">
+        <div class="section-title">Select Hook</div>
+        <div class="hooks-grid" id="hooks-grid"></div>
+      </div>
+
+      <!-- Post Body + Sources in columns -->
+      <div class="editor-columns">
+        <div class="editor-left">
+          <div class="form-group">
+            <label class="form-label">Post Body</label>
+            <textarea class="post-body-textarea" id="post-body-editor"></textarea>
+          </div>
+
+          <!-- LinkedIn Preview -->
+          <div class="section-title" style="margin-top: 16px;">LinkedIn Preview</div>
+          <div class="linkedin-preview">
+            <div class="linkedin-preview-header">
+              <div class="linkedin-preview-avatar">CS</div>
+              <div>
+                <div class="linkedin-preview-name">ClearSky Limited</div>
+                <div class="linkedin-preview-tagline">Environmental Merchant Bank</div>
+                <div class="linkedin-preview-time">Just now · 🌐</div>
+              </div>
+            </div>
+            <div class="linkedin-preview-text" id="linkedin-preview-text"></div>
+          </div>
+        </div>
+
+        <!-- Sources Panel -->
+        <div class="sources-panel" id="sources-panel">
+          <div class="sources-panel-header">
+            <div class="section-title" style="margin: 0; font-size: 12px;">Sources</div>
+            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="toggleAddSource()">+ Add</button>
+          </div>
+          
+          <!-- Data Quality Banner -->
+          <div class="data-quality-banner" id="data-quality-banner" style="display: none;"></div>
+          
+          <!-- Research Summary -->
+          <div class="research-summary-box" id="research-summary-box" style="display: none;">
+            <div class="research-summary-label">Research Summary</div>
+            <div id="research-summary-text"></div>
+          </div>
+          
+          <!-- Sources List -->
+          <div id="sources-list"></div>
+          
+          <!-- Add Source Form -->
+          <div class="add-source-form" id="add-source-form">
+            <input id="new-source-claim" placeholder="Claim / data point">
+            <input id="new-source-url" placeholder="Source URL (https://...)">
+            <input id="new-source-title" placeholder="Source title">
+            <div style="display: flex; gap: 6px;">
+              <select class="form-select" id="new-source-type" style="font-size: 11px; padding: 4px;">
+                <option value="web">Web</option>
+                <option value="registry">Registry</option>
+                <option value="government">Government</option>
+                <option value="academic">Academic</option>
+                <option value="industry_report">Industry Report</option>
+              </select>
+              <select class="form-select" id="new-source-confidence" style="font-size: 11px; padding: 4px;">
+                <option value="high">High</option>
+                <option value="medium" selected>Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+            <div style="display: flex; gap: 6px; margin-top: 6px;">
+              <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="toggleAddSource()">Cancel</button>
+              <button class="btn btn-primary" style="padding: 4px 8px; font-size: 11px;" onclick="saveCustomSource()">Add Source</button>
+            </div>
+          </div>
+          
+          <!-- Suggested Links -->
+          <div class="suggested-links-box" id="suggested-links-box" style="display: none;">
+            <div class="section-title" style="margin: 0 0 8px 0; font-size: 11px;">Suggested Links for Post</div>
+            <div id="suggested-links-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="post-actions">
+        <button class="btn btn-secondary" onclick="closeEditor()">Discard</button>
+        <button class="btn btn-primary" id="btn-save-draft" onclick="saveDraft()">Save Draft</button>
+        <button class="btn btn-publish" id="btn-approve" onclick="approvePost()">Approve</button>
+        <button class="btn btn-danger" id="btn-publish" onclick="publishPost()" style="background: var(--green); color: var(--navy); border: none;">Publish to LinkedIn</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ============================================
+    // CONFIG
+    // ============================================
+    const API_BASE = 'https://api-tools.oga.earth/api/social';
+    let currentBrand = 'clearsky001';
+    let currentMonth = new Date();
+    let currentPostId = null;
+    let currentHooks = [];
+    let selectedHookId = null;
+    let allTopics = [];
+    let allPosts = [];
+    let currentSources = [];
+    let currentSuggestedLinks = [];
+    let currentDataQuality = null;
+    let currentResearchSummary = '';
+
+    // ============================================
+    // TAB NAVIGATION
+    // ============================================
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+      tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+    });
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.nav-tab[data-tab="${tabName}"]`).classList.add('active');
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+      
+      // Load tab data
+      if (tabName === 'topics') loadTopics();
+      if (tabName === 'calendar') renderCalendar();
+      if (tabName === 'posts') loadPosts();
+      if (tabName === 'dashboard') loadDashboard();
+    }
+
+    // ============================================
+    // API HELPERS
+    // ============================================
+    async function api(path, method = 'GET', body = null) {
+      const opts = {
+        method,
+        headers: { 'Content-Type': 'application/json' }
+      };
+      if (body) opts.body = JSON.stringify(body);
+      
+      try {
+        const res = await fetch(`${API_BASE}/${currentBrand}${path}`, opts);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: res.statusText }));
+          throw new Error(err.error || res.statusText);
+        }
+        return await res.json();
+      } catch (e) {
+        showToast(`API Error: ${e.message}`, true);
+        throw e;
+      }
+    }
+
+    async function apiBrands() {
+      try {
+        const res = await fetch(`${API_BASE}/brands`);
+        return await res.json();
+      } catch (e) {
+        console.error('Failed to load brands:', e);
+        return [];
+      }
+    }
+
+    // ============================================
+    // TOAST
+    // ============================================
+    function showToast(msg, isError = false) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = `toast visible ${isError ? 'error' : ''}`;
+      setTimeout(() => toast.classList.remove('visible'), 3000);
+    }
+
+    // ============================================
+    // DASHBOARD
+    // ============================================
+    async function loadDashboard() {
+      try {
+        const data = await api('/analytics/dashboard');
+        document.getElementById('kpi-posts').textContent = data.posts_this_week || 0;
+        document.getElementById('kpi-impressions').textContent = formatNumber(data.total_impressions || 0);
+        document.getElementById('kpi-engagement').textContent = (data.avg_engagement_rate || 0).toFixed(1) + '%';
+        document.getElementById('kpi-contacts').textContent = data.hubspot_contacts || 0;
+        document.getElementById('kpi-dms').textContent = data.pending_dms || 0;
+        document.getElementById('kpi-pipeline').textContent = '€' + formatNumber(data.pipeline_value || 0);
+      } catch (e) {
+        // Dashboard will show defaults
+        console.log('Dashboard data not available yet — API endpoints may not be deployed');
+      }
+    }
+
+    function formatNumber(n) {
+      if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+      if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+      return n.toString();
+    }
+
+    // ============================================
+    // TOPICS
+    // ============================================
+    async function loadTopics() {
+      try {
+        const topics = await api('/topics');
+        allTopics = Array.isArray(topics) ? topics : (topics.results || []);
+        renderTopics(allTopics);
+      } catch (e) {
+        document.getElementById('topics-grid').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📦</div>
+            <p>Could not load topics. Make sure the API is deployed.</p>
+          </div>`;
+      }
+    }
+
+    function renderTopics(topics) {
+      const grid = document.getElementById('topics-grid');
+      if (!topics.length) {
+        grid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📦</div><p>No topics yet. Add your first topic.</p></div>`;
+        return;
+      }
+      grid.innerHTML = topics.map(t => `
+        <div class="topic-card" data-pillar="${t.pillar}">
+          <span class="topic-pillar pillar-${t.pillar}">${t.pillar.replace('_', ' ')}</span>
+          <div class="topic-title">${t.title}</div>
+          <div class="topic-angle">${t.angle ? t.angle.substring(0, 120) + '...' : ''}</div>
+          <div class="topic-meta">
+            <span>Used: ${t.times_used || 0}x</span>
+            ${t.last_used_at ? `<span>Last: ${new Date(t.last_used_at).toLocaleDateString()}</span>` : ''}
+          </div>
+          <button class="topic-generate-btn" onclick="generatePost('${t.id}')">⚡ Generate Post</button>
+        </div>
+      `).join('');
+    }
+
+    function filterTopics(pillar) {
+      document.querySelectorAll('.pillar-filter').forEach(b => b.classList.remove('active'));
+      document.querySelector(`.pillar-filter[data-pillar="${pillar}"]`).classList.add('active');
+      if (pillar === 'all') {
+        renderTopics(allTopics);
+      } else {
+        renderTopics(allTopics.filter(t => t.pillar === pillar));
+      }
+    }
+
+    function toggleAddTopic() {
+      document.getElementById('add-topic-form').classList.toggle('visible');
+    }
+
+    async function saveTopic() {
+      const topic = {
+        title: document.getElementById('new-topic-title').value,
+        pillar: document.getElementById('new-topic-pillar').value,
+        angle: document.getElementById('new-topic-angle').value,
+        target_audience: document.getElementById('new-topic-audience').value,
+        cta: document.getElementById('new-topic-cta').value,
+        key_data_points: document.getElementById('new-topic-data').value
+      };
+      if (!topic.title) return showToast('Title is required', true);
+      try {
+        await api('/topics', 'POST', topic);
+        showToast('Topic saved');
+        toggleAddTopic();
+        loadTopics();
+      } catch (e) {}
+    }
+
+    // ============================================
+    // POST GENERATION
+    // ============================================
+    async function generatePost(topicId) {
+      showToast('🔍 Researching topic + generating post... 15-30 seconds');
+      try {
+        const result = await api('/posts/generate', 'POST', { topic_id: topicId, platform: 'linkedin' });
+        currentPostId = result.post.id;
+        currentHooks = result.hooks || [];
+        currentSources = result.sources || [];
+        currentSuggestedLinks = result.suggested_links || [];
+        currentDataQuality = result.data_quality || null;
+        currentResearchSummary = result.research_summary || '';
+        openEditor(result.post, result.hooks);
+      } catch (e) {
+        showToast('Generation failed: ' + e.message, true);
+      }
+    }
+
+    function openEditor(post, hooks) {
+      document.getElementById('post-editor-overlay').classList.add('visible');
+      document.getElementById('post-body-editor').value = post.body_text;
+      
+      // Render hooks
+      const grid = document.getElementById('hooks-grid');
+      grid.innerHTML = hooks.map((h, i) => `
+        <div class="hook-option" data-hook-id="${h.id}" onclick="selectHook('${h.id}', ${i})">
+          <span class="hook-technique-badge pillar-${h.technique === 'specific_number' ? 'regulatory' : h.technique === 'contradiction' ? 'market_intelligence' : h.technique === 'accusation' ? 'behind_the_scenes' : h.technique === 'stolen_thought' ? 'project_insights' : 'thought_leadership'}">${h.technique.replace('_', ' ')}</span>
+          <div class="hook-text">${h.line_1}<br>${h.line_2}</div>
+          <div class="hook-char-count">${h.char_count_1 || h.line_1.length} / ${h.char_count_2 || h.line_2.length} chars</div>
+        </div>
+      `).join('');
+      
+      // Auto-select first hook
+      if (hooks.length > 0) selectHook(hooks[0].id, 0);
+      
+      // Render data quality banner
+      renderDataQuality();
+      
+      // Render research summary
+      renderResearchSummary();
+      
+      // Render sources
+      renderSources();
+      
+      // Render suggested links
+      renderSuggestedLinks();
+      
+      updatePreview();
+      document.getElementById('post-body-editor').addEventListener('input', updatePreview);
+    }
+
+    function renderDataQuality() {
+      const banner = document.getElementById('data-quality-banner');
+      if (!currentDataQuality) { banner.style.display = 'none'; return; }
+      const icons = { green: '✅', yellow: '⚠️', red: '🔴' };
+      banner.className = `data-quality-banner dq-${currentDataQuality.flag}`;
+      banner.innerHTML = `${icons[currentDataQuality.flag] || '⚠️'} ${currentDataQuality.note}`;
+      banner.style.display = 'flex';
+    }
+
+    function renderResearchSummary() {
+      const box = document.getElementById('research-summary-box');
+      if (!currentResearchSummary) { box.style.display = 'none'; return; }
+      document.getElementById('research-summary-text').textContent = currentResearchSummary;
+      box.style.display = 'block';
+    }
+
+    function renderSources() {
+      const list = document.getElementById('sources-list');
+      if (!currentSources.length) {
+        list.innerHTML = '<div style="font-size: 12px; color: var(--gray-400); text-align: center; padding: 12px;">No sources found. Web research may be unavailable.</div>';
+        return;
+      }
+      list.innerHTML = currentSources.map((s, i) => `
+        <div class="source-item ${s.included ? '' : 'excluded'}" data-source-id="${s.id}">
+          <div class="source-header">
+            <div style="flex: 1;">
+              <div class="source-claim">${s.claim}</div>
+              <a class="source-url" href="${s.source_url}" target="_blank" title="${s.source_url}">${s.source_title || s.source_domain || s.source_url}</a>
+              <div class="source-meta">
+                <span class="source-type-badge source-type-${s.source_type}">${(s.source_type || 'web').replace('_', ' ')}</span>
+                <span class="confidence-badge confidence-${s.confidence}">${s.confidence}</span>
+                ${s.source_date ? `<span style="font-size: 9px; color: var(--gray-600);">${s.source_date}</span>` : ''}
+              </div>
+            </div>
+            <button class="source-toggle ${s.included ? 'included' : ''}" onclick="toggleSource('${s.id}', ${i})" title="${s.included ? 'Exclude this source' : 'Include this source'}">
+              ${s.included ? '✓' : '✗'}
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderSuggestedLinks() {
+      const box = document.getElementById('suggested-links-box');
+      if (!currentSuggestedLinks.length) { box.style.display = 'none'; return; }
+      document.getElementById('suggested-links-list').innerHTML = currentSuggestedLinks.map(l => `
+        <div class="suggested-link-item">
+          <span style="color: var(--gray-200);">📎 ${l.anchor_text}</span>
+          <a href="${l.url}" target="_blank">${new URL(l.url).hostname}</a>
+        </div>
+      `).join('');
+      box.style.display = 'block';
+    }
+
+    async function toggleSource(sourceId, index) {
+      const source = currentSources[index];
+      const newIncluded = source.included ? 0 : 1;
+      try {
+        await api(`/posts/${currentPostId}/sources/${sourceId}`, 'PUT', { included: newIncluded });
+        currentSources[index].included = newIncluded;
+        renderSources();
+      } catch (e) {
+        // Optimistic update even if API fails
+        currentSources[index].included = newIncluded;
+        renderSources();
+      }
+    }
+
+    function toggleAddSource() {
+      document.getElementById('add-source-form').classList.toggle('visible');
+    }
+
+    async function saveCustomSource() {
+      const claim = document.getElementById('new-source-claim').value;
+      const url = document.getElementById('new-source-url').value;
+      const title = document.getElementById('new-source-title').value;
+      const type = document.getElementById('new-source-type').value;
+      const confidence = document.getElementById('new-source-confidence').value;
+      
+      if (!claim || !url) return showToast('Claim and URL required', true);
+      
+      try {
+        const result = await api(`/posts/${currentPostId}/sources`, 'POST', {
+          claim, source_url: url, source_title: title, source_type: type, confidence,
+          source_domain: new URL(url).hostname
+        });
+        currentSources.push({ ...result, included: 1 });
+        renderSources();
+        toggleAddSource();
+        // Clear form
+        document.getElementById('new-source-claim').value = '';
+        document.getElementById('new-source-url').value = '';
+        document.getElementById('new-source-title').value = '';
+        showToast('Source added');
+      } catch (e) {
+        showToast('Failed to add source', true);
+      }
+    }
+
+    function selectHook(hookId, index) {
+      selectedHookId = hookId;
+      document.querySelectorAll('.hook-option').forEach(h => h.classList.remove('selected'));
+      document.querySelector(`.hook-option[data-hook-id="${hookId}"]`).classList.add('selected');
+      updatePreview();
+    }
+
+    function updatePreview() {
+      const hook = currentHooks.find(h => h.id === selectedHookId);
+      const body = document.getElementById('post-body-editor').value;
+      const previewEl = document.getElementById('linkedin-preview-text');
+      
+      if (hook) {
+        const fullText = `${hook.line_1}\n${hook.line_2}\n\n${body}`;
+        // Show only first 2 lines + "... more"
+        previewEl.innerHTML = `<strong>${hook.line_1}</strong>\n<strong>${hook.line_2}</strong>\n<span class="linkedin-preview-seemore">... more</span>`;
+      } else {
+        previewEl.textContent = body.substring(0, 100) + '...';
+      }
+    }
+
+    function closeEditor() {
+      document.getElementById('post-editor-overlay').classList.remove('visible');
+      currentPostId = null;
+      currentHooks = [];
+      selectedHookId = null;
+      currentSources = [];
+      currentSuggestedLinks = [];
+      currentDataQuality = null;
+      currentResearchSummary = '';
+    }
+
+    async function saveDraft() {
+      if (!currentPostId || !selectedHookId) return;
+      try {
+        await api(`/posts/${currentPostId}/select-hook`, 'PUT', { hook_id: selectedHookId });
+        const body = document.getElementById('post-body-editor').value;
+        // Could also update body text here if edited
+        showToast('Draft saved');
+        closeEditor();
+      } catch (e) {}
+    }
+
+    async function approvePost() {
+      if (!currentPostId) return;
+      try {
+        if (selectedHookId) {
+          await api(`/posts/${currentPostId}/select-hook`, 'PUT', { hook_id: selectedHookId });
+        }
+        await api(`/posts/${currentPostId}/approve`, 'PUT');
+        showToast('Post approved ✓');
+        closeEditor();
+      } catch (e) {}
+    }
+
+    async function publishPost() {
+      if (!currentPostId) return;
+      if (!confirm('Publish this post to LinkedIn now?')) return;
+      try {
+        if (selectedHookId) {
+          await api(`/posts/${currentPostId}/select-hook`, 'PUT', { hook_id: selectedHookId });
+        }
+        await api(`/posts/${currentPostId}/approve`, 'PUT');
+        const result = await api(`/posts/${currentPostId}/publish`, 'POST');
+        showToast('Published to LinkedIn! 🎉');
+        closeEditor();
+      } catch (e) {}
+    }
+
+    // ============================================
+    // POSTS LIST
+    // ============================================
+    async function loadPosts() {
+      try {
+        const posts = await api('/posts');
+        allPosts = Array.isArray(posts) ? posts : (posts.results || []);
+        renderPosts(allPosts);
+      } catch (e) {
+        document.getElementById('posts-list').innerHTML = `<div class="empty-state"><p>Could not load posts.</p></div>`;
+      }
+    }
+
+    function renderPosts(posts) {
+      const list = document.getElementById('posts-list');
+      if (!posts.length) {
+        list.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📝</div><p>No posts generated yet.</p></div>`;
+        return;
+      }
+      list.innerHTML = posts.map(p => `
+        <div class="dm-card">
+          <div class="dm-prospect-info">
+            <div class="dm-prospect-name">${p.hook_line_1 || 'No hook selected'}</div>
+            <div class="dm-prospect-title">${p.hook_line_2 || ''}</div>
+            <div class="dm-draft-preview">${p.body_text ? p.body_text.substring(0, 150) + '...' : ''}</div>
+            <div class="topic-meta" style="margin-top: 8px;">
+              <span>${p.platform}</span>
+              <span>${new Date(p.created_at).toLocaleDateString()}</span>
+              ${p.impressions ? `<span>${formatNumber(p.impressions)} impressions</span>` : ''}
+            </div>
+          </div>
+          <div class="dm-actions">
+            <span class="dm-status-badge ${p.status === 'draft' ? 'dm-status-drafted' : p.status === 'approved' ? 'dm-status-approved' : 'dm-status-sent'}">${p.status}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterPosts(status) {
+      document.querySelectorAll('.post-filter').forEach(b => b.classList.remove('active'));
+      document.querySelector(`.post-filter[data-status="${status}"]`).classList.add('active');
+      if (status === 'all') renderPosts(allPosts);
+      else renderPosts(allPosts.filter(p => p.status === status));
+    }
+
+    // ============================================
+    // CALENDAR
+    // ============================================
+    function renderCalendar() {
+      const grid = document.getElementById('calendar-grid');
+      const year = currentMonth.getFullYear();
+      const month = currentMonth.getMonth();
+      
+      document.getElementById('calendar-month-label').textContent = 
+        new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+      
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const today = new Date();
+      
+      let html = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => 
+        `<div class="calendar-header-cell">${d}</div>`
+      ).join('');
+      
+      // Empty cells before first day
+      for (let i = 0; i < firstDay; i++) {
+        html += `<div class="calendar-cell empty"></div>`;
+      }
+      
+      // Days
+      for (let d = 1; d <= daysInMonth; d++) {
+        const isToday = today.getFullYear() === year && today.getMonth() === month && today.getDate() === d;
+        html += `<div class="calendar-cell ${isToday ? 'today' : ''}" data-date="${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}">
+          <div class="calendar-date">${d}</div>
+        </div>`;
+      }
+      
+      grid.innerHTML = html;
+      
+      // Load calendar entries
+      loadCalendarEntries(year, month + 1);
+    }
+
+    async function loadCalendarEntries(year, month) {
+      try {
+        const entries = await api(`/calendar?month=${year}-${String(month).padStart(2, '0')}`);
+        const items = Array.isArray(entries) ? entries : (entries.results || []);
+        items.forEach(entry => {
+          const cell = document.querySelector(`.calendar-cell[data-date="${entry.scheduled_date}"]`);
+          if (cell) {
+            const tag = document.createElement('span');
+            tag.className = `calendar-post-tag tag-${entry.status || 'draft'}`;
+            tag.textContent = entry.topic_title || entry.status || 'Post';
+            cell.appendChild(tag);
+          }
+        });
+      } catch (e) {
+        console.log('Calendar entries not available yet');
+      }
+    }
+
+    function changeMonth(delta) {
+      currentMonth.setMonth(currentMonth.getMonth() + delta);
+      renderCalendar();
+    }
+
+    // ============================================
+    // QUICK GENERATE
+    // ============================================
+    function openQuickGenerate() {
+      switchTab('topics');
+      showToast('Select a topic and click ⚡ Generate Post');
+    }
+
+    // ============================================
+    // BRAND SELECTOR
+    // ============================================
+    document.getElementById('brandSelector').addEventListener('change', (e) => {
+      currentBrand = e.target.value;
+      loadDashboard();
+    });
+
+    async function loadBrands() {
+      const brands = await apiBrands();
+      const selector = document.getElementById('brandSelector');
+      if (brands.length) {
+        selector.innerHTML = brands.map(b => 
+          `<option value="${b.id}">${b.name}</option>`
+        ).join('');
+        currentBrand = brands[0].id;
+      }
+    }
+
+    // ============================================
+    // INIT
+    // ============================================
+    async function init() {
+      await loadBrands();
+      loadDashboard();
+      renderCalendar();
+    }
+
+    init();
+  </script>
+</body>
+</html>

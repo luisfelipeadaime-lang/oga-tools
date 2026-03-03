@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClearSky — Sales Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080e1a;
+  --surface: #0d1525;
+  --card: #121d2e;
+  --card-alt: #162236;
+  --border: #1c2d42;
+  --border-hover: #2a4060;
+  --gold: #d4af37;
+  --gold-soft: #c9a82e;
+  --gold-bg: rgba(212,175,55,0.06);
+  --gold-bg2: rgba(212,175,55,0.12);
+  --green: #22c55e;
+  --green-bg: rgba(34,197,94,0.08);
+  --green-text: #4ade80;
+  --red: #ef4444;
+  --red-bg: rgba(239,68,68,0.08);
+  --red-text: #f87171;
+  --amber: #f59e0b;
+  --amber-bg: rgba(245,158,11,0.08);
+  --amber-text: #fbbf24;
+  --blue: #3b82f6;
+  --blue-bg: rgba(59,130,246,0.08);
+  --teal: #14b8a6;
+  --teal-bg: rgba(20,184,166,0.08);
+  --purple: #8b5cf6;
+  --text: #e8eaed;
+  --text-secondary: #9ca3af;
+  --text-muted: #64748b;
+  --font: 'DM Sans', -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+::selection { background: var(--gold); color: var(--bg); }
+
+/* TOP BAR */
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.topbar-left { display: flex; align-items: center; gap: 14px; }
+.logo { font-size: 11px; font-weight: 700; letter-spacing: 3.5px; color: var(--gold); text-transform: uppercase; }
+.logo-sep { width: 1px; height: 18px; background: var(--border); }
+.topbar-title { font-size: 14px; font-weight: 600; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.range-pill {
+  display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.range-pill button {
+  background: none; border: none; color: var(--text-muted); font-family: var(--mono); font-size: 11px; padding: 6px 12px; cursor: pointer; transition: all 0.15s;
+}
+.range-pill button.active { background: var(--gold-bg2); color: var(--gold); font-weight: 600; }
+.range-pill button:hover:not(.active) { color: var(--text-secondary); }
+.refresh-btn {
+  background: var(--card); border: 1px solid var(--border); color: var(--text-secondary); font-size: 12px; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-family: var(--font); transition: all 0.15s;
+}
+.refresh-btn:hover { border-color: var(--gold); color: var(--gold); }
+.data-source { font-size: 10px; color: var(--text-muted); font-family: var(--mono); }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; animation: blink 2s infinite; margin-right: 4px; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* LAYOUT */
+.page { max-width: 1440px; margin: 0 auto; padding: 0 28px 40px; }
+
+/* LOADING */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: var(--text-muted);
+}
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* SCOREBOARD */
+.scoreboard {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 20px 0;
+}
+.score-cell {
+  background: var(--card);
+  padding: 16px;
+  text-align: center;
+}
+.score-num {
+  font-family: var(--mono); font-size: 28px; font-weight: 700; line-height: 1; margin-bottom: 5px;
+}
+.score-label { font-size: 10px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+.score-sub { font-size: 9px; color: var(--text-muted); margin-top: 3px; }
+.score-cell.highlight { background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(239,68,68,0.02)); }
+.score-cell.highlight .score-num { color: var(--red-text); }
+.score-cell.good .score-num { color: var(--green-text); }
+.score-cell.warn .score-num { color: var(--amber-text); }
+.score-cell.gold .score-num { color: var(--gold); }
+.score-cell.neutral .score-num { color: var(--text); }
+.score-cell.blue .score-num { color: var(--blue); }
+
+/* GRIDS */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+@media (max-width: 1000px) {
+  .grid-2 { grid-template-columns: 1fr; }
+  .scoreboard { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* PANELS */
+.panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.panel-head { padding: 14px 18px 0; display: flex; align-items: center; justify-content: space-between; }
+.panel-title { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.panel-badge { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 6px; background: var(--gold-bg2); color: var(--gold); }
+.panel-body { padding: 14px 18px 18px; }
+.panel-note { font-size: 10px; color: var(--text-muted); font-style: italic; padding: 0 18px 12px; }
+
+/* TABLE */
+.tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+.tbl th { text-align: left; padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; border-bottom: 1px solid var(--border); }
+.tbl th.r { text-align: right; }
+.tbl td { padding: 7px 10px; border-bottom: 1px solid rgba(28,45,66,0.5); color: var(--text-secondary); }
+.tbl td.name { color: var(--text); font-weight: 500; }
+.tbl td.num { font-family: var(--mono); font-weight: 500; text-align: right; }
+.tbl tr:hover td { background: rgba(255,255,255,0.02); }
+.tbl tr:last-child td { border-bottom: none; }
+
+/* PILLS */
+.pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; gap: 4px; }
+.pill.g { background: var(--green-bg); color: var(--green-text); }
+.pill.y { background: var(--amber-bg); color: var(--amber-text); }
+.pill.r { background: var(--red-bg); color: var(--red-text); }
+.pill.b { background: var(--blue-bg); color: var(--blue); }
+.pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; }
+.pill.g::before { background: var(--green); }
+.pill.y::before { background: var(--amber); }
+.pill.r::before { background: var(--red); }
+.pill.b::before { background: var(--blue); }
+
+/* FOOTER */
+.page-footer { border-top: 1px solid var(--border); padding: 14px 0; display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">ClearSky</div>
+    <div class="logo-sep"></div>
+    <div class="topbar-title">Sales Command Center</div>
+  </div>
+  <div class="topbar-right">
+    <div class="range-pill">
+      <button onclick="setRange(7)">7d</button>
+      <button onclick="setRange(14)" class="active" id="btn-14">14d</button>
+      <button onclick="setRange(30)">30d</button>
+      <button onclick="setRange(90)">90d</button>
+    </div>
+    <button class="refresh-btn" onclick="loadDashboard()">↻ Refresh</button>
+    <div class="data-source" id="dataSource"><span class="live-dot"></span> HubSpot Live</div>
+  </div>
+</div>
+
+<div class="page" id="mainContent">
+  <div class="loading-state">
+    <div class="spinner"></div>
+    <div>Loading HubSpot activity data...</div>
+  </div>
+</div>
+
+<script>
+const API_BASE = 'https://api-tools.oga.earth';
+let currentRange = 14;
+
+function setRange(days) {
+  currentRange = days;
+  document.querySelectorAll('.range-pill button').forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  loadDashboard();
+}
+
+async function loadDashboard() {
+  const to = new Date().toISOString().slice(0, 10);
+  const fromDate = new Date();
+  fromDate.setDate(fromDate.getDate() - currentRange);
+  const from = fromDate.toISOString().slice(0, 10);
+
+  try {
+    const res = await fetch(`${API_BASE}/api/revenue/activity-stats?from=${from}&to=${to}`);
+    if (!res.ok) throw new Error(`API returned ${res.status}`);
+    const data = await res.json();
+    renderDashboard(data);
+  } catch (e) {
+    document.getElementById('mainContent').innerHTML = `
+      <div style="max-width:600px;margin:120px auto;text-align:center;color:var(--text-muted)">
+        <div style="font-size:48px;margin-bottom:24px">⚠️</div>
+        <div style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:12px">Data Unavailable</div>
+        <div style="line-height:1.6">${e.message}<br>Check API connection at ${API_BASE}/api/revenue/activity-stats</div>
+        <button class="refresh-btn" style="margin-top:24px" onclick="loadDashboard()">Retry Connection</button>
+      </div>
+    `;
+    document.getElementById('dataSource').innerHTML = '<span style="color:var(--red)">● Error</span>';
+  }
+}
+
+function renderDashboard(data) {
+  const s = data.summary;
+  const main = document.getElementById('mainContent');
+
+  main.innerHTML = `
+    <!-- SCOREBOARD -->
+    <div class="scoreboard">
+      <div class="score-cell highlight">
+        <div class="score-num">$0</div>
+        <div class="score-label">Revenue Closed</div>
+        <div class="score-sub">Target: $100K/mo</div>
+      </div>
+      <div class="score-cell gold">
+        <div class="score-num">$0</div>
+        <div class="score-label">Pipeline Value</div>
+        <div class="score-sub">0 active deals</div>
+      </div>
+      <div class="score-cell warn">
+        <div class="score-num">${s.companies_with_meetings || 0}</div>
+        <div class="score-label">Cos w/ Meetings</div>
+        <div class="score-sub">out of ${s.external_companies} contacted</div>
+      </div>
+      <div class="score-cell good">
+        <div class="score-num">${s.total_meetings}</div>
+        <div class="score-label">Ext. Meetings</div>
+        <div class="score-sub">external counterparties only</div>
+      </div>
+      <div class="score-cell blue">
+        <div class="score-num">${s.total_calls}</div>
+        <div class="score-label">Calls Made</div>
+        <div class="score-sub">vs ${s.total_emails.toLocaleString()} emails</div>
+      </div>
+      <div class="score-cell neutral">
+        <div class="score-num">${s.external_contacts}</div>
+        <div class="score-label">Ext. Contacts</div>
+        <div class="score-sub">unique individuals</div>
+      </div>
+    </div>
+
+    <!-- ROW 1: TOP COMPANIES + TEAM ACTIVITY -->
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">🏢 Most Active Companies <span class="panel-badge">${s.external_companies} external</span></div>
+        </div>
+        <div class="panel-body">
+          <table class="tbl">
+            <thead><tr><th>Company</th><th class="r">Activities</th><th class="r">Meetings</th><th>Type</th></tr></thead>
+            <tbody id="companiesBody"></tbody>
+          </table>
+        </div>
+        <div class="panel-note">Internal entities excluded. Source: HubSpot engagement counts by company.</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">👥 Team Activity Breakdown</div>
+        </div>
+        <div class="panel-body">
+          <table class="tbl">
+            <thead><tr><th>Team Member</th><th class="r">Activities</th></tr></thead>
+            <tbody id="teamBody"></tbody>
+          </table>
+        </div>
+        <div class="panel-note">Source: HubSpot CRM activity log, all engagement types.</div>
+      </div>
+    </div>
+
+    <!-- ROW 2: T1 ACCOUNT STATUS -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">🎯 T1 Account Coverage <span class="panel-badge">${data.t1_status.length} tracked</span></div>
+      </div>
+      <div class="panel-body">
+        <table class="tbl">
+          <thead><tr><th>Account</th><th>Status</th><th class="r">Activities</th></tr></thead>
+          <tbody id="t1Body"></tbody>
+        </table>
+      </div>
+      <div class="panel-note">T1 buyers: target accounts for CDR/CORSIA credits. Green = meeting held. Yellow = emails only. Red = no activity.</div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="page-footer">
+      <span>CONFIDENTIAL — INTERNAL USE ONLY</span>
+      <span>Data: HubSpot CRM API • Period: ${data.period.from} to ${data.period.to} • Filtered: ${data.raw_count_before_filter - data.clean_count_after_filter} internal activities removed • Processing: ${data.processing_time_ms}ms</span>
+    </div>
+  `;
+
+  // Render companies table
+  const companiesBody = document.getElementById('companiesBody');
+  companiesBody.innerHTML = data.top_companies.slice(0, 15).map(c => `
+    <tr>
+      <td class="name">${c.name}</td>
+      <td class="num">${c.activities}</td>
+      <td class="num">${c.meetings}</td>
+      <td style="font-size:10px${c.type === 'T1 Buyer' ? ';color:var(--green-text)' : ''}">${c.type}</td>
+    </tr>
+  `).join('');
+
+  // Render team table
+  const teamBody = document.getElementById('teamBody');
+  teamBody.innerHTML = data.team.map(t => `
+    <tr>
+      <td class="name">${t.name}</td>
+      <td class="num">${t.activities}</td>
+    </tr>
+  `).join('');
+
+  // Render T1 table
+  const t1Body = document.getElementById('t1Body');
+  t1Body.innerHTML = data.t1_status.map(t => `
+    <tr>
+      <td class="name">${t.account}</td>
+      <td><span class="pill ${t.status === 'green' ? 'g' : (t.status === 'yellow' ? 'y' : 'r')}">${t.engagement}</span></td>
+      <td class="num">${t.activities}</td>
+    </tr>
+  `).join('');
+
+  // Update data source badge
+  document.getElementById('dataSource').innerHTML = '<span class="live-dot"></span> HubSpot Live';
+}
+
+// Auto-load on page load
+loadDashboard();
+</script>
+
+</body>
+</html>

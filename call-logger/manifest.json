@@ -1,0 +1,21 @@
+{
+  "name": "ClearSky Call Logger",
+  "short_name": "Call Logger",
+  "description": "Log calls and meetings to HubSpot CRM",
+  "start_url": "/call-logger/",
+  "display": "standalone",
+  "background_color": "#0D1B3E",
+  "theme_color": "#0D1B3E",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

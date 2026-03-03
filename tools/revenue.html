@@ -1,0 +1,2491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClearSky Revenue Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0A1628;
+  --navy-light: #111d30;
+  --surface: #111827;
+  --card: #1a2332;
+  --card-hover: #1f2a3c;
+  --border: #1e2d3d;
+  --border-light: #2a3a4e;
+  --gold: #C8A951;
+  --gold-dim: #a08a42;
+  --gold-bg: rgba(200,169,81,0.08);
+  --gold-bg2: rgba(200,169,81,0.15);
+  --green: #34d399;
+  --green-bg: rgba(52,211,153,0.1);
+  --red: #f87171;
+  --red-bg: rgba(248,113,113,0.1);
+  --yellow: #fbbf24;
+  --yellow-bg: rgba(251,191,36,0.1);
+  --blue: #60a5fa;
+  --blue-bg: rgba(96,165,250,0.1);
+  --purple: #a78bfa;
+  --text: #e5e7eb;
+  --text-dim: #9ca3af;
+  --text-muted: #6b7280;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--navy);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* HEADER */
+.header {
+  background: var(--navy);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-logo { color: var(--gold); font-size: 13px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
+.brand-divider { width: 1px; height: 20px; background: var(--border-light); }
+.brand-title { font-size: 15px; font-weight: 500; color: var(--text); }
+.header-actions { display: flex; align-items: center; gap: 10px; }
+.sync-status { font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
+.sync-status.syncing { color: var(--gold); }
+.header-date { font-family: var(--mono); font-size: 11px; color: var(--text-dim); }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); display: inline-block; animation: pulse 2s infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* TEAM SELECT */
+.team-select {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  padding: 6px 10px;
+  cursor: pointer;
+  outline: none;
+}
+.team-select:focus { border-color: var(--gold); }
+
+/* TABS */
+.tabs { background: var(--navy); border-bottom: 1px solid var(--border); position: sticky; top: 57px; z-index: 99; }
+.tabs-inner { max-width: 1400px; margin: 0 auto; display: flex; padding: 0 24px; gap: 0; }
+.tab {
+  padding: 12px 20px; font-size: 13px; font-weight: 500; color: var(--text-muted);
+  cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; user-select: none;
+}
+.tab:hover { color: var(--text-dim); }
+.tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+.tab-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  font-size: 10px; font-weight: 600; border-radius: 9px; margin-left: 6px; font-family: var(--mono);
+}
+.tab-badge.red { background: var(--red-bg); color: var(--red); }
+.tab-badge.gold { background: var(--gold-bg); color: var(--gold); }
+.tab-badge.blue { background: var(--blue-bg); color: var(--blue); }
+
+/* CONTENT */
+.content { max-width: 1400px; margin: 0 auto; padding: 24px; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* SECTION HEADERS */
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.section-title { font-size: 18px; font-weight: 600; color: var(--text); }
+.section-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+/* BUTTONS */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px; font-size: 12px; font-weight: 500;
+  border-radius: 6px; border: none; cursor: pointer; transition: all 0.15s; font-family: 'Inter', sans-serif;
+}
+.btn-gold { background: var(--gold); color: var(--navy); }
+.btn-gold:hover { background: #d4b55e; }
+.btn-outline { background: transparent; color: var(--text-dim); border: 1px solid var(--border-light); }
+.btn-outline:hover { border-color: var(--text-muted); color: var(--text); }
+.btn-sm { padding: 5px 10px; font-size: 11px; }
+.btn-xs { padding: 3px 8px; font-size: 10px; }
+.btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
+.btn-danger:hover { background: rgba(248,113,113,0.2); }
+.btn-green { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
+.btn-green:hover { background: rgba(52,211,153,0.2); }
+.btn-blue { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(96,165,250,0.2); }
+.btn-blue:hover { background: rgba(96,165,250,0.2); }
+.btn-purple { background: rgba(167,139,250,0.1); color: var(--purple); border: 1px solid rgba(167,139,250,0.2); }
+.btn-purple:hover { background: rgba(167,139,250,0.2); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* STATS BAR */
+.stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+.stat-label { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.stat-value { font-family: var(--mono); font-size: 24px; font-weight: 600; color: var(--text); }
+.stat-value.gold { color: var(--gold); }
+.stat-value.green { color: var(--green); }
+.stat-value.red { color: var(--red); }
+.stat-delta { font-size: 11px; margin-top: 4px; font-family: var(--mono); }
+.stat-delta.up { color: var(--green); }
+.stat-delta.down { color: var(--red); }
+
+/* KPI BAR (Brian view) */
+.kpi-bar {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px; margin-bottom: 20px; padding: 16px;
+  background: linear-gradient(135deg, rgba(52,211,153,0.05), rgba(200,169,81,0.05));
+  border: 1px solid var(--border); border-radius: 10px;
+}
+.kpi-card { text-align: center; }
+.kpi-card .kpi-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px; }
+.kpi-card .kpi-value { font-family: var(--mono); font-size: 20px; font-weight: 700; }
+.kpi-card .kpi-target { font-size: 10px; color: var(--text-muted); font-family: var(--mono); }
+.kpi-bar-progress { height: 3px; background: var(--border); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+.kpi-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+
+/* ACTION CARDS */
+.action-list { display: flex; flex-direction: column; gap: 10px; }
+.action-card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px 18px; display: grid; grid-template-columns: 36px 1fr auto;
+  gap: 14px; align-items: start; transition: all 0.3s; cursor: pointer; position: relative;
+}
+.action-card:hover { background: var(--card-hover); border-color: var(--border-light); }
+.action-card.removing { opacity: 0; transform: translateX(100px); max-height: 0; padding: 0; margin: 0; overflow: hidden; transition: all 0.4s ease; }
+.action-card.extracting { border-color: var(--gold); background: rgba(200,169,81,0.03); }
+.action-card.extracting::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+.action-rank {
+  width: 36px; height: 36px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 14px; font-weight: 600;
+  background: var(--gold-bg); color: var(--gold);
+}
+.action-rank.top3 { background: var(--gold-bg2); }
+
+.action-body { min-width: 0; }
+.action-who { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.action-who span { font-weight: 400; color: var(--text-dim); font-size: 13px; }
+.action-trigger { font-size: 12px; color: var(--text-dim); margin-bottom: 6px; line-height: 1.4; }
+.action-intel-summary {
+  font-size: 12px; color: var(--text); line-height: 1.5; margin-bottom: 6px;
+  padding: 8px 10px; background: rgba(200,169,81,0.04);
+  border-left: 2px solid var(--gold-dim); border-radius: 0 4px 4px 0;
+}
+.action-suggested {
+  font-size: 11px; color: var(--gold); font-weight: 600; margin-bottom: 6px;
+  padding: 4px 8px; background: var(--gold-bg); border-radius: 4px; display: inline-block;
+}
+.action-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.action-tag { font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 500; }
+.action-tag.profiled { background: var(--green-bg); color: var(--green); }
+.action-tag.unprofiled { background: rgba(107,114,128,0.15); color: var(--text-muted); }
+.action-tag.ai-extracted { background: rgba(167,139,250,0.12); color: var(--purple); }
+.project-badge { font-size: 10px; padding: 2px 7px; border-radius: 3px; font-weight: 600; background: var(--gold-bg2); color: var(--gold); cursor: pointer; }
+.project-badge:hover { background: rgba(200,169,81,0.25); }
+.confidence-badge { font-size: 9px; padding: 1px 5px; border-radius: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+.confidence-high { background: var(--green-bg); color: var(--green); }
+.confidence-medium { background: var(--yellow-bg); color: var(--yellow); }
+.confidence-low { background: rgba(107,114,128,0.15); color: var(--text-muted); }
+
+/* OWNER BADGES */
+.owner-badge {
+  font-size: 9px; padding: 2px 6px; border-radius: 3px;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; position: relative;
+}
+.owner-badge.owner-ana { background: rgba(167,139,250,0.15); color: #a78bfa; }
+.owner-badge.owner-carolina { background: rgba(96,165,250,0.15); color: #60a5fa; }
+.owner-badge.owner-luis { background: rgba(200,169,81,0.15); color: #C8A951; }
+.owner-badge.owner-brian { background: rgba(52,211,153,0.15); color: #34d399; }
+.owner-badge.owner-other { background: rgba(107,114,128,0.15); color: #9ca3af; }
+
+/* OWNER REASSIGN DROPDOWN */
+.owner-dropdown {
+  position: absolute; top: 100%; left: 0; z-index: 50;
+  background: var(--navy-light); border: 1px solid var(--border-light);
+  border-radius: 6px; padding: 4px 0; min-width: 140px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4); display: none;
+}
+.owner-dropdown.open { display: block; }
+.owner-dropdown-item {
+  padding: 6px 12px; font-size: 11px; color: var(--text-dim);
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+}
+.owner-dropdown-item:hover { background: var(--card-hover); color: var(--text); }
+.owner-dropdown-item .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+/* ENGAGEMENT INDICATORS */
+.engagement-bar { display: flex; gap: 3px; align-items: center; font-size: 10px; font-family: var(--mono); color: var(--text-muted); }
+.engagement-bar .eng-pip { width: 4px; height: 12px; border-radius: 2px; background: var(--border-light); }
+.engagement-bar .eng-pip.active { background: var(--gold); }
+.engagement-bar .eng-pip.hot { background: var(--green); }
+
+/* GROUP SECTION HEADERS */
+.action-group-header { padding: 12px 16px 8px; display: flex; align-items: center; gap: 10px; }
+.action-group-header .group-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; }
+.action-group-header .group-count { font-size: 10px; font-family: var(--mono); color: var(--text-muted); }
+.action-group-header .group-line { flex: 1; height: 1px; background: var(--border); }
+.action-group-header.group-active .group-label { color: var(--green); }
+.action-group-header.group-reengage .group-label { color: var(--gold); }
+.action-group-header.group-pipeline .group-label { color: var(--blue); }
+
+/* ENGAGEMENT CARD BORDERS */
+.action-card.eng-hot { border-left: 3px solid var(--green); }
+.action-card.eng-warm { border-left: 3px solid var(--gold); }
+.action-card.eng-cool { border-left: 3px solid var(--blue); }
+.action-card.eng-cold { border-left: 3px solid var(--text-muted); }
+
+/* ACTION BUTTONS — new hierarchy */
+.action-buttons { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
+.action-buttons .btn-primary-action {
+  padding: 6px 14px; font-size: 11px; font-weight: 600; border-radius: 5px;
+  border: none; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s;
+}
+.action-buttons .btn-email { background: var(--gold); color: var(--navy); }
+.action-buttons .btn-email:hover { background: #d4b55e; }
+.action-buttons .btn-analyze { background: var(--purple); color: #fff; }
+.action-buttons .btn-analyze:hover { background: #b9a0fb; }
+.action-buttons .btn-create-deal {
+  padding: 6px 10px; font-size: 11px; font-weight: 500; border-radius: 5px;
+  border: 1px solid var(--border-light); background: transparent; color: var(--text-dim);
+  cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s;
+}
+.action-buttons .btn-create-deal:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+/* THREE-DOT MENU */
+.three-dot-wrap { position: relative; }
+.three-dot-btn {
+  width: 28px; height: 28px; border-radius: 5px; border: 1px solid var(--border-light);
+  background: transparent; color: var(--text-muted); font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+  font-family: 'Inter', sans-serif; letter-spacing: 2px; line-height: 1;
+}
+.three-dot-btn:hover { border-color: var(--text-muted); color: var(--text); background: var(--card-hover); }
+.three-dot-menu {
+  position: absolute; top: 100%; right: 0; z-index: 50;
+  background: var(--navy-light); border: 1px solid var(--border-light);
+  border-radius: 6px; padding: 4px 0; min-width: 160px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4); display: none; margin-top: 4px;
+}
+.three-dot-menu.open { display: block; }
+.three-dot-menu-item {
+  padding: 7px 12px; font-size: 11px; color: var(--text-dim);
+  cursor: pointer; display: flex; align-items: center; gap: 8px; white-space: nowrap;
+}
+.three-dot-menu-item:hover { background: var(--card-hover); color: var(--text); }
+.three-dot-menu-item.danger { color: var(--red); }
+.three-dot-menu-item.danger:hover { background: var(--red-bg); }
+
+/* KANBAN BOARD */
+.kanban { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; min-height: 400px; }
+.kanban-column { background: var(--surface); border-radius: 8px; padding: 12px; min-height: 300px; }
+.kanban-header {
+  font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--text-muted); padding-bottom: 10px; margin-bottom: 10px;
+  border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;
+}
+.kanban-count { font-family: var(--mono); font-size: 11px; background: var(--card); padding: 2px 6px; border-radius: 4px; }
+.kanban-cards { display: flex; flex-direction: column; gap: 8px; }
+.kanban-card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 12px; cursor: pointer; transition: all 0.15s; }
+.kanban-card:hover { background: var(--card-hover); border-color: var(--border-light); }
+.kanban-card.stale { border-color: var(--red); border-width: 1px; }
+.kanban-card-company { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.kanban-card-desc { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.kanban-card-meta { display: flex; align-items: center; justify-content: space-between; font-size: 11px; }
+.kanban-card-value { font-family: var(--mono); font-weight: 600; color: var(--gold); }
+.kanban-card-owner { padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+.owner-ana { background: rgba(167,139,250,0.15); color: var(--purple); }
+.owner-carolina { background: rgba(96,165,250,0.15); color: var(--blue); }
+.owner-luis { background: var(--gold-bg); color: var(--gold); }
+.owner-brian { background: var(--green-bg); color: var(--green); }
+.owner-unassigned { background: rgba(107,114,128,0.15); color: var(--text-muted); }
+
+/* TABLE */
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table thead th {
+  text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);
+  border-bottom: 1px solid var(--border); white-space: nowrap; position: sticky; top: 0; background: var(--navy);
+}
+.data-table tbody tr { border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; }
+.data-table tbody tr:hover { background: var(--card-hover); }
+.data-table td { padding: 10px 12px; vertical-align: middle; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* SORTABLE TABLE HEADERS */
+.sort-header { cursor: pointer; user-select: none; }
+.sort-header:hover { color: var(--text); }
+.sort-indicator { font-size: 9px; margin-left: 3px; opacity: 0.5; }
+.sort-header.sort-asc .sort-indicator, .sort-header.sort-desc .sort-indicator { opacity: 1; color: var(--gold); }
+
+/* BADGES */
+.badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+.badge-available { background: var(--green-bg); color: var(--green); }
+.badge-forward { background: var(--yellow-bg); color: var(--yellow); }
+.badge-pipeline { background: var(--blue-bg); color: var(--blue); }
+.badge-sold_out { background: rgba(107,114,128,0.15); color: var(--text-muted); }
+.badge-hot { background: var(--red-bg); color: var(--red); }
+.badge-warm { background: var(--yellow-bg); color: var(--yellow); }
+.badge-cold { background: var(--blue-bg); color: var(--blue); }
+.badge-dormant { background: rgba(107,114,128,0.15); color: var(--text-muted); }
+.badge-new { background: var(--green-bg); color: var(--green); }
+.badge-T1 { background: var(--gold-bg2); color: var(--gold); font-weight: 700; }
+.badge-T2 { background: var(--blue-bg); color: var(--blue); }
+.badge-T3 { background: rgba(107,114,128,0.15); color: var(--text-muted); }
+
+/* FILTER PILLS */
+.filters { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+.filter-pill {
+  padding: 5px 12px; font-size: 12px; font-weight: 500; border-radius: 20px;
+  border: 1px solid var(--border-light); background: transparent; color: var(--text-dim);
+  cursor: pointer; transition: all 0.15s; font-family: 'Inter', sans-serif;
+}
+.filter-pill:hover { border-color: var(--text-muted); color: var(--text); }
+.filter-pill.active { background: var(--gold-bg2); border-color: var(--gold-dim); color: var(--gold); }
+
+/* SEARCH BAR */
+.search-bar {
+  width: 100%; padding: 8px 12px 8px 34px; font-size: 13px;
+  font-family: 'Inter', sans-serif; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 6px; color: var(--text);
+  outline: none; transition: border-color 0.15s;
+}
+.search-bar:focus { border-color: var(--gold); }
+.search-wrap { position: relative; margin-bottom: 12px; }
+.search-wrap::before {
+  content: '\2315'; position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+  font-size: 15px; color: var(--text-muted); pointer-events: none;
+}
+
+/* FILTER ROW (action list + buyer intel) */
+.filter-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+.filter-row .filter-group-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.filter-divider { width: 1px; height: 20px; background: var(--border-light); margin: 0 4px; }
+
+/* ONBOARDING BANNER */
+.onboarding-banner {
+  background: linear-gradient(135deg, rgba(200,169,81,0.08), rgba(96,165,250,0.06));
+  border: 1px solid var(--gold-dim); border-radius: 8px;
+  padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: flex-start; gap: 12px;
+}
+.onboarding-banner .ob-icon { font-size: 20px; flex-shrink: 0; }
+.onboarding-banner .ob-text { font-size: 12px; color: var(--text-dim); line-height: 1.5; flex: 1; }
+.onboarding-banner .ob-text strong { color: var(--text); }
+.onboarding-banner .ob-close {
+  background: none; border: none; color: var(--text-muted); font-size: 16px;
+  cursor: pointer; padding: 0 4px; flex-shrink: 0;
+}
+.onboarding-banner .ob-close:hover { color: var(--text); }
+
+/* AUTO-SYNC WARNING */
+.sync-warning {
+  background: var(--yellow-bg); border: 1px solid rgba(251,191,36,0.3); border-radius: 6px;
+  padding: 8px 14px; font-size: 12px; color: var(--yellow); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+.sync-warning button { font-size: 11px; }
+
+/* EXPANDABLE ROWS */
+.expand-row { display: none; }
+.expand-row.open { display: table-row; }
+.expand-row td { padding: 0; }
+.expand-content {
+  padding: 16px 20px; background: var(--surface); border-bottom: 2px solid var(--border);
+}
+.expand-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.expand-field-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 4px; }
+.expand-field-value { font-size: 12px; color: var(--text); line-height: 1.4; }
+
+/* BULK ACTION BAR */
+.bulk-bar {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--navy-light); border: 1px solid var(--gold-dim);
+  border-radius: 10px; padding: 10px 20px; display: none; align-items: center; gap: 12px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5); z-index: 150;
+}
+.bulk-bar.visible { display: flex; }
+.bulk-bar .bulk-count { font-size: 12px; font-weight: 600; color: var(--gold); font-family: var(--mono); }
+.bulk-bar .bulk-actions { display: flex; gap: 6px; }
+
+/* CSV EXPORT */
+.btn-csv { background: var(--surface); color: var(--text-dim); border: 1px solid var(--border-light); }
+.btn-csv:hover { border-color: var(--text-muted); color: var(--text); }
+
+/* BUYER SECTION HEADER */
+.buyer-section-header {
+  font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--text-muted); margin: 24px 0 12px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;
+}
+.buyer-section-header .count { font-family: var(--mono); background: var(--card); padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+
+/* COLUMN FILTER DROPDOWN */
+.col-filter-wrap { position: relative; display: inline-block; }
+.col-filter-btn {
+  background: none; border: none; color: var(--text-muted); cursor: pointer;
+  font-size: 10px; padding: 0 3px; vertical-align: middle;
+}
+.col-filter-btn:hover, .col-filter-btn.active { color: var(--gold); }
+.col-filter-drop {
+  position: absolute; top: 100%; left: 0; z-index: 60;
+  background: var(--navy-light); border: 1px solid var(--border-light);
+  border-radius: 6px; padding: 8px; min-width: 160px; max-height: 200px; overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4); display: none;
+}
+.col-filter-drop.open { display: block; }
+.col-filter-drop label { display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: 11px; color: var(--text-dim); cursor: pointer; }
+.col-filter-drop label:hover { color: var(--text); }
+.col-filter-drop input[type=checkbox] { accent-color: var(--gold); }
+
+/* ACTIVE FILTER PILLS */
+.active-filters { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+.active-filter-pill {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px;
+  font-size: 10px; border-radius: 12px; background: var(--gold-bg2); color: var(--gold);
+  font-weight: 500;
+}
+.active-filter-pill button {
+  background: none; border: none; color: var(--gold-dim); cursor: pointer;
+  font-size: 12px; padding: 0; line-height: 1;
+}
+.active-filter-pill button:hover { color: var(--gold); }
+
+/* BATCH PROGRESS */
+.batch-progress { padding: 16px; background: var(--card); border: 1px solid var(--gold-dim); border-radius: 8px; margin-bottom: 16px; }
+.batch-progress-text { font-size: 13px; font-weight: 500; color: var(--gold); margin-bottom: 8px; }
+.batch-progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.batch-progress-fill { height: 100%; background: var(--gold); border-radius: 2px; transition: width 0.3s; }
+.batch-results { margin-top: 8px; font-size: 11px; color: var(--text-dim); font-family: var(--mono); }
+
+/* EMPTY STATE */
+.empty-state { text-align: center; padding: 60px 24px; color: var(--text-muted); }
+.empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state-text { font-size: 14px; margin-bottom: 16px; }
+
+/* LOADING */
+.loading { text-align: center; padding: 40px; color: var(--text-muted); }
+.spinner { width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner-inline { width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; vertical-align: middle; }
+
+/* TOAST */
+.toast-container { position: fixed; top: 80px; right: 24px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
+.toast { padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; animation: slideIn 0.3s ease; max-width: 340px; }
+.toast-success { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+.toast-error { background: var(--red-bg); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+.toast-info { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(96,165,250,0.3); }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* MODAL */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; padding: 24px; }
+.modal-overlay.active { display: flex; }
+.modal { background: var(--navy-light); border: 1px solid var(--border-light); border-radius: 12px; width: 100%; max-width: 600px; max-height: 85vh; overflow-y: auto; padding: 24px; }
+.modal-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+.modal-close { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; padding: 4px; }
+.modal-close:hover { color: var(--text); }
+
+/* FORM */
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 5px; }
+.form-input, .form-select, .form-textarea {
+  width: 100%; padding: 8px 12px; font-size: 13px; font-family: 'Inter', sans-serif;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); outline: none; transition: border-color 0.15s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--gold); }
+.form-textarea { resize: vertical; min-height: 60px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+/* ENGAGEMENT PANEL */
+.engagement-panel { margin-top: 16px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+.engagement-panel h4 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 12px; }
+.engagement-item { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.engagement-item:last-child { border-bottom: none; }
+.engagement-type { font-size: 10px; font-weight: 600; text-transform: uppercase; padding: 1px 5px; border-radius: 3px; margin-right: 6px; }
+.engagement-type.email { background: var(--blue-bg); color: var(--blue); }
+.engagement-type.call { background: var(--green-bg); color: var(--green); }
+.engagement-type.meeting { background: var(--gold-bg2); color: var(--gold); }
+.engagement-type.note { background: rgba(107,114,128,0.15); color: var(--text-muted); }
+.engagement-date { color: var(--text-muted); font-family: var(--mono); font-size: 11px; }
+
+/* RESPONSIVE */
+@media (max-width: 1024px) { .kanban { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 768px) {
+  .header-inner { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .tabs-inner { overflow-x: auto; }
+  .tab { padding: 12px 14px; font-size: 12px; }
+  .content { padding: 16px; }
+  .kanban { grid-template-columns: 1fr; }
+  .stats-bar { grid-template-columns: repeat(2, 1fr); }
+  .action-card { grid-template-columns: 28px 1fr; }
+  .action-buttons { grid-column: 1 / -1; }
+  .form-row, .form-row-3 { grid-template-columns: 1fr; }
+  .data-table { font-size: 12px; }
+  .data-table td, .data-table th { padding: 8px; }
+  .bulk-bar { left: 16px; right: 16px; transform: none; }
+  .expand-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-logo">ClearSky</div>
+      <div class="brand-divider"></div>
+      <div class="brand-title">Revenue Command Center</div>
+    </div>
+    <div class="header-actions">
+      <span class="sync-status" id="syncStatus"></span>
+      <select class="team-select" id="teamSelect" onchange="onTeamChange()" title="Filter by team member">
+        <option value="">All Team</option>
+      </select>
+      <button class="btn btn-outline btn-sm" id="syncBtn" onclick="syncHubSpot()" title="Pull latest contacts, companies, and deals from HubSpot">Sync HubSpot</button>
+      <span class="status-dot" title="API connected"></span>
+      <span class="header-date" id="headerDate"></span>
+    </div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tabs-inner">
+    <div class="tab active" data-tab="actions" title="Priority action list ranked by engagement [1]">Actions <span class="tab-badge red" id="actionsBadge">0</span></div>
+    <div class="tab" data-tab="deals" title="Deal pipeline kanban board [2]">Deal Tracker <span class="tab-badge gold" id="dealsBadge">0</span></div>
+    <div class="tab" data-tab="inventory" title="Project inventory with pricing [3]">Inventory</div>
+    <div class="tab" data-tab="buyers" title="AI-extracted buyer intelligence profiles [4]">Buyer Intel <span class="tab-badge blue" id="buyersBadge">0</span></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- AUTO-SYNC WARNING -->
+  <div class="sync-warning" id="syncWarning" style="display:none">
+    <span>Data is stale.</span>
+    <button class="btn btn-outline btn-xs" onclick="syncHubSpot()">Sync Now</button>
+  </div>
+
+  <!-- ONBOARDING BANNER -->
+  <div class="onboarding-banner" id="onboardingBanner" style="display:none">
+    <span class="ob-icon">&#9889;</span>
+    <div class="ob-text">
+      <strong>Welcome to Revenue Command Center.</strong>
+      Actions tab ranks contacts by engagement intensity. Click a contact to view email history. Use the <strong>three-dot menu (&#8943;)</strong> for re-analysis or exclusion.
+      The <strong>Buyer Intel</strong> tab has search, sort, and bulk actions.
+      Press <strong>1-4</strong> to switch tabs, <strong>Ctrl+N</strong> for new items, <strong>Ctrl+S</strong> to sync.
+    </div>
+    <button class="ob-close" onclick="dismissOnboarding()" title="Dismiss this banner">&times;</button>
+  </div>
+
+  <!-- TAB 1: ACTION LIST -->
+  <div class="tab-content active" id="tab-actions">
+    <div id="brianKpis" style="display:none"></div>
+    <div class="stats-bar" id="actionStats"></div>
+    <div class="section-header">
+      <div>
+        <div class="section-title">Priority Actions</div>
+        <div class="section-subtitle">Ranked by engagement intensity — active conversations first, cold outreach last</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="loadActionList()" title="Refresh action list">Refresh</button>
+      </div>
+    </div>
+    <!-- Search + Quick-filter pills -->
+    <div class="search-wrap">
+      <input class="search-bar" id="actionSearch" type="text" placeholder="Search contacts, companies, projects..." oninput="onActionSearch()" title="Search action list by name, company, or project">
+    </div>
+    <div class="filter-row" id="actionFilters">
+      <span class="filter-group-label">Group:</span>
+      <button class="filter-pill active" data-action-filter="all">All</button>
+      <button class="filter-pill" data-action-filter="active">Active</button>
+      <button class="filter-pill" data-action-filter="reengage">Re-engage</button>
+      <button class="filter-pill" data-action-filter="pipeline">Pipeline</button>
+      <span class="filter-divider"></span>
+      <span class="filter-group-label">Person:</span>
+      <button class="filter-pill" data-action-owner="ana">Ana</button>
+      <button class="filter-pill" data-action-owner="carolina">Carolina</button>
+      <button class="filter-pill" data-action-owner="luis">Luis</button>
+      <button class="filter-pill" data-action-owner="brian">Brian</button>
+    </div>
+    <div class="action-list" id="actionList">
+      <div class="loading"><div class="spinner"></div>Loading contacts...</div>
+    </div>
+  </div>
+
+  <!-- TAB 2: DEAL TRACKER -->
+  <div class="tab-content" id="tab-deals">
+    <div class="stats-bar" id="dealStats"></div>
+    <div class="section-header">
+      <div>
+        <div class="section-title">Deal Pipeline</div>
+        <div class="section-subtitle">Red border = stuck too long</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="openImportDealsModal()" title="Import deals from HubSpot cache">Import from HubSpot</button>
+        <button class="btn btn-gold" onclick="openDealModal()" title="Create a new deal manually [Ctrl+N]">+ New Deal</button>
+      </div>
+    </div>
+    <div class="kanban" id="kanban">
+      <div class="loading" style="grid-column:1/-1"><div class="spinner"></div>Loading deals...</div>
+    </div>
+  </div>
+
+  <!-- TAB 3: INVENTORY -->
+  <div class="tab-content" id="tab-inventory">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Project Inventory</div>
+        <div class="section-subtitle">What we can sell — with pre-approved pricing ranges</div>
+      </div>
+      <button class="btn btn-gold" onclick="openProjectModal()" title="Add a new project to inventory [Ctrl+N]">+ Add Project</button>
+    </div>
+    <div class="filters" id="inventoryFilters">
+      <button class="filter-pill active" data-filter="all">All</button>
+      <button class="filter-pill" data-filter="available">Available Now</button>
+      <button class="filter-pill" data-filter="forward">Forward</button>
+      <button class="filter-pill" data-filter="pipeline">Pipeline</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="data-table" id="inventoryTable">
+        <thead><tr><th>Project</th><th>Type</th><th>Registry</th><th>Status</th><th>Volume</th><th>Price Range (USD)</th><th>Our Role</th><th>Target Buyers</th></tr></thead>
+        <tbody id="inventoryBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB 4: BUYER INTEL -->
+  <div class="tab-content" id="tab-buyers">
+    <div class="stats-bar" id="buyerStats"></div>
+    <div class="section-header">
+      <div>
+        <div class="section-title">Buyer Intelligence</div>
+        <div class="section-subtitle">AI-extracted buyer profiles from HubSpot email history</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-csv btn-sm" onclick="exportBuyersCSV()" title="Export buyer data as CSV">Export CSV</button>
+        <button class="btn btn-purple btn-sm" id="batchExtractBtn" onclick="runBatchExtraction()" title="Auto-profile up to 50 unprocessed contacts using AI">Run Batch Extraction (50)</button>
+        <button class="btn btn-gold" onclick="openBuyerModal()" title="Manually create a buyer profile [Ctrl+N]">+ Profile Buyer</button>
+      </div>
+    </div>
+    <div id="batchProgressContainer" style="display:none"></div>
+    <div class="search-wrap">
+      <input class="search-bar" id="buyerSearch" type="text" placeholder="Search buyers by company, name, mandate..." oninput="onBuyerSearch()" title="Filter buyer table by keyword">
+    </div>
+    <div class="filter-row" id="buyerFilters">
+      <span class="filter-group-label">Status:</span>
+      <button class="filter-pill active" data-filter="buyers_only">Buyers Only</button>
+      <button class="filter-pill" data-filter="hot">Hot</button>
+      <button class="filter-pill" data-filter="warm">Warm</button>
+      <button class="filter-pill" data-filter="cold">Cold</button>
+      <button class="filter-pill" data-filter="new">New</button>
+      <span class="filter-divider"></span>
+      <span class="filter-group-label">Quality:</span>
+      <button class="filter-pill active" data-quality="medium_plus">Medium+</button>
+      <button class="filter-pill" data-quality="high_only">High Only</button>
+      <button class="filter-pill" data-quality="all_quality">All Quality</button>
+      <span class="filter-divider"></span>
+      <button class="filter-pill" data-filter="show_all">Show All (unfiltered)</button>
+      <button class="filter-pill" data-filter="unprofiled">Unprofiled</button>
+    </div>
+    <div class="active-filters" id="buyerActiveFilters"></div>
+    <div id="buyersContent">
+      <div class="loading"><div class="spinner"></div>Loading buyer data...</div>
+    </div>
+  </div>
+</div>
+
+<!-- BULK ACTION BAR -->
+<div class="bulk-bar" id="bulkBar">
+  <span class="bulk-count" id="bulkCount">0 selected</span>
+  <div class="bulk-actions">
+    <select class="team-select" id="bulkTier" title="Set tier for selected buyers">
+      <option value="">Set Tier...</option>
+      <option value="T1">T1</option><option value="T2">T2</option><option value="T3">T3</option>
+    </select>
+    <select class="team-select" id="bulkStatus" title="Set status for selected buyers">
+      <option value="">Set Status...</option>
+      <option value="hot">Hot</option><option value="warm">Warm</option><option value="cold">Cold</option><option value="new">New</option>
+    </select>
+    <button class="btn btn-gold btn-sm" onclick="applyBulkAction()" title="Apply selected changes to all checked buyers">Apply</button>
+    <button class="btn btn-outline btn-sm" onclick="clearBulkSelection()">Cancel</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const API = 'https://api-tools.oga.earth/api';
+const STAGES = ['conversation','pricing_sent','negotiating','closed_won','closed_lost'];
+const STAGE_LABELS = { conversation:'Conversation', pricing_sent:'Pricing Sent', negotiating:'Negotiating', closed_won:'Closed Won', closed_lost:'Closed Lost' };
+const OWNERS = ['ana','carolina','luis','brian','unassigned'];
+const PROJECT_TYPES = ['TSB','biochar','REDD+','ARR','plastic','CORSIA','MITECO','blue_carbon','NBS','other'];
+const REGISTRIES = ['Puro.earth','VCS','GoldStandard','MITECO','Verra','Isometric','other'];
+const ROLES = ['principal','exclusive_marketer','non_exclusive_marketer','broker','developer'];
+const STATUSES = ['available','forward','pipeline','sold_out'];
+const REL_STATUSES = ['hot','warm','cold','dormant','new'];
+const TIERS = ['T1','T2','T3'];
+
+let ownerMap = {};
+let ownerNameToId = {};
+let selectedOwnerId = localStorage.getItem('rcc_owner_id') || '';
+let selectedOwnerName = localStorage.getItem('rcc_owner_name') || '';
+
+// Action list state
+let actionListCache = { active: [], reengage: [], pipeline: [] };
+let actionFilterGroup = 'all';
+let actionFilterOwner = '';
+let actionSearchTerm = '';
+
+// Buyer table state
+let buyerSortCol = 'tier';
+let buyerSortDir = 'asc';
+let buyerSearchTerm = '';
+let buyerColumnFilters = {};
+let buyerExpandedRow = null;
+let bulkSelected = new Set();
+
+// ============================================================
+// IN-MEMORY CACHE
+// ============================================================
+let cache = {
+  deals: [], projects: [], buyers: [], activeContacts: [],
+  hubspotContacts: [], hubspotCompanies: [], hubspotDeals: [],
+  owners: [], lastSync: null
+};
+
+// ============================================================
+// API LAYER
+// ============================================================
+async function api(endpoint, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(`${API}${endpoint}`, opts);
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`API ${res.status}: ${text}`);
+  }
+  return res.json();
+}
+
+async function apiPatch(endpoint, body) {
+  const opts = { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+  const res = await fetch(`${API}${endpoint}`, opts);
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`API ${res.status}: ${text}`);
+  }
+  return res.json();
+}
+
+// ============================================================
+// DATA LOADING
+// ============================================================
+async function loadAll() {
+  try {
+    const [deals, projects, buyers] = await Promise.all([
+      api('/revenue/deals'), api('/revenue/projects'), api('/revenue/buyers')
+    ]);
+    cache.deals = deals.data || [];
+    cache.projects = projects.data || [];
+    cache.buyers = buyers.data || [];
+  } catch (e) {
+    console.error('Failed to load core data:', e);
+    toast('Failed to load data: ' + e.message, 'error');
+  }
+}
+
+async function loadActiveContacts() {
+  try {
+    let endpoint = '/hubspot/contacts/active?limit=500';
+    if (selectedOwnerId) endpoint += '&owner_id=' + encodeURIComponent(selectedOwnerId);
+    const result = await api(endpoint);
+    cache.activeContacts = result.data || [];
+  } catch (e) {
+    console.warn('Active contacts failed:', e.message);
+    cache.activeContacts = [];
+  }
+}
+
+async function loadHubSpotCache() {
+  try {
+    const [contacts, companies, deals] = await Promise.all([
+      api('/hubspot/contacts/all'), api('/hubspot/companies/all'), api('/hubspot/deals/all')
+    ]);
+    cache.hubspotContacts = contacts.data || [];
+    cache.hubspotCompanies = companies.data || [];
+    cache.hubspotDeals = deals.data || [];
+    if (contacts.data && contacts.data.length > 0) {
+      cache.lastSync = contacts.data[0].synced_at;
+    }
+  } catch (e) {
+    console.warn('HubSpot cache empty — run sync first:', e.message);
+  }
+}
+
+async function loadOwners() {
+  try {
+    const result = await api('/hubspot/owners');
+    cache.owners = result.data || [];
+    buildOwnerMaps();
+    populateTeamSelect();
+  } catch (e) {
+    console.warn('Failed to load owners:', e.message);
+    populateTeamSelectFallback();
+  }
+}
+
+function buildOwnerMaps() {
+  ownerMap = {};
+  ownerNameToId = {};
+  for (const o of cache.owners) {
+    const first = (o.firstname || '').toLowerCase();
+    ownerMap[o.owner_id] = o;
+    if (first) ownerNameToId[first] = o.owner_id;
+  }
+}
+
+function getOwnerName(ownerId) {
+  if (!ownerId) return 'unassigned';
+  const o = ownerMap[ownerId];
+  if (o) return (o.firstname || '').toLowerCase() || 'unknown';
+  return 'unknown';
+}
+
+function populateTeamSelect() {
+  const select = document.getElementById('teamSelect');
+  select.innerHTML = '<option value="">All Team</option>';
+  const knownNames = ['ana','carolina','luis','brian'];
+  const added = new Set();
+  for (const name of knownNames) {
+    const ownerId = ownerNameToId[name];
+    if (ownerId) {
+      const opt = document.createElement('option');
+      opt.value = ownerId;
+      opt.textContent = name.charAt(0).toUpperCase() + name.slice(1);
+      opt.dataset.name = name;
+      select.appendChild(opt);
+      added.add(ownerId);
+    }
+  }
+  for (const o of cache.owners) {
+    if (added.has(o.owner_id)) continue;
+    const first = (o.firstname || '').toLowerCase();
+    if (first && !knownNames.includes(first)) {
+      const opt = document.createElement('option');
+      opt.value = o.owner_id;
+      opt.textContent = o.firstname || o.email || 'Owner ' + o.owner_id;
+      opt.dataset.name = first;
+      select.appendChild(opt);
+      added.add(o.owner_id);
+    } else if (!first) {
+      const label = o.contact_count ? `Team #${o.owner_id.slice(-4)} (${o.contact_count})` : `Owner ${o.owner_id.slice(-4)}`;
+      const opt = document.createElement('option');
+      opt.value = o.owner_id;
+      opt.textContent = label;
+      opt.dataset.name = '';
+      select.appendChild(opt);
+      added.add(o.owner_id);
+    }
+  }
+  if (selectedOwnerId) select.value = selectedOwnerId;
+}
+
+function populateTeamSelectFallback() {
+  const select = document.getElementById('teamSelect');
+  select.innerHTML = '<option value="">All Team</option>';
+  for (const name of ['Ana','Carolina','Luis','Brian']) {
+    const opt = document.createElement('option');
+    opt.value = name.toLowerCase();
+    opt.textContent = name;
+    opt.dataset.name = name.toLowerCase();
+    select.appendChild(opt);
+  }
+}
+
+function onTeamChange() {
+  const select = document.getElementById('teamSelect');
+  selectedOwnerId = select.value;
+  const selectedOption = select.options[select.selectedIndex];
+  selectedOwnerName = selectedOption?.dataset?.name || '';
+  localStorage.setItem('rcc_owner_id', selectedOwnerId);
+  localStorage.setItem('rcc_owner_name', selectedOwnerName);
+  renderCurrentTab();
+}
+
+// ============================================================
+// SYNC
+// ============================================================
+async function syncHubSpot() {
+  const btn = document.getElementById('syncBtn');
+  const status = document.getElementById('syncStatus');
+  btn.disabled = true;
+  btn.textContent = 'Syncing...';
+  status.textContent = 'Syncing HubSpot...';
+  status.className = 'sync-status syncing';
+  try {
+    const result = await api('/hubspot/sync');
+    cache.lastSync = new Date().toISOString();
+    toast(`Synced ${result.contacts_synced || 0} contacts, ${result.companies_synced || 0} companies, ${result.deals_synced || 0} deals`);
+    await Promise.all([loadHubSpotCache(), loadActiveContacts(), loadOwners()]);
+    renderCurrentTab();
+  } catch (e) {
+    toast('Sync failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sync HubSpot';
+    updateSyncStatus();
+  }
+}
+
+function updateSyncStatus() {
+  const el = document.getElementById('syncStatus');
+  if (cache.lastSync) {
+    el.textContent = `Last sync: ${timeSince(cache.lastSync)}`;
+    el.className = 'sync-status';
+  } else {
+    el.textContent = 'Not synced';
+    el.className = 'sync-status';
+  }
+}
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+function switchTab(tabName) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === `tab-${tabName}`));
+  renderCurrentTab();
+}
+
+function renderCurrentTab() {
+  const tab = document.querySelector('.tab.active')?.dataset.tab || 'actions';
+  if (tab === 'actions') loadActionList();
+  if (tab === 'deals') renderKanban();
+  if (tab === 'inventory') renderInventory();
+  if (tab === 'buyers') renderBuyers();
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+});
+
+// ============================================================
+// ONBOARDING BANNER
+// ============================================================
+function showOnboarding() {
+  if (localStorage.getItem('rcc_onboarding_dismissed')) return;
+  document.getElementById('onboardingBanner').style.display = 'flex';
+}
+function dismissOnboarding() {
+  document.getElementById('onboardingBanner').style.display = 'none';
+  localStorage.setItem('rcc_onboarding_dismissed', '1');
+}
+
+// ============================================================
+// AUTO-SYNC CHECK
+// ============================================================
+function checkAutoSync() {
+  if (!cache.lastSync) return;
+  const age = Date.now() - new Date(cache.lastSync).getTime();
+  const oneHour = 3600000;
+  const oneDay = 86400000;
+  if (age > oneDay) {
+    const w = document.getElementById('syncWarning');
+    w.querySelector('span').textContent = `Data is ${Math.floor(age / oneHour)}h stale — last synced ${timeSince(cache.lastSync)}.`;
+    w.style.display = 'flex';
+  } else if (age > oneHour) {
+    // Auto-sync silently in background
+    syncHubSpot();
+  }
+}
+
+// ============================================================
+// ACTION LIST — Smart-ranked with intelligence
+// ============================================================
+async function loadActionList() {
+  await loadActiveContacts();
+  const contacts = cache.activeContacts;
+  const buyers = cache.buyers;
+  const deals = cache.deals;
+  const projects = cache.projects;
+  const today = new Date();
+
+  const buyerByHsId = {};
+  const buyerByEmail = {};
+  for (const b of buyers) {
+    if (b.hubspot_contact_id) buyerByHsId[b.hubspot_contact_id] = b;
+    if (b.contact_email) buyerByEmail[b.contact_email.toLowerCase()] = b;
+  }
+
+  const actions = [];
+
+  for (const contact of contacts) {
+    const name = [contact.firstname, contact.lastname].filter(Boolean).join(' ') || contact.email || 'Unknown';
+    const company = contact.company || '';
+    const email = contact.email || '';
+    const lastActivity = contact.last_activity_date || contact.last_email_date || contact.synced_at;
+    const lastDate = lastActivity ? new Date(lastActivity) : null;
+    const daysSince = lastDate ? Math.floor((today - lastDate) / 86400000) : 999;
+    const buyerProfile = buyerByHsId[contact.hubspot_id] || buyerByEmail[email.toLowerCase()] || null;
+    const isProfiled = !!buyerProfile;
+    const isAiExtracted = buyerProfile?.source === 'ai_extracted';
+
+    // Skip internal team contacts
+    const INTERNAL_DOMAINS = ['clearskyltd.com', 'leadingcarbon.com', 'maboroshi.com'];
+    if (email && INTERNAL_DOMAINS.some(d => email.toLowerCase().endsWith('@' + d))) continue;
+
+    // Skip ALL confirmed non-buyers
+    if (buyerProfile && buyerProfile.is_buyer === 0) continue;
+
+    // Skip sellers (mandate contains seller/supply-side/project developer keywords)
+    if (buyerProfile) {
+      const mandate = (buyerProfile.buying_mandate || '').toLowerCase();
+      if (mandate.includes('seller') || mandate.includes('supply side') || mandate.includes('project developer')) continue;
+    }
+
+    // Skip dead leads: LOW confidence + cold + no engagement in 60d
+    if (buyerProfile && buyerProfile.extraction_confidence === 'low' &&
+        buyerProfile.relationship_status === 'cold' &&
+        (contact.activity_count_60d || 0) === 0) continue;
+
+    const engScore = contact.engagement_score || 0;
+    const act30d = contact.activity_count_30d || 0;
+    const act60d = contact.activity_count_60d || 0;
+    const emails60d = contact.email_count_60d || 0;
+    const calls60d = contact.call_count_60d || 0;
+    const meetings60d = contact.meeting_count_60d || 0;
+    const hasInbound = contact.has_inbound_reply === 1;
+
+    let score = 0;
+    if (hasInbound && act30d >= 2) score += 50;
+    else if (hasInbound) score += 30;
+    if (act30d >= 5) score += 30;
+    else if (act30d >= 2) score += 20;
+    else if (act30d >= 1) score += 10;
+    score += (calls60d * 8);
+    score += (meetings60d * 10);
+
+    const activeDeal = deals.find(d =>
+      !['closed_won','closed_lost','dead'].includes(d.stage) &&
+      (d.contact_email === email || d.company === company)
+    );
+    if (activeDeal) {
+      if (activeDeal.stage === 'negotiating') score += 25;
+      else if (activeDeal.stage === 'pricing_sent') score += 20;
+      else score += 10;
+    }
+
+    const temp = buyerProfile?.relationship_status || '';
+    if (temp === 'hot' && isProfiled) score += 15;
+    else if (temp === 'warm' && isProfiled) score += 8;
+
+    if (isProfiled) score += 5;
+    let matchedProjects = [];
+    if (buyerProfile) {
+      let buyerTypes = [];
+      try { buyerTypes = JSON.parse(buyerProfile.credit_types_interested || '[]'); } catch(e) {}
+      const availableProjects = projects.filter(p => ['available','forward'].includes(p.status));
+      matchedProjects = availableProjects.filter(p => {
+        let targetBuyers = [];
+        try { targetBuyers = JSON.parse(p.target_buyers || '[]'); } catch(e) {}
+        return buyerTypes.some(bt =>
+          p.project_type.toLowerCase().includes(bt.toLowerCase()) ||
+          targetBuyers.some(tb => tb.toLowerCase().includes(bt.toLowerCase()))
+        );
+      });
+      if (matchedProjects.length > 0) score += 10;
+    }
+
+    if (engScore === 0 && act60d === 0 && !hasInbound) score -= 20;
+    if (engScore > 0 && daysSince >= 14) score += 8;
+    else if (engScore > 0 && daysSince >= 7) score += 4;
+
+    let engLevel = 'cold';
+    if (act30d >= 3 && hasInbound) engLevel = 'hot';
+    else if (act30d >= 1 || engScore >= 20) engLevel = 'warm';
+    else if (act60d >= 1) engLevel = 'cool';
+
+    actions.push({
+      cardClass: `eng-${engLevel}`, engLevel, score, engScore, daysSince,
+      act30d, act60d, emails60d, calls60d, meetings60d, hasInbound,
+      name, company, email, isProfiled, isAiExtracted, buyerProfile, activeDeal,
+      matchedProjects, hubspotId: contact.hubspot_id, jobTitle: contact.jobtitle, ownerId: contact.owner_id
+    });
+  }
+
+  // Also add active deals with no contact match
+  for (const deal of deals) {
+    if (['closed_won','closed_lost','dead'].includes(deal.stage)) continue;
+    if (selectedOwnerName && deal.owner && deal.owner !== selectedOwnerName) continue;
+    const hasContactMatch = contacts.some(c => c.email === deal.contact_email || c.company === deal.company);
+    if (hasContactMatch) continue;
+    const lastAct = deal.last_activity_date || deal.created_at;
+    const daysSince = lastAct ? Math.floor((today - new Date(lastAct)) / 86400000) : 999;
+    let score = 10;
+    if (deal.stage === 'negotiating') score += 25;
+    else if (deal.stage === 'pricing_sent') score += 20;
+    actions.push({
+      cardClass: 'eng-warm', engLevel: 'warm', score, engScore: 0, daysSince,
+      act30d: 0, act60d: 0, emails60d: 0, calls60d: 0, meetings60d: 0, hasInbound: false,
+      name: deal.contact_name || deal.company, company: deal.company, email: deal.contact_email || '',
+      isProfiled: false, isAiExtracted: false, buyerProfile: null, activeDeal: deal,
+      matchedProjects: [], hubspotId: null, jobTitle: null, ownerId: null
+    });
+  }
+
+  actions.sort((a, b) => b.score - a.score);
+
+  const activeConvos = [];
+  const reengageNow = [];
+  const pipeline = [];
+  for (const a of actions) {
+    if (a.daysSince < 14 && a.score > 20) activeConvos.push(a);
+    else if (a.daysSince >= 14 && a.daysSince <= 60 && a.engScore > 0) reengageNow.push(a);
+    else pipeline.push(a);
+  }
+
+  actionListCache = {
+    active: activeConvos.slice(0, 30),
+    reengage: reengageNow.slice(0, 20),
+    pipeline: pipeline.slice(0, 15)
+  };
+
+  // Stats
+  const engagedCount = contacts.filter(c => (c.engagement_score || 0) > 0).length;
+  const inboundCount = contacts.filter(c => c.has_inbound_reply === 1).length;
+  const profiledCount = contacts.filter(c => buyerByHsId[c.hubspot_id] || buyerByEmail[(c.email || '').toLowerCase()]).length;
+  const profiledPct = contacts.length > 0 ? Math.round(profiledCount / contacts.length * 100) : 0;
+  const activePipeline = deals.filter(d => !['closed_won','closed_lost','dead'].includes(d.stage));
+  const pipelineValue = activePipeline.reduce((s, d) => s + (d.value_usd || 0), 0);
+
+  const allGroupedCount = actionListCache.active.length + actionListCache.reengage.length + actionListCache.pipeline.length;
+  document.getElementById('actionStats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Showing</div><div class="stat-value">${allGroupedCount}</div><div class="stat-delta">of ${contacts.length} active contacts</div></div>
+    <div class="stat-card"><div class="stat-label">Active Conversations</div><div class="stat-value green">${activeConvos.length}</div><div class="stat-delta">two-way in 14d</div></div>
+    <div class="stat-card"><div class="stat-label">Engaged (90d)</div><div class="stat-value">${engagedCount}</div><div class="stat-delta">${inboundCount} with inbound replies</div></div>
+    <div class="stat-card"><div class="stat-label">Pipeline Value</div><div class="stat-value gold">$${formatNum(pipelineValue)}</div><div class="stat-delta">${activePipeline.length} active deals</div></div>
+    <div class="stat-card"><div class="stat-label">AI Profiled</div><div class="stat-value">${profiledCount}</div><div class="stat-delta">${profiledPct}% of ${contacts.length}</div></div>
+  `;
+
+  renderBrianKpis();
+
+  const allGrouped = [...actionListCache.active, ...actionListCache.reengage, ...actionListCache.pipeline];
+  document.getElementById('actionsBadge').textContent = allGrouped.length;
+  document.getElementById('actionsBadge').className = `tab-badge ${activeConvos.length > 0 ? 'gold' : 'red'}`;
+
+  renderFilteredActions();
+}
+
+function renderFilteredActions() {
+  const container = document.getElementById('actionList');
+  const search = actionSearchTerm.toLowerCase();
+
+  // Collect items based on group filter
+  let groups = [];
+  if (actionFilterGroup === 'all' || actionFilterGroup === 'active') groups.push({ items: actionListCache.active, cls: 'group-active', label: 'Active Conversations' });
+  if (actionFilterGroup === 'all' || actionFilterGroup === 'reengage') groups.push({ items: actionListCache.reengage, cls: 'group-reengage', label: 'Re-engage Now' });
+  if (actionFilterGroup === 'all' || actionFilterGroup === 'pipeline') groups.push({ items: actionListCache.pipeline, cls: 'group-pipeline', label: 'Pipeline' });
+
+  // Apply owner filter
+  if (actionFilterOwner) {
+    groups = groups.map(g => ({
+      ...g,
+      items: g.items.filter(a => getOwnerName(a.ownerId) === actionFilterOwner)
+    }));
+  }
+
+  // Apply search
+  if (search) {
+    groups = groups.map(g => ({
+      ...g,
+      items: g.items.filter(a =>
+        a.name.toLowerCase().includes(search) ||
+        a.company.toLowerCase().includes(search) ||
+        a.email.toLowerCase().includes(search) ||
+        (a.buyerProfile?.buying_mandate || '').toLowerCase().includes(search) ||
+        a.matchedProjects.some(p => (p.name || '').toLowerCase().includes(search))
+      )
+    }));
+  }
+
+  const totalVisible = groups.reduce((s, g) => s + g.items.length, 0);
+
+  if (totalVisible === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">&#128269;</div><div class="empty-state-text">No actions match your filters. Try broadening your search.</div></div>`;
+    return;
+  }
+
+  let html = '';
+  let globalRank = 0;
+  for (const g of groups) {
+    if (g.items.length === 0) continue;
+    html += `<div class="action-group-header ${g.cls}"><span class="group-label">${g.label}</span><span class="group-count">${g.items.length}</span><span class="group-line"></span></div>`;
+    for (const a of g.items) {
+      globalRank++;
+      html += renderActionCard(a, globalRank);
+    }
+  }
+  container.innerHTML = html;
+}
+
+// ============================================================
+// ACTION CARD RENDERER — New button hierarchy
+// ============================================================
+function renderActionCard(a, rank) {
+  const bp = a.buyerProfile;
+  const hasSummary = bp && bp.last_discussion_summary;
+  const hasSuggested = bp && bp.suggested_next_action;
+  const suggestedProjects = bp?.suggested_projects || '';
+  const confidence = bp?.extraction_confidence || '';
+
+  // Owner badge (clickable for reassignment)
+  const ownerName = getOwnerDisplayName(a.ownerId);
+  const ownerBadgeClass = a.ownerId ? getOwnerBadgeClass(a.ownerId) : '';
+  const ownerBadge = ownerName && a.hubspotId
+    ? `<span class="owner-badge ${ownerBadgeClass}" onclick="event.stopPropagation();toggleOwnerDropdown('${a.hubspotId}')" title="Click to reassign owner">${esc(ownerName)}<span class="owner-dropdown" id="od-${a.hubspotId}">${buildOwnerDropdownItems(a.hubspotId)}</span></span>`
+    : ownerName ? `<span class="owner-badge ${ownerBadgeClass}">${esc(ownerName)}</span>` : '';
+
+  // Engagement pips
+  const engPips = Math.min(5, Math.ceil((a.engScore || 0) / 20));
+  let pipsHtml = '';
+  if (a.engScore > 0) {
+    pipsHtml = '<span class="engagement-bar" title="Engagement score: ' + a.engScore + '">';
+    for (let i = 0; i < 5; i++) {
+      const cls = i < engPips ? (a.hasInbound ? 'active hot' : 'active') : '';
+      pipsHtml += `<span class="eng-pip ${cls}"></span>`;
+    }
+    pipsHtml += ` ${a.engScore}</span>`;
+  }
+
+  // Trigger text
+  let triggerText = '';
+  if (hasSummary) triggerText = '';
+  else if (a.activeDeal) triggerText = `Deal: ${esc(a.activeDeal.deal_description || '')} (${STAGE_LABELS[a.activeDeal.stage] || a.activeDeal.stage})`;
+  else if (a.act30d >= 2 && a.hasInbound) triggerText = `Active two-way conversation — ${a.act30d} activities in 30d`;
+  else if (a.act30d >= 1) triggerText = `Recent activity — ${a.act30d} touch${a.act30d > 1 ? 'es' : ''} in 30d`;
+  else if (a.daysSince >= 14 && a.engScore > 0) triggerText = `${a.daysSince}d since last activity — was engaged, re-engage now`;
+  else if (a.daysSince >= 14) triggerText = `${a.daysSince}d ago — no response to outreach`;
+  else triggerText = `Last activity ${a.daysSince}d ago`;
+
+  // Engagement detail
+  let engDetail = '';
+  if (a.emails60d || a.calls60d || a.meetings60d) {
+    const parts = [];
+    if (a.emails60d) parts.push(`${a.emails60d} email${a.emails60d > 1 ? 's' : ''}`);
+    if (a.calls60d) parts.push(`${a.calls60d} call${a.calls60d > 1 ? 's' : ''}`);
+    if (a.meetings60d) parts.push(`${a.meetings60d} mtg${a.meetings60d > 1 ? 's' : ''}`);
+    if (a.hasInbound) parts.push('inbound reply');
+    engDetail = `<span style="font-size:10px;color:var(--text-muted);font-family:var(--mono)">${parts.join(' / ')}</span>`;
+  }
+
+  // Project badges
+  const projBadges = a.matchedProjects.map(p =>
+    `<span class="project-badge" title="${esc(p.one_liner || p.name)}">${esc(p.short_name || p.name)}</span>`
+  ).join(' ');
+  let aiProjBadges = '';
+  if (suggestedProjects && !a.matchedProjects.length) {
+    aiProjBadges = suggestedProjects.split(',').map(p => p.trim()).filter(Boolean).map(p =>
+      `<span class="project-badge" title="AI suggested">${esc(p)}</span>`
+    ).join(' ');
+  }
+
+  // Determine primary button: Email if profiled, Analyze Emails if unprofiled
+  let primaryBtn = '';
+  if (!a.isProfiled && a.hubspotId) {
+    primaryBtn = `<button class="btn-primary-action btn-analyze" onclick="event.stopPropagation();extractIntel('${a.hubspotId}')" id="intel-btn-${a.hubspotId}" title="Use AI to extract buyer intelligence from email history">Analyze Emails</button>`;
+  } else if (a.email) {
+    primaryBtn = `<button class="btn-primary-action btn-email" onclick="event.stopPropagation();window.open('mailto:${esc(a.email)}')" title="Open email client to contact ${esc(a.name)}">Email</button>`;
+  }
+
+  // Secondary: Create Deal
+  const createDealBtn = `<button class="btn-create-deal" onclick="event.stopPropagation();openDealFromContact('${esc(a.name)}','${esc(a.company)}','${esc(a.email)}','${a.hubspotId || ''}','${a.ownerId || ''}')" title="Create a new deal pre-filled with this contact's data">+ Deal</button>`;
+
+  // Three-dot menu
+  const menuId = 'menu-' + (a.hubspotId || rank);
+  let menuItems = '';
+  if (a.isProfiled && a.hubspotId) {
+    menuItems += `<div class="three-dot-menu-item" onclick="event.stopPropagation();extractIntel('${a.hubspotId}')" title="Re-run AI analysis on this contact's emails">&#x1F504; Re-analyze</div>`;
+  }
+  if (a.hubspotId) {
+    menuItems += `<div class="three-dot-menu-item" onclick="event.stopPropagation();openContactDetail('${a.hubspotId}', '${esc(a.email)}')" title="View recent email, call, and meeting history">&#x1F4E7; View Emails</div>`;
+  }
+  if (a.hubspotId) {
+    menuItems += `<div class="three-dot-menu-item danger" onclick="event.stopPropagation();excludeContact('${a.hubspotId}', this)" title="Mark this contact as not a buyer and remove from list">&#x26D4; Not a Buyer</div>`;
+  }
+
+  return `
+  <div class="action-card ${a.cardClass}" id="card-${a.hubspotId || rank}" data-contact-id="${a.hubspotId || ''}" onclick="openContactDetail('${a.hubspotId || ''}', '${esc(a.email)}')">
+    <div class="action-rank ${rank <= 3 ? 'top3' : ''}" title="Priority rank #${rank} (score: ${a.score})">${rank}</div>
+    <div class="action-body">
+      <div class="action-who">${esc(a.name)}${a.jobTitle ? ` <span>${esc(a.jobTitle)}</span>` : ''} <span>@ ${esc(a.company)}</span> ${ownerBadge}</div>
+      ${hasSummary ? `<div class="action-intel-summary">${esc(bp.last_discussion_summary)}</div>` : ''}
+      ${triggerText ? `<div class="action-trigger">${triggerText}</div>` : ''}
+      ${hasSuggested ? `<div class="action-suggested">${esc(bp.suggested_next_action)}</div>` : ''}
+      <div class="action-meta">
+        ${pipsHtml}
+        ${a.isAiExtracted ? `<span class="action-tag ai-extracted" title="AI-extracted buyer profile">AI</span>` : a.isProfiled ? `<span class="action-tag profiled" title="Has buyer profile">Profiled</span>` : `<span class="action-tag unprofiled" title="No buyer profile yet — click Analyze Emails">New</span>`}
+        ${a.activeDeal ? `<span style="font-size:10px;color:var(--gold)" title="Active deal">Deal: $${formatNum(a.activeDeal.value_usd || 0)}</span>` : ''}
+        ${confidence ? `<span class="confidence-badge confidence-${confidence}" title="AI extraction confidence">${confidence}</span>` : ''}
+        ${engDetail}
+        <span style="font-size:10px;color:var(--text-muted);font-family:var(--mono)" title="Days since last activity">${a.daysSince}d</span>
+        ${projBadges}
+        ${aiProjBadges}
+      </div>
+    </div>
+    <div class="action-buttons" onclick="event.stopPropagation()">
+      ${primaryBtn}
+      ${createDealBtn}
+      <div class="three-dot-wrap">
+        <button class="three-dot-btn" onclick="event.stopPropagation();toggleThreeDotMenu('${menuId}')" title="More actions">&middot;&middot;&middot;</button>
+        <div class="three-dot-menu" id="${menuId}">
+          ${menuItems}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// ACTION LIST SEARCH + FILTER
+// ============================================================
+let _actionSearchTimer = null;
+function onActionSearch() {
+  clearTimeout(_actionSearchTimer);
+  _actionSearchTimer = setTimeout(() => {
+    actionSearchTerm = document.getElementById('actionSearch').value;
+    renderFilteredActions();
+  }, 200);
+}
+
+document.querySelectorAll('#actionFilters [data-action-filter]').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('#actionFilters [data-action-filter]').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    actionFilterGroup = pill.dataset.actionFilter;
+    renderFilteredActions();
+  });
+});
+
+document.querySelectorAll('#actionFilters [data-action-owner]').forEach(pill => {
+  pill.addEventListener('click', () => {
+    const wasActive = pill.classList.contains('active');
+    document.querySelectorAll('#actionFilters [data-action-owner]').forEach(p => p.classList.remove('active'));
+    if (!wasActive) {
+      pill.classList.add('active');
+      actionFilterOwner = pill.dataset.actionOwner;
+    } else {
+      actionFilterOwner = '';
+    }
+    renderFilteredActions();
+  });
+});
+
+// ============================================================
+// THREE-DOT MENU + OWNER DROPDOWN
+// ============================================================
+function toggleThreeDotMenu(menuId) {
+  closeAllMenus();
+  const el = document.getElementById(menuId);
+  if (el) el.classList.toggle('open');
+}
+
+function toggleOwnerDropdown(hubspotId) {
+  closeAllMenus();
+  const el = document.getElementById('od-' + hubspotId);
+  if (el) el.classList.toggle('open');
+}
+
+function closeAllMenus() {
+  document.querySelectorAll('.three-dot-menu.open, .owner-dropdown.open').forEach(m => m.classList.remove('open'));
+}
+document.addEventListener('click', () => closeAllMenus());
+
+function buildOwnerDropdownItems(hubspotId) {
+  const knownNames = ['ana','carolina','luis','brian'];
+  const colors = { ana: '#a78bfa', carolina: '#60a5fa', luis: '#C8A951', brian: '#34d399' };
+  return knownNames.map(name => {
+    const oid = ownerNameToId[name];
+    if (!oid) return '';
+    return `<div class="owner-dropdown-item" onclick="event.stopPropagation();reassignContact('${hubspotId}','${oid}','${name}')"><span class="dot" style="background:${colors[name]}"></span>${name.charAt(0).toUpperCase() + name.slice(1)}</div>`;
+  }).join('');
+}
+
+async function reassignContact(hubspotId, newOwnerId, newOwnerName) {
+  closeAllMenus();
+  try {
+    await apiPatch('/revenue/reassign-contact', { hubspot_id: hubspotId, new_owner_id: newOwnerId });
+    const displayName = newOwnerName.charAt(0).toUpperCase() + newOwnerName.slice(1);
+    toast(`Reassigned to ${displayName}`);
+    // Update local cache
+    const c = cache.activeContacts.find(c => c.hubspot_id === hubspotId);
+    if (c) c.owner_id = newOwnerId;
+    // Live-update owner badges in the DOM for this contact
+    document.querySelectorAll(`[data-contact-id="${hubspotId}"] .owner-badge`).forEach(badge => {
+      badge.className = `owner-badge ${getOwnerBadgeClass(newOwnerId)}`;
+      if (badge.childNodes[0]) badge.childNodes[0].textContent = displayName;
+    });
+    renderFilteredActions();
+  } catch (e) {
+    toast('Reassign failed: ' + e.message, 'error');
+  }
+}
+
+// Owner badge helpers
+function getOwnerBadgeClass(ownerId) {
+  const OWNER_COLORS = { ana: 'owner-ana', carolina: 'owner-carolina', luis: 'owner-luis', brian: 'owner-brian' };
+  return OWNER_COLORS[getOwnerName(ownerId)] || 'owner-other';
+}
+function getOwnerDisplayName(ownerId) {
+  if (!ownerId) return '';
+  const o = ownerMap[ownerId];
+  if (o && o.firstname) return o.firstname;
+  return '';
+}
+
+// ============================================================
+// CREATE DEAL FROM CONTACT (shortcut)
+// ============================================================
+function openDealFromContact(name, company, email, hubspotId, ownerId) {
+  // Get buyer profile for pre-fill
+  const bp = cache.buyers.find(b => b.hubspot_contact_id === hubspotId) ||
+             cache.buyers.find(b => b.contact_email && b.contact_email.toLowerCase() === email.toLowerCase());
+
+  const ownerName = ownerId ? getOwnerName(ownerId) : '';
+  const suggestedProject = bp?.suggested_projects ? bp.suggested_projects.split(',')[0].trim() : '';
+  const dealDesc = bp?.suggested_next_action || '';
+  const budgetRange = bp?.budget_range || '';
+
+  // Parse budget to estimate value
+  let value = 0;
+  if (budgetRange) {
+    const nums = budgetRange.match(/[\d,.]+/g);
+    if (nums && nums.length >= 1) value = parseFloat(nums[0].replace(/,/g, '')) * 1000 || 0;
+  }
+
+  openDealModal();
+  setTimeout(() => {
+    const form = document.querySelector('#modalContent form');
+    if (!form) return;
+    const f = (n) => form.querySelector(`[name=${n}]`);
+    if (f('company')) f('company').value = company;
+    if (f('contact_name')) f('contact_name').value = name;
+    if (f('contact_email')) f('contact_email').value = email;
+    if (f('deal_description')) f('deal_description').value = dealDesc;
+    if (f('owner')) f('owner').value = ownerName || 'unassigned';
+    if (f('stage')) f('stage').value = 'conversation';
+    if (f('value_usd') && value > 0) f('value_usd').value = value;
+    if (f('project_name') && suggestedProject) {
+      const opts = Array.from(f('project_name').options);
+      const match = opts.find(o => o.value.toLowerCase().includes(suggestedProject.toLowerCase()));
+      if (match) f('project_name').value = match.value;
+    }
+  }, 50);
+}
+
+// ============================================================
+// EXTRACT INTELLIGENCE — Single contact
+// ============================================================
+async function extractIntel(hubspotId) {
+  const card = document.getElementById('card-' + hubspotId);
+  const btn = document.getElementById('intel-btn-' + hubspotId);
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-inline"></span> Analyzing...'; }
+  if (card) card.classList.add('extracting');
+
+  try {
+    const result = await api('/revenue/extract-intelligence', 'POST', { contact_hubspot_id: hubspotId });
+    const data = result.data || result;
+    if (data.status === 'skipped') {
+      toast('Skipped: ' + (data.reason || 'insufficient data'), 'info');
+    } else if (data.status === 'error') {
+      toast('Extraction failed: ' + (data.reason || 'unknown'), 'error');
+    } else {
+      toast(`Intelligence extracted for ${data.intel?.buying_mandate ? 'buyer' : 'contact'}`);
+      await loadAll();
+      loadActionList();
+      return;
+    }
+  } catch (e) {
+    toast('Extraction error: ' + e.message, 'error');
+  } finally {
+    if (card) card.classList.remove('extracting');
+    if (btn) { btn.disabled = false; btn.textContent = btn.classList.contains('btn-analyze') ? 'Analyze Emails' : 'Re-analyze'; }
+  }
+}
+
+// ============================================================
+// EXCLUDE CONTACT — Not a Buyer
+// ============================================================
+async function excludeContact(hubspotId, btnEl) {
+  const card = document.getElementById('card-' + hubspotId);
+  if (!card) return;
+  try {
+    await api('/revenue/exclude-contact', 'POST', { hubspot_id: hubspotId, reason: 'marked by user' });
+    card.classList.add('removing');
+    setTimeout(() => card.remove(), 400);
+    toast('Contact excluded');
+  } catch (e) {
+    toast('Failed to exclude: ' + e.message, 'error');
+  }
+}
+
+// ============================================================
+// BATCH EXTRACTION
+// ============================================================
+async function runBatchExtraction() {
+  const btn = document.getElementById('batchExtractBtn');
+  const container = document.getElementById('batchProgressContainer');
+  btn.disabled = true; btn.textContent = 'Running...';
+  container.style.display = 'block';
+  container.innerHTML = `<div class="batch-progress"><div class="batch-progress-text">Starting batch extraction...</div><div class="batch-progress-bar"><div class="batch-progress-fill" style="width:0%"></div></div><div class="batch-results"></div></div>`;
+
+  try {
+    const textEl = container.querySelector('.batch-progress-text');
+    const fillEl = container.querySelector('.batch-progress-fill');
+    textEl.textContent = 'Processing contacts... this may take a few minutes';
+    fillEl.style.width = '10%';
+    let progress = 10;
+    const interval = setInterval(() => { progress = Math.min(progress + 2, 90); fillEl.style.width = progress + '%'; }, 3000);
+
+    const result = await api('/revenue/extract-intelligence', 'POST', { batch: true, limit: 50 });
+    clearInterval(interval);
+    fillEl.style.width = '100%';
+    const { created = 0, updated = 0, skipped = 0, errors = 0, processed = 0 } = result;
+    textEl.textContent = `Batch complete: ${processed} contacts processed`;
+    container.querySelector('.batch-results').innerHTML =
+      `<span style="color:var(--green)">Created: ${created}</span> | <span style="color:var(--blue)">Updated: ${updated}</span> | <span style="color:var(--text-muted)">Skipped: ${skipped}</span> | <span style="color:var(--red)">Errors: ${errors}</span>`;
+    toast(`Batch extraction complete: ${created + updated} profiles created/updated`);
+    await loadAll(); renderBuyers();
+  } catch (e) {
+    container.innerHTML = `<div class="batch-progress" style="border-color:var(--red)"><div class="batch-progress-text" style="color:var(--red)">Batch extraction failed: ${esc(e.message)}</div></div>`;
+    toast('Batch extraction failed: ' + e.message, 'error');
+  } finally { btn.disabled = false; btn.textContent = 'Run Batch Extraction (50)'; }
+}
+
+// ============================================================
+// BRIAN'S KPI VIEW
+// ============================================================
+function renderBrianKpis() {
+  const kpiContainer = document.getElementById('brianKpis');
+  if (selectedOwnerName !== 'brian') { kpiContainer.style.display = 'none'; return; }
+  kpiContainer.style.display = 'block';
+  const now = new Date();
+  const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0,0,0,0);
+  const quarterStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
+
+  const touchesThisWeek = cache.deals.filter(d => {
+    const lastAct = d.last_activity_date || d.updated_at;
+    return lastAct && new Date(lastAct) >= weekStart && (d.owner === 'brian' || !selectedOwnerId);
+  }).length;
+  const newContactsQuarter = cache.buyers.filter(b => b.created_at && new Date(b.created_at) >= quarterStart).length;
+  const brianDeals = cache.deals.filter(d => !['closed_won','closed_lost','dead'].includes(d.stage) && (d.owner === 'brian' || !selectedOwnerId));
+  const pipelineValue = brianDeals.reduce((s, d) => s + (d.value_usd || 0), 0);
+  const progressed = brianDeals.filter(d => { const u = d.updated_at ? new Date(d.updated_at) : null; return u && u >= weekStart; }).length;
+
+  const touchTarget = 50, contactTarget = 10;
+  const touchPct = Math.min(100, Math.round(touchesThisWeek / touchTarget * 100));
+  const contactPct = Math.min(100, Math.round(newContactsQuarter / contactTarget * 100));
+
+  kpiContainer.innerHTML = `
+    <div class="kpi-bar">
+      <div class="kpi-card"><div class="kpi-label">Touches This Week</div><div class="kpi-value" style="color:${touchPct >= 80 ? 'var(--green)' : touchPct >= 50 ? 'var(--yellow)' : 'var(--red)'}">${touchesThisWeek}</div><div class="kpi-target">Target: ${touchTarget}/week</div><div class="kpi-bar-progress"><div class="kpi-bar-fill" style="width:${touchPct}%;background:${touchPct >= 80 ? 'var(--green)' : touchPct >= 50 ? 'var(--yellow)' : 'var(--red)'}"></div></div></div>
+      <div class="kpi-card"><div class="kpi-label">New Contacts (Quarter)</div><div class="kpi-value" style="color:${contactPct >= 80 ? 'var(--green)' : contactPct >= 50 ? 'var(--yellow)' : 'var(--red)'}">${newContactsQuarter}</div><div class="kpi-target">Target: ${contactTarget}/quarter</div><div class="kpi-bar-progress"><div class="kpi-bar-fill" style="width:${contactPct}%;background:${contactPct >= 80 ? 'var(--green)' : contactPct >= 50 ? 'var(--yellow)' : 'var(--red)'}"></div></div></div>
+      <div class="kpi-card"><div class="kpi-label">Pipeline Value</div><div class="kpi-value gold">$${formatNum(pipelineValue)}</div><div class="kpi-target">${brianDeals.length} active deals</div></div>
+      <div class="kpi-card"><div class="kpi-label">Progressed This Week</div><div class="kpi-value" style="color:var(--green)">${progressed}</div><div class="kpi-target">deals moved forward</div></div>
+    </div>`;
+}
+
+// ============================================================
+// CONTACT DETAIL — show HubSpot engagements
+// ============================================================
+async function openContactDetail(hubspotId, email) {
+  if (!hubspotId) {
+    const deal = cache.deals.find(d => d.contact_email === email);
+    if (deal) { openDealModal(deal.id); return; }
+    const buyer = cache.buyers.find(b => b.contact_email === email);
+    if (buyer) { openBuyerModal(buyer.id); return; }
+    return;
+  }
+  const contact = cache.activeContacts.find(c => c.hubspot_id === hubspotId) || cache.hubspotContacts.find(c => c.hubspot_id === hubspotId);
+  const name = contact ? [contact.firstname, contact.lastname].filter(Boolean).join(' ') : email;
+
+  openModal(`
+    <div class="modal-title">${esc(name)} <button class="modal-close" onclick="closeModal()">&times;</button></div>
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:12px">${esc(contact?.company || '')} | ${esc(contact?.email || '')} | ${esc(contact?.jobtitle || '')}</div>
+    <div class="engagement-panel">
+      <h4>Recent Activity</h4>
+      <div id="engagementsList"><div class="loading"><div class="spinner"></div>Loading engagements...</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+      ${email ? `<button class="btn btn-gold btn-sm" onclick="window.open('mailto:${esc(email)}')" title="Send email">Email</button>` : ''}
+      <button class="btn btn-purple btn-sm" onclick="closeModal();extractIntel('${hubspotId}')" title="Run AI extraction">Extract Intel</button>
+      <button class="btn btn-blue btn-sm" onclick="closeModal();openQuickProfile('${esc(name)}','${esc(contact?.company || '')}','${esc(email)}','${hubspotId}')" title="Create buyer profile manually">Manual Profile</button>
+      <button class="btn btn-outline btn-sm" onclick="closeModal();openDealFromContact('${esc(name)}','${esc(contact?.company || '')}','${esc(email)}','${hubspotId}','${contact?.owner_id || ''}')" title="Create deal from this contact">+ Deal</button>
+      <button class="btn btn-outline btn-sm" onclick="closeModal()">Close</button>
+    </div>
+  `);
+
+  try {
+    const result = await api(`/hubspot/contacts/${hubspotId}/engagements`);
+    const engagements = result.data || [];
+    const el = document.getElementById('engagementsList');
+    if (engagements.length === 0) {
+      el.innerHTML = '<div style="padding:12px;color:var(--text-muted);font-size:12px">No recent engagements found</div>';
+      return;
+    }
+    el.innerHTML = engagements.slice(0, 20).map(eng => {
+      const type = eng.type || 'note';
+      const date = eng.timestamp ? new Date(eng.timestamp).toLocaleDateString() : '';
+      const subject = eng.subject || eng.body_preview || '(no subject)';
+      return `<div class="engagement-item"><span class="engagement-type ${type}">${type}</span><span class="engagement-date">${date}</span><div style="margin-top:4px;color:var(--text-dim)">${esc(subject.substring(0, 120))}</div></div>`;
+    }).join('');
+  } catch (e) {
+    document.getElementById('engagementsList').innerHTML = `<div style="padding:12px;color:var(--red);font-size:12px">Failed to load: ${esc(e.message)}</div>`;
+  }
+}
+
+// ============================================================
+// KANBAN — Deal Tracker
+// ============================================================
+function renderKanban() {
+  const container = document.getElementById('kanban');
+  let pipeline = cache.deals.filter(d => d.stage !== 'dead');
+  if (selectedOwnerName) pipeline = pipeline.filter(d => d.owner === selectedOwnerName || !d.owner);
+
+  const activeCount = pipeline.filter(d => !['closed_won','closed_lost'].includes(d.stage)).length;
+  document.getElementById('dealsBadge').textContent = activeCount;
+  const activeDeals = pipeline.filter(d => !['closed_won','closed_lost'].includes(d.stage));
+  const totalValue = activeDeals.reduce((s, d) => s + (d.value_usd || 0), 0);
+
+  document.getElementById('dealStats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Active Pipeline</div><div class="stat-value gold">$${formatNum(totalValue)}</div></div>
+    <div class="stat-card"><div class="stat-label">Deals in Progress</div><div class="stat-value">${activeDeals.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Won</div><div class="stat-value green">${pipeline.filter(d => d.stage === 'closed_won').length}</div></div>
+    <div class="stat-card"><div class="stat-label">Lost</div><div class="stat-value" style="color:var(--text-muted)">${pipeline.filter(d => d.stage === 'closed_lost').length}</div></div>
+  `;
+
+  container.innerHTML = STAGES.map(stage => {
+    const stageDeals = pipeline.filter(d => d.stage === stage);
+    return `
+      <div class="kanban-column" data-stage="${stage}">
+        <div class="kanban-header">${STAGE_LABELS[stage]}<span class="kanban-count">${stageDeals.length}</span></div>
+        <div class="kanban-cards">
+          ${stageDeals.map(d => {
+            const lastAct = d.last_activity_date ? new Date(d.last_activity_date) : new Date(d.created_at);
+            const daysSince = Math.floor((new Date() - lastAct) / 86400000);
+            const isStale = (stage === 'conversation' && daysSince > 14) || (stage === 'pricing_sent' && daysSince > 7);
+            return `
+              <div class="kanban-card ${isStale ? 'stale' : ''}" onclick="openDealModal('${d.id}')" title="${esc(d.deal_description || '')}">
+                <div class="kanban-card-company">${esc(d.company)}</div>
+                <div class="kanban-card-desc">${esc(d.deal_description || '')}</div>
+                <div class="kanban-card-meta">
+                  <span class="kanban-card-value">${d.value_usd ? '$' + formatNum(d.value_usd) : ''}</span>
+                  <span class="kanban-card-owner owner-${d.owner || 'unassigned'}">${d.owner || '?'}</span>
+                </div>
+                ${isStale ? `<div style="font-size:10px;color:var(--red);margin-top:4px;font-family:var(--mono)">${daysSince}d stale</div>` : ''}
+                ${d.next_action ? `<div style="font-size:10px;color:var(--text-muted);margin-top:2px">${esc(d.next_action)}</div>` : ''}
+              </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ============================================================
+// IMPORT DEALS FROM HUBSPOT
+// ============================================================
+function openImportDealsModal() {
+  const hsDeals = cache.hubspotDeals;
+  if (hsDeals.length === 0) { toast('No HubSpot deals cached. Run sync first.', 'info'); return; }
+  const existingNames = new Set(cache.deals.map(d => d.deal_description?.toLowerCase()));
+  const importable = hsDeals.filter(d => !existingNames.has((d.dealname || '').toLowerCase()));
+
+  openModal(`
+    <div class="modal-title">Import Deals from HubSpot <button class="modal-close" onclick="closeModal()">&times;</button></div>
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:16px">${importable.length} deals available to import (${hsDeals.length} total in HubSpot)</div>
+    ${importable.length === 0 ? '<div style="padding:24px;text-align:center;color:var(--text-muted)">All HubSpot deals already imported</div>' :
+      `<div style="max-height:400px;overflow-y:auto">
+        ${importable.map(d => `
+          <div style="display:flex;align-items:center;gap:12px;padding:10px;border-bottom:1px solid var(--border)">
+            <input type="checkbox" class="hs-deal-check" value="${esc(d.hubspot_id)}" style="accent-color:var(--gold)">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:600">${esc(d.dealname || 'Untitled')}</div>
+              <div style="font-size:11px;color:var(--text-dim)">${esc(d.dealstage || '')} | ${d.amount ? '$' + formatNum(d.amount) : 'No amount'}${d.closedate ? ' | Close: ' + d.closedate.substring(0, 10) : ''}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn btn-gold" onclick="importSelectedDeals()">Import Selected</button>
+        <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      </div>`}
+  `);
+}
+
+async function importSelectedDeals() {
+  const checked = document.querySelectorAll('.hs-deal-check:checked');
+  if (checked.length === 0) { toast('Select at least one deal', 'info'); return; }
+  let imported = 0;
+  for (const cb of checked) {
+    const hsDeal = cache.hubspotDeals.find(d => d.hubspot_id === cb.value);
+    if (!hsDeal) continue;
+    try {
+      await api('/revenue/deals', 'POST', {
+        company: hsDeal.dealname || 'HubSpot Deal',
+        deal_description: hsDeal.dealname || '',
+        value_usd: hsDeal.amount || 0,
+        stage: mapHubSpotStage(hsDeal.dealstage),
+        notes: `Imported from HubSpot (ID: ${hsDeal.hubspot_id})`
+      });
+      imported++;
+    } catch (e) { console.error('Failed to import deal:', e); }
+  }
+  closeModal();
+  toast(`Imported ${imported} deal(s) from HubSpot`);
+  await loadAll(); renderKanban();
+}
+
+function mapHubSpotStage(hsStage) {
+  const s = (hsStage || '').toLowerCase();
+  if (s.includes('won') || s.includes('closed won')) return 'closed_won';
+  if (s.includes('lost') || s.includes('closed lost')) return 'closed_lost';
+  if (s.includes('negot') || s.includes('contract')) return 'negotiating';
+  if (s.includes('proposal') || s.includes('pricing') || s.includes('quote')) return 'pricing_sent';
+  return 'conversation';
+}
+
+// ============================================================
+// INVENTORY TABLE
+// ============================================================
+function renderInventory(filter = 'all') {
+  const body = document.getElementById('inventoryBody');
+  const projects = filter === 'all' ? cache.projects : cache.projects.filter(p => p.status === filter);
+  body.innerHTML = projects.map(p => {
+    let targets = [];
+    try { targets = JSON.parse(p.target_buyers || '[]'); } catch(e) {}
+    return `
+      <tr onclick="openProjectModal('${p.id}')">
+        <td><strong>${esc(p.short_name || p.name)}</strong><br><span style="font-size:11px;color:var(--text-muted)">${esc(p.name)}</span></td>
+        <td>${esc(p.project_type)}</td><td>${esc(p.registry || '')}</td>
+        <td><span class="badge badge-${p.status}">${p.status}</span></td>
+        <td style="font-family:var(--mono)">${p.available_volume ? formatNum(p.available_volume) + ' ' + (p.volume_unit || '') : ''}</td>
+        <td style="font-family:var(--mono)">${p.price_floor_usd ? '$' + p.price_floor_usd + ' - $' + p.price_ceiling_usd : ''}</td>
+        <td><span style="font-size:11px">${(p.clearsky_role || '').replace(/_/g, ' ')}</span></td>
+        <td style="max-width:160px"><span style="font-size:11px;color:var(--text-dim)">${targets.slice(0, 3).join(', ')}</span></td>
+      </tr>`;
+  }).join('');
+  if (projects.length === 0) body.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted)">No projects match filter</td></tr>';
+}
+
+// ============================================================
+// BUYERS — Search, Sort, Filter, Expand, Bulk, CSV
+// ============================================================
+function renderBuyers() {
+  const filter = buyerStatusFilter;
+  const quality = buyerQualityFilter;
+  const container = document.getElementById('buyersContent');
+  const buyers = cache.buyers;
+  const contacts = cache.activeContacts.length > 0 ? cache.activeContacts : cache.hubspotContacts;
+
+  const profiledHsIds = new Set(buyers.filter(b => b.hubspot_contact_id).map(b => b.hubspot_contact_id));
+  const profiledEmails = new Set(buyers.map(b => (b.contact_email || '').toLowerCase()).filter(Boolean));
+  const unprofiledContacts = contacts.filter(c =>
+    !profiledHsIds.has(c.hubspot_id) && !profiledEmails.has((c.email || '').toLowerCase())
+  );
+  const aiExtracted = buyers.filter(b => b.source === 'ai_extracted').length;
+  const buyersOnly = buyers.filter(b => b.is_buyer !== 0);
+  const medPlusCount = buyersOnly.filter(b => ['high','medium'].includes(b.extraction_confidence)).length;
+  const highOnlyCount = buyersOnly.filter(b => b.extraction_confidence === 'high').length;
+
+  document.getElementById('buyerStats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Profiled Buyers</div><div class="stat-value green">${buyersOnly.length}</div><div class="stat-delta">${buyers.length} total profiles</div></div>
+    <div class="stat-card"><div class="stat-label">AI Extracted</div><div class="stat-value" style="color:var(--purple)">${aiExtracted}</div></div>
+    <div class="stat-card"><div class="stat-label">Unprofiled</div><div class="stat-value" style="color:var(--text-muted)">${unprofiledContacts.length}</div></div>
+    <div class="stat-card"><div class="stat-label">T1 Buyers</div><div class="stat-value gold">${buyersOnly.filter(b => b.tier === 'T1').length}</div></div>
+  `;
+  document.getElementById('buyersBadge').textContent = unprofiledContacts.length;
+
+  // Update filter pill counts
+  const statusPills = document.querySelectorAll('#buyerFilters [data-filter]');
+  statusPills.forEach(p => {
+    const f = p.dataset.filter;
+    if (f === 'buyers_only') p.textContent = `Buyers Only (${buyersOnly.length})`;
+    else if (f === 'hot') p.textContent = `Hot (${buyersOnly.filter(b => b.relationship_status === 'hot').length})`;
+    else if (f === 'warm') p.textContent = `Warm (${buyersOnly.filter(b => b.relationship_status === 'warm').length})`;
+    else if (f === 'cold') p.textContent = `Cold (${buyersOnly.filter(b => b.relationship_status === 'cold').length})`;
+    else if (f === 'new') p.textContent = `New (${buyersOnly.filter(b => b.relationship_status === 'new').length})`;
+    else if (f === 'unprofiled') p.textContent = `Unprofiled (${unprofiledContacts.length})`;
+  });
+  const qualityPills = document.querySelectorAll('#buyerFilters [data-quality]');
+  qualityPills.forEach(p => {
+    const q = p.dataset.quality;
+    if (q === 'medium_plus') p.textContent = `Medium+ (${medPlusCount})`;
+    else if (q === 'high_only') p.textContent = `High Only (${highOnlyCount})`;
+    else if (q === 'all_quality') p.textContent = `All Quality (${buyers.length})`;
+  });
+
+  // Unprofiled view
+  if (filter === 'unprofiled') {
+    container.innerHTML = `
+      <div class="buyer-section-header">Unprofiled HubSpot Contacts <span class="count">${unprofiledContacts.length}</span></div>
+      <div style="overflow-x:auto"><table class="data-table">
+        <thead><tr><th>Name</th><th>Email</th><th>Company</th><th>Job Title</th><th>Last Activity</th><th></th></tr></thead>
+        <tbody>${unprofiledContacts.map(c => {
+          const name = [c.firstname, c.lastname].filter(Boolean).join(' ') || '';
+          const lastAct = c.last_activity_date || c.last_email_date;
+          const days = lastAct ? Math.floor((new Date() - new Date(lastAct)) / 86400000) : null;
+          return `<tr>
+            <td><strong>${esc(name)}</strong></td><td style="font-size:12px">${esc(c.email || '')}</td>
+            <td>${esc(c.company || '')}</td><td style="font-size:12px;color:var(--text-dim)">${esc(c.jobtitle || '')}</td>
+            <td style="font-family:var(--mono);font-size:11px;${days !== null && days >= 14 ? 'color:var(--red)' : ''}">${days !== null ? days + 'd ago' : ''}</td>
+            <td>
+              <button class="btn btn-purple btn-xs" onclick="extractIntel('${c.hubspot_id}')" title="AI-extract buyer intel" style="margin-right:4px">Extract Intel</button>
+              <button class="btn btn-blue btn-xs" onclick="openQuickProfile('${esc(name)}','${esc(c.company || '')}','${esc(c.email || '')}','${c.hubspot_id}')" title="Manually create profile">Manual</button>
+            </td></tr>`;
+        }).join('')}</tbody>
+      </table></div>`;
+    return;
+  }
+
+  // Profiled buyers — filtered, searched, sorted
+  let filteredBuyers = [...buyers];
+
+  // Status filter
+  if (filter === 'buyers_only' || filter === 'all') {
+    // "buyers_only" hides is_buyer=0; "all" shows everything
+    if (filter === 'buyers_only') {
+      filteredBuyers = filteredBuyers.filter(b => b.is_buyer !== 0);
+    }
+  } else if (['hot','warm','cold','new','dormant'].includes(filter)) {
+    filteredBuyers = filteredBuyers.filter(b => b.relationship_status === filter && b.is_buyer !== 0);
+  }
+
+  // Quality filter
+  if (quality === 'medium_plus') {
+    filteredBuyers = filteredBuyers.filter(b => !b.extraction_confidence || ['high','medium'].includes(b.extraction_confidence));
+  } else if (quality === 'high_only') {
+    filteredBuyers = filteredBuyers.filter(b => b.extraction_confidence === 'high');
+  }
+
+  // Apply search
+  const search = buyerSearchTerm.toLowerCase();
+  if (search) {
+    filteredBuyers = filteredBuyers.filter(b =>
+      (b.company || '').toLowerCase().includes(search) ||
+      (b.contact_name || '').toLowerCase().includes(search) ||
+      (b.buying_mandate || '').toLowerCase().includes(search) ||
+      (b.credit_types_interested || '').toLowerCase().includes(search) ||
+      (b.contact_email || '').toLowerCase().includes(search)
+    );
+  }
+
+  // Apply column filters
+  for (const [col, values] of Object.entries(buyerColumnFilters)) {
+    if (values && values.size > 0) {
+      filteredBuyers = filteredBuyers.filter(b => {
+        const val = (b[col] || '').toString().toLowerCase();
+        return values.has(val);
+      });
+    }
+  }
+
+  // Sort — tier sort uses T1>T2>T3 ordering with secondary sort by confidence
+  const CONF_ORDER = { high: 0, medium: 1, low: 2, '': 3 };
+  filteredBuyers.sort((a, b) => {
+    let av = a[buyerSortCol] || '';
+    let bv = b[buyerSortCol] || '';
+    if (typeof av === 'string') av = av.toLowerCase();
+    if (typeof bv === 'string') bv = bv.toLowerCase();
+    if (av < bv) return buyerSortDir === 'asc' ? -1 : 1;
+    if (av > bv) return buyerSortDir === 'asc' ? 1 : -1;
+    // Secondary sort: by confidence (high > medium > low)
+    const ca = CONF_ORDER[((a.extraction_confidence || '')).toLowerCase()] ?? 3;
+    const cb = CONF_ORDER[((b.extraction_confidence || '')).toLowerCase()] ?? 3;
+    return ca - cb;
+  });
+
+  // Collect unique values for column filters
+  const tierVals = [...new Set(buyers.map(b => b.tier).filter(Boolean))];
+  const statusVals = [...new Set(buyers.map(b => b.relationship_status).filter(Boolean))];
+  const sourceVals = [...new Set(buyers.map(b => b.source || 'manual').filter(Boolean))];
+
+  const sortIcon = (col) => {
+    if (buyerSortCol !== col) return '<span class="sort-indicator">&#9650;&#9660;</span>';
+    return buyerSortDir === 'asc' ? '<span class="sort-indicator">&#9650;</span>' : '<span class="sort-indicator">&#9660;</span>';
+  };
+  const sortCls = (col) => `sort-header ${buyerSortCol === col ? 'sort-' + buyerSortDir : ''}`;
+
+  // Render active filter pills
+  const activeFiltersHtml = Object.entries(buyerColumnFilters).filter(([, v]) => v && v.size > 0).map(([col, vals]) =>
+    [...vals].map(v => `<span class="active-filter-pill">${col}: ${v} <button onclick="removeBuyerColumnFilter('${col}','${v}')">&times;</button></span>`).join('')
+  ).join('');
+  document.getElementById('buyerActiveFilters').innerHTML = activeFiltersHtml;
+
+  container.innerHTML = `
+    <div class="buyer-section-header">Profiled Buyers <span class="count">${filteredBuyers.length}</span></div>
+    <div style="overflow-x:auto">
+      <table class="data-table" id="buyerTable">
+        <thead><tr>
+          <th style="width:30px"><input type="checkbox" id="buyerSelectAll" onchange="toggleAllBuyers(this)" style="accent-color:var(--gold)" title="Select all visible buyers"></th>
+          <th class="${sortCls('company')}" onclick="sortBuyers('company')">Company ${sortIcon('company')}</th>
+          <th class="${sortCls('contact_name')}" onclick="sortBuyers('contact_name')">Contact ${sortIcon('contact_name')}</th>
+          <th>Mandate</th>
+          <th>Credit Types</th>
+          <th class="${sortCls('tier')}" onclick="sortBuyers('tier')">Tier ${sortIcon('tier')} <span class="col-filter-btn ${buyerColumnFilters.tier?.size ? 'active' : ''}" onclick="event.stopPropagation();toggleColFilter('tier-filter')" title="Filter by tier">&#9783;</span>
+            <div class="col-filter-drop" id="tier-filter">${tierVals.map(v => `<label><input type="checkbox" onchange="onColFilterChange('tier','${v}',this.checked)" ${buyerColumnFilters.tier?.has(v.toLowerCase()) ? 'checked' : ''}> ${v}</label>`).join('')}</div>
+          </th>
+          <th class="${sortCls('relationship_status')}" onclick="sortBuyers('relationship_status')">Status ${sortIcon('relationship_status')} <span class="col-filter-btn ${buyerColumnFilters.relationship_status?.size ? 'active' : ''}" onclick="event.stopPropagation();toggleColFilter('status-filter')" title="Filter by status">&#9783;</span>
+            <div class="col-filter-drop" id="status-filter">${statusVals.map(v => `<label><input type="checkbox" onchange="onColFilterChange('relationship_status','${v}',this.checked)" ${buyerColumnFilters.relationship_status?.has(v.toLowerCase()) ? 'checked' : ''}> ${v}</label>`).join('')}</div>
+          </th>
+          <th class="${sortCls('extraction_confidence')}" onclick="sortBuyers('extraction_confidence')">Confidence ${sortIcon('extraction_confidence')}</th>
+          <th class="${sortCls('source')}" onclick="sortBuyers('source')">Source ${sortIcon('source')}</th>
+        </tr></thead>
+        <tbody>
+          ${filteredBuyers.length === 0 ? `<tr><td colspan="9"><div class="empty-state"><div class="empty-state-text">No buyer profiles match this filter.</div></div></td></tr>` :
+            filteredBuyers.map(b => {
+              let types = [];
+              try { types = JSON.parse(b.credit_types_interested || '[]'); } catch(e) {}
+              const isAi = b.source === 'ai_extracted';
+              const isExpanded = buyerExpandedRow === b.id;
+              return `
+                <tr onclick="toggleBuyerExpand('${b.id}')" class="${isExpanded ? 'expanded' : ''}">
+                  <td onclick="event.stopPropagation()"><input type="checkbox" class="buyer-check" value="${b.id}" ${bulkSelected.has(b.id) ? 'checked' : ''} onchange="onBuyerCheck('${b.id}',this.checked)" style="accent-color:var(--gold)"></td>
+                  <td><strong>${esc(b.company)}</strong></td>
+                  <td>${esc(b.contact_name || '')}</td>
+                  <td style="max-width:180px"><span style="font-size:12px">${esc(b.buying_mandate || '')}</span></td>
+                  <td>${types.map(t => `<span class="badge" style="margin:1px;background:var(--gold-bg);color:var(--gold);font-size:10px">${t}</span>`).join(' ')}</td>
+                  <td><span class="badge badge-${b.tier}">${b.tier || ''}</span></td>
+                  <td><span class="badge badge-${b.relationship_status}">${b.relationship_status || ''}</span></td>
+                  <td>${b.extraction_confidence ? `<span class="confidence-badge confidence-${b.extraction_confidence}">${b.extraction_confidence}</span>` : ''}</td>
+                  <td><span style="font-size:10px;color:${isAi ? 'var(--purple)' : 'var(--text-muted)'}">${isAi ? 'AI' : 'manual'}</span></td>
+                </tr>
+                <tr class="expand-row ${isExpanded ? 'open' : ''}" id="expand-${b.id}">
+                  <td colspan="9">
+                    <div class="expand-content">
+                      <div class="expand-grid">
+                        <div><div class="expand-field-label">Buying Mandate</div><div class="expand-field-value">${esc(b.buying_mandate || 'N/A')}</div></div>
+                        <div><div class="expand-field-label">Budget Range</div><div class="expand-field-value">${esc(b.budget_range || 'N/A')}</div></div>
+                        <div><div class="expand-field-label">Volume Appetite</div><div class="expand-field-value">${esc(b.volume_appetite || 'N/A')}</div></div>
+                        <div><div class="expand-field-label">Timeline Pressure</div><div class="expand-field-value">${esc(b.timeline_pressure || 'N/A')}</div></div>
+                        <div><div class="expand-field-label">Deal Structure Preference</div><div class="expand-field-value">${esc(b.deal_structure_preference || 'N/A')}</div></div>
+                        <div><div class="expand-field-label">Known Objections</div><div class="expand-field-value">${esc(b.objections || 'N/A')}</div></div>
+                        ${b.last_discussion_summary ? `<div style="grid-column:1/-1"><div class="expand-field-label">AI Discussion Summary</div><div class="expand-field-value">${esc(b.last_discussion_summary)}</div></div>` : ''}
+                        ${b.suggested_next_action ? `<div style="grid-column:1/-1"><div class="expand-field-label">Suggested Next Action</div><div class="expand-field-value" style="color:var(--gold)">${esc(b.suggested_next_action)}</div></div>` : ''}
+                        ${b.suggested_projects ? `<div><div class="expand-field-label">Suggested Projects</div><div class="expand-field-value">${esc(b.suggested_projects)}</div></div>` : ''}
+                        <div><div class="expand-field-label">Contact Email</div><div class="expand-field-value">${esc(b.contact_email || 'N/A')}</div></div>
+                      </div>
+                      <div style="display:flex;gap:8px;margin-top:12px">
+                        <button class="btn btn-gold btn-xs" onclick="event.stopPropagation();openBuyerModal('${b.id}')" title="Edit full profile">Edit Profile</button>
+                        ${b.hubspot_contact_id ? `<button class="btn btn-purple btn-xs" onclick="event.stopPropagation();extractIntel('${b.hubspot_contact_id}')" title="Re-run AI extraction">Re-Analyze</button>` : ''}
+                        <button class="btn btn-outline btn-xs" onclick="event.stopPropagation();openDealFromContact('${esc(b.contact_name || '')}','${esc(b.company)}','${esc(b.contact_email || '')}','${b.hubspot_contact_id || ''}','')" title="Create deal for this buyer">+ Deal</button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>`;
+            }).join('')}
+        </tbody>
+      </table>
+    </div>
+    ${unprofiledContacts.length > 0 ? `
+      <div class="buyer-section-header" style="margin-top:32px">Unprofiled Contacts <span class="count">${unprofiledContacts.length}</span></div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">${unprofiledContacts.length} active contacts without buyer profiles — <a href="#" onclick="event.preventDefault();document.querySelector('[data-filter=unprofiled]').click()" style="color:var(--gold)">View all</a></div>
+    ` : ''}`;
+
+  updateBulkBar();
+}
+
+// Buyer table interactions
+function toggleBuyerExpand(id) {
+  buyerExpandedRow = buyerExpandedRow === id ? null : id;
+  document.querySelectorAll('.expand-row').forEach(r => r.classList.remove('open'));
+  if (buyerExpandedRow) {
+    const row = document.getElementById('expand-' + id);
+    if (row) row.classList.add('open');
+  }
+}
+
+function sortBuyers(col) {
+  if (buyerSortCol === col) {
+    if (buyerSortDir === 'asc') buyerSortDir = 'desc';
+    else if (buyerSortDir === 'desc') { buyerSortCol = 'tier'; buyerSortDir = 'asc'; }
+  } else {
+    buyerSortCol = col;
+    buyerSortDir = 'asc';
+  }
+  renderBuyers();
+}
+
+let _buyerSearchTimer = null;
+function onBuyerSearch() {
+  clearTimeout(_buyerSearchTimer);
+  _buyerSearchTimer = setTimeout(() => {
+    buyerSearchTerm = document.getElementById('buyerSearch').value;
+    renderBuyers();
+  }, 200);
+}
+
+function toggleColFilter(filterId) {
+  document.querySelectorAll('.col-filter-drop').forEach(d => { if (d.id !== filterId) d.classList.remove('open'); });
+  document.getElementById(filterId)?.classList.toggle('open');
+}
+
+function onColFilterChange(col, value, checked) {
+  if (!buyerColumnFilters[col]) buyerColumnFilters[col] = new Set();
+  if (checked) buyerColumnFilters[col].add(value.toLowerCase());
+  else buyerColumnFilters[col].delete(value.toLowerCase());
+  renderBuyers();
+}
+
+function removeBuyerColumnFilter(col, value) {
+  if (buyerColumnFilters[col]) {
+    buyerColumnFilters[col].delete(value);
+    if (buyerColumnFilters[col].size === 0) delete buyerColumnFilters[col];
+  }
+  renderBuyers();
+}
+
+// Bulk selection
+function onBuyerCheck(id, checked) {
+  if (checked) bulkSelected.add(id);
+  else bulkSelected.delete(id);
+  updateBulkBar();
+}
+
+function toggleAllBuyers(el) {
+  const checks = document.querySelectorAll('.buyer-check');
+  checks.forEach(c => { c.checked = el.checked; if (el.checked) bulkSelected.add(c.value); else bulkSelected.delete(c.value); });
+  updateBulkBar();
+}
+
+function updateBulkBar() {
+  const bar = document.getElementById('bulkBar');
+  if (bulkSelected.size > 0) {
+    bar.classList.add('visible');
+    document.getElementById('bulkCount').textContent = bulkSelected.size + ' selected';
+  } else {
+    bar.classList.remove('visible');
+  }
+}
+
+function clearBulkSelection() {
+  bulkSelected.clear();
+  document.querySelectorAll('.buyer-check').forEach(c => c.checked = false);
+  const all = document.getElementById('buyerSelectAll');
+  if (all) all.checked = false;
+  document.getElementById('bulkTier').value = '';
+  document.getElementById('bulkStatus').value = '';
+  updateBulkBar();
+}
+
+async function applyBulkAction() {
+  const tier = document.getElementById('bulkTier').value;
+  const status = document.getElementById('bulkStatus').value;
+  if (!tier && !status) { toast('Select a tier or status to apply', 'info'); return; }
+
+  let updated = 0;
+  for (const id of bulkSelected) {
+    const update = {};
+    if (tier) update.tier = tier;
+    if (status) update.relationship_status = status;
+    try {
+      await api(`/revenue/buyers/${id}`, 'PUT', update);
+      updated++;
+    } catch (e) { console.error('Bulk update failed for', id, e); }
+  }
+  toast(`Updated ${updated} buyer profiles`);
+  clearBulkSelection();
+  await loadAll();
+  renderBuyers();
+}
+
+// CSV Export
+function exportBuyersCSV() {
+  const buyers = cache.buyers;
+  if (buyers.length === 0) { toast('No buyers to export', 'info'); return; }
+  const headers = ['Company','Contact Name','Email','Tier','Status','Buying Mandate','Credit Types','Budget Range','Volume Appetite','Confidence','Source'];
+  const rows = buyers.map(b => {
+    let types = '';
+    try { types = JSON.parse(b.credit_types_interested || '[]').join('; '); } catch(e) { types = b.credit_types_interested || ''; }
+    return [b.company, b.contact_name, b.contact_email, b.tier, b.relationship_status, b.buying_mandate, types, b.budget_range, b.volume_appetite, b.extraction_confidence, b.source].map(v => `"${(v || '').toString().replace(/"/g, '""')}"`);
+  });
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `clearsky_buyers_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  toast('CSV exported');
+}
+
+// ============================================================
+// FILTER PILLS
+// ============================================================
+document.querySelectorAll('#inventoryFilters .filter-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('#inventoryFilters .filter-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    renderInventory(pill.dataset.filter);
+  });
+});
+
+// Buyer filter state
+let buyerStatusFilter = 'buyers_only';
+let buyerQualityFilter = 'medium_plus';
+
+document.querySelectorAll('#buyerFilters [data-filter]').forEach(pill => {
+  pill.addEventListener('click', () => {
+    const f = pill.dataset.filter;
+    if (f === 'show_all') {
+      // Reset both filters
+      buyerStatusFilter = 'all';
+      buyerQualityFilter = 'all_quality';
+      document.querySelectorAll('#buyerFilters [data-filter]').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('#buyerFilters [data-quality]').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      document.querySelector('#buyerFilters [data-quality="all_quality"]').classList.add('active');
+    } else if (f === 'unprofiled') {
+      buyerStatusFilter = 'unprofiled';
+      document.querySelectorAll('#buyerFilters [data-filter]').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+    } else {
+      buyerStatusFilter = f;
+      document.querySelectorAll('#buyerFilters [data-filter]').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+    }
+    renderBuyers();
+  });
+});
+
+document.querySelectorAll('#buyerFilters [data-quality]').forEach(pill => {
+  pill.addEventListener('click', () => {
+    buyerQualityFilter = pill.dataset.quality;
+    document.querySelectorAll('#buyerFilters [data-quality]').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    renderBuyers();
+  });
+});
+
+// ============================================================
+// MODALS
+// ============================================================
+function openModal(html) {
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('active');
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+document.getElementById('modalOverlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+// DEAL MODAL
+function openDealModal(id) {
+  const deal = id ? cache.deals.find(d => d.id === id) : {};
+  const isEdit = !!id;
+  const projectOptions = cache.projects.map(p =>
+    `<option value="${esc(p.short_name || p.name)}" ${deal.project_name === (p.short_name || p.name) ? 'selected' : ''}>${esc(p.short_name || p.name)}</option>`
+  ).join('');
+
+  openModal(`
+    <div class="modal-title">${isEdit ? 'Edit Deal' : 'New Deal'}<button class="modal-close" onclick="closeModal()">&times;</button></div>
+    <form onsubmit="submitDeal(event, '${id || ''}')">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Company *</label><input class="form-input" name="company" value="${esc(deal.company || '')}" required></div>
+        <div class="form-group"><label class="form-label">Contact Name</label><input class="form-input" name="contact_name" value="${esc(deal.contact_name || '')}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Contact Email</label><input class="form-input" name="contact_email" type="email" value="${esc(deal.contact_email || '')}"></div>
+        <div class="form-group"><label class="form-label">Credit Type</label><input class="form-input" name="credit_type" value="${esc(deal.credit_type || '')}"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Deal Description *</label><input class="form-input" name="deal_description" value="${esc(deal.deal_description || '')}" required placeholder="e.g., CORSIA credit pricing for Q2"></div>
+      <div class="form-row-3">
+        <div class="form-group"><label class="form-label">Value (USD)</label><input class="form-input" name="value_usd" type="number" value="${deal.value_usd || ''}" placeholder="50000"></div>
+        <div class="form-group"><label class="form-label">Stage</label><select class="form-select" name="stage">${STAGES.map(s => `<option value="${s}" ${deal.stage === s ? 'selected' : ''}>${STAGE_LABELS[s]}</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label">Owner</label><select class="form-select" name="owner">${OWNERS.map(o => `<option value="${o}" ${deal.owner === o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Project</label><select class="form-select" name="project_name"><option value="">-- Select --</option>${projectOptions}</select></div>
+        <div class="form-group"><label class="form-label">Volume (tonnes)</label><input class="form-input" name="volume_tonnes" type="number" value="${deal.volume_tonnes || ''}"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Next Action</label><input class="form-input" name="next_action" value="${esc(deal.next_action || '')}" placeholder="e.g., Send term sheet to Thomas"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Next Action Date</label><input class="form-input" name="next_action_date" type="date" value="${deal.next_action_date || ''}"></div>
+        <div class="form-group"><label class="form-label">Last Activity Date</label><input class="form-input" name="last_activity_date" type="date" value="${deal.last_activity_date || ''}"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Blocker</label><input class="form-input" name="blocker" value="${esc(deal.blocker || '')}" placeholder="What's preventing this from moving forward?"></div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" name="notes" rows="3">${esc(deal.notes || '')}</textarea></div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button type="submit" class="btn btn-gold">${isEdit ? 'Update' : 'Create'} Deal</button>
+        ${isEdit ? `<button type="button" class="btn btn-danger" onclick="confirmDeleteDeal('${id}')">Delete</button>` : ''}
+        <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      </div>
+    </form>
+  `);
+}
+
+async function submitDeal(e, id) {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const deal = Object.fromEntries(fd.entries());
+  deal.value_usd = parseFloat(deal.value_usd) || 0;
+  deal.volume_tonnes = parseFloat(deal.volume_tonnes) || null;
+  try {
+    if (id) { await api(`/revenue/deals/${id}`, 'PUT', deal); }
+    else { await api('/revenue/deals', 'POST', deal); }
+    closeModal(); toast('Deal saved');
+    await loadAll(); renderCurrentTab();
+  } catch (e) { toast('Failed to save deal: ' + e.message, 'error'); }
+}
+
+async function confirmDeleteDeal(id) {
+  if (confirm('Delete this deal?')) {
+    try { await api(`/revenue/deals/${id}`, 'DELETE'); closeModal(); toast('Deal deleted'); await loadAll(); renderCurrentTab(); }
+    catch (e) { toast('Failed to delete: ' + e.message, 'error'); }
+  }
+}
+
+// PROJECT MODAL
+function openProjectModal(id) {
+  const proj = id ? cache.projects.find(p => p.id === id) : {};
+  const isEdit = !!id;
+  openModal(`
+    <div class="modal-title">${isEdit ? 'Edit Project' : 'New Project'}<button class="modal-close" onclick="closeModal()">&times;</button></div>
+    <form onsubmit="submitProject(event, '${id || ''}')">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Project Name *</label><input class="form-input" name="name" value="${esc(proj.name || '')}" required></div>
+        <div class="form-group"><label class="form-label">Short Name</label><input class="form-input" name="short_name" value="${esc(proj.short_name || '')}"></div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group"><label class="form-label">Type *</label><select class="form-select" name="project_type" required>${PROJECT_TYPES.map(t => `<option value="${t}" ${proj.project_type === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label">Registry</label><select class="form-select" name="registry">${REGISTRIES.map(r => `<option value="${r}" ${proj.registry === r ? 'selected' : ''}>${r}</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label">Status</label><select class="form-select" name="status">${STATUSES.map(s => `<option value="${s}" ${proj.status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group"><label class="form-label">Available Volume</label><input class="form-input" name="available_volume" type="number" value="${proj.available_volume || ''}"></div>
+        <div class="form-group"><label class="form-label">Volume Unit</label><input class="form-input" name="volume_unit" value="${esc(proj.volume_unit || 'tCO2e')}"></div>
+        <div class="form-group"><label class="form-label">ClearSky Role</label><select class="form-select" name="clearsky_role">${ROLES.map(r => `<option value="${r}" ${proj.clearsky_role === r ? 'selected' : ''}>${r.replace(/_/g,' ')}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group"><label class="form-label">Price Floor (USD)</label><input class="form-input" name="price_floor_usd" type="number" step="0.01" value="${proj.price_floor_usd || ''}"></div>
+        <div class="form-group"><label class="form-label">Price Ceiling (USD)</label><input class="form-input" name="price_ceiling_usd" type="number" step="0.01" value="${proj.price_ceiling_usd || ''}"></div>
+        <div class="form-group"><label class="form-label">Delivery Date</label><input class="form-input" name="delivery_date" value="${esc(proj.delivery_date || '')}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Commission Min %</label><input class="form-input" name="commission_min_pct" type="number" step="0.1" value="${proj.commission_min_pct || ''}"></div>
+        <div class="form-group"><label class="form-label">Commission Max %</label><input class="form-input" name="commission_max_pct" type="number" step="0.1" value="${proj.commission_max_pct || ''}"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Target Buyers (JSON array)</label><input class="form-input" name="target_buyers" value='${esc(proj.target_buyers || '[]')}' placeholder='["CDR mandate","CORSIA"]'></div>
+      <div class="form-group"><label class="form-label">One-Liner Pitch</label><input class="form-input" name="one_liner" value="${esc(proj.one_liner || '')}"></div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" name="notes" rows="2">${esc(proj.notes || '')}</textarea></div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button type="submit" class="btn btn-gold">${isEdit ? 'Update' : 'Create'} Project</button>
+        ${isEdit ? `<button type="button" class="btn btn-danger" onclick="confirmDeleteProject('${id}')">Delete</button>` : ''}
+        <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      </div>
+    </form>
+  `);
+}
+
+async function submitProject(e, id) {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const proj = Object.fromEntries(fd.entries());
+  proj.available_volume = parseFloat(proj.available_volume) || null;
+  proj.price_floor_usd = parseFloat(proj.price_floor_usd) || null;
+  proj.price_ceiling_usd = parseFloat(proj.price_ceiling_usd) || null;
+  proj.commission_min_pct = parseFloat(proj.commission_min_pct) || null;
+  proj.commission_max_pct = parseFloat(proj.commission_max_pct) || null;
+  try {
+    if (id) { await api(`/revenue/projects/${id}`, 'PUT', proj); }
+    else { await api('/revenue/projects', 'POST', proj); }
+    closeModal(); toast('Project saved');
+    await loadAll(); renderCurrentTab();
+  } catch (e) { toast('Failed to save project: ' + e.message, 'error'); }
+}
+
+async function confirmDeleteProject(id) {
+  if (confirm('Delete this project?')) {
+    try { await api(`/revenue/projects/${id}`, 'DELETE'); closeModal(); toast('Project deleted'); await loadAll(); renderCurrentTab(); }
+    catch (e) { toast('Failed to delete: ' + e.message, 'error'); }
+  }
+}
+
+// BUYER MODAL
+function openBuyerModal(id) {
+  const buyer = id ? cache.buyers.find(b => b.id === id) : {};
+  const isEdit = !!id;
+  openModal(`
+    <div class="modal-title">${isEdit ? 'Edit Buyer Profile' : 'New Buyer Profile'}<button class="modal-close" onclick="closeModal()">&times;</button></div>
+    <form onsubmit="submitBuyer(event, '${id || ''}')">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Company *</label><input class="form-input" name="company" value="${esc(buyer.company || '')}" required></div>
+        <div class="form-group"><label class="form-label">Contact Name</label><input class="form-input" name="contact_name" value="${esc(buyer.contact_name || '')}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Contact Email</label><input class="form-input" name="contact_email" type="email" value="${esc(buyer.contact_email || '')}"></div>
+        <div class="form-group"><label class="form-label">Relationship Owner</label><select class="form-select" name="relationship_owner"><option value="">--</option>${OWNERS.filter(o => o !== 'unassigned').map(o => `<option value="${o}" ${buyer.relationship_owner === o ? 'selected' : ''}>${o}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Buying Mandate</label><textarea class="form-textarea" name="buying_mandate" rows="2" placeholder="What are they looking for?">${esc(buyer.buying_mandate || '')}</textarea></div>
+      <div class="form-group"><label class="form-label">Credit Types Interested (JSON array)</label><input class="form-input" name="credit_types_interested" value='${esc(buyer.credit_types_interested || '[]')}' placeholder='["CORSIA","CDR","biochar"]'></div>
+      <div class="form-row-3">
+        <div class="form-group"><label class="form-label">Volume Appetite</label><input class="form-input" name="volume_appetite" value="${esc(buyer.volume_appetite || '')}" placeholder="50K tonnes/yr"></div>
+        <div class="form-group"><label class="form-label">Budget Range</label><input class="form-input" name="budget_range" value="${esc(buyer.budget_range || '')}" placeholder="$5-10/tCO2e"></div>
+        <div class="form-group"><label class="form-label">Timeline Pressure</label><input class="form-input" name="timeline_pressure" value="${esc(buyer.timeline_pressure || '')}" placeholder="Q2 deadline"></div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group"><label class="form-label">Tier</label><select class="form-select" name="tier">${TIERS.map(t => `<option value="${t}" ${buyer.tier === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label">Relationship Status</label><select class="form-select" name="relationship_status">${REL_STATUSES.map(s => `<option value="${s}" ${buyer.relationship_status === s ? 'selected' : ''}>${s}</option>`).join('')}</select></div>
+        <div class="form-group"><label class="form-label">Deal Structure Pref</label><input class="form-input" name="deal_structure_preference" value="${esc(buyer.deal_structure_preference || '')}" placeholder="spot only"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Known Objections</label><input class="form-input" name="objections" value="${esc(buyer.objections || '')}"></div>
+      <div class="form-group"><label class="form-label">Sustainability Commitments</label><input class="form-input" name="sustainability_commitments" value="${esc(buyer.sustainability_commitments || '')}"></div>
+      <div class="form-group"><label class="form-label">Last Known Need</label><textarea class="form-textarea" name="last_known_need" rows="2">${esc(buyer.last_known_need || '')}</textarea></div>
+      ${isEdit && buyer.last_discussion_summary ? `<div class="form-group"><label class="form-label">AI Discussion Summary</label><div style="font-size:12px;color:var(--text-dim);padding:8px;background:var(--surface);border-radius:6px">${esc(buyer.last_discussion_summary)}</div></div>` : ''}
+      ${isEdit && buyer.suggested_next_action ? `<div class="form-group"><label class="form-label">AI Suggested Action</label><div style="font-size:12px;color:var(--gold);padding:8px;background:var(--gold-bg);border-radius:6px">${esc(buyer.suggested_next_action)}</div></div>` : ''}
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" name="notes" rows="2">${esc(buyer.notes || '')}</textarea></div>
+      <input type="hidden" name="hubspot_contact_id" value="${esc(buyer.hubspot_contact_id || '')}">
+      <input type="hidden" name="hubspot_company_id" value="${esc(buyer.hubspot_company_id || '')}">
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button type="submit" class="btn btn-gold">${isEdit ? 'Update' : 'Create'} Buyer</button>
+        ${isEdit && buyer.hubspot_contact_id ? `<button type="button" class="btn btn-purple btn-sm" onclick="closeModal();extractIntel('${buyer.hubspot_contact_id}')">Re-Extract Intel</button>` : ''}
+        ${isEdit ? `<button type="button" class="btn btn-danger" onclick="confirmDeleteBuyer('${id}')">Delete</button>` : ''}
+        <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      </div>
+    </form>
+  `);
+}
+
+function openQuickProfile(name, company, email, hubspotId) {
+  openBuyerModal();
+  setTimeout(() => {
+    const form = document.querySelector('#modalContent form');
+    if (!form) return;
+    const f = (n) => form.querySelector(`[name=${n}]`);
+    if (f('contact_name')) f('contact_name').value = name;
+    if (f('company')) f('company').value = company;
+    if (f('contact_email')) f('contact_email').value = email;
+    if (f('hubspot_contact_id')) f('hubspot_contact_id').value = hubspotId || '';
+  }, 50);
+}
+
+async function submitBuyer(e, id) {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const buyer = Object.fromEntries(fd.entries());
+  try {
+    if (id) { await api(`/revenue/buyers/${id}`, 'PUT', buyer); }
+    else { await api('/revenue/buyers', 'POST', buyer); }
+    closeModal(); toast('Buyer profile saved');
+    await loadAll(); renderCurrentTab();
+  } catch (e) { toast('Failed to save buyer: ' + e.message, 'error'); }
+}
+
+async function confirmDeleteBuyer(id) {
+  if (confirm('Delete this buyer profile?')) {
+    try { await api(`/revenue/buyers/${id}`, 'DELETE'); closeModal(); toast('Buyer deleted'); await loadAll(); renderCurrentTab(); }
+    catch (e) { toast('Failed to delete: ' + e.message, 'error'); }
+  }
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function esc(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+function formatNum(n) {
+  if (n == null) return '0';
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(n >= 10000 ? 0 : 1) + 'K';
+  return n.toLocaleString();
+}
+
+function timeSince(dateStr) {
+  const seconds = Math.floor((new Date() - new Date(dateStr)) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return minutes + 'm ago';
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return hours + 'h ago';
+  return Math.floor(hours / 24) + 'd ago';
+}
+
+function toast(msg, type = 'success') {
+  const container = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.getElementById('headerDate').textContent = new Date().toLocaleDateString('en-US', {
+  weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+});
+
+(async function init() {
+  showOnboarding();
+  await Promise.all([loadAll(), loadHubSpotCache(), loadOwners()]);
+  updateSyncStatus();
+  checkAutoSync();
+  loadActionList();
+})();
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+  if (e.key === '1') switchTab('actions');
+  if (e.key === '2') switchTab('deals');
+  if (e.key === '3') switchTab('inventory');
+  if (e.key === '4') switchTab('buyers');
+  if (e.key === 'n' && e.ctrlKey) {
+    e.preventDefault();
+    const tab = document.querySelector('.tab.active')?.dataset.tab;
+    if (tab === 'deals') openDealModal();
+    if (tab === 'inventory') openProjectModal();
+    if (tab === 'buyers') openBuyerModal();
+  }
+  if (e.key === 's' && e.ctrlKey) { e.preventDefault(); syncHubSpot(); }
+});
+</script>
+</body>
+</html>

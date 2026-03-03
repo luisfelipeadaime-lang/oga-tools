@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClearSky — EY RFP Screener</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/docx@9.5.3/dist/index.umd.cjs"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#0A1628;--dark:#0F2140;--gold:#C8A951;--gold-light:#E8D49A;
+  --green:#16A34A;--green-bg:#F0FDF4;--green-light:#DCFCE7;
+  --red:#DC2626;--red-bg:#FEF2F2;--red-light:#FEE2E2;
+  --amber:#F59E0B;--amber-bg:#FFFBEB;--amber-light:#FEF3C7;
+  --blue:#3B82F6;--blue-bg:#EFF6FF;
+  --bg:#F1F5F9;--card:#FFFFFF;--border:#E2E8F0;
+  --text:#0F172A;--muted:#64748B;--faint:#94A3B8;
+  --shadow:0 1px 3px rgba(0,0,0,.06);
+  --shadow-lg:0 8px 24px rgba(0,0,0,.1);
+  --radius:8px;
+}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+.hdr{background:var(--navy);padding:0 28px;height:54px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.hdr-left{display:flex;align-items:center;gap:20px}
+.hdr-brand{color:var(--gold);font-size:10px;letter-spacing:2.5px;text-transform:uppercase;font-weight:600}
+.hdr h1{color:#fff;font-size:15px;font-weight:600;margin-top:1px}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.countdown{background:rgba(220,38,38,.12);color:#FCA5A5;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;display:flex;align-items:center;gap:6px}
+.countdown .dot{width:6px;height:6px;border-radius:50%;background:#EF4444;animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.btn-gold{background:var(--gold);color:var(--navy);border:none;padding:8px 18px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:700;font-family:inherit;transition:all .15s;display:flex;align-items:center;gap:6px}
+.btn-gold:hover{background:var(--gold-light);transform:translateY(-1px)}
+.container{max-width:1280px;margin:0 auto;padding:20px 28px 60px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.st{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:10px}
+.st-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0}
+.st-icon.a{background:var(--blue-bg);color:var(--blue)}
+.st-icon.b{background:var(--green-light);color:var(--green)}
+.st-icon.c{background:var(--amber-light);color:var(--amber)}
+.st-icon.d{background:var(--red-light);color:var(--red)}
+.st-lbl{font-size:10px;color:var(--faint);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.st-val{font-size:22px;font-weight:700;line-height:1}
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:12px;flex-wrap:wrap}
+.tabs{display:flex;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:3px}
+.tab{padding:7px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s;border:none;background:none;font-family:inherit}
+.tab:hover{color:var(--text)}
+.tab.active{background:var(--navy);color:#fff}
+.tab .cnt{font-size:10px;background:rgba(0,0,0,.06);padding:1px 6px;border-radius:10px;margin-left:5px;font-weight:700}
+.tab.active .cnt{background:rgba(255,255,255,.2)}
+.tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+thead th{background:#F8FAFC;padding:9px 12px;text-align:left;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--faint);border-bottom:2px solid var(--border);white-space:nowrap}
+th:nth-child(1){width:70px}th:nth-child(2){width:auto}th:nth-child(3){width:90px}th:nth-child(4){width:100px}th:nth-child(5){width:50px}th:nth-child(6){width:120px}th:nth-child(7){width:150px}th:nth-child(8){width:45px}th:nth-child(9){width:90px}
+tbody td{padding:10px 12px;border-bottom:1px solid #F1F5F9;vertical-align:middle;overflow:hidden;text-overflow:ellipsis}
+tbody tr.row{cursor:pointer;transition:background .1s}
+tbody tr.row:hover{background:#F8FAFC}
+tbody tr.row.selected{background:#EFF6FF;box-shadow:inset 3px 0 0 var(--navy)}
+.empty-msg{text-align:center;padding:40px 20px;color:var(--faint);font-size:13px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;letter-spacing:.3px}
+.badge.pass{background:var(--green-bg);color:var(--green)}.badge.fail{background:var(--red-bg);color:var(--red)}.badge.gaps{background:var(--amber-bg);color:var(--amber)}.badge.pending{background:#F1F5F9;color:var(--faint)}
+.badge .bd{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.badge.pass .bd{background:var(--green)}.badge.fail .bd{background:var(--red)}.badge.gaps .bd{background:var(--amber)}.badge.pending .bd{background:var(--faint)}
+.rt-badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.3px;white-space:nowrap;margin-right:3px}
+.rt-badge.rt-aaa{background:#DCFCE7;color:#16A34A}.rt-badge.rt-aa{background:#DCFCE7;color:#16A34A}.rt-badge.rt-a{background:#D1FAE5;color:#059669}
+.rt-badge.rt-bbb{background:#FEF3C7;color:#D97706}.rt-badge.rt-bb{background:#FEF3C7;color:#D97706}.rt-badge.rt-b{background:#FEF3C7;color:#D97706}
+.rt-badge.rt-ccc{background:#FEE2E2;color:#DC2626}.rt-badge.rt-cc{background:#FEE2E2;color:#DC2626}.rt-badge.rt-c{background:#FEE2E2;color:#DC2626}
+.rt-badge.rt-d{background:#FEE2E2;color:#991B1B}.rt-badge.rt-nr{background:#F1F5F9;color:#94A3B8}
+.sc{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px}
+.sc.hi{color:var(--green)}.sc.md{color:var(--amber)}.sc.lo{color:var(--red)}
+.mc{font-size:11px;padding:2px 7px;border-radius:4px;font-weight:600;white-space:nowrap}
+.mc.ok{background:var(--green-bg);color:var(--green)}.mc.bad{background:var(--red-bg);color:var(--red)}.mc.unk{background:#F1F5F9;color:var(--muted)}
+.vb{display:flex;align-items:center;gap:6px}.vt{flex:1;height:5px;background:#F1F5F9;border-radius:3px;overflow:hidden}.vf{height:100%;border-radius:3px}
+.vf.g{background:var(--green)}.vf.y{background:var(--amber)}.vf.r{background:var(--red)}
+.vl{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);min-width:36px;text-align:right}
+.pn{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pd{font-size:11px;color:var(--faint);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fc{font-size:11px;color:var(--faint)}
+.acts{display:flex;gap:3px}
+.ab{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s;font-size:12px;color:var(--muted)}
+.ab:hover{border-color:var(--navy);color:var(--navy);box-shadow:0 2px 4px rgba(0,0,0,.08)}
+.ab.rp{background:var(--navy);border-color:var(--navy);color:#fff}.ab.rp:hover{background:#162d50}
+.ab.dl:hover{border-color:var(--red);color:var(--red);background:var(--red-bg)}
+/* Detail panel */
+.detail{background:var(--card);border:1px solid var(--border);border-top:3px solid var(--navy);border-radius:0 0 var(--radius) var(--radius);margin-top:-1px;display:none;animation:slideUp .2s ease}
+.detail.open{display:block}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.det-bar{padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px}
+.det-bar-left{display:flex;align-items:center;gap:14px}
+.det-score{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:18px;color:#fff;flex-shrink:0}
+.det-score.hi{background:var(--green)}.det-score.md{background:var(--amber)}.det-score.lo{background:var(--red)}
+.det-name{font-size:18px;font-weight:700}.det-meta{font-size:12px;color:var(--muted)}
+.det-bar-right{display:flex;gap:8px;align-items:center}
+.det-btn{padding:8px 16px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:1px solid var(--border);background:var(--card);color:var(--text);transition:all .12s;display:flex;align-items:center;gap:5px}
+.det-btn:hover{border-color:var(--navy);box-shadow:var(--shadow)}
+.det-btn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}.det-btn.primary:hover{background:#162d50}
+.det-close{width:32px;height:32px;border-radius:6px;border:1px solid var(--border);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--faint)}
+.det-close:hover{background:var(--red-bg);color:var(--red);border-color:var(--red)}
+.det-body{padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.det-col h3{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--faint);font-weight:700;margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.det-col h3:first-child{margin-top:0}
+.det-item{font-size:12px;margin-bottom:5px;line-height:1.5;display:flex;gap:6px}
+.det-item .icon{flex-shrink:0;width:16px;font-weight:700}
+.det-item.pass{color:var(--green)}.det-item.fail{color:var(--red)}.det-item.gap{color:var(--amber)}
+.det-flag{font-size:12px;padding:8px 10px;background:var(--red-bg);border-left:3px solid var(--red);border-radius:0 4px 4px 0;margin-bottom:5px;line-height:1.4}
+.det-miss{font-size:12px;padding:4px 0;color:var(--muted)}
+.det-pricing{font-size:12px;padding:10px;background:var(--green-bg);border-left:3px solid var(--green);border-radius:0 4px 4px 0;line-height:1.5;margin-bottom:5px}
+.det-ready{font-size:12px;padding:10px;background:var(--amber-bg);border-left:3px solid var(--amber);border-radius:0 4px 4px 0;line-height:1.5}
+.qa{background:#F8FAFC;border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:8px}
+.qa-q{font-size:11px;font-weight:700;color:var(--navy);margin-bottom:4px;line-height:1.4}
+.qa-a{font-size:12px;color:var(--muted);line-height:1.6}
+.qa-cp{font-size:10px;padding:4px 10px;background:var(--navy);color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:600;margin-top:6px;font-family:inherit}
+.qa-cp:hover{background:#162d50}
+/* RFP Brief */
+.rfp-brief{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px 28px;box-shadow:var(--shadow);margin-bottom:16px}
+.rfp-brief h2{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.rfp-brief .sub{font-size:12px;color:var(--faint);margin-bottom:16px}
+.rfp-brief pre{font-family:'DM Sans',sans-serif;font-size:13px;line-height:1.8;color:var(--text);white-space:pre-wrap;max-height:500px;overflow-y:auto}
+/* Slide panel */
+.ov{position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:200;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(2px)}
+.ov.open{opacity:1;pointer-events:auto}
+.sp{position:fixed;top:0;right:0;bottom:0;width:500px;max-width:100vw;background:var(--card);z-index:201;transform:translateX(100%);transition:transform .22s ease;overflow-y:auto;box-shadow:-4px 0 20px rgba(0,0,0,.1)}
+.sp.open{transform:translateX(0)}
+.sp-hdr{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--card);z-index:5}
+.sp-hdr h2{font-size:15px;font-weight:700}
+.sp-close{width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--faint)}
+.sp-close:hover{background:var(--red-bg);color:var(--red);border-color:var(--red)}
+.sp-body{padding:16px 20px}
+.sp-sec{margin-bottom:16px}
+.sp-sec-t{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--faint);font-weight:700;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.f{margin-bottom:10px}
+.f label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:3px}
+.f .rq{color:var(--red)}
+.f input,.f select,.f textarea{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;background:#fff;transition:border .12s}
+.f input:focus,.f select:focus,.f textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(10,22,40,.06)}
+.f textarea{resize:vertical;min-height:56px}
+.f .ht{font-size:10px;color:var(--faint);margin-top:2px}
+.fr{display:grid;gap:8px}.fr2{grid-template-columns:1fr 1fr}.fr5{grid-template-columns:repeat(5,1fr)}
+.uz{border:2px dashed var(--border);border-radius:var(--radius);padding:20px;text-align:center;cursor:pointer;transition:all .12s}
+.uz:hover{border-color:var(--navy);background:#F8FAFC}
+.uz p{font-size:12px;color:var(--muted)}.uz small{font-size:10px;color:var(--faint)}
+.fl{margin-top:6px}
+.fi{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:#F8FAFC;border-radius:5px;margin-bottom:3px;font-size:11px}
+.fi button{background:none;border:none;color:var(--red);cursor:pointer;font-size:12px}
+.btn-sv{width:100%;padding:13px;background:var(--navy);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;margin-top:8px}
+.btn-sv:hover{background:#162d50;transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+.btn-sv:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.loading-bar{display:none;text-align:center;padding:8px;font-size:12px;color:var(--muted);background:var(--blue-bg);border-radius:6px;margin-bottom:8px}
+.loading-bar.show{display:block}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}.toast.ok{background:var(--green);color:#fff}.toast.err{background:var(--red);color:#fff}
+@media(max-width:900px){.stats{grid-template-columns:1fr 1fr}.det-body{grid-template-columns:1fr}.container{padding:12px 16px 60px}.sp{width:100vw}.fr5{grid-template-columns:repeat(3,1fr)}.tbl-wrap{overflow-x:auto}table{min-width:700px}}
+@media(max-width:600px){.stats{grid-template-columns:1fr}.toolbar{flex-direction:column;align-items:stretch}.tabs{width:100%}.tab{flex:1;text-align:center}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-left"><div><div class="hdr-brand">ClearSky Limited</div><h1>EY Abatable RFP Screener</h1></div></div>
+  <div class="hdr-right">
+    <div class="countdown"><span class="dot"></span><span id="cd"></span></div>
+    <button class="btn-gold" id="btn-add-hdr" onclick="openPanel()">+ Add Project</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="stats" id="stats-bar"></div>
+
+  <div class="toolbar">
+    <div class="tabs" id="tabs-bar"></div>
+    <button class="btn-gold" id="btn-add-tbl" onclick="openPanel()">+ Add Project</button>
+  </div>
+
+  <div id="tab-arr"><div class="tbl-wrap"><table><thead><tr><th>Status</th><th>Project</th><th>Country</th><th>Methodology</th><th>Score</th><th>Total Volume</th><th>Ratings</th><th>Docs</th><th>Actions</th></tr></thead><tbody id="tbody-arr"></tbody></table></div><div class="detail" id="detail"></div></div>
+  <div id="tab-bio" style="display:none"><div class="tbl-wrap"><table><thead><tr><th>Status</th><th>Project</th><th>Country</th><th>Methodology</th><th>Score</th><th>Total Volume</th><th>Ratings</th><th>Docs</th><th>Actions</th></tr></thead><tbody id="tbody-bio"></tbody></table></div></div>
+  <div id="tab-soil" style="display:none"><div class="tbl-wrap"><table><thead><tr><th>Status</th><th>Project</th><th>Country</th><th>Methodology</th><th>Score</th><th>Total Volume</th><th>Ratings</th><th>Docs</th><th>Actions</th></tr></thead><tbody id="tbody-soil"></tbody></table></div></div>
+  <div id="tab-brief" style="display:none">
+    <div class="rfp-brief"><h2>ARR RFP Overview</h2><div class="sub">EY Afforestation, Reforestation & Revegetation — Feb 2026</div><pre>After a successful spot RFP in 2025, EY is seeking proposals for near-term offtake of high-quality Nature Based removal projects. This RFP is focused on ARR projects, deliveries 2026-2030.
+
+ACCEPTED METHODOLOGIES: VM0047, ISM Reforestation, ISM Agroforestry, Plan Vivo Acorn, M001 (Equitable Earth)
+STANDARDS: VCS (Verra), Isometric, Plan Vivo (ex-post only), Equitable Earth
+CARBON PROFILE: Removals only
+VOLUME: 10,000 – 100,000 tCO₂e per year
+STATUS: Projects under validation eligible (forward purchase)
+RATING: Preferred minimum B (Sylvera/BeZero) or Tier 2 (Calyx)
+
+EXCLUDED: REDD+, IFM, Gold Standard ARR, VM0033, VM0048, CAR Mexico, OFAC-sanctioned countries
+
+DEADLINE: 27 February 2026, 23:59 GMT
+SHORTLIST: March 2026 | DUE DILIGENCE: April-May 2026 | VERPA: June 2026</pre></div>
+    <div class="rfp-brief"><h2>Biochar RFP Overview</h2><div class="sub">EY Biochar Projects — Feb 2026</div><pre>Same procurement cycle as ARR. Focused on biochar carbon removal projects.
+
+ACCEPTED METHODOLOGIES: VM0044, Puro Biochar, ISM Biochar Production and Storage
+STANDARDS: VCS (Verra), Puro Earth, Isometric
+CARBON PROFILE: Removals only
+VOLUME: 5,000 – 20,000 tCO₂e per year (100k total 2026-2030)
+ADDITIONAL: Feedstock sustainability certification, production facility details, application/storage documentation
+
+EXCLUDED: Same as ARR — no OFAC, no unapproved methodologies
+DEADLINE: Same as ARR</pre></div>
+    <div class="rfp-brief"><h2>Soil Carbon RFP Overview</h2><div class="sub">EY Soil Carbon Removal Projects — Feb 2026</div><pre>Same procurement cycle as ARR and Biochar. Focused on soil carbon removal projects.
+
+ACCEPTED METHODOLOGIES: VM0042 Improved Agricultural Land Management, Climate Action Reserve U.S. Soil Enrichment Protocol
+STANDARDS: VCS (Verra), Climate Action Reserve (CAR)
+CARBON PROFILE: Removals only
+VOLUME: 10,000 – 60,000 tCO₂e per year per project
+CO-BENEFITS: Supply chain sustainability, biodiversity, improved livelihoods preferred
+PAYMENT: Prepayment discount offers encouraged alongside payment on delivery (50 days)
+RATINGS: Preferred B+ (Sylvera/BeZero) or Tier 2 (Calyx). Not required.
+GEOGRAPHIES: EY operational countries preferred (150+). OFAC excluded.
+
+DEADLINE: Same as ARR/Biochar — 27 February 2026
+SHORTLIST: Week of 2 March | DD: Week of 6 April | VERPA: June 2026</pre></div>
+  </div>
+</div>
+
+<div class="ov" id="ov" onclick="closePanel()"></div>
+<div class="sp" id="sp">
+  <div class="sp-hdr"><h2 id="sp-title">Add Project</h2><button class="sp-close" onclick="closePanel()">✕</button></div>
+  <div class="sp-body">
+    <div class="loading-bar" id="sp-loading"></div>
+    <div class="sp-sec"><div class="sp-sec-t">Basic Info</div>
+      <div class="fr fr2"><div class="f"><label>Your name</label><input id="ff-who" placeholder="Ana / Carolina / Luis"></div><div class="f"><label>Target RFP<span class="rq">*</span></label><select id="ff-rfp" onchange="onRfpChange()"><option value="">Select...</option><option value="ARR">ARR (Reforestation)</option><option value="Biochar">Biochar</option><option value="Soil Carbon">Soil Carbon</option></select></div></div>
+      <div class="fr fr2"><div class="f"><label>Project name<span class="rq">*</span></label><input id="ff-name" placeholder="e.g. Fasera Reforestation"></div><div class="f"><label>Developer<span class="rq">*</span></label><input id="ff-dev" placeholder="Developer company"></div></div>
+      <div class="fr fr2"><div class="f"><label>Country<span class="rq">*</span></label><input id="ff-country" placeholder="e.g. Mozambique"></div><div class="f"><label>Developer contact</label><input id="ff-contact" placeholder="Name, email, phone"></div></div>
+    </div>
+    <div class="sp-sec"><div class="sp-sec-t">Technical</div>
+      <div class="fr fr2"><div class="f"><label>Methodology<span class="rq">*</span></label><select id="ff-meth"><option value="">Select RFP first...</option></select></div><div class="f"><label>Standard<span class="rq">*</span></label><select id="ff-std"><option value="">Select RFP first...</option></select></div></div>
+      <div class="fr fr2"><div class="f"><label>Registry ID</label><input id="ff-regid" placeholder="e.g. VCS-4884"></div><div class="f"><label>Status</label><select id="ff-status"><option value="">Select...</option><option>Under validation</option><option>Registered</option><option>First issuance completed</option><option>Multiple issuances</option></select></div></div>
+      <div class="f"><label>Carbon profile<span class="rq">*</span></label><select id="ff-carbon"><option value="">Select...</option><option value="Removal">Removal</option><option value="Avoidance">Avoidance</option><option value="Mixed">Mixed</option></select></div>
+      <div class="f"><label>Project registry URL</label><input id="ff-url" type="url" placeholder="https://registry.verra.org/..."><p class="ht">AI reads this page to extract project details</p></div>
+    </div>
+    <div class="sp-sec"><div class="sp-sec-t">Volume (tCO₂e / year)</div>
+      <div class="fr fr5"><div class="f"><label>2026</label><input id="ff-v26" type="number" placeholder="0"></div><div class="f"><label>2027</label><input id="ff-v27" type="number" placeholder="0"></div><div class="f"><label>2028</label><input id="ff-v28" type="number" placeholder="0"></div><div class="f"><label>2029</label><input id="ff-v29" type="number" placeholder="0"></div><div class="f"><label>2030</label><input id="ff-v30" type="number" placeholder="0"></div></div>
+      <p class="ht" style="margin-top:4px">Not all years needed. Projects starting 2028+ OK.</p>
+    </div>
+    <div class="sp-sec"><div class="sp-sec-t">Pricing (USD / tCO₂e)</div>
+      <div class="fr fr2"><div class="f"><label>On delivery</label><input id="ff-pd" type="number" placeholder="e.g. 25"></div><div class="f"><label>With prepayment</label><input id="ff-pp" type="number" placeholder="e.g. 20"></div></div>
+    </div>
+    <div class="sp-sec" id="sec-arr"><div class="sp-sec-t">ARR Details</div>
+      <div class="fr fr2"><div class="f"><label>Expected issuance</label><input id="ff-issue" placeholder="e.g. Q3 2027"></div><div class="f"><label>Project length (yrs)</label><input id="ff-len" type="number" placeholder="30"></div></div>
+      <div class="fr fr2"><div class="f"><label>Avg annual credits</label><input id="ff-avg" type="number" placeholder="75000"></div><div class="f"><label>Lifetime potential</label><input id="ff-life" type="number" placeholder="2250000"></div></div>
+    </div>
+    <div class="sp-sec"><div class="sp-sec-t">Third-Party Ratings</div>
+      <div class="fr fr2"><div class="f"><label>BeZero Rating</label><select id="ff-bezero"><option value="">Select...</option><option>AAA</option><option>AA</option><option>A</option><option>BB</option><option>B</option><option>C</option><option>D</option><option>Not Rated</option><option>Unknown</option></select><p class="ht">Free at bezerocarbon.com</p></div><div class="f"><label>Sylvera Rating</label><select id="ff-sylvera"><option value="">Select...</option><option>AAA</option><option>AA</option><option>A</option><option>BBB</option><option>BB</option><option>B</option><option>CCC</option><option>CC</option><option>C</option><option>D</option><option>Not Rated</option><option>Unknown</option></select><p class="ht">Paid — sylvera.com</p></div></div>
+      <div class="fr fr2"><div class="f"><label>Calyx Rating</label><select id="ff-calyx"><option value="">Select...</option><option>AAA</option><option>AA</option><option>A</option><option>BBB</option><option>BB</option><option>B</option><option>CCC</option><option>CC</option><option>C</option><option>D</option><option>Not Rated</option><option>Unknown</option></select><p class="ht">Free tier at calyxglobal.com</p></div><div class="f"></div></div>
+    </div>
+    <div class="sp-sec"><div class="sp-sec-t">Documents</div>
+      <div id="existing-files"></div>
+      <div class="uz" onclick="document.getElementById('ff-files').click()"><p><strong>Drop files</strong> or click to browse</p><small>PDDs, decks, maps, reports — AI reads these to draft answers</small><input type="file" id="ff-files" multiple hidden accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.png,.jpg,.jpeg"></div>
+      <div class="fl" id="file-list"></div>
+    </div>
+    <div class="sp-sec"><div class="f"><label>Notes for Luis</label><textarea id="ff-notes" placeholder="Risks, deal structure, timeline..."></textarea></div></div>
+    <button class="btn-sv" id="btn-save" onclick="saveProject()">Save & Screen with AI</button>
+    <p style="text-align:center;font-size:10px;color:var(--faint);margin-top:6px">Screening runs instantly. Doc extraction in background.</p>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+var API_BASE='https://api-tools.oga.earth';
+var TOOL='ey-rfp';
+var projects=[];
+var projectFiles={};
+var editId=null;
+var currentTab='arr';
+var openDetailId=null;
+
+// ═══ ACCEPTED METHODOLOGIES (for chip coloring) ═══
+var ARR_METH=['VM0047','ISM Reforestation','ISM Agroforestry','PV Acorn','M001 (Equitable Earth)'];
+var BIO_METH=['VM0044','Puro Biochar','ISM Biochar'];
+var SOIL_METH=['VM0042','CAR Soil Enrichment Protocol'];
+var ALL_ACCEPTED=[].concat(ARR_METH,BIO_METH,SOIL_METH);
+
+// ═══ HELPERS ═══
+function $(id){return document.getElementById(id)}
+function toast(msg,ok){var t=$('toast');t.textContent=msg;t.className='toast '+(ok!==false?'ok':'err')+' show';setTimeout(function(){t.classList.remove('show')},3000)}
+async function api(path,opts){opts=opts||{};opts.headers=opts.headers||{};if(!(opts.body instanceof FormData))opts.headers['Content-Type']='application/json';var r=await fetch(API_BASE+path,opts);if(!r.ok)throw new Error('API '+r.status);return r.json()}
+
+// ═══ COUNTDOWN ═══
+function updateCountdown(){var dl=new Date('2026-02-27T23:59:00Z'),n=new Date(),d=dl-n;if(d<=0){$('cd').textContent='CLOSED';return}var dd=Math.floor(d/864e5),hh=Math.floor(d%864e5/36e5),mm=Math.floor(d%36e5/6e4);$('cd').textContent=dd+'d '+hh+'h '+mm+'m left'}
+updateCountdown();setInterval(updateCountdown,6e4);
+
+// ═══ LOAD PROJECTS ═══
+async function loadProjects(){
+  try{
+    var res=await api('/api/'+TOOL+'/projects');
+    projects=res.projects||[];
+    for(var i=0;i<projects.length;i++){
+      projects[i].data=typeof projects[i].data==='string'?JSON.parse(projects[i].data):projects[i].data;
+      projects[i].screening=projects[i].screening||(typeof projects[i].latest_screening==='string'?JSON.parse(projects[i].latest_screening):projects[i].latest_screening)||null;
+    }
+    // Load file counts
+    for(var i=0;i<projects.length;i++){
+      try{var fr=await api('/api/files/'+TOOL+'/'+projects[i].id);projectFiles[projects[i].id]=fr.files||[]}catch(e){projectFiles[projects[i].id]=[]}
+    }
+  }catch(e){console.error('Load error:',e);projects=[]}
+  render();
+}
+
+// ═══ RENDER ═══
+function render(){
+  var arrProjs=projects.filter(function(p){return p.data.rfp==='ARR'});
+  var bioProjs=projects.filter(function(p){return p.data.rfp==='Biochar'});
+  var soilProjs=projects.filter(function(p){return p.data.rfp==='Soil Carbon'});
+  var ready=0,gaps=0,fails=0;
+  projects.forEach(function(p){if(!p.screening)return;var st=p.screening.overall_status||'';if(st.toLowerCase().indexOf('pass')>-1||st.toLowerCase().indexOf('ready')>-1)ready++;else if(st.toLowerCase().indexOf('fail')>-1||st.toLowerCase().indexOf('not')>-1)fails++;else gaps++});
+
+  // Stats
+  $('stats-bar').innerHTML='<div class="st"><div class="st-icon a">'+projects.length+'</div><div><div class="st-lbl">Total Projects</div><div class="st-val">'+projects.length+'</div></div></div>'
+    +'<div class="st"><div class="st-icon b">✓</div><div><div class="st-lbl">Ready to Submit</div><div class="st-val">'+ready+'</div></div></div>'
+    +'<div class="st"><div class="st-icon c">!</div><div><div class="st-lbl">Has Gaps</div><div class="st-val">'+gaps+'</div></div></div>'
+    +'<div class="st"><div class="st-icon d">✕</div><div><div class="st-lbl">Does Not Qualify</div><div class="st-val">'+fails+'</div></div></div>';
+
+  // Tabs
+  $('tabs-bar').innerHTML='<button class="tab'+(currentTab==='arr'?' active':'')+'" onclick="switchTab(\'arr\',this)">ARR <span class="cnt">'+arrProjs.length+'</span></button>'
+    +'<button class="tab'+(currentTab==='bio'?' active':'')+'" onclick="switchTab(\'bio\',this)">Biochar <span class="cnt">'+bioProjs.length+'</span></button>'
+    +'<button class="tab'+(currentTab==='soil'?' active':'')+'" onclick="switchTab(\'soil\',this)">Soil Carbon <span class="cnt">'+soilProjs.length+'</span></button>'
+    +'<button class="tab'+(currentTab==='brief'?' active':'')+'" onclick="switchTab(\'brief\',this)">RFP Brief</button>';
+
+  renderTable('tbody-arr',arrProjs);
+  renderTable('tbody-bio',bioProjs);
+  renderTable('tbody-soil',soilProjs);
+}
+
+function ratingBadge(label,val){if(!val||val==='Unknown')return'';var cls='rt-nr';var v=val.toUpperCase();if(v==='AAA'||v==='AA')cls='rt-aaa';else if(v==='A')cls='rt-a';else if(v==='BBB'||v==='BB'||v==='B')cls='rt-bbb';else if(v==='CCC'||v==='CC'||v==='C')cls='rt-ccc';else if(v==='D')cls='rt-d';else if(v==='NOT RATED')cls='rt-nr';return '<span class="rt-badge '+cls+'" title="'+esc(label)+'">'+esc(label[0])+':'+esc(val)+'</span>'}
+function renderTable(tbodyId,projs){
+  var tb=$(tbodyId);
+  if(!projs.length){tb.innerHTML='<tr><td colspan="9" class="empty-msg">No projects yet — click <strong>+ Add Project</strong> to start</td></tr>';return}
+  tb.innerHTML=projs.map(function(p){
+    var d=p.data,s=p.screening,files=projectFiles[p.id]||[];
+    var status='pending',statusLabel='Pending',score=null,scoreClass='';
+    if(s&&!s.error){
+      score=s.score;
+      var st=(s.overall_status||'').toLowerCase();
+      if(st.indexOf('pass')>-1||st.indexOf('ready')>-1){status='pass';statusLabel='Ready'}
+      else if(st.indexOf('fail')>-1||st.indexOf('not')>-1){status='fail';statusLabel='Fail'}
+      else{status='gaps';statusLabel='Gaps'}
+      scoreClass=score>=70?'hi':score>=40?'md':'lo';
+    }
+    var methOk=ALL_ACCEPTED.some(function(m){return(d.methodology||'').indexOf(m)>-1});
+    var methClass=methOk?'ok':d.methodology?'bad':'unk';
+    var vol=0;['v2026','v2027','v2028','v2029','v2030'].forEach(function(k){vol+=parseInt(d[k])||0});
+    var volPct=Math.min(100,Math.round(vol/500000*100));
+    var volClass=vol>100000?'g':vol>0?'y':'r';
+    var volStr=vol>=1000?(vol/1000).toFixed(0)+'k':vol||'0';
+    var hasReport=s&&!s.error;
+    var ratings=ratingBadge('BeZero',d.bezero_rating)+ratingBadge('Sylvera',d.sylvera_rating)+ratingBadge('Calyx',d.calyx_rating);
+
+    return '<tr class="row'+(openDetailId===p.id?' selected':'')+'" onclick="showDetail(\''+p.id+'\')">'
+      +'<td><span class="badge '+status+'"><span class="bd"></span>'+statusLabel+'</span></td>'
+      +'<td><div class="pn">'+esc(d.name||'Untitled')+'</div><div class="pd">'+esc(d.developer||'')+(d.submittedBy?' · '+esc(d.submittedBy):'')+'</div></td>'
+      +'<td>'+esc(d.country||'—')+'</td>'
+      +'<td><span class="mc '+methClass+'">'+esc(d.methodology||'—')+'</span></td>'
+      +'<td>'+(score!==null?'<span class="sc '+scoreClass+'">'+score+'</span>':'<span style="color:var(--faint)">—</span>')+'</td>'
+      +'<td><div class="vb"><div class="vt"><div class="vf '+volClass+'" style="width:'+volPct+'%"></div></div><span class="vl">'+volStr+'</span></div></td>'
+      +'<td>'+(ratings||'<span style="color:var(--faint);font-size:10px">—</span>')+'</td>'
+      +'<td><span class="fc">📎 '+files.length+'</span></td>'
+      +'<td><div class="acts">'
+        +(hasReport?'<button class="ab rp" title="Report" onclick="event.stopPropagation();generateReport(\''+p.id+'\')">📄</button>':'')
+        +'<button class="ab" title="Edit" onclick="event.stopPropagation();editProject(\''+p.id+'\')">✎</button>'
+        +'<button class="ab dl" title="Delete" onclick="event.stopPropagation();deleteProject(\''+p.id+'\')">🗑</button>'
+      +'</div></td></tr>';
+  }).join('');
+}
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+// ═══ TABS ═══
+function switchTab(t,el){
+  currentTab=t;
+  $('tab-arr').style.display=t==='arr'?'block':'none';
+  $('tab-bio').style.display=t==='bio'?'block':'none';
+  $('tab-soil').style.display=t==='soil'?'block':'none';
+  $('tab-brief').style.display=t==='brief'?'block':'none';
+  $('btn-add-tbl').style.display=t==='brief'?'none':'flex';
+  $('btn-add-hdr').style.display=t==='brief'?'none':'flex';
+  closeDetail();
+  render();
+}
+
+// ═══ DETAIL PANEL ═══
+function showDetail(pid){
+  if(openDetailId===pid){closeDetail();return}
+  openDetailId=pid;
+  var p=projects.find(function(x){return x.id===pid});
+  if(!p)return;
+  var d=p.data,s=p.screening,files=projectFiles[pid]||[];
+  var det=$('detail');
+
+  // Move detail under the correct table
+  var tab=d.rfp==='Biochar'?$('tab-bio'):d.rfp==='Soil Carbon'?$('tab-soil'):$('tab-arr');
+  tab.appendChild(det);
+
+  if(!s||s.error){
+    var errMsg=s&&s.error?'<div style="color:var(--red);font-size:13px;margin-bottom:12px">⚠ '+esc(s.error)+'</div>':'';
+    det.innerHTML='<div style="padding:24px;text-align:center">'
+      +errMsg
+      +'<div style="color:var(--faint);margin-bottom:16px">No AI screening results yet.</div>'
+      +'<button class="det-btn primary" onclick="reScreen(\''+pid+'\')" id="btn-rescreen">🔄 Screen with AI</button>'
+      +'</div>';
+    det.classList.add('open');
+    render();
+    return;
+  }
+
+  var sc=s.score>=70?'hi':s.score>=40?'md':'lo';
+  var html='<div class="det-bar"><div class="det-bar-left">'
+    +'<div class="det-score '+sc+'">'+s.score+'</div>'
+    +'<div><div class="det-name">'+esc(d.name||'')+'</div><div class="det-meta">'+esc(d.developer||'')+' · '+esc(d.country||'')+' · '+esc(d.methodology||'')+' · '+esc(d.standard||'')+'</div>'
+    +(d.bezero_rating||d.sylvera_rating||d.calyx_rating?'<div style="margin-top:6px">'+ratingBadge('BeZero',d.bezero_rating)+ratingBadge('Sylvera',d.sylvera_rating)+ratingBadge('Calyx',d.calyx_rating)+'</div>':'')
+    +'</div>'
+    +'</div><div class="det-bar-right">'
+    +'<button class="det-btn primary" onclick="generateReport(\''+pid+'\')">📄 Download Report</button>'
+    +'<button class="det-btn" onclick="reScreen(\''+pid+'\')">🔄 Re-screen</button>'
+    +'<button class="det-btn" onclick="editProject(\''+pid+'\')">✎ Edit</button>'
+    +'<button class="det-close" onclick="closeDetail()">✕</button>'
+    +'</div></div>';
+
+  html+='<div class="det-body"><div class="det-col">';
+
+  // Criteria
+  html+='<h3>AI Criteria Assessment</h3>';
+  if(s.criteria_results){s.criteria_results.forEach(function(c){
+    var cls=c.status==='pass'?'pass':c.status==='fail'?'fail':'gap';
+    var icon=c.status==='pass'?'✓':c.status==='fail'?'✕':'⚠';
+    html+='<div class="det-item '+cls+'"><span class="icon">'+icon+'</span><span><strong>'+esc(c.criterion)+':</strong> '+esc(c.detail)+'</span></div>';
+  })}
+
+  // Flags
+  if(s.flags&&s.flags.length){html+='<h3>⚠ Flags & Risks</h3>';s.flags.forEach(function(f){html+='<div class="det-flag">'+esc(f)+'</div>'})}
+
+  // Missing
+  if(s.missing_information&&s.missing_information.length){html+='<h3>Missing Information</h3>';s.missing_information.forEach(function(m){html+='<div class="det-miss">☐ '+esc(m)+'</div>'})}
+
+  // Pricing
+  if(s.pricing_recommendation){html+='<h3>💰 Pricing Guidance</h3><div class="det-pricing">'+esc(s.pricing_recommendation)+'</div>'}
+
+  // Readiness
+  if(s.submission_readiness){html+='<h3>🚀 Submission Readiness</h3><div class="det-ready">'+esc(s.submission_readiness)+'</div>'}
+
+  // Files
+  if(files.length){html+='<h3>📎 Uploaded Files</h3>';files.forEach(function(f){
+    html+='<div class="fi"><span>📎 '+esc(f.original_name)+' ('+Math.round(f.size_bytes/1024)+'KB)</span><a href="#" onclick="event.preventDefault();downloadFile(\''+f.id+'\',\''+esc(f.original_name)+'\')">↓</a></div>';
+  })}
+
+  html+='</div><div class="det-col">';
+
+  // Q&A
+  html+='<h3>Draft Abatable Answers</h3><p style="font-size:11px;color:var(--faint);margin-bottom:12px;font-style:italic">Review and copy-paste into the Abatable portal</p>';
+  if(s.draft_answers&&s.draft_answers.length){s.draft_answers.forEach(function(qa,i){
+    html+='<div class="qa"><div class="qa-q">Q'+(i+1)+': '+esc(qa.question)+'</div><div class="qa-a">'+esc(qa.suggested_answer)+'</div><button class="qa-cp" onclick="copyText(this)">Copy answer</button></div>';
+  })}else{html+='<div style="color:var(--faint);font-size:12px;padding:12px">No draft answers generated. Upload project documents for AI to generate detailed answers.</div>'}
+
+  html+='</div></div>';
+  det.innerHTML=html;
+  det.classList.add('open');
+  render();
+  det.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function closeDetail(){openDetailId=null;$('detail').classList.remove('open');$('detail').innerHTML='';render()}
+function copyText(btn){var a=btn.previousElementSibling.textContent;navigator.clipboard.writeText(a).then(function(){var o=btn.textContent;btn.textContent='Copied!';btn.style.background='var(--green)';setTimeout(function(){btn.textContent=o;btn.style.background=''},1500)})}
+async function reScreen(pid){
+  // Find ALL re-screen buttons on the page and disable them with loading text
+  var btns=document.querySelectorAll('[onclick*="reScreen"]');
+  btns.forEach(function(b){b.disabled=true;b.dataset.origText=b.textContent;b.textContent='⏳ Screening...'});
+  toast('AI screening started...');
+  try{
+    // Extract any unextracted files first
+    var fl=await api('/api/files/'+TOOL+'/'+pid);
+    var n=(fl.files||[]).length;
+    for(var x=0;x<n;x++){
+      try{var ex=await api('/api/'+TOOL+'/projects/'+pid+'/extract',{method:'POST'});if(!ex.extracted&&ex.remaining===0)break}catch(e){break}
+    }
+    await api('/api/'+TOOL+'/projects/'+pid+'/screen',{method:'POST'});
+    toast('Re-screened!');
+  }catch(e){toast('Screening failed: '+e.message,false)}
+  btns.forEach(function(b){b.disabled=false;b.textContent=b.dataset.origText||'🔄 Re-screen'});
+  closeDetail();
+  await loadProjects();
+  showDetail(pid);
+}
+
+// ═══ RFP-DEPENDENT DROPDOWNS ═══
+var METHS={ARR:['VM0047','ISM Reforestation','ISM Agroforestry','PV Acorn','M001 (Equitable Earth)','Other'],Biochar:['VM0044','Puro Biochar','ISM Biochar','Other'],'Soil Carbon':['VM0042','CAR Soil Enrichment Protocol','Other']};
+var STDS={ARR:['VCS (Verra)','Isometric','Plan Vivo','Equitable Earth','Other'],Biochar:['VCS (Verra)','Puro Earth','Isometric','Other'],'Soil Carbon':['VCS (Verra)','Climate Action Reserve','Other']};
+function onRfpChange(){
+  var rfp=$('ff-rfp').value;
+  $('sec-arr').style.display=(rfp==='Biochar'||rfp==='Soil Carbon')?'none':'block';
+  var m=$('ff-meth'),s=$('ff-std');
+  m.innerHTML='<option value="">Select...</option>';s.innerHTML='<option value="">Select...</option>';
+  if(rfp&&METHS[rfp]){METHS[rfp].forEach(function(v){m.innerHTML+='<option>'+v+'</option>'});STDS[rfp].forEach(function(v){s.innerHTML+='<option>'+v+'</option>'})}
+}
+
+// ═══ FORM: SAVE ═══
+function getFormData(){return{name:$('ff-name').value,developer:$('ff-dev').value,country:$('ff-country').value,rfp:$('ff-rfp').value,methodology:$('ff-meth').value,standard:$('ff-std').value,registryId:$('ff-regid').value,status:$('ff-status').value,carbon:$('ff-carbon').value,registryUrl:$('ff-url').value,v2026:$('ff-v26').value,v2027:$('ff-v27').value,v2028:$('ff-v28').value,v2029:$('ff-v29').value,v2030:$('ff-v30').value,priceD:$('ff-pd').value,priceP:$('ff-pp').value,expectedIssuance:$('ff-issue').value,projectLength:$('ff-len').value,avgAnnual:$('ff-avg').value,lifetimePotential:$('ff-life').value,bezero_rating:$('ff-bezero').value,sylvera_rating:$('ff-sylvera').value,calyx_rating:$('ff-calyx').value,contact:$('ff-contact').value,submittedBy:$('ff-who').value,notes:$('ff-notes').value}}
+function setFormData(d){$('ff-name').value=d.name||'';$('ff-dev').value=d.developer||'';$('ff-country').value=d.country||'';$('ff-rfp').value=d.rfp||'';onRfpChange();$('ff-meth').value=d.methodology||'';$('ff-std').value=d.standard||'';$('ff-regid').value=d.registryId||'';$('ff-status').value=d.status||'';$('ff-carbon').value=d.carbon||'';$('ff-url').value=d.registryUrl||'';$('ff-v26').value=d.v2026||'';$('ff-v27').value=d.v2027||'';$('ff-v28').value=d.v2028||'';$('ff-v29').value=d.v2029||'';$('ff-v30').value=d.v2030||'';$('ff-pd').value=d.priceD||'';$('ff-pp').value=d.priceP||'';$('ff-issue').value=d.expectedIssuance||'';$('ff-len').value=d.projectLength||'';$('ff-avg').value=d.avgAnnual||'';$('ff-life').value=d.lifetimePotential||'';$('ff-bezero').value=d.bezero_rating||'';$('ff-sylvera').value=d.sylvera_rating||'';$('ff-calyx').value=d.calyx_rating||'';$('ff-contact').value=d.contact||'';$('ff-who').value=d.submittedBy||'';$('ff-notes').value=d.notes||''}
+
+async function saveProject(){
+  var d=getFormData();
+  if(!d.name||!d.rfp||!d.methodology){toast('Fill in: Project name, Target RFP, Methodology',false);return}
+  var btn=$('btn-save');btn.disabled=true;
+  var ld=$('sp-loading');ld.textContent='Saving...';ld.classList.add('show');
+  try{
+    var pid;
+    if(editId){
+      await api('/api/'+TOOL+'/projects/'+editId,{method:'PUT',body:JSON.stringify({data:d,skipScreening:true})});
+      pid=editId;
+    }else{
+      var r=await api('/api/'+TOOL+'/projects',{method:'POST',body:JSON.stringify({data:d,submitted_by:d.submittedBy||'unknown',skipScreening:true})});
+      pid=r.id;
+    }
+    // Upload files
+    var fi=$('ff-files');
+    if(fi.files.length>0){
+      for(var i=0;i<fi.files.length;i++){
+        var f=fi.files[i];ld.textContent='Uploading '+(i+1)+'/'+fi.files.length+': '+f.name;
+        if(f.size>10*1024*1024){toast(f.name+' too large',false);continue}
+        var fd=new FormData();fd.append('file',f);fd.append('tool',TOOL);fd.append('project_id',pid);fd.append('uploaded_by',d.submittedBy||'unknown');
+        await api('/api/files/upload',{method:'POST',body:fd,headers:{}});
+      }
+    }
+    // Extract docs if new files uploaded
+    var didUpload=fi.files.length>0;
+    if(didUpload){
+      ld.textContent='Extracting documents...';
+      var totalFiles=fi.files.length;
+      try{var fl=await api('/api/files/'+TOOL+'/'+pid);totalFiles=Math.max(totalFiles,(fl.files||[]).length)}catch(e){}
+      for(var x=0;x<totalFiles;x++){
+        ld.textContent='Extracting document '+(x+1)+'/'+totalFiles+'...';
+        try{var ex=await api('/api/'+TOOL+'/projects/'+pid+'/extract',{method:'POST'});if(!ex.extracted&&ex.remaining===0)break}catch(e){break}
+      }
+    }
+    // Only call AI screening if: new files uploaded OR no valid screening exists yet
+    var hasValidScreening=false;
+    if(editId){var ep=projects.find(function(x){return x.id===editId});hasValidScreening=ep&&ep.screening&&!ep.screening.error}
+    var screenOk=true;
+    if(didUpload||!hasValidScreening){
+      ld.textContent='Running AI screening...';
+      try{await api('/api/'+TOOL+'/projects/'+pid+'/screen',{method:'POST'})}catch(e){screenOk=false;console.error('Screen error:',e);toast('Saved but AI screening failed: '+e.message,false)}
+      if(screenOk) toast(didUpload?'Saved, extracted & screened!':'Saved & screened!');
+    }else{
+      toast('Saved! (screening unchanged — use Re-screen to update AI analysis)');
+    }
+    ld.classList.remove('show');
+    closePanel();
+    await loadProjects();
+  }catch(e){ld.classList.remove('show');toast('Save failed: '+e.message,false)}
+  btn.disabled=false;
+}
+async function extractBackground(pid,n){
+  for(var i=0;i<n;i++){
+    try{var r=await api('/api/'+TOOL+'/projects/'+pid+'/extract',{method:'POST'});if(!r.extracted&&r.remaining===0)break;toast('Doc '+(i+1)+' extracted — re-screened')}catch(e){break}
+  }
+  await loadProjects();
+}
+
+// ═══ EDIT / DELETE ═══
+function editProject(pid){
+  var p=projects.find(function(x){return x.id===pid});if(!p)return;
+  editId=pid;
+  setFormData(p.data);
+  // Clear file input and preview to prevent cross-project file contamination
+  $('ff-files').value='';$('file-list').innerHTML='';$('existing-files').innerHTML='';
+  $('sp-loading').classList.remove('show');
+  $('sp-title').textContent='Edit '+esc(p.data.name||'Project');
+  $('ov').classList.add('open');$('sp').classList.add('open');
+  loadEditFiles(pid);
+}
+async function loadEditFiles(pid){
+  var el=$('existing-files');
+  try{
+    var r=await api('/api/files/'+TOOL+'/'+pid);
+    var files=r.files||[];
+    if(!files.length){el.innerHTML='';return}
+    el.innerHTML='<div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">Uploaded files</div>'
+      +files.map(function(f){
+        return '<div class="fi"><span>📎 '+esc(f.original_name)+' <span style="color:var(--faint)">('+Math.round(f.size_bytes/1024)+'KB)</span></span>'
+          +'<div><a href="#" onclick="event.preventDefault();downloadFile(\''+f.id+'\',\''+esc(f.original_name)+'\')" style="margin-right:8px;font-size:12px" title="Download">↓</a>'
+          +'<a href="#" onclick="event.preventDefault();deleteFile(\''+f.id+'\',\''+pid+'\')" style="color:var(--red);font-size:12px" title="Delete">✕</a></div></div>';
+      }).join('');
+  }catch(e){el.innerHTML=''}
+}
+async function deleteFile(fid,pid){
+  if(!confirm('Delete this file?'))return;
+  try{
+    await api('/api/files/delete/'+fid,{method:'DELETE'});
+    toast('File deleted');
+    loadEditFiles(pid);
+  }catch(e){toast('Delete failed: '+e.message,false)}
+}
+async function deleteProject(pid){
+  if(!confirm('Delete this project?'))return;
+  try{await api('/api/'+TOOL+'/projects/'+pid,{method:'DELETE'});toast('Deleted');await loadProjects()}catch(e){toast('Delete failed',false)}
+}
+
+// ═══ PANEL OPEN/CLOSE ═══
+function openPanel(){
+  editId=null;
+  $('sp-title').textContent='Add Project';
+  // Reset form
+  ['ff-name','ff-dev','ff-country','ff-rfp','ff-meth','ff-std','ff-regid','ff-status','ff-carbon','ff-url','ff-v26','ff-v27','ff-v28','ff-v29','ff-v30','ff-pd','ff-pp','ff-issue','ff-len','ff-avg','ff-life','ff-bezero','ff-sylvera','ff-calyx','ff-contact','ff-who','ff-notes'].forEach(function(id){var el=$(id);if(el)el.value=''});
+  $('file-list').innerHTML='';$('existing-files').innerHTML='';$('sp-loading').classList.remove('show');
+  onRfpChange();
+  $('ov').classList.add('open');$('sp').classList.add('open');
+}
+function closePanel(){$('ov').classList.remove('open');$('sp').classList.remove('open')}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closePanel()});
+
+// File preview
+$('ff-files').addEventListener('change',function(){
+  var el=$('file-list');el.innerHTML='';
+  for(var i=0;i<this.files.length;i++){var f=this.files[i];el.innerHTML+='<div class="fi">📎 '+esc(f.name)+' <span style="color:var(--faint)">'+Math.round(f.size/1024)+'KB</span></div>'}
+});
+
+// ═══ DOWNLOAD FILE (working — from Claude Code) ═══
+function downloadFile(fid,fname){window.open(API_BASE+'/api/files/download/'+fid,'_blank')}
+
+// ═══ GENERATE REPORT (working — from Claude Code) ═══
+async function generateReport(projId){try{
+if(typeof docx==='undefined'){toast("Report library still loading — try again in a moment",false);return}
+var proj=projects.find(function(x){return x.id===projId});
+if(!proj||!proj.screening||proj.screening.error){toast("No AI screening results yet",false);return}
+var p=proj.data,s=proj.screening;
+var NAVY="0A1628",GOLD="C8A951",GRN="16A34A",RED="DC2626",AMB="F59E0B",LGRAY="F8FAFC",BCLR="D1D5DB";
+var bdr={style:docx.BorderStyle.SINGLE,size:1,color:BCLR};
+var bds={top:bdr,bottom:bdr,left:bdr,right:bdr};
+var cm={top:80,bottom:80,left:120,right:120};
+var now=new Date();
+var ds=now.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
+var sc=s.score>=70?GRN:s.score>=40?AMB:RED;
+function si(st){return st==="pass"?"PASS":st==="fail"?"FAIL":"GAP"}
+function sclr(st){return st==="pass"?GRN:st==="fail"?RED:AMB}
+function sbg(st){return st==="pass"?"F0FDF4":st==="fail"?"FEF2F2":"FFFBEB"}
+var ch=[];
+ch.push(new docx.Paragraph({spacing:{after:60},children:[new docx.TextRun({text:"CLEARSKY LIMITED",font:"Arial",size:16,color:GOLD,bold:true,characterSpacing:100})]}));
+ch.push(new docx.Paragraph({spacing:{after:40},children:[new docx.TextRun({text:"AI PROJECT SCREENING REPORT",font:"Arial",size:32,color:NAVY,bold:true})]}));
+ch.push(new docx.Paragraph({spacing:{after:200},border:{bottom:{style:docx.BorderStyle.SINGLE,size:6,color:GOLD,space:1}},children:[new docx.TextRun({text:"Generated "+ds,font:"Arial",size:18,color:"6B7280"})]}));
+ch.push(new docx.Paragraph({spacing:{after:120},children:[new docx.TextRun({text:"Score: "+s.score+"/100",font:"Arial",size:36,bold:true,color:sc}),new docx.TextRun({text:"    Status: "+s.overall_status,font:"Arial",size:36,bold:true,color:sc})]}));
+ch.push(new docx.Paragraph({spacing:{after:200},shading:{fill:LGRAY,type:docx.ShadingType.CLEAR},children:[new docx.TextRun({text:s.summary,font:"Arial",size:22,color:"1A1A2E"})]}));
+ch.push(new docx.Paragraph({spacing:{before:300,after:200},children:[new docx.TextRun({text:"Project Details",font:"Arial",size:28,bold:true,color:NAVY})]}));
+var dr=[["Project Name",p.name||""],["Developer",p.developer||""],["Country",p.country||""],["Target RFP",p.rfp||""],["Methodology",p.methodology||""],["Standard",p.standard||""],["Registry ID",p.registryId||"Not provided"],["Carbon Profile",p.carbon||""],["BeZero Rating",p.bezero_rating||"Not provided"],["Sylvera Rating",p.sylvera_rating||"Not provided"],["Calyx Rating",p.calyx_rating||"Not provided"],["Volume 2026",p.v2026?parseInt(p.v2026).toLocaleString()+" tCO2e":"N/A"],["Volume 2027",p.v2027?parseInt(p.v2027).toLocaleString()+" tCO2e":"N/A"],["Volume 2028",p.v2028?parseInt(p.v2028).toLocaleString()+" tCO2e":"N/A"],["Volume 2029",p.v2029?parseInt(p.v2029).toLocaleString()+" tCO2e":"N/A"],["Volume 2030",p.v2030?parseInt(p.v2030).toLocaleString()+" tCO2e":"N/A"],["Price (delivery)",p.priceD?"$"+p.priceD+"/tCO2e":"Not provided"],["Price (prepay)",p.priceP?"$"+p.priceP+"/tCO2e":"Not provided"]];
+ch.push(new docx.Table({width:{size:9360,type:docx.WidthType.DXA},columnWidths:[3200,6160],rows:dr.map(function(r){return new docx.TableRow({children:[new docx.TableCell({borders:bds,width:{size:3200,type:docx.WidthType.DXA},margins:cm,shading:{fill:"E8EDF2",type:docx.ShadingType.CLEAR},children:[new docx.Paragraph({children:[new docx.TextRun({text:r[0],font:"Arial",size:20,bold:true,color:NAVY})]})]}),new docx.TableCell({borders:bds,width:{size:6160,type:docx.WidthType.DXA},margins:cm,children:[new docx.Paragraph({children:[new docx.TextRun({text:r[1],font:"Arial",size:20})]})]})]})})
+}));
+if(s.criteria_results&&s.criteria_results.length){
+ch.push(new docx.Paragraph({spacing:{before:400,after:200},children:[new docx.TextRun({text:"Criteria Assessment",font:"Arial",size:28,bold:true,color:NAVY})]}));
+var hdr=new docx.TableRow({children:[new docx.TableCell({borders:bds,width:{size:1200,type:docx.WidthType.DXA},margins:cm,shading:{fill:NAVY,type:docx.ShadingType.CLEAR},children:[new docx.Paragraph({children:[new docx.TextRun({text:"Status",font:"Arial",size:18,bold:true,color:"FFFFFF"})]})]}),new docx.TableCell({borders:bds,width:{size:2600,type:docx.WidthType.DXA},margins:cm,shading:{fill:NAVY,type:docx.ShadingType.CLEAR},children:[new docx.Paragraph({children:[new docx.TextRun({text:"Criterion",font:"Arial",size:18,bold:true,color:"FFFFFF"})]})]}),new docx.TableCell({borders:bds,width:{size:5560,type:docx.WidthType.DXA},margins:cm,shading:{fill:NAVY,type:docx.ShadingType.CLEAR},children:[new docx.Paragraph({children:[new docx.TextRun({text:"Detail",font:"Arial",size:18,bold:true,color:"FFFFFF"})]})]})]});
+var crs=s.criteria_results.map(function(c){return new docx.TableRow({children:[new docx.TableCell({borders:bds,width:{size:1200,type:docx.WidthType.DXA},margins:cm,shading:{fill:sbg(c.status),type:docx.ShadingType.CLEAR},children:[new docx.Paragraph({children:[new docx.TextRun({text:si(c.status),font:"Arial",size:20,bold:true,color:sclr(c.status)})]})]}),new docx.TableCell({borders:bds,width:{size:2600,type:docx.WidthType.DXA},margins:cm,children:[new docx.Paragraph({children:[new docx.TextRun({text:c.criterion,font:"Arial",size:20,bold:true})]})]}),new docx.TableCell({borders:bds,width:{size:5560,type:docx.WidthType.DXA},margins:cm,children:[new docx.Paragraph({children:[new docx.TextRun({text:c.detail,font:"Arial",size:20})]})]})]})});
+ch.push(new docx.Table({width:{size:9360,type:docx.WidthType.DXA},columnWidths:[1200,2600,5560],rows:[hdr].concat(crs)}));}
+if(s.flags&&s.flags.length){ch.push(new docx.Paragraph({spacing:{before:400,after:200},children:[new docx.TextRun({text:"Flags & Risks",font:"Arial",size:28,bold:true,color:RED})]}));s.flags.forEach(function(f){ch.push(new docx.Paragraph({spacing:{after:100},indent:{left:360},border:{left:{style:docx.BorderStyle.SINGLE,size:8,color:RED,space:8}},children:[new docx.TextRun({text:f,font:"Arial",size:20,color:"1A1A2E"})]}))})}
+if(s.missing_information&&s.missing_information.length){ch.push(new docx.Paragraph({spacing:{before:400,after:200},children:[new docx.TextRun({text:"Missing Information",font:"Arial",size:28,bold:true,color:NAVY})]}));s.missing_information.forEach(function(m){ch.push(new docx.Paragraph({spacing:{after:80},indent:{left:720,hanging:360},children:[new docx.TextRun({text:"\u2610  "+m,font:"Arial",size:20})]}))})}
+if(s.pricing_recommendation){ch.push(new docx.Paragraph({spacing:{before:400,after:200},children:[new docx.TextRun({text:"Pricing Guidance",font:"Arial",size:28,bold:true,color:NAVY})]}));ch.push(new docx.Paragraph({spacing:{after:200},shading:{fill:"F0FDF4",type:docx.ShadingType.CLEAR},children:[new docx.TextRun({text:s.pricing_recommendation,font:"Arial",size:20})]}))}
+if(s.submission_readiness){ch.push(new docx.Paragraph({spacing:{before:400,after:200},children:[new docx.TextRun({text:"Submission Readiness",font:"Arial",size:28,bold:true,color:NAVY})]}));ch.push(new docx.Paragraph({spacing:{after:200},shading:{fill:"FFFBEB",type:docx.ShadingType.CLEAR},border:{left:{style:docx.BorderStyle.SINGLE,size:8,color:AMB,space:8}},children:[new docx.TextRun({text:s.submission_readiness,font:"Arial",size:20})]}))}
+ch.push(new docx.Paragraph({children:[new docx.PageBreak()]}));
+ch.push(new docx.Paragraph({spacing:{before:200,after:120},children:[new docx.TextRun({text:"Abatable RFP \u2014 Draft Answers",font:"Arial",size:28,bold:true,color:NAVY})]}));
+ch.push(new docx.Paragraph({spacing:{after:200},children:[new docx.TextRun({text:"Review and copy-paste these answers into the Abatable submission portal.",font:"Arial",size:20,italics:true,color:"6B7280"})]}));
+if(s.draft_answers&&s.draft_answers.length){s.draft_answers.forEach(function(qa,i){ch.push(new docx.Paragraph({spacing:{before:250,after:80},shading:{fill:"E8EDF2",type:docx.ShadingType.CLEAR},children:[new docx.TextRun({text:"Q"+(i+1)+": "+qa.question,font:"Arial",size:20,bold:true,color:NAVY})]}));ch.push(new docx.Paragraph({spacing:{after:160},indent:{left:240},children:[new docx.TextRun({text:qa.suggested_answer,font:"Arial",size:20,color:"1A1A2E"})]}))})}
+ch.push(new docx.Paragraph({spacing:{before:600},border:{top:{style:docx.BorderStyle.SINGLE,size:2,color:BCLR,space:8}},children:[new docx.TextRun({text:"ClearSky AI Screening Report \u2014 "+(p.name||"Project")+" \u2014 "+ds,font:"Arial",size:16,color:"9CA3AF"})]}));
+var doc=new docx.Document({styles:{default:{document:{run:{font:"Arial",size:22}}}},sections:[{properties:{page:{size:{width:12240,height:15840},margin:{top:1440,right:1440,bottom:1440,left:1440}}},children:ch}]});
+var buf=await docx.Packer.toBlob(doc);
+var fn="ClearSky_Screening_"+(p.name||"Project").replace(/[^a-zA-Z0-9]/g,"_")+".docx";
+var a=document.createElement("a");a.href=URL.createObjectURL(buf);a.download=fn;a.click();URL.revokeObjectURL(a.href);
+toast("Report downloaded!");
+}catch(e){console.error("Report generation error:",e);toast("Report failed: "+e.message,false)}}
+
+// ═══ INIT ═══
+loadProjects();
+</script>
+</body>
+</html>

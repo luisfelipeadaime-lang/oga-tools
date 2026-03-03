@@ -1,0 +1,2032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClearSky | Company Registry</title>
+<link rel="icon" href="/assets/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0A1628;
+  --navy-light: #0F1D32;
+  --navy-mid: #142540;
+  --gold: #C8A951;
+  --gold-dim: rgba(200,169,81,0.10);
+  --gold-glow: rgba(200,169,81,0.25);
+  --white: #F0F0F0;
+  --gray: #8899AA;
+  --gray-dark: #4A5568;
+  --green: #48BB78;
+  --green-dim: rgba(72,187,120,0.12);
+  --amber: #ED8936;
+  --amber-dim: rgba(237,137,54,0.12);
+  --red: #FC8181;
+  --red-dim: rgba(252,129,129,0.12);
+  --blue: #63B3ED;
+  --blue-dim: rgba(99,179,237,0.12);
+  --purple: #B794F6;
+  --radius: 10px;
+  --radius-lg: 14px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'DM Sans', -apple-system, sans-serif;
+  background: var(--navy);
+  color: var(--white);
+  min-height: 100vh;
+}
+
+/* ═══ TOP BAR ═══ */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 28px;
+  background: var(--navy-light);
+  border-bottom: 1px solid rgba(200,169,81,0.1);
+  position: sticky; top: 0; z-index: 100;
+}
+.topbar-left { display:flex; align-items:center; gap:14px; }
+.topbar-left img { height:26px; }
+.topbar-left .title {
+  color: var(--gold); font-weight: 700; font-size: 16px;
+  letter-spacing: 0.3px;
+}
+.topbar a.back {
+  color: var(--gray); font-size: 13px; text-decoration: none;
+  display: flex; align-items: center; gap: 4px;
+}
+.topbar a.back:hover { color: var(--gold); }
+
+/* ═══ STATS BAR ═══ */
+.stats {
+  display: flex; gap: 0; padding: 0 28px;
+  background: var(--navy-light);
+  border-bottom: 1px solid rgba(200,169,81,0.06);
+  overflow-x: auto;
+}
+.stat {
+  padding: 14px 22px; text-align: center;
+  border-right: 1px solid rgba(200,169,81,0.06);
+  min-width: 110px;
+}
+.stat:last-child { border-right: none; }
+.stat-n { font-size: 26px; font-weight: 700; color: var(--gold); line-height: 1; }
+.stat-l { font-size: 10px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.6px; margin-top: 4px; }
+
+/* ═══ SEARCH ═══ */
+.search-wrap {
+  padding: 20px 28px 0;
+  max-width: 600px;
+}
+.search {
+  width: 100%; padding: 12px 18px 12px 44px;
+  background: var(--navy-light); border: 1px solid rgba(200,169,81,0.12);
+  border-radius: 50px; color: var(--white); font-size: 15px;
+  font-family: inherit; transition: 0.2s;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' viewBox='0 0 24 24' stroke='%238899AA' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cline x1='16.65' y1='16.65' x2='21' y2='21'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 16px center;
+}
+.search:focus { outline:none; border-color:var(--gold); box-shadow:0 0 0 3px var(--gold-dim); }
+.search::placeholder { color:var(--gray); }
+
+/* ═══ COMPANY GRID ═══ */
+.grid-wrap { padding: 20px 28px 40px; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+.card {
+  background: var(--navy-light);
+  border: 1px solid rgba(200,169,81,0.06);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.card:hover {
+  border-color: var(--gold-glow);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+}
+.card-name {
+  font-size: 15px; font-weight: 600; color: var(--white);
+  margin-bottom: 4px;
+}
+.card-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--gold); opacity: 0.7;
+  margin-bottom: 10px;
+}
+.card-meta {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  font-size: 11px; color: var(--gray); line-height: 1.8;
+}
+.card-meta span { display: inline-flex; align-items: center; gap: 4px; }
+
+/* doc status dots row */
+.card-docs {
+  display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap;
+}
+.doc-dot {
+  padding: 3px 8px; border-radius: 12px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.2px;
+}
+.doc-dot.executed { background:var(--green-dim); color:var(--green); }
+.doc-dot.processing { background:var(--amber-dim); color:var(--amber); }
+.doc-dot.requested { background:var(--blue-dim); color:var(--blue); }
+.doc-dot.unclear { background:rgba(136,153,170,0.12); color:var(--gray); }
+.doc-dot.denied { background:var(--red-dim); color:var(--red); }
+.doc-dot.not_started { background:rgba(136,153,170,0.08); color:var(--gray-dark); }
+
+/* ═══ DETAIL PANEL (slide-out) ═══ */
+.overlay {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.5);
+}
+.overlay.open { display: block; }
+
+.detail {
+  position: fixed; top: 0; right: -520px; bottom: 0;
+  width: 500px; max-width: 92vw;
+  background: var(--navy-light);
+  border-left: 1px solid rgba(200,169,81,0.1);
+  z-index: 201;
+  transition: right 0.25s ease;
+  overflow-y: auto;
+  box-shadow: -8px 0 40px rgba(0,0,0,0.4);
+}
+.detail.open { right: 0; }
+
+.detail-head {
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(200,169,81,0.08);
+  position: sticky; top: 0; background: var(--navy-light); z-index: 2;
+}
+.detail-close {
+  position: absolute; top: 16px; right: 18px;
+  background: none; border: none; color: var(--gray);
+  font-size: 20px; cursor: pointer; padding: 4px;
+}
+.detail-close:hover { color: var(--gold); }
+.detail-company { font-size: 20px; font-weight: 700; color: var(--gold); margin-bottom: 2px; }
+.detail-id {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--gray);
+}
+
+.detail-body { padding: 20px 24px; }
+
+/* sections inside detail */
+.section { margin-bottom: 24px; }
+.section-title {
+  font-size: 11px; font-weight: 600; color: var(--gold);
+  text-transform: uppercase; letter-spacing: 0.8px;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(200,169,81,0.08);
+}
+.info-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px;
+}
+.info-label { font-size: 10px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; }
+.info-value { font-size: 13px; color: var(--white); margin-top: 1px; word-break: break-word; }
+.info-value a { color: var(--gold); text-decoration: none; }
+.info-value a:hover { text-decoration: underline; }
+
+/* doc rows in detail */
+.doc-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--navy);
+  border-radius: var(--radius);
+  margin-bottom: 6px;
+}
+.doc-row-left { display: flex; align-items: center; gap: 10px; }
+.doc-type-label { font-size: 12px; font-weight: 600; color: var(--white); }
+.doc-date { font-size: 11px; color: var(--gray); }
+
+/* notes */
+.note-item {
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(200,169,81,0.04);
+}
+.note-item:last-child { border-bottom: none; }
+.note-meta { font-size: 10px; color: var(--gray); margin-bottom: 3px; }
+.note-text { font-size: 13px; color: var(--white); line-height: 1.5; }
+
+.note-input-wrap {
+  display: flex; gap: 8px; margin-top: 10px;
+}
+.note-input {
+  flex: 1; padding: 10px 14px; background: var(--navy);
+  border: 1px solid rgba(200,169,81,0.12);
+  border-radius: var(--radius); color: var(--white);
+  font-size: 13px; font-family: inherit;
+}
+.note-input:focus { outline:none; border-color:var(--gold); }
+.note-input::placeholder { color:var(--gray); }
+
+.btn {
+  padding: 8px 16px; border-radius: var(--radius); font-size: 12px;
+  font-weight: 600; cursor: pointer; border: none; transition: 0.15s;
+  font-family: inherit;
+}
+.btn-gold { background:var(--gold); color:var(--navy); }
+.btn-gold:hover { background:#D4B85E; }
+.btn-sm { padding: 6px 12px; font-size: 11px; }
+
+/* ═══ EMPTY STATE ═══ */
+.empty-state {
+  text-align: center; padding: 60px 20px; color: var(--gray);
+}
+.empty-state p { font-size: 14px; }
+
+/* ═══ TOAST ═══ */
+.toast {
+  position:fixed; bottom:20px; right:20px; z-index:500;
+  background:var(--navy-mid); border:1px solid var(--gold); color:var(--gold);
+  padding:10px 18px; border-radius:var(--radius); font-size:13px;
+  transform:translateY(80px); opacity:0; transition:0.3s;
+}
+.toast.show { transform:translateY(0); opacity:1; }
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 640px) {
+  .grid { grid-template-columns: 1fr; }
+  .stats { flex-wrap: wrap; }
+  .stat { min-width: 80px; padding: 10px 14px; }
+  .stat-n { font-size: 20px; }
+  .detail { width: 100%; max-width: 100vw; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <img src="/assets/logos/logo-gold.png" alt="CS" onerror="this.style.display='none'">
+    <span class="title">Company Registry</span>
+  </div>
+  <a class="back" href="/">← Dashboard</a>
+</div>
+
+<!-- STATS -->
+<div class="stats" id="statsBar"></div>
+
+<!-- SEARCH -->
+<div class="search-wrap">
+  <input class="search" id="searchInput" type="text" placeholder="Search companies, people, projects…" oninput="render()">
+</div>
+
+<!-- GRID -->
+<div class="grid-wrap">
+  <div class="grid" id="companyGrid"></div>
+  <div class="empty-state" id="emptyState" style="display:none">
+    <p>No companies match your search.</p>
+  </div>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="closeDetail()"></div>
+
+<!-- DETAIL PANEL -->
+<div class="detail" id="detailPanel">
+  <div class="detail-head">
+    <button class="detail-close" onclick="closeDetail()">✕</button>
+    <div class="detail-company" id="detailName"></div>
+    <div class="detail-id" id="detailId"></div>
+  </div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const API = 'https://api-tools.oga.earth';
+const STORAGE_KEY = 'csl_registry';
+
+let counterparties = [];
+let documents = [];
+let activities = [];
+
+// ============================================================
+// LABELS
+// ============================================================
+const DOC_LABELS = {
+  nda: 'NDA', kyc: 'KYC', marketing: 'Marketing',
+  advisory: 'Advisory', cross_referral: 'Cross-Referral',
+};
+const STATUS_LABELS = {
+  executed: 'Executed', processing: 'In Progress', requested: 'Sent',
+  unclear: 'Unclear', denied: 'Denied', not_started: 'Not Started',
+  draft_ready: 'Draft Ready', sent: 'Sent', redlines: 'Redlines', declined: 'Declined',
+};
+
+// ============================================================
+// DATA LOADING
+// ============================================================
+async function loadData() {
+  // Try API first
+  try {
+    const [cpResp, docResp, actResp] = await Promise.all([
+      fetch(API + '/api/onboarding/counterparties').then(r => r.ok ? r.json() : null),
+      fetch(API + '/api/onboarding/documents').then(r => r.ok ? r.json() : null),
+      fetch(API + '/api/onboarding/activity').then(r => r.ok ? r.json() : null),
+    ]);
+    if (cpResp?.counterparties?.length) {
+      counterparties = cpResp.counterparties;
+      documents = docResp?.documents || [];
+      activities = actResp?.activities || [];
+      saveLocal();
+      render();
+      return;
+    }
+  } catch(e) { console.warn('API unavailable, using local data'); }
+
+  // Fallback: localStorage
+  loadLocal();
+
+  // Seed if empty
+  if (counterparties.length === 0) {
+    seedFromOnboarding();
+    saveLocal();
+  }
+  render();
+}
+
+function loadLocal() {
+  try {
+    const d = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    counterparties = d.counterparties || [];
+    documents = d.documents || [];
+    activities = d.activities || [];
+  } catch(e) {
+    counterparties = []; documents = []; activities = [];
+  }
+}
+
+function saveLocal() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ counterparties, documents, activities }));
+  } catch(e) {}
+}
+
+// Also check onboarding tool's localStorage for data
+
+// ============================================================
+// SEED DATA (from Notion export — same as onboarding tool)
+// ============================================================
+// Auto-generated from Notion export — 33 counterparties, 43 documents, 74 activities
+// Generated: 2026-02-27 07:54
+
+const SEED_COUNTERPARTIES = [
+  {
+    "general_id": "BEP-2026",
+    "company_name": "Bepex",
+    "address": "",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "",
+    "signatory_title": "",
+    "signatory_email": "",
+    "backoffice_name": "Michael Jasper",
+    "backoffice_title": "Technical Sales Engineer",
+    "backoffice_email": "mcasper@bepex.com",
+    "requester": "Bobbie Armstrong",
+    "notes": ""
+  },
+  {
+    "general_id": "EGE-2026",
+    "company_name": "EGE Haina",
+    "address": "",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "",
+    "signatory_title": "",
+    "signatory_email": "",
+    "backoffice_name": "Miguel Purcell",
+    "backoffice_title": "Gerente de Fidelizacion",
+    "backoffice_email": "eliasm@egehaina.com",
+    "requester": "Carolina Martinez",
+    "notes": ""
+  },
+  {
+    "general_id": "CHA-2026",
+    "company_name": "Charm Industrial",
+    "address": "182 Howard Street #150, San Francisco, California, 94105",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Vince Green",
+    "signatory_title": "Chief Development Officer",
+    "signatory_email": "vince.green@charmindustrial.com",
+    "backoffice_name": "Vince Green",
+    "backoffice_title": "Chief Development Officer",
+    "backoffice_email": "vince.green@charmindustrial.com",
+    "requester": "Ana Avramovic",
+    "notes": ""
+  },
+  {
+    "general_id": "WOO-2026",
+    "company_name": "Woodcache",
+    "address": "Please look up",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Serge Bushman",
+    "signatory_title": "Founder/CEO",
+    "signatory_email": "serge@woodcache.org",
+    "backoffice_name": "",
+    "backoffice_title": "",
+    "backoffice_email": "",
+    "requester": "Ana Avramovic",
+    "notes": ""
+  },
+  {
+    "general_id": "ECO-2026",
+    "company_name": "Eco2 International",
+    "address": "Calle Bravo Murillo 187 1H",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Miguel Angel Tobaruela",
+    "signatory_title": "Administrador",
+    "signatory_email": "direccion@eco2international.com",
+    "backoffice_name": "Miguel Angel Tobaruela",
+    "backoffice_title": "CEO",
+    "backoffice_email": "direccion@eco2international.com",
+    "requester": "Luis Adaime",
+    "notes": ""
+  },
+  {
+    "general_id": "OFF-2026",
+    "company_name": "Offcarbon",
+    "address": "26 Colon de Larreategui Street, 1st Floor A-B, 48009 Bilbao, Spain",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Kepa Solaun Martinez",
+    "signatory_title": "Legal Representative",
+    "signatory_email": "legal@globalfactor.com",
+    "backoffice_name": "Marie Cubertafont",
+    "backoffice_title": "Senior Consultant",
+    "backoffice_email": "mcubertafont@offcarbon.com",
+    "requester": "Carolina Martinez",
+    "notes": ""
+  },
+  {
+    "general_id": "NUM-2026",
+    "company_name": "Numerco",
+    "address": "18 King William Street, EC4N 7BP, UK",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Gareth Turner",
+    "signatory_title": "Director",
+    "signatory_email": "gareth.turner@numerco.com",
+    "backoffice_name": "Anushree Mishra",
+    "backoffice_title": "Country Manager",
+    "backoffice_email": "anushree.mishra@numerco.com",
+    "requester": "Carolina Martinez",
+    "notes": ""
+  },
+  {
+    "general_id": "BOS-2026",
+    "company_name": "Bosquia Nature S.L.",
+    "address": "Calle Los Prados, 166, Edificio Impulsa, Gijón, Spain",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Rafael Permuy",
+    "signatory_title": "Chief Executive Officer",
+    "signatory_email": "rafael@bosquia.com",
+    "backoffice_name": "Marcos Montes",
+    "backoffice_title": "NA",
+    "backoffice_email": "marcos@bosquia.com",
+    "requester": "Luis Adaime",
+    "notes": ""
+  },
+  {
+    "general_id": "ORI-2026",
+    "company_name": "Orizon Agriculture (Pty) Ltd",
+    "address": "54 Melrose Boulevard, Melrose Arch, Johannesburg, 2196, South Africa",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Michael Lilje/ Heinz Ortmann",
+    "signatory_title": "Chief Executive Officer",
+    "signatory_email": "michael@orizonagriculture.com",
+    "backoffice_name": "Michael Lilje",
+    "backoffice_title": "CEO",
+    "backoffice_email": "michael@orizonagriculture.com",
+    "requester": "Carolina Martinez",
+    "notes": ""
+  },
+  {
+    "general_id": "GRE-2026",
+    "company_name": "Greenline Climate",
+    "address": "4023 Kennett Pike #50601, Wilmington, DE, USA 19807 (“Greenline”)",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Tim Kramer",
+    "signatory_title": "Chief Executive Officer",
+    "signatory_email": "tkramer@greenlineclimate.com.",
+    "backoffice_name": "Sheldon Zakreski",
+    "backoffice_title": "",
+    "backoffice_email": "szakreski@greenlineclimate.com",
+    "requester": "Carolina Martinez",
+    "notes": ""
+  },
+  {
+    "general_id": "CAR-2026",
+    "company_name": "CarbonOf",
+    "address": "Av. Paseo de la Reforma 296, colonia Juárez, Cuauhtémoc, Ciudad de México,\n06600",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Marco Adrian Hernandez Reyes, Alma Elisa Hernandez Reyes",
+    "signatory_title": "Chief Executive Officer, Chief Compliance Officer",
+    "signatory_email": "marco.hernandez@carbonof.com, alma.hernandez@carbonof.com",
+    "backoffice_name": "",
+    "backoffice_title": "",
+    "backoffice_email": "",
+    "requester": "Carolina Martinez",
+    "notes": ""
+  },
+  {
+    "general_id": "INF-2026",
+    "company_name": "Infinite Solutions",
+    "address": "Plot No. 128 FB, Scheme No. 94, Ring Road, Sector-F, Indore-452016, Madhya Pradesh, India",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Sumeet Singhvi",
+    "signatory_title": "Director",
+    "signatory_email": "",
+    "backoffice_name": "Deepika Singh",
+    "backoffice_title": "deepika@infisolutions.org",
+    "backoffice_email": "deepika@infisolutions.org",
+    "requester": "Carolina Martinez",
+    "notes": ""
+  },
+  {
+    "general_id": "TRA-2026",
+    "company_name": "Tradewater",
+    "address": "1016 W Jackson Blvd 1007 Chicago, IL 60607",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Kirsten Love",
+    "signatory_title": "Chief Marketing Officer",
+    "signatory_email": "klove@tradewater.us",
+    "backoffice_name": "Rachel Kanan",
+    "backoffice_title": "Chief Financial Officer",
+    "backoffice_email": "rkanan@tradewater.us and accounting@tradewater.us.",
+    "requester": "Carolina Martinez",
+    "notes": ""
+  },
+  {
+    "general_id": "SAL-2026",
+    "company_name": "Salamander Broking",
+    "address": "",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "",
+    "signatory_title": "",
+    "signatory_email": "",
+    "backoffice_name": "Dave Ball",
+    "backoffice_title": "",
+    "backoffice_email": "dave.ball@salamander-broking.com",
+    "requester": "Carolina Martinez",
+    "notes": ""
+  },
+  {
+    "general_id": "ALM-2026",
+    "company_name": "ALMAC WORKS LLC (d/b/a RNG Connect)",
+    "address": "6 Gilson Terrace, #3\nSomerville, MA, 02143, USA",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Alexander MacFarlane",
+    "signatory_title": "Member",
+    "signatory_email": "amacfarlane@rngconnect.com",
+    "backoffice_name": "Alex MacFarlane",
+    "backoffice_title": "",
+    "backoffice_email": "amacfarlane@rngconnect.com",
+    "requester": "Ana Avramovic",
+    "notes": ""
+  },
+  {
+    "general_id": "CAT-2026",
+    "company_name": "Catapult Environmental Inc",
+    "address": "Suite 1620, 700 9th Ave. SW (South Tower), Calgary AB, T2P 3V4",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Brent Boss",
+    "signatory_title": "Chief Operations Officer",
+    "signatory_email": "bboss@catapultenv.com",
+    "backoffice_name": "",
+    "backoffice_title": "",
+    "backoffice_email": "",
+    "requester": "Ana Avramovic",
+    "notes": ""
+  },
+  {
+    "general_id": "BOO-2026",
+    "company_name": "Boomitra",
+    "address": "400 Concar Dr San Mateo 94402 USA",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Subramaniam Satyamoorthy",
+    "signatory_title": "Chief Operations Officer",
+    "signatory_email": "satyamoorthys@boomitra.com",
+    "backoffice_name": "Finlay Walker",
+    "backoffice_title": "Director of Sales",
+    "backoffice_email": "finlay@boomitra.com",
+    "requester": "Brian Katz",
+    "notes": ""
+  },
+  {
+    "general_id": "THE-2026",
+    "company_name": "The Climate Trust",
+    "address": "80 SE Madison St, Suite 216, pORTLAND or 97214",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Kyler Sherry",
+    "signatory_title": "Chief Operating Officer",
+    "signatory_email": "ksherry@climatetrust.org",
+    "backoffice_name": "Travis Croft",
+    "backoffice_title": "",
+    "backoffice_email": "tcroft@climatetrust.org",
+    "requester": "Ana Avramovic",
+    "notes": ""
+  },
+  {
+    "general_id": "LYO-2026",
+    "company_name": "LyonDellBasell",
+    "address": "2800 Post Oak Boulevard Suite 500, Houston, Texas 77056",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "",
+    "signatory_title": "",
+    "signatory_email": "",
+    "backoffice_name": "Mariane Maximous",
+    "backoffice_title": "VP Feedstocks & Mechanical Recycling",
+    "backoffice_email": "mariane.maximous@lyondellbasell.com",
+    "requester": "Ana Avramovic",
+    "notes": ""
+  },
+  {
+    "general_id": "AGR-2026",
+    "company_name": "Agrocortex Madiras do Acre Ltda",
+    "address": "Redovia Br-362, S/N, Lote 50, Zona Rural, Sitio Katiani, 69950-000, Manoel Urbamo, Acre, Brazil",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Marcos Preto",
+    "signatory_title": "Chief Executive Officer",
+    "signatory_email": "marcos.preto@agrocortex.com",
+    "backoffice_name": "Marcos Preto",
+    "backoffice_title": "Chief Executive Officer",
+    "backoffice_email": "marcos.preto@agrocortex.com",
+    "requester": "Carolina Martinez",
+    "notes": ""
+  },
+  {
+    "general_id": "BRI-2026",
+    "company_name": "BrightSpot",
+    "address": "",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "",
+    "signatory_title": "",
+    "signatory_email": "",
+    "backoffice_name": "",
+    "backoffice_title": "",
+    "backoffice_email": "",
+    "requester": "Ana Avramovic",
+    "notes": ""
+  },
+  {
+    "general_id": "EQU-2026",
+    "company_name": "Equus",
+    "address": "",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "",
+    "signatory_title": "",
+    "signatory_email": "",
+    "backoffice_name": "Lavinia Nemer",
+    "backoffice_title": "",
+    "backoffice_email": "nemer.l@otcgh.com",
+    "requester": "Ana Avramovic",
+    "notes": ""
+  },
+  {
+    "general_id": "ATM-2026",
+    "company_name": "AtmosClear Canada Inc.",
+    "address": "32 Sonata Place, Ottawa ON, K1G 6H2",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Ms. Sid Embree",
+    "signatory_title": "Director",
+    "signatory_email": "sid@atmosclear.org",
+    "backoffice_name": "Ms. Sid Embree",
+    "backoffice_title": "Director",
+    "backoffice_email": "sid@atmosclear.org",
+    "requester": "Ana Avramovic",
+    "notes": ""
+  },
+  {
+    "general_id": "SIS-2026",
+    "company_name": "Sistema.bio",
+    "address": "",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "",
+    "signatory_title": "",
+    "signatory_email": "",
+    "backoffice_name": "",
+    "backoffice_title": "",
+    "backoffice_email": "",
+    "requester": "Carolina Martinez",
+    "notes": ""
+  },
+  {
+    "general_id": "YEP-2026",
+    "company_name": "Yepas",
+    "address": "",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "",
+    "signatory_title": "",
+    "signatory_email": "",
+    "backoffice_name": "",
+    "backoffice_title": "",
+    "backoffice_email": "",
+    "requester": "Carolina Martinez",
+    "notes": ""
+  },
+  {
+    "general_id": "KAN-2026",
+    "company_name": "K Animus Sustainability",
+    "address": "",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "",
+    "signatory_title": "",
+    "signatory_email": "",
+    "backoffice_name": "",
+    "backoffice_title": "",
+    "backoffice_email": "",
+    "requester": "Ana Avramovic",
+    "notes": ""
+  },
+  {
+    "general_id": "JAG-2026",
+    "company_name": "Jaguar Corridor Investment fUND",
+    "address": "",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "David Lagreca",
+    "signatory_title": "Chief Executive Officer",
+    "signatory_email": "dklagreca@gmail.com",
+    "backoffice_name": "David Lagreca",
+    "backoffice_title": "Chief Executive Officer",
+    "backoffice_email": "dklagreca@gmail.com",
+    "requester": "Ana Avramovic",
+    "notes": ""
+  },
+  {
+    "general_id": "ROY-2026",
+    "company_name": "Royal bank of Canada",
+    "address": "335 8th Ave SW, 23rd Floor Calgary, AB, T2P 1C9",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Julia-Maria Becker",
+    "signatory_title": "Senior Director",
+    "signatory_email": "julia-maria.becker@rbccmxom",
+    "backoffice_name": "",
+    "backoffice_title": "",
+    "backoffice_email": "",
+    "requester": "Ana Avramovic",
+    "notes": ""
+  },
+  {
+    "general_id": "COR-2026",
+    "company_name": "Corsia Credits",
+    "address": "",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "",
+    "signatory_title": "",
+    "signatory_email": "",
+    "backoffice_name": "",
+    "backoffice_title": "",
+    "backoffice_email": "",
+    "requester": "Brian Katz",
+    "notes": ""
+  },
+  {
+    "general_id": "RNG-2026",
+    "company_name": "RNG Connect",
+    "address": "",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Alexander MacFarlane",
+    "signatory_title": "Principal",
+    "signatory_email": "amacfarlane@rngconnect.com",
+    "backoffice_name": "",
+    "backoffice_title": "",
+    "backoffice_email": "",
+    "requester": "Ana Avramovic",
+    "notes": ""
+  },
+  {
+    "general_id": "AID-2026",
+    "company_name": "Aider",
+    "address": "",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "",
+    "signatory_title": "",
+    "signatory_email": "",
+    "backoffice_name": "",
+    "backoffice_title": "",
+    "backoffice_email": "",
+    "requester": "Carolina Martinez",
+    "notes": ""
+  },
+  {
+    "general_id": "TRU-2026",
+    "company_name": "True Manufacturing Co., Inc.",
+    "address": "2001 East Terra Lane, O’Fallon, MO 63366 Missouri, USA",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "Charles Hon",
+    "signatory_title": "Manager, Engineering, Sustainability, and Government Affairs",
+    "signatory_email": "chon@truemfg.com",
+    "backoffice_name": "Fort Jeffrey",
+    "backoffice_title": "Dentons",
+    "backoffice_email": "jeffrey.fort@dentons.com",
+    "requester": "Emmanuel Mendoza",
+    "notes": ""
+  },
+  {
+    "general_id": "CAE-2026",
+    "company_name": "Caely",
+    "address": "",
+    "country": "",
+    "jurisdiction": "",
+    "signatory_name": "",
+    "signatory_title": "",
+    "signatory_email": "",
+    "backoffice_name": "Alexandra Prybil",
+    "backoffice_title": "Mid-Office Specialist",
+    "backoffice_email": "backoffice@caely.com",
+    "requester": "Carolina Martinez",
+    "notes": ""
+  }
+];
+
+const SEED_DOCUMENTS = [
+  {
+    "general_id": "BEP-2026",
+    "doc_type": "nda",
+    "status": "processing",
+    "progress": 75,
+    "request_date": "2026-01-22",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "EGE-2026",
+    "doc_type": "nda",
+    "status": "processing",
+    "progress": 75,
+    "request_date": "2026-02-09",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "CHA-2026",
+    "doc_type": "nda",
+    "status": "executed",
+    "progress": 100,
+    "request_date": "2026-01-30",
+    "doc_params": {},
+    "executed_file_url": "MNDA_Charm_Industrial__ClearSky_Limited.pdf"
+  },
+  {
+    "general_id": "WOO-2026",
+    "doc_type": "nda",
+    "status": "requested",
+    "progress": 25,
+    "request_date": "2026-02-07",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "ECO-2026",
+    "doc_type": "nda",
+    "status": "executed",
+    "progress": 100,
+    "request_date": "2026-02-05",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "OFF-2026",
+    "doc_type": "nda",
+    "status": "processing",
+    "progress": 75,
+    "request_date": "2026-02-06",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "NUM-2026",
+    "doc_type": "nda",
+    "status": "executed",
+    "progress": 100,
+    "request_date": "2026-01-27",
+    "doc_params": {},
+    "executed_file_url": "https://mkspamp.sharepoint.com/:b:/r/sites/ClearSkyLtd/Documents/0%27.%20Clear%20Sky%20Limited/1.%20Projects%20Management/1.%20Counterparties/Numerco/1.%20NDA/MNDA%20Numerco%20Limited%20%26%20CLearSky%20Limited.pdf?csf=1&web=1&e=EqLdm8"
+  },
+  {
+    "general_id": "BOS-2026",
+    "doc_type": "nda",
+    "status": "executed",
+    "progress": 100,
+    "request_date": "2026-01-01",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "ORI-2026",
+    "doc_type": "nda",
+    "status": "executed",
+    "progress": 100,
+    "request_date": "2026-01-27",
+    "doc_params": {},
+    "executed_file_url": "MNDA_Orizon_Agriculture__ClearSky_Limited.pdf"
+  },
+  {
+    "general_id": "GRE-2026",
+    "doc_type": "nda",
+    "status": "executed",
+    "progress": 100,
+    "request_date": "2026-01-27",
+    "doc_params": {},
+    "executed_file_url": "MNDA_-_GreenLine_Climate__ClearSky_Limited.docx-.pdf"
+  },
+  {
+    "general_id": "CAR-2026",
+    "doc_type": "nda",
+    "status": "executed",
+    "progress": 100,
+    "request_date": "2026-01-28",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "INF-2026",
+    "doc_type": "nda",
+    "status": "executed",
+    "progress": 100,
+    "request_date": "2026-01-28",
+    "doc_params": {},
+    "executed_file_url": "CSL_NDA_two-way_NDA_6.2.2025.pdf"
+  },
+  {
+    "general_id": "TRA-2026",
+    "doc_type": "nda",
+    "status": "executed",
+    "progress": 100,
+    "request_date": "2026-02-03",
+    "doc_params": {},
+    "executed_file_url": "MNDA_Trade_Water__ClearSky_Limited.docx.pdf"
+  },
+  {
+    "general_id": "SAL-2026",
+    "doc_type": "nda",
+    "status": "processing",
+    "progress": 75,
+    "request_date": "2026-02-03",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "ALM-2026",
+    "doc_type": "nda",
+    "status": "processing",
+    "progress": 75,
+    "request_date": "2026-02-05",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "CAT-2026",
+    "doc_type": "nda",
+    "status": "executed",
+    "progress": 100,
+    "request_date": "2026-02-05",
+    "doc_params": {},
+    "executed_file_url": "MNDA_Catapult__Clearsky_Limited.pdf"
+  },
+  {
+    "general_id": "BOO-2026",
+    "doc_type": "nda",
+    "status": "executed",
+    "progress": 100,
+    "request_date": "2026-01-27",
+    "doc_params": {},
+    "executed_file_url": "CSL_Boomitra_Inc__ClearSky_Limited.docx-.pdf"
+  },
+  {
+    "general_id": "THE-2026",
+    "doc_type": "nda",
+    "status": "executed",
+    "progress": 100,
+    "request_date": "2026-01-30",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "LYO-2026",
+    "doc_type": "nda",
+    "status": "processing",
+    "progress": 75,
+    "request_date": "2026-01-12",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "AGR-2026",
+    "doc_type": "nda",
+    "status": "executed",
+    "progress": 100,
+    "request_date": "2026-01-06",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "BRI-2026",
+    "doc_type": "nda",
+    "status": "unclear",
+    "progress": 0,
+    "request_date": "2026-01-12",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "EQU-2026",
+    "doc_type": "nda",
+    "status": "processing",
+    "progress": 75,
+    "request_date": "2026-01-22",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "ATM-2026",
+    "doc_type": "nda",
+    "status": "processing",
+    "progress": 75,
+    "request_date": "2026-02-17",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "SIS-2026",
+    "doc_type": "nda",
+    "status": "requested",
+    "progress": 25,
+    "request_date": "2026-02-09",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "YEP-2026",
+    "doc_type": "nda",
+    "status": "requested",
+    "progress": 25,
+    "request_date": "2026-02-10",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "KAN-2026",
+    "doc_type": "nda",
+    "status": "requested",
+    "progress": 25,
+    "request_date": "2026-02-10",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "JAG-2026",
+    "doc_type": "nda",
+    "status": "processing",
+    "progress": 75,
+    "request_date": "2026-02-17",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "ROY-2026",
+    "doc_type": "nda",
+    "status": "executed",
+    "progress": 100,
+    "request_date": "2026-01-15",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "COR-2026",
+    "doc_type": "nda",
+    "status": "processing",
+    "progress": 75,
+    "request_date": "2026-02-18",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "RNG-2026",
+    "doc_type": "nda",
+    "status": "processing",
+    "progress": 75,
+    "request_date": "2026-02-17",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "AID-2026",
+    "doc_type": "nda",
+    "status": "requested",
+    "progress": 25,
+    "request_date": "2026-02-20",
+    "doc_params": {},
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "TRU-2026",
+    "doc_type": "nda",
+    "status": "executed",
+    "progress": 100,
+    "request_date": "2026-02-24",
+    "doc_params": {},
+    "executed_file_url": "MNDA_True_Manufacturing__ClearSky_Limiteddocx.pdf"
+  },
+  {
+    "general_id": "EGE-2026",
+    "doc_type": "kyc",
+    "status": "processing",
+    "progress": 75,
+    "request_date": "2026-02-09",
+    "doc_params": {
+      "kyc_type": "COB Form"
+    },
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "NUM-2026",
+    "doc_type": "kyc",
+    "status": "unclear",
+    "progress": 0,
+    "request_date": "2026-01-27",
+    "doc_params": {
+      "kyc_type": "ClearSky COB"
+    },
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "TRA-2026",
+    "doc_type": "kyc",
+    "status": "executed",
+    "progress": 100,
+    "request_date": "2026-02-03",
+    "doc_params": {
+      "kyc_type": "ClearSky COB"
+    },
+    "executed_file_url": "https://mkspamp.sharepoint.com/:b:/r/sites/ClearSkyLtd/Documents/0%27.%20Clear%20Sky%20Limited/1.%20Projects%20Management/1.%20Counterparties/Tradewater/2.%20KYC/1.%20KYC%20Tradewater%20(CSL).pdf?csf=1&web=1&e=XOfrJc, https://mkspamp.sharepoint.com/:b:/r/sites/ClearSkyLtd/Documents/0%27.%20Clear%20Sky%20Limited/1.%20Projects%20Management/1.%20Counterparties/Tradewater/2.%20KYC/2.%20KYC%20Tradewater%20(CSL)%20Complement.pdf?csf=1&web=1&e=NPLFyK"
+  },
+  {
+    "general_id": "CAE-2026",
+    "doc_type": "kyc",
+    "status": "executed",
+    "progress": 100,
+    "request_date": "2026-01-15",
+    "doc_params": {
+      "kyc_type": "ClearSky COB"
+    },
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "TRU-2026",
+    "doc_type": "kyc",
+    "status": "requested",
+    "progress": 25,
+    "request_date": "2026-02-12",
+    "doc_params": {
+      "kyc_type": "ClearSky COB"
+    },
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "AGR-2026",
+    "doc_type": "kyc",
+    "status": "executed",
+    "progress": 100,
+    "request_date": "2026-01-06",
+    "doc_params": {
+      "kyc_type": "ClearSky COB"
+    },
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "EQU-2026",
+    "doc_type": "kyc",
+    "status": "processing",
+    "progress": 75,
+    "request_date": "2026-01-22",
+    "doc_params": {
+      "kyc_type": "Enhance Due Diligence"
+    },
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "GRE-2026",
+    "doc_type": "kyc",
+    "status": "unclear",
+    "progress": 0,
+    "request_date": "2026-02-09",
+    "doc_params": {
+      "kyc_type": "ClearSky COB"
+    },
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "INF-2026",
+    "doc_type": "kyc",
+    "status": "processing",
+    "progress": 75,
+    "request_date": "2026-02-09",
+    "doc_params": {
+      "kyc_type": "ClearSky COB"
+    },
+    "executed_file_url": ""
+  },
+  {
+    "general_id": "ORI-2026",
+    "doc_type": "kyc",
+    "status": "executed",
+    "progress": 100,
+    "request_date": "2026-02-09",
+    "doc_params": {
+      "kyc_type": "COB Form"
+    },
+    "executed_file_url": "Screenshot_2026-02-26_120303.png"
+  },
+  {
+    "general_id": "KAN-2026",
+    "doc_type": "marketing",
+    "status": "requested",
+    "progress": 25,
+    "request_date": "2026-02-18",
+    "doc_params": {
+      "project_name": "",
+      "floor_price": "",
+      "currency": "USD",
+      "commission": "",
+      "commission_rationale": "10%"
+    },
+    "executed_file_url": ""
+  }
+];
+
+const SEED_ACTIVITIES = [
+  {
+    "general_id": "BEP-2026",
+    "doc_type": "nda",
+    "description": "Jan 22 - Requested the NDA.",
+    "actor": "Bobbie Armstrong"
+  },
+  {
+    "general_id": "BEP-2026",
+    "doc_type": "nda",
+    "description": "Feb 10 - NDA was sent for their review.",
+    "actor": "Bobbie Armstrong"
+  },
+  {
+    "general_id": "EGE-2026",
+    "doc_type": "nda",
+    "description": "Feb 10 - Requested the NDA comments and the KYC form (not available in the email thread)",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "EGE-2026",
+    "doc_type": "nda",
+    "description": "Feb 11 - Email was sent to agree which NDA to use, and an editable version of the KYC",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "CHA-2026",
+    "doc_type": "nda",
+    "description": "Jan 30 - NDA forwarded to Vince.",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "CHA-2026",
+    "doc_type": "nda",
+    "description": "Feb 03 - NDA (with comments) was shared",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "CHA-2026",
+    "doc_type": "nda",
+    "description": "Feb 11 - A follow up was sent",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "CHA-2026",
+    "doc_type": "nda",
+    "description": "Feb 19 - They accepted the comments, they were going to go forward in DocuSign",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "WOO-2026",
+    "doc_type": "nda",
+    "description": "I will send you an email about this. It’s very important you include exactly what I email you in your email to Serge",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "ECO-2026",
+    "doc_type": "nda",
+    "description": "Feb 11 - I sent a follow up on this. We haven’t received not a signle message on this.",
+    "actor": "Luis Adaime"
+  },
+  {
+    "general_id": "ECO-2026",
+    "doc_type": "nda",
+    "description": "Feb 12 - NDA was sent.",
+    "actor": "Luis Adaime"
+  },
+  {
+    "general_id": "OFF-2026",
+    "doc_type": "nda",
+    "description": "Feb 10 - Received answer. Waiting for comments on the NDA.",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "OFF-2026",
+    "doc_type": "nda",
+    "description": "Feb 23 - Shared for consideration (they changed the Governing Law for France, instead of England, or Spain (they are from Bilbao)",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "OFF-2026",
+    "doc_type": "nda",
+    "description": "Feb 26 - NDA was sent",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "NUM-2026",
+    "doc_type": "nda",
+    "description": "They already singed our NDA. We need to sign",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "BOS-2026",
+    "doc_type": "nda",
+    "description": "Contract executed",
+    "actor": "Luis Adaime"
+  },
+  {
+    "general_id": "ORI-2026",
+    "doc_type": "nda",
+    "description": "Feb 09 - MNDA was sent through DocuSign.",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "ORI-2026",
+    "doc_type": "nda",
+    "description": "- COB is already completed.",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "ORI-2026",
+    "doc_type": "nda",
+    "description": "Feb 19 - MNDA is completed.",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "GRE-2026",
+    "doc_type": "nda",
+    "description": "Feb 09 - MNDA (signed) was sent.",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "GRE-2026",
+    "doc_type": "nda",
+    "description": "- KYC was shared for completion.",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "CAR-2026",
+    "doc_type": "nda",
+    "description": "Feb 09 - MNDA (signed) was sent.",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "CAR-2026",
+    "doc_type": "nda",
+    "description": "KYC was sent for completion.",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "INF-2026",
+    "doc_type": "nda",
+    "description": "Feb 09 - MNDA (signed) was shared.",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "INF-2026",
+    "doc_type": "nda",
+    "description": "- KYC was shared for information.",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "TRA-2026",
+    "doc_type": "nda",
+    "description": "The NDA was sent for signature (Feb 07).",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "TRA-2026",
+    "doc_type": "nda",
+    "description": "The KYC was sent for completion (Feb 07)",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "TRA-2026",
+    "doc_type": "nda",
+    "description": "Feb 10 - Mistake in the spelling, was resent.",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "SAL-2026",
+    "doc_type": "nda",
+    "description": "Feb 03 - Email to follow up on their comments for the NDA",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "ALM-2026",
+    "doc_type": "nda",
+    "description": "Feb 11 - Brian requested to wait for the Courtney advise so I could send the Cross-Referral Agreement with the NDA.",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "CAT-2026",
+    "doc_type": "nda",
+    "description": "Feb 11 - Received answer by courtney suggesting only to share the docx file, not the PDF that is for internal lecture",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "CAT-2026",
+    "doc_type": "nda",
+    "description": "Feb 18 - NDA was sent to Brent through DocuSign (his comments on governing law were approved by Brian)",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "BOO-2026",
+    "doc_type": "nda",
+    "description": "Jan 20 - MNDA (signed) was shared.",
+    "actor": "Brian Katz"
+  },
+  {
+    "general_id": "THE-2026",
+    "doc_type": "nda",
+    "description": "Feb 11 - NDA with legal comments was sent",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "THE-2026",
+    "doc_type": "nda",
+    "description": "Feb 16 - Their NDA aligned our comments, it was sent for signature internally",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "THE-2026",
+    "doc_type": "nda",
+    "description": "- Sent the MNDA fully executed.",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "LYO-2026",
+    "doc_type": "nda",
+    "description": "Jan 22 - Communication was activated",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "LYO-2026",
+    "doc_type": "nda",
+    "description": "Feb 13 - NDA sent (by Ana) for review, I will wait for her response for next steps",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "LYO-2026",
+    "doc_type": "nda",
+    "description": "Feb 13 - Julia-Maria sent an automatic reply (she will be back the 16 February)",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "AGR-2026",
+    "doc_type": "nda",
+    "description": "Jan 23 - MNDA (signed) was shared",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "BRI-2026",
+    "doc_type": "nda",
+    "description": "Feb 03 - I followed up with an introduction email",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "EQU-2026",
+    "doc_type": "nda",
+    "description": "Feb 16 - Sent a message to confirm we have MNDA (no detection on archive)",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "ATM-2026",
+    "doc_type": "nda",
+    "description": "Feb 17 - Sid sent over their standard NDA for our review and comment. Ana has forwarded to Emmanuel",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "ATM-2026",
+    "doc_type": "nda",
+    "description": "- It was shared the NDA for their review (they sent one from them)",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "SIS-2026",
+    "doc_type": "nda",
+    "description": "Feb 09 - NDA was sent for their review",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "SIS-2026",
+    "doc_type": "nda",
+    "description": "Feb 20 - No response yet",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "JAG-2026",
+    "doc_type": "nda",
+    "description": "Feb 18 - Their NDA was review and in substance is not that different from ours, either way I shared CLS for their review and enhance the process on speed",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "JAG-2026",
+    "doc_type": "nda",
+    "description": "Feb 19 - They responded that they were going to check it",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "ROY-2026",
+    "doc_type": "nda",
+    "description": "Feb 17 - Julia replied they are not having more onboarding from they side, but they can start CBL deal through it",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "COR-2026",
+    "doc_type": "nda",
+    "description": "Feb 19 - Brian followed up on the MNDA status",
+    "actor": "Brian Katz"
+  },
+  {
+    "general_id": "RNG-2026",
+    "doc_type": "nda",
+    "description": "Feb 19 - Referred he wasn´t sure it was useful another NDA apart from the Agreement, I replied that is different the process…",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "AID-2026",
+    "doc_type": "nda",
+    "description": "Feb 20 - Carolina shared the NDA and started the communications",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "TRU-2026",
+    "doc_type": "nda",
+    "description": "Feb 24 - NDA was sent",
+    "actor": "Emmanuel Mendoza"
+  },
+  {
+    "general_id": "TRU-2026",
+    "doc_type": "nda",
+    "description": "Feb 26 - MNDA executed",
+    "actor": "Emmanuel Mendoza"
+  },
+  {
+    "general_id": "GRE-2026",
+    "doc_type": "nda",
+    "description": "Send our standard NDA over to Dani Warren at Great Bear",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "EGE-2026",
+    "doc_type": "kyc",
+    "description": "Feb 10 - Requested the NDA comments and the KYC form (not available in the email thread)",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "EGE-2026",
+    "doc_type": "kyc",
+    "description": "Feb 11 - Email was sent to agree which NDA to use, and an editable version of the KYC",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "NUM-2026",
+    "doc_type": "kyc",
+    "description": "Feb 09 - Was sent the KYC for its completion",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "NUM-2026",
+    "doc_type": "kyc",
+    "description": "Feb 20 - No answere",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "TRA-2026",
+    "doc_type": "kyc",
+    "description": "Feb 08 - KYC was sent for its completion",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "TRA-2026",
+    "doc_type": "kyc",
+    "description": "Feb 17 - KYC was received with additional information",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "CAE-2026",
+    "doc_type": "kyc",
+    "description": "Jan 28 - KYC was received fully completed",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "CAE-2026",
+    "doc_type": "kyc",
+    "description": "Feb 12 - KYC signed was shared (doc was ready from the Jan 23",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "AGR-2026",
+    "doc_type": "kyc",
+    "description": "Feb 11 - KYC was shared signed.",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "EQU-2026",
+    "doc_type": "kyc",
+    "description": "Jan 22 - Conversation started, exchanges of documents",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "EQU-2026",
+    "doc_type": "kyc",
+    "description": "Feb 12 - Information was sent to Brian for validation",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "EQU-2026",
+    "doc_type": "kyc",
+    "description": "Feb 16 - NFA Bylaw 1101 Certification was sent to Brian and Tarek for signature",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "EQU-2026",
+    "doc_type": "kyc",
+    "description": "- EOX costumer table, Ana needs to verified the amounts",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "EQU-2026",
+    "doc_type": "kyc",
+    "description": "- BSA will be sent to Courtney for its review",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "GRE-2026",
+    "doc_type": "kyc",
+    "description": "Feb 09 - KYC form was shared",
+    "actor": "Ana Avramovic"
+  },
+  {
+    "general_id": "INF-2026",
+    "doc_type": "kyc",
+    "description": "Feb 09 - They informed they were working on the KYC",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "INF-2026",
+    "doc_type": "kyc",
+    "description": "Feb 20 - Follow-up email was sent",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "ORI-2026",
+    "doc_type": "kyc",
+    "description": "Feb 13 - KYC was received",
+    "actor": "Carolina Martinez"
+  },
+  {
+    "general_id": "ORI-2026",
+    "doc_type": "kyc",
+    "description": "Feb 19 - KYC completed was sent",
+    "actor": "Carolina Martinez"
+  }
+];
+
+
+function seedFromOnboarding() {
+  // Try onboarding tool localStorage first
+  try {
+    const ob = JSON.parse(localStorage.getItem('csl_onboarding') || '{}');
+    if (ob.counterparties?.length) {
+      counterparties = ob.counterparties;
+      documents = ob.documents || [];
+      activities = ob.activities || [];
+      return;
+    }
+  } catch(e) {}
+
+  // Fall back to embedded seed data
+  const now = new Date().toISOString();
+  SEED_COUNTERPARTIES.forEach((cp, i) => {
+    cp.id = cp.id || ('seed_cp_' + String(i).padStart(3,'0'));
+    cp.created_at = cp.created_at || now;
+  });
+  SEED_DOCUMENTS.forEach((doc, i) => {
+    doc.id = doc.id || ('seed_doc_' + String(i).padStart(3,'0'));
+    const cp = SEED_COUNTERPARTIES.find(c => c.general_id === doc.general_id);
+    doc.counterparty_id = cp ? cp.id : '';
+    doc.created_at = doc.created_at || now;
+  });
+  SEED_ACTIVITIES.forEach((act, i) => {
+    act.id = act.id || ('seed_act_' + String(i).padStart(3,'0'));
+    const cp = SEED_COUNTERPARTIES.find(c => c.general_id === act.general_id);
+    act.counterparty_id = cp ? cp.id : '';
+    act.created_at = act.created_at || now;
+    act.action = act.action || 'note';
+  });
+  counterparties = [...SEED_COUNTERPARTIES];
+  documents = [...SEED_DOCUMENTS];
+  activities = [...SEED_ACTIVITIES];
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function render() {
+  renderStats();
+  renderGrid();
+}
+
+function renderStats() {
+  const total = counterparties.length;
+  const ndaExec = documents.filter(d => d.doc_type === 'nda' && d.status === 'executed').length;
+  const ndaPending = documents.filter(d => d.doc_type === 'nda' && d.status !== 'executed' && d.status !== 'declined').length;
+  const kycDone = documents.filter(d => d.doc_type === 'kyc' && d.status === 'executed').length;
+  const kycPending = documents.filter(d => d.doc_type === 'kyc' && d.status !== 'executed' && d.status !== 'declined').length;
+  const mktActive = documents.filter(d => d.doc_type === 'marketing').length;
+
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat"><div class="stat-n">${total}</div><div class="stat-l">Companies</div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--green)">${ndaExec}</div><div class="stat-l">NDA Executed</div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--amber)">${ndaPending}</div><div class="stat-l">NDA Pending</div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--green)">${kycDone}</div><div class="stat-l">KYC Done</div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--amber)">${kycPending}</div><div class="stat-l">KYC Pending</div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--blue)">${mktActive}</div><div class="stat-l">Marketing</div></div>
+  `;
+}
+
+function renderGrid() {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  const grid = document.getElementById('companyGrid');
+  const empty = document.getElementById('emptyState');
+
+  let filtered = counterparties.filter(cp => {
+    if (!q) return true;
+    const searchable = [
+      cp.company_name, cp.general_id, cp.country, cp.requester,
+      cp.signatory_name, cp.backoffice_name, cp.address,
+    ].join(' ').toLowerCase();
+    return searchable.includes(q);
+  });
+
+  // Sort: companies with most activity/docs first, then alphabetical
+  filtered.sort((a, b) => {
+    const aDocs = documents.filter(d => d.general_id === a.general_id).length;
+    const bDocs = documents.filter(d => d.general_id === b.general_id).length;
+    if (bDocs !== aDocs) return bDocs - aDocs;
+    return (a.company_name || '').localeCompare(b.company_name || '');
+  });
+
+  if (filtered.length === 0) {
+    grid.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  grid.innerHTML = filtered.map(cp => {
+    const docs = documents.filter(d => d.general_id === cp.general_id);
+    const docsHtml = docs.map(d => {
+      const label = DOC_LABELS[d.doc_type] || d.doc_type;
+      const status = d.status || 'not_started';
+      return `<span class="doc-dot ${status}">${label}</span>`;
+    }).join('');
+
+    const contact = cp.signatory_name || cp.backoffice_name || '';
+    const requester = cp.requester || '';
+
+    return `
+      <div class="card" onclick="openDetail('${cp.general_id}')">
+        <div class="card-name">${cp.company_name}</div>
+        <div class="card-id">${cp.general_id}</div>
+        <div class="card-meta">
+          ${contact ? `<span>👤 ${contact}</span>` : ''}
+          ${requester ? `<span>📋 ${requester}</span>` : ''}
+          ${cp.country ? `<span>🌍 ${cp.country}</span>` : ''}
+        </div>
+        ${docsHtml ? `<div class="card-docs">${docsHtml}</div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+// ============================================================
+// DETAIL PANEL
+// ============================================================
+function openDetail(generalId) {
+  const cp = counterparties.find(c => c.general_id === generalId);
+  if (!cp) return;
+
+  const docs = documents.filter(d => d.general_id === generalId);
+  const notes = activities
+    .filter(a => a.general_id === generalId || a.counterparty_id === cp.id)
+    .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+  document.getElementById('detailName').textContent = cp.company_name;
+  document.getElementById('detailId').textContent = cp.general_id;
+
+  const body = document.getElementById('detailBody');
+  body.innerHTML = '';
+
+  // ── CONTACTS ──
+  body.innerHTML += `
+    <div class="section">
+      <div class="section-title">Contacts</div>
+      <div class="info-grid">
+        ${cp.signatory_name ? `
+          <div><div class="info-label">Signatory</div><div class="info-value">${cp.signatory_name}${cp.signatory_title ? `<br><span style="color:var(--gray);font-size:11px">${cp.signatory_title}</span>` : ''}</div></div>
+          <div><div class="info-label">Email</div><div class="info-value">${cp.signatory_email ? `<a href="mailto:${cp.signatory_email}">${cp.signatory_email}</a>` : '—'}</div></div>
+        ` : ''}
+        ${cp.backoffice_name ? `
+          <div><div class="info-label">Backoffice / Compliance</div><div class="info-value">${cp.backoffice_name}${cp.backoffice_title ? `<br><span style="color:var(--gray);font-size:11px">${cp.backoffice_title}</span>` : ''}</div></div>
+          <div><div class="info-label">Email</div><div class="info-value">${cp.backoffice_email ? `<a href="mailto:${cp.backoffice_email}">${cp.backoffice_email}</a>` : '—'}</div></div>
+        ` : ''}
+        ${cp.address ? `<div style="grid-column:1/-1"><div class="info-label">Address</div><div class="info-value">${cp.address}</div></div>` : ''}
+      </div>
+    </div>
+  `;
+
+  // ── DOCUMENTS ──
+  const docsHtml = docs.length > 0
+    ? docs.map(d => {
+        const label = DOC_LABELS[d.doc_type] || d.doc_type;
+        const status = d.status || 'not_started';
+        const statusLabel = STATUS_LABELS[status] || status;
+        const date = d.request_date || '';
+        const spLink = d.executed_file_url || '';
+
+        return `<div class="doc-row">
+          <div class="doc-row-left">
+            <span class="doc-dot ${status}">${label}</span>
+            <span class="doc-type-label">${statusLabel}</span>
+            ${date ? `<span class="doc-date">${date}</span>` : ''}
+          </div>
+          ${spLink && spLink.startsWith('http') ? `<a href="${spLink}" target="_blank" style="color:var(--gold);font-size:11px;text-decoration:none">📎 View</a>` : ''}
+        </div>`;
+      }).join('')
+    : '<div style="font-size:13px;color:var(--gray);padding:8px 0">No documents yet</div>';
+
+  body.innerHTML += `
+    <div class="section">
+      <div class="section-title">Documents</div>
+      ${docsHtml}
+    </div>
+  `;
+
+  // ── OWNER ──
+  if (cp.requester) {
+    body.innerHTML += `
+      <div class="section">
+        <div class="section-title">ClearSky Owner</div>
+        <div style="font-size:13px">${cp.requester}</div>
+      </div>
+    `;
+  }
+
+  // ── NOTES / ACTIVITY ──
+  const notesHtml = notes.length > 0
+    ? notes.map(n => {
+        const date = n.created_at ? new Date(n.created_at).toLocaleDateString('en-GB', {day:'2-digit',month:'short',year:'numeric'}) : '';
+        const actor = n.actor || '';
+        const text = n.details || n.description || n.action || '';
+        return `<div class="note-item">
+          <div class="note-meta">${date}${actor ? ` — ${actor}` : ''}</div>
+          <div class="note-text">${text}</div>
+        </div>`;
+      }).join('')
+    : '<div style="font-size:13px;color:var(--gray);padding:8px 0">No notes yet</div>';
+
+  body.innerHTML += `
+    <div class="section">
+      <div class="section-title">Notes & Activity</div>
+      ${notesHtml}
+      <div class="note-input-wrap">
+        <input class="note-input" id="noteInput" placeholder="Add a note…" onkeydown="if(event.key==='Enter')addNote('${generalId}')">
+        <button class="btn btn-gold btn-sm" onclick="addNote('${generalId}')">Add</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('detailPanel').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('detailPanel').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
+
+// ============================================================
+// ADD NOTE (the ONE write action for everyone)
+// ============================================================
+async function addNote(generalId) {
+  const input = document.getElementById('noteInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const cp = counterparties.find(c => c.general_id === generalId);
+  const note = {
+    id: 'note_' + Date.now(),
+    counterparty_id: cp?.id || '',
+    general_id: generalId,
+    action: 'note',
+    description: text,
+    details: text,
+    actor: 'Team',
+    created_at: new Date().toISOString(),
+  };
+
+  activities.unshift(note);
+  saveLocal();
+
+  // Try API
+  try {
+    await fetch(API + '/api/onboarding/activity', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(note),
+    });
+  } catch(e) {}
+
+  input.value = '';
+  openDetail(generalId); // refresh
+  toast('Note added');
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+loadData();
+</script>
+</body>
+</html>

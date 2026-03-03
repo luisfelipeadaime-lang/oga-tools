@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presentation Engine — ClearSky Tools</title>
+<link rel="icon" href="/assets/favicon.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"></script>
+<script>
+// Fallback CDN if cdnjs fails
+if (typeof PptxGenJS === 'undefined') {
+  document.write('<script src="https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"><\/script>');
+}
+</script>
+<style>
+:root {
+  --dn: #0D1B3E; --lb: #5B9BD5; --gd: #D4A843; --wh: #FFFFFF;
+  --ow: #F5F7FA; --dt: #2C3E50; --mg: #6B7B8D; --lg: #E8ECF1;
+  --tg: #1A8A6E; --sr: #C0392B; --bg: #F8F9FB;
+  --font-head: 'Georgia', 'Times New Roman', serif;
+  --font-body: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: var(--font-body); background: var(--bg); color: var(--dt); min-height: 100vh; }
+
+/* ═══ NAV ═══ */
+.nav { background: var(--dn); padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
+.nav img { height: 28px; }
+.nav-sep { color: var(--mg); font-size: 14px; }
+.nav-title { color: var(--wh); font-size: 14px; font-weight: 600; letter-spacing: 0.02em; }
+.nav-back { color: var(--lb); font-size: 13px; text-decoration: none; margin-left: auto; }
+.nav-back:hover { color: var(--gd); }
+
+/* ═══ MAIN ═══ */
+.container { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
+.hero { margin-bottom: 32px; }
+.hero h1 { font-family: var(--font-head); font-size: 26px; color: var(--dn); margin-bottom: 6px; }
+.hero p { color: var(--mg); font-size: 14px; }
+
+/* ═══ STEP INDICATOR ═══ */
+.steps { display: flex; gap: 4px; margin-bottom: 28px; }
+.step { flex: 1; height: 4px; background: var(--lg); border-radius: 2px; transition: background 0.3s; }
+.step.active { background: var(--gd); }
+.step.done { background: var(--tg); }
+
+/* ═══ PROMPT AREA ═══ */
+.prompt-section { margin-bottom: 24px; }
+.prompt-label { font-size: 13px; font-weight: 600; color: var(--dn); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+.prompt-label span.badge { background: var(--gd); color: var(--wh); font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
+.prompt-box { width: 100%; min-height: 100px; padding: 14px 16px; border: 2px solid var(--lg); border-radius: 8px; font-size: 14px; font-family: var(--font-body); color: var(--dt); resize: vertical; transition: border-color 0.2s; line-height: 1.5; }
+.prompt-box:focus { outline: none; border-color: var(--lb); }
+.prompt-box::placeholder { color: #aab; }
+
+/* ═══ TYPE SELECTOR ═══ */
+.type-row { display: flex; gap: 12px; margin-bottom: 24px; }
+.type-card { flex: 1; padding: 16px; border: 2px solid var(--lg); border-radius: 8px; cursor: pointer; transition: all 0.2s; text-align: center; }
+.type-card:hover { border-color: var(--lb); }
+.type-card.selected { border-color: var(--gd); background: rgba(212,168,67,0.06); }
+.type-card .icon { font-size: 24px; margin-bottom: 6px; }
+.type-card .label { font-size: 13px; font-weight: 600; color: var(--dn); }
+.type-card .desc { font-size: 11px; color: var(--mg); margin-top: 3px; }
+
+/* ═══ BUTTONS ═══ */
+.btn { padding: 10px 24px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+.btn-primary { background: var(--dn); color: var(--wh); }
+.btn-primary:hover { background: #162d5a; }
+.btn-primary:disabled { background: var(--mg); cursor: not-allowed; }
+.btn-gold { background: var(--gd); color: var(--wh); }
+.btn-gold:hover { background: #c49a38; }
+.btn-outline { background: transparent; color: var(--dn); border: 1.5px solid var(--lg); }
+.btn-outline:hover { border-color: var(--lb); }
+.btn-row { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+
+/* ═══ BRIEF EDITOR ═══ */
+.brief-section { display: none; }
+.brief-section.visible { display: block; }
+.field-group { margin-bottom: 16px; }
+.field-group label { font-size: 12px; font-weight: 600; color: var(--dn); margin-bottom: 4px; display: block; }
+.field-group label .opt { color: var(--mg); font-weight: 400; font-style: italic; }
+.field-group input, .field-group textarea, .field-group select {
+  width: 100%; padding: 8px 12px; border: 1.5px solid var(--lg); border-radius: 6px;
+  font-size: 13px; font-family: var(--font-body); color: var(--dt); transition: border-color 0.2s;
+}
+.field-group input:focus, .field-group textarea:focus, .field-group select:focus { outline: none; border-color: var(--lb); }
+.field-group textarea { min-height: 60px; resize: vertical; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.char-count { font-size: 10px; color: var(--mg); text-align: right; margin-top: 2px; }
+
+.section-header { font-family: var(--font-head); font-size: 16px; color: var(--dn); margin: 24px 0 12px; padding-bottom: 6px; border-bottom: 2px solid var(--gd); }
+
+/* ═══ SLIDE PREVIEW CARDS ═══ */
+.slide-preview { background: var(--wh); border: 1px solid var(--lg); border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+.slide-preview .slide-title { font-size: 12px; font-weight: 600; color: var(--gd); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ═══ GENERATING STATE ═══ */
+.generating { text-align: center; padding: 48px 24px; }
+.spinner { width: 36px; height: 36px; border: 3px solid var(--lg); border-top: 3px solid var(--gd); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.gen-text { color: var(--mg); font-size: 14px; }
+
+/* ═══ STATUS ═══ */
+.status { padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; display: none; }
+.status.error { display: block; background: #fef2f2; color: var(--sr); border: 1px solid #fecaca; }
+.status.success { display: block; background: #f0fdf4; color: var(--tg); border: 1px solid #bbf7d0; }
+.status.info { display: block; background: #eff6ff; color: var(--lb); border: 1px solid #bfdbfe; }
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 640px) {
+  .type-row { flex-direction: column; }
+  .field-row, .field-row-3 { grid-template-columns: 1fr; }
+  .container { padding: 20px 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <img src="/assets/logos/logo-white.png" alt="ClearSky" onerror="this.style.display='none'">
+  <span class="nav-sep">|</span>
+  <span class="nav-title">Presentation Engine</span>
+  <a href="/" class="nav-back">← Back to Tools</a>
+</nav>
+
+<div class="container">
+  <!-- HERO -->
+  <div class="hero">
+    <h1>Presentation Engine</h1>
+    <p>Generate branded ClearSky presentations from a prompt. AI fills the content, you review and download.</p>
+  </div>
+
+  <!-- STEPS -->
+  <div class="steps">
+    <div class="step active" id="step1"></div>
+    <div class="step" id="step2"></div>
+    <div class="step" id="step3"></div>
+  </div>
+
+  <!-- STATUS -->
+  <div class="status" id="status"></div>
+
+  <!-- ═══════════ PHASE 1: PROMPT ═══════════ -->
+  <div id="phase-prompt">
+    <!-- PROMPT -->
+    <div class="prompt-section">
+      <div class="prompt-label">
+        Describe the presentation you need
+        <span class="badge">AI-POWERED</span>
+      </div>
+      <textarea class="prompt-box" id="prompt" placeholder="e.g., Create a tearsheet for the EcoGreen Cameroon plastic credit project for Société Générale
+
+e.g., Build a deck for TotalEnergies comparing three NBS projects: Bolivia, ERA Brazil, and Boomitra
+
+e.g., Project tearsheet for Sierra Leone blue carbon using VM0033, highlight community co-benefits for Howden Group"></textarea>
+    </div>
+
+    <!-- TYPE SELECTOR -->
+    <div class="prompt-label">Output type</div>
+    <div class="type-row">
+      <div class="type-card selected" data-type="tearsheet" onclick="selectType(this)">
+        <div class="icon">📋</div>
+        <div class="label">Project Tearsheet</div>
+        <div class="desc">3-page A4 portrait • Single project focus</div>
+      </div>
+      <div class="type-card" data-type="deck" onclick="selectType(this)">
+        <div class="icon">📊</div>
+        <div class="label">Presentation Deck</div>
+        <div class="desc">16:9 landscape • Multi-project / sector</div>
+      </div>
+      <div class="type-card" data-type="whitepaper" onclick="selectType(this)">
+        <div class="icon">📄</div>
+        <div class="label">White Paper</div>
+        <div class="desc">A4 portrait • Deep-dive document</div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="generateBrief()" id="btn-generate">
+        Generate Brief →
+      </button>
+      <button class="btn btn-outline" onclick="toggleManual()">
+        Or fill manually ↓
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════ GENERATING ═══════════ -->
+  <div id="phase-generating" style="display:none">
+    <div class="generating">
+      <div class="spinner"></div>
+      <div class="gen-text" id="gen-status">Searching project knowledge base...</div>
+    </div>
+  </div>
+
+  <!-- ═══════════ PHASE 2: BRIEF EDITOR ═══════════ -->
+  <div id="phase-brief" style="display:none">
+
+    <!-- TEARSHEET FIELDS -->
+    <div id="fields-tearsheet" class="brief-section visible">
+      <h3 class="section-header">Cover & Overview</h3>
+      <div class="field-group">
+        <label>Project Name</label>
+        <input type="text" id="ts-project-name" placeholder="e.g., EcoGreen Recycling S.A.">
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label>Country</label>
+          <input type="text" id="ts-country" placeholder="e.g., Cameroon">
+        </div>
+        <div class="field-group">
+          <label>Credit Type</label>
+          <input type="text" id="ts-credit-type" placeholder="e.g., Plastic WCC + WRC">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label>Verra ID <span class="opt">(optional)</span></label>
+          <input type="text" id="ts-verra-id" placeholder="e.g., PWRP-5466">
+        </div>
+        <div class="field-group">
+          <label>Methodology <span class="opt">(optional)</span></label>
+          <input type="text" id="ts-methodology" placeholder="e.g., PWRM0001 v1.1 + PWRM0002 v1.1">
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Project Overview <span class="opt">(max 500 chars)</span></label>
+        <textarea id="ts-overview" placeholder="2-3 paragraph project description..." maxlength="500" oninput="updateCount(this,'ts-overview-count',500)"></textarea>
+        <div class="char-count" id="ts-overview-count">0 / 500</div>
+      </div>
+
+      <h3 class="section-header">Key Metrics</h3>
+      <div class="field-row-3">
+        <div class="field-group">
+          <label>WCC / Year <span class="opt">(optional)</span></label>
+          <input type="text" id="ts-wcc" placeholder="e.g., ~10,900">
+        </div>
+        <div class="field-group">
+          <label>WRC / Year <span class="opt">(optional)</span></label>
+          <input type="text" id="ts-wrc" placeholder="e.g., ~6,600">
+        </div>
+        <div class="field-group">
+          <label>Total CP1 <span class="opt">(optional)</span></label>
+          <input type="text" id="ts-total-cp1" placeholder="e.g., 122,535">
+        </div>
+      </div>
+      <div class="field-row-3">
+        <div class="field-group">
+          <label>Jobs Created <span class="opt">(optional)</span></label>
+          <input type="text" id="ts-jobs" placeholder="e.g., 450+">
+        </div>
+        <div class="field-group">
+          <label>Crediting Period <span class="opt">(optional)</span></label>
+          <input type="text" id="ts-period" placeholder="e.g., Dec 2022 – Nov 2029">
+        </div>
+        <div class="field-group">
+          <label>Material / Asset Type <span class="opt">(optional)</span></label>
+          <input type="text" id="ts-material" placeholder="e.g., PET (Type 1)">
+        </div>
+      </div>
+
+      <h3 class="section-header">Technical Details</h3>
+      <div class="field-row">
+        <div class="field-group">
+          <label>Output / End Product <span class="opt">(optional)</span></label>
+          <input type="text" id="ts-output" placeholder="e.g., Food-grade rPET flakes/pellets">
+        </div>
+        <div class="field-group">
+          <label>Verification Body <span class="opt">(optional)</span></label>
+          <input type="text" id="ts-vvb" placeholder="e.g., S&A Carbon LLC">
+        </div>
+      </div>
+      <div class="field-group">
+        <label>SDGs <span class="opt">(comma-separated numbers)</span></label>
+        <input type="text" id="ts-sdgs" placeholder="e.g., 3, 8, 11, 12, 14, 15">
+      </div>
+
+      <h3 class="section-header">Co-Benefits (up to 4)</h3>
+      <div id="ts-cobenefits">
+        <div class="field-row" style="margin-bottom:8px">
+          <div class="field-group"><label>Title</label><input type="text" class="cb-title" placeholder="e.g., Employment"></div>
+          <div class="field-group"><label>Description</label><input type="text" class="cb-desc" placeholder="e.g., 450+ jobs in waste collection"></div>
+        </div>
+        <div class="field-row" style="margin-bottom:8px">
+          <div class="field-group"><input type="text" class="cb-title" placeholder="Title"></div>
+          <div class="field-group"><input type="text" class="cb-desc" placeholder="Description"></div>
+        </div>
+        <div class="field-row" style="margin-bottom:8px">
+          <div class="field-group"><input type="text" class="cb-title" placeholder="Title"></div>
+          <div class="field-group"><input type="text" class="cb-desc" placeholder="Description"></div>
+        </div>
+        <div class="field-row" style="margin-bottom:8px">
+          <div class="field-group"><input type="text" class="cb-title" placeholder="Title"></div>
+          <div class="field-group"><input type="text" class="cb-desc" placeholder="Description"></div>
+        </div>
+      </div>
+
+      <h3 class="section-header">Investment Case</h3>
+      <div class="field-group">
+        <label>Additionality Summary <span class="opt">(max 200 chars)</span></label>
+        <textarea id="ts-additionality" placeholder="Why is this project additional?" maxlength="200" oninput="updateCount(this,'ts-add-count',200)"></textarea>
+        <div class="char-count" id="ts-add-count">0 / 200</div>
+      </div>
+      <div class="field-group">
+        <label>Traceability Summary <span class="opt">(max 200 chars)</span></label>
+        <textarea id="ts-traceability" placeholder="How is material tracked?" maxlength="200" oninput="updateCount(this,'ts-trace-count',200)"></textarea>
+        <div class="char-count" id="ts-trace-count">0 / 200</div>
+      </div>
+      <div class="field-group">
+        <label>Impact Summary <span class="opt">(max 200 chars)</span></label>
+        <textarea id="ts-impact" placeholder="Key impact metrics" maxlength="200" oninput="updateCount(this,'ts-impact-count',200)"></textarea>
+        <div class="char-count" id="ts-impact-count">0 / 200</div>
+      </div>
+
+      <h3 class="section-header">Contact & Counterparty</h3>
+      <div class="field-row-3">
+        <div class="field-group">
+          <label>Contact Name</label>
+          <input type="text" id="ts-contact-name" placeholder="e.g., Luis Adaime" value="Luis Adaime">
+        </div>
+        <div class="field-group">
+          <label>Contact Email</label>
+          <input type="text" id="ts-contact-email" placeholder="e.g., luis@clearskyltd.com" value="trading@clearskyltd.com">
+        </div>
+        <div class="field-group">
+          <label>Contact Phone <span class="opt">(optional)</span></label>
+          <input type="text" id="ts-contact-phone" placeholder="+44 XXX XXX XXXX">
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Counterparty <span class="opt">(optional — for tailored CTA)</span></label>
+        <input type="text" id="ts-counterparty" placeholder="e.g., TotalEnergies, Société Générale">
+      </div>
+    </div>
+
+    <!-- DECK FIELDS -->
+    <div id="fields-deck" class="brief-section">
+      <h3 class="section-header">Deck Overview</h3>
+      <div class="field-group">
+        <label>Deck Title</label>
+        <input type="text" id="dk-title" placeholder="e.g., Nature-Based Solutions Portfolio">
+      </div>
+      <div class="field-group">
+        <label>Subtitle / Credit Type</label>
+        <input type="text" id="dk-subtitle" placeholder="e.g., REDD+ Credit Opportunities for TotalEnergies">
+      </div>
+      <div class="field-group">
+        <label>Executive Summary <span class="opt">(max 400 chars)</span></label>
+        <textarea id="dk-summary" placeholder="Market context and ClearSky positioning..." maxlength="400" oninput="updateCount(this,'dk-sum-count',400)"></textarea>
+        <div class="char-count" id="dk-sum-count">0 / 400</div>
+      </div>
+      <div class="field-group">
+        <label>Sector / Market Context <span class="opt">(max 400 chars)</span></label>
+        <textarea id="dk-market" placeholder="Regulatory landscape, market size, trends..." maxlength="400" oninput="updateCount(this,'dk-mkt-count',400)"></textarea>
+        <div class="char-count" id="dk-mkt-count">0 / 400</div>
+      </div>
+
+      <h3 class="section-header">Key Statistics (up to 4)</h3>
+      <div class="field-row" style="margin-bottom:8px">
+        <div class="field-group"><label>Number</label><input type="text" class="dk-stat-num" placeholder="e.g., 460M"></div>
+        <div class="field-group"><label>Label</label><input type="text" class="dk-stat-label" placeholder="e.g., Tonnes produced annually"></div>
+      </div>
+      <div class="field-row" style="margin-bottom:8px">
+        <div class="field-group"><input type="text" class="dk-stat-num" placeholder="Number"></div>
+        <div class="field-group"><input type="text" class="dk-stat-label" placeholder="Label"></div>
+      </div>
+      <div class="field-row" style="margin-bottom:8px">
+        <div class="field-group"><input type="text" class="dk-stat-num" placeholder="Number"></div>
+        <div class="field-group"><input type="text" class="dk-stat-label" placeholder="Label"></div>
+      </div>
+      <div class="field-row" style="margin-bottom:8px">
+        <div class="field-group"><input type="text" class="dk-stat-num" placeholder="Number"></div>
+        <div class="field-group"><input type="text" class="dk-stat-label" placeholder="Label"></div>
+      </div>
+
+      <h3 class="section-header">Projects (up to 3)</h3>
+      <div id="dk-projects">
+        <div class="slide-preview" data-proj="0">
+          <div class="slide-title">Project 1</div>
+          <div class="field-row" style="margin-bottom:8px">
+            <div class="field-group"><label>Name</label><input type="text" class="dk-proj-name"></div>
+            <div class="field-group"><label>Country</label><input type="text" class="dk-proj-country"></div>
+          </div>
+          <div class="field-row" style="margin-bottom:8px">
+            <div class="field-group"><label>Credit Type</label><input type="text" class="dk-proj-type"></div>
+            <div class="field-group"><label>Key Metric</label><input type="text" class="dk-proj-metric"></div>
+          </div>
+          <div class="field-group"><label>Description <span class="opt">(max 250 chars)</span></label><textarea class="dk-proj-desc" maxlength="250"></textarea></div>
+        </div>
+        <div class="slide-preview" data-proj="1">
+          <div class="slide-title">Project 2 <span class="opt">(optional)</span></div>
+          <div class="field-row" style="margin-bottom:8px">
+            <div class="field-group"><label>Name</label><input type="text" class="dk-proj-name"></div>
+            <div class="field-group"><label>Country</label><input type="text" class="dk-proj-country"></div>
+          </div>
+          <div class="field-row" style="margin-bottom:8px">
+            <div class="field-group"><label>Credit Type</label><input type="text" class="dk-proj-type"></div>
+            <div class="field-group"><label>Key Metric</label><input type="text" class="dk-proj-metric"></div>
+          </div>
+          <div class="field-group"><label>Description</label><textarea class="dk-proj-desc" maxlength="250"></textarea></div>
+        </div>
+        <div class="slide-preview" data-proj="2">
+          <div class="slide-title">Project 3 <span class="opt">(optional)</span></div>
+          <div class="field-row" style="margin-bottom:8px">
+            <div class="field-group"><label>Name</label><input type="text" class="dk-proj-name"></div>
+            <div class="field-group"><label>Country</label><input type="text" class="dk-proj-country"></div>
+          </div>
+          <div class="field-row" style="margin-bottom:8px">
+            <div class="field-group"><label>Credit Type</label><input type="text" class="dk-proj-type"></div>
+            <div class="field-group"><label>Key Metric</label><input type="text" class="dk-proj-metric"></div>
+          </div>
+          <div class="field-group"><label>Description</label><textarea class="dk-proj-desc" maxlength="250"></textarea></div>
+        </div>
+      </div>
+
+      <h3 class="section-header">Contact</h3>
+      <div class="field-row-3">
+        <div class="field-group"><label>Name</label><input type="text" id="dk-contact-name" value="Luis Adaime"></div>
+        <div class="field-group"><label>Email</label><input type="text" id="dk-contact-email" value="trading@clearskyltd.com"></div>
+        <div class="field-group"><label>Counterparty</label><input type="text" id="dk-counterparty"></div>
+      </div>
+    </div>
+
+    <!-- WHITE PAPER FIELDS (simplified for MVP) -->
+    <div id="fields-whitepaper" class="brief-section">
+      <h3 class="section-header">White Paper</h3>
+      <div class="field-group">
+        <label>Document Title</label>
+        <input type="text" id="wp-title" placeholder="e.g., Plastic Credits: A Corporate Guide">
+      </div>
+      <div class="field-group">
+        <label>Subtitle</label>
+        <input type="text" id="wp-subtitle" placeholder="e.g., A Guide to Verra-Certified Plastic Waste Reduction">
+      </div>
+      <div class="field-group">
+        <label>Sections <span class="opt">(one per line, up to 10)</span></label>
+        <textarea id="wp-sections" style="min-height:120px" placeholder="Executive Summary&#10;The Plastic Waste Crisis&#10;What Are Plastic Credits?&#10;..."></textarea>
+      </div>
+      <div class="status info" style="display:block">White paper generation builds a structured outline with section placeholders. Full content should be edited in PowerPoint after download.</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="generatePPTX()">
+        ⬇ Download PPTX
+      </button>
+      <button class="btn btn-outline" onclick="downloadBrief()">
+        💾 Save Brief JSON
+      </button>
+      <button class="btn btn-outline" onclick="goBack()">
+        ← Back to Prompt
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════
+// PROJECT KNOWLEDGE BASE
+// ════════════════════════════════════════════
+const PROJECT_KB = {
+  "ecogreen": {
+    name: "EcoGreen Recycling S.A.", country: "Cameroon", creditType: "Plastic WCC + WRC",
+    verraId: "PWRP-5466", methodology: "PWRM0001 v1.1 + PWRM0002 v1.1",
+    wcc: "~10,900", wrc: "~6,600", totalCp1: "122,535 (76,035 WCC + 46,500 WRC)",
+    jobs: "450+", period: "Dec 2022 – Nov 2029 (7yr)", material: "PET (Type 1)",
+    output: "Food-grade rPET flakes and pellets", vvb: "S&A Carbon LLC",
+    sdgs: "3, 8, 11, 12, 14, 15",
+    overview: "EcoGreen Recycling operates Cameroon's first industrial-scale PET recycling facility in Douala. The project collects plastic waste from urban waterways and informal dump sites, processes it into food-grade rPET, and sells to domestic and export markets. Credit revenue enables collection infrastructure in areas with zero existing waste management.",
+    additionality: "No formal waste collection or recycling infrastructure existed in the project area. Credit revenue finances collection networks, sorting facilities, and processing equipment that would not exist under baseline conditions.",
+    traceability: "Full chain-of-custody from collection point through sorting, washing, and pelletizing. Each batch is weighed, documented, and traceable to specific collection zones. Verra-serialized credits linked to verified material flows.",
+    impact: "450+ direct jobs created in waste collection and processing. Measurable reduction in waterway plastic pollution. Community health improvements through cleaner urban drainage. Food-grade output displaces virgin PET production.",
+    cobenefits: [
+      {title: "Employment", desc: "450+ jobs in collection, sorting, and processing — primarily for previously informal waste workers"},
+      {title: "Health & Sanitation", desc: "Reduced plastic pollution in urban drainage, lowering flood and disease risk in Douala communities"},
+      {title: "Circular Economy", desc: "Food-grade rPET output displaces virgin plastic production, closing the material loop"},
+      {title: "Climate Co-benefits", desc: "Avoided landfill methane emissions and reduced virgin PET manufacturing emissions"}
+    ]
+  },
+  "roded": {
+    name: "Roded Recycling Ltd.", country: "Israel", creditType: "Plastic WCC + WRC",
+    verraId: "PWRP-5303", methodology: "PWRM0001 v1.1 + PWRM0002 v1.1",
+    wcc: "~9,400", wrc: "~9,200", totalCp1: "130,680 (66,000 WCC + 64,680 WRC)",
+    jobs: "50+", period: "May 2023 – May 2030 (7yr)", material: "LDPE, HDPE, PP",
+    output: "Recycled PE pallets (food-grade certified)", vvb: "TBD",
+    sdgs: "8, 12, 14, 15",
+    overview: "Roded Recycling addresses agricultural plastic waste in Israel's Arava Valley, collecting and recycling polyethylene films, irrigation drip lines, and polypropylene containers that would otherwise be landfilled or open-burned. Patented technology converts waste into food-grade pallets sold commercially.",
+    additionality: "Agricultural plastic waste in the Arava region was routinely landfilled or burned. No commercial recycling pathway existed for contaminated agricultural films. Credit revenue enables collection logistics across dispersed farming communities.",
+    traceability: "GPS-tracked collection routes, weigh-bridge documentation at facility intake, and batch-level processing records. ISO-certified facility with full audit trail. Listed on NYSE (GNE subsidiary).",
+    impact: "Diverts thousands of tonnes of agricultural plastic from landfill annually. Patented recycling technology produces food-grade certified output. Creates circular economy for agricultural inputs in arid regions.",
+    cobenefits: [
+      {title: "Agricultural Sustainability", desc: "Removes plastic contamination from farming land, protecting soil health in arid environments"},
+      {title: "Technology Innovation", desc: "Patented recycling process for contaminated agricultural films — first of its kind commercially"},
+      {title: "Circular Economy", desc: "Food-grade pallet output re-enters the agricultural supply chain"},
+      {title: "Listed Entity", desc: "NYSE-listed parent (GNE) provides financial transparency and governance standards"}
+    ]
+  },
+  "sierra_leone": {
+    name: "Sierra Leone Blue Carbon", country: "Sierra Leone", creditType: "Blue Carbon VCUs",
+    verraId: "TBD", methodology: "VM0033 (Tidal Wetland and Seagrass Restoration)",
+    wcc: "TBD", wrc: "N/A", totalCp1: "TBD",
+    jobs: "TBD", period: "TBD", material: "Mangrove restoration",
+    output: "Verified Carbon Units (VCUs)", vvb: "TBD",
+    sdgs: "1, 8, 13, 14, 15",
+    overview: "ClearSky's Sierra Leone blue carbon project involves mangrove restoration and conservation along the coastal zones. The project aims to restore degraded mangrove ecosystems, sequestering carbon while providing coastal protection and biodiversity benefits. Early-stage development with community engagement underway.",
+    additionality: "Mangrove ecosystems in the project area face ongoing degradation from charcoal production, land conversion, and coastal erosion. Without intervention, carbon stocks would continue to decline. Credit revenue finances restoration and community-based protection.",
+    traceability: "Satellite monitoring of mangrove canopy extent, ground-truth biomass sampling, and community-based monitoring protocols per VM0033 requirements.",
+    impact: "Coastal protection for vulnerable communities, biodiversity restoration, sustainable livelihoods through mangrove-based enterprises, and significant carbon sequestration potential.",
+    cobenefits: [
+      {title: "Coastal Protection", desc: "Restored mangroves provide natural barriers against storm surge and coastal erosion"},
+      {title: "Biodiversity", desc: "Mangrove ecosystems support fish nurseries, bird habitats, and marine biodiversity"},
+      {title: "Community Livelihoods", desc: "Sustainable harvesting, ecotourism, and fisheries enhancement for coastal communities"},
+      {title: "Climate Resilience", desc: "Mangroves sequester carbon at rates 3-5x greater than terrestrial forests per hectare"}
+    ]
+  },
+  "bosquia": {
+    name: "Bosquia Asturias Reforestation", country: "Spain", creditType: "Reforestation VCUs",
+    verraId: "TBD", methodology: "TSB (Terrestrial Storage of Biomass) / AR-ACM0003",
+    wcc: "N/A", wrc: "N/A", totalCp1: "TBD",
+    jobs: "TBD", period: "TBD (30+ year crediting)", material: "Native broadleaf reforestation",
+    output: "Verified Carbon Units (VCUs)", vvb: "TBD",
+    sdgs: "8, 13, 15",
+    overview: "Bosquia is a reforestation project in Asturias, northern Spain, converting degraded eucalyptus and scrubland into native broadleaf forest. The project falls under MITECO's Spanish reforestation framework and targets high-integrity carbon removal through long-term biomass storage.",
+    additionality: "Degraded land with no economic incentive for reforestation under baseline conditions. Credit revenue finances planting, maintenance, and long-term forest management that would not otherwise occur.",
+    traceability: "MITECO registry integration, satellite monitoring, periodic ground-truth biomass inventories per methodology requirements.",
+    impact: "Biodiversity restoration in degraded landscapes, long-term carbon removal through native forest growth, rural employment in forest management.",
+    cobenefits: [
+      {title: "Biodiversity Restoration", desc: "Conversion from monoculture eucalyptus to native broadleaf species restores ecological function"},
+      {title: "Rural Employment", desc: "Long-term forest management creates sustained employment in rural Asturias"},
+      {title: "Water Management", desc: "Native forests improve water retention and reduce erosion risk"},
+      {title: "Fire Resilience", desc: "Broadleaf forests are significantly more fire-resistant than eucalyptus monocultures"}
+    ]
+  }
+};
+
+// Keyword matching for project lookup
+function findProject(text) {
+  const lower = text.toLowerCase();
+  const matches = [];
+  const keywords = {
+    ecogreen: ['ecogreen', 'cameroon', 'douala', 'pet recycling', 'plastic cameroon', '5466'],
+    roded: ['roded', 'israel', 'arava', 'agricultural plastic', '5303'],
+    sierra_leone: ['sierra leone', 'blue carbon', 'mangrove', 'vm0033'],
+    bosquia: ['bosquia', 'asturias', 'reforestation spain', 'native broadleaf']
+  };
+  for (const [key, kws] of Object.entries(keywords)) {
+    if (kws.some(kw => lower.includes(kw))) matches.push(key);
+  }
+  return matches;
+}
+
+// ════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════
+let selectedType = 'tearsheet';
+let currentBrief = null;
+
+// ════════════════════════════════════════════
+// UI HELPERS
+// ════════════════════════════════════════════
+function selectType(el) {
+  document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedType = el.dataset.type;
+}
+
+function updateCount(el, countId, max) {
+  document.getElementById(countId).textContent = `${el.value.length} / ${max}`;
+}
+
+function showStatus(msg, type='info') {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = `status ${type}`;
+  setTimeout(() => { if (el.textContent === msg) el.style.display = 'none'; }, 8000);
+}
+
+function setStep(n) {
+  document.querySelectorAll('.step').forEach((s, i) => {
+    s.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+  });
+}
+
+function toggleManual() {
+  showPhase('brief');
+  showFieldsFor(selectedType);
+  setStep(1);
+}
+
+function goBack() {
+  showPhase('prompt');
+  setStep(0);
+}
+
+function showPhase(phase) {
+  ['prompt', 'generating', 'brief'].forEach(p => {
+    document.getElementById(`phase-${p}`).style.display = p === phase ? 'block' : 'none';
+  });
+}
+
+function showFieldsFor(type) {
+  ['tearsheet', 'deck', 'whitepaper'].forEach(t => {
+    const el = document.getElementById(`fields-${t}`);
+    if (el) el.classList.toggle('visible', t === type);
+  });
+}
+
+// ════════════════════════════════════════════
+// BRIEF GENERATION (AI or local KB)
+// ════════════════════════════════════════════
+async function generateBrief() {
+  const prompt = document.getElementById('prompt').value.trim();
+  if (!prompt) { showStatus('Please describe the presentation you need.', 'error'); return; }
+
+  showPhase('generating');
+  setStep(1);
+
+  const genStatus = document.getElementById('gen-status');
+
+  // 1) Search local KB first
+  genStatus.textContent = 'Searching project knowledge base...';
+  await sleep(300);
+
+  const projectMatches = findProject(prompt);
+  let kbContext = '';
+  if (projectMatches.length > 0) {
+    kbContext = projectMatches.map(k => {
+      const p = PROJECT_KB[k];
+      return `PROJECT: ${p.name}\nCountry: ${p.country}\nType: ${p.creditType}\nVerra: ${p.verraId}\nMethodology: ${p.methodology}\nWCC/yr: ${p.wcc}\nWRC/yr: ${p.wrc}\nTotal CP1: ${p.totalCp1}\nJobs: ${p.jobs}\nPeriod: ${p.period}\nMaterial: ${p.material}\nOutput: ${p.output}\nSDGs: ${p.sdgs}\nOverview: ${p.overview}\nAdditionality: ${p.additionality}\nTraceability: ${p.traceability}\nImpact: ${p.impact}\nCo-benefits: ${p.cobenefits.map(c => c.title + ': ' + c.desc).join('; ')}`;
+    }).join('\n\n');
+    genStatus.textContent = `Found ${projectMatches.length} project(s) in knowledge base. Generating brief...`;
+    await sleep(300);
+  } else {
+    genStatus.textContent = 'No local KB match. Calling Claude AI with web search to look up project details...';
+    await sleep(300);
+  }
+
+  // 2) Call Claude API (direct Anthropic API with web search)
+  try {
+    const brief = await callClaudeForBrief(prompt, kbContext, selectedType);
+    if (brief) {
+      populateFields(brief, selectedType);
+      currentBrief = brief;
+      showStatus('Brief generated successfully. Review and edit fields below, then download PPTX.', 'success');
+    }
+  } catch (e) {
+    console.warn('Claude API call failed:', e.message);
+
+    // Fallback: populate from KB directly if we have matches
+    if (projectMatches.length > 0) {
+      const p = PROJECT_KB[projectMatches[0]];
+      if (selectedType === 'tearsheet') populateTearsheetFromKB(p);
+      else if (selectedType === 'deck') populateDeckFromKB(projectMatches);
+      showStatus('AI generation failed (' + e.message.substring(0, 80) + '). Populated from local knowledge base — edit fields as needed.', 'info');
+    } else {
+      showStatus('AI generation failed: ' + e.message.substring(0, 120) + '. Please fill fields manually or try again.', 'error');
+    }
+  }
+
+  showPhase('brief');
+  showFieldsFor(selectedType);
+  setStep(1);
+}
+
+async function callClaudeForBrief(prompt, kbContext, type) {
+  const genStatus = document.getElementById('gen-status');
+  genStatus.textContent = 'Calling Claude AI with web search...';
+
+  const schemaInstructions = type === 'tearsheet'
+    ? `Return a JSON object with these exact keys: {"projectName":"string","country":"string","creditType":"string","verraId":"string","methodology":"string","wcc":"string (annual volume)","wrc":"string (annual volume or N/A)","totalCp1":"string","jobs":"string","period":"string (crediting period)","material":"string","output":"string (end product)","vvb":"string","sdgs":"string (comma-separated numbers)","overview":"string (max 500 chars, project description)","additionality":"string (max 200 chars)","traceability":"string (max 200 chars)","impact":"string (max 200 chars)","cobenefits":[{"title":"string","desc":"string"}] (up to 4),"contactName":"Luis Adaime","contactEmail":"trading@clearskyltd.com","counterparty":"string (from prompt or empty)"}`
+    : type === 'deck'
+    ? `Return a JSON object with these exact keys: {"title":"string","subtitle":"string","summary":"string (max 400 chars, executive summary)","market":"string (max 400 chars, sector/market context)","stats":[{"num":"string","label":"string"}] (up to 4 key statistics),"projects":[{"name":"string","country":"string","type":"string (credit type)","metric":"string (key volume metric)","desc":"string (max 250 chars)"}] (one per project mentioned),"contactName":"Luis Adaime","contactEmail":"trading@clearskyltd.com","counterparty":"string (from prompt or empty)"}`
+    : `Return a JSON object with these exact keys: {"title":"string","subtitle":"string","sections":["string"] (up to 10 section titles)}`;
+
+  const systemPrompt = `You are a ClearSky Limited presentation content generator. ClearSky is an environmental merchant bank that originates, structures, and distributes high-integrity environmental credits (carbon, plastic, biodiversity).
+
+Your task: Generate structured content for a ${type} presentation based on the user's request.
+
+CRITICAL INSTRUCTIONS:
+1. Use web search to look up any Verra VCS project IDs (e.g., VCS4854), Verra PWRS IDs (e.g., PWRP-5466), or methodology references mentioned in the prompt. Search for "[project ID] verra registry" to find project details.
+2. Extract real project data: project name, country, methodology, credit volumes, crediting period, project proponent, etc.
+3. For counterparties mentioned (e.g., TotalEnergies), tailor the framing and subtitle appropriately.
+4. All text fields MUST respect their character limits — this is critical to prevent layout overflow.
+5. Use "[TBD]" for any data you cannot find rather than making it up.
+6. Return ONLY valid JSON. No markdown backticks, no preamble, no explanation. Just the JSON object.
+
+${schemaInstructions}
+
+${kbContext ? 'CLEARSKY PROJECT KNOWLEDGE BASE (use this data if matching):\n' + kbContext : ''}
+
+Generate accurate, professional content suitable for institutional buyers.`;
+
+  // Call through the Worker proxy endpoint
+  const response = await fetch('https://api-tools.oga.earth/api/presentations/generate-brief', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4000,
+      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      system: systemPrompt,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`API ${response.status}: ${errText.substring(0, 100)}`);
+  }
+
+  const data = await response.json();
+
+  // The Worker returns the Anthropic API response directly
+  // Extract text content from response (may have multiple blocks due to tool use)
+  let jsonText = '';
+  if (data.content) {
+    // Anthropic API response format
+    for (const block of data.content) {
+      if (block.type === 'text' && block.text) {
+        jsonText += block.text;
+      }
+    }
+  } else if (typeof data === 'object' && data.projectName || data.title || data.sections) {
+    // Worker already parsed the JSON for us
+    return data;
+  }
+
+  if (!jsonText) {
+    throw new Error('No text content in AI response');
+  }
+
+  // Clean and parse JSON
+  jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+  const jsonMatch = jsonText.match(/\{[\s\S]*\}/);
+  if (jsonMatch) jsonText = jsonMatch[0];
+
+  genStatus.textContent = 'Parsing AI response...';
+  return JSON.parse(jsonText);
+}
+
+function populateTearsheetFromKB(p) {
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
+  setVal('ts-project-name', p.name); setVal('ts-country', p.country);
+  setVal('ts-credit-type', p.creditType); setVal('ts-verra-id', p.verraId);
+  setVal('ts-methodology', p.methodology); setVal('ts-overview', p.overview);
+  setVal('ts-wcc', p.wcc); setVal('ts-wrc', p.wrc); setVal('ts-total-cp1', p.totalCp1);
+  setVal('ts-jobs', p.jobs); setVal('ts-period', p.period); setVal('ts-material', p.material);
+  setVal('ts-output', p.output); setVal('ts-vvb', p.vvb); setVal('ts-sdgs', p.sdgs);
+  setVal('ts-additionality', p.additionality); setVal('ts-traceability', p.traceability);
+  setVal('ts-impact', p.impact);
+  if (p.cobenefits) {
+    const titles = document.querySelectorAll('.cb-title');
+    const descs = document.querySelectorAll('.cb-desc');
+    p.cobenefits.forEach((cb, i) => { if (titles[i]) titles[i].value = cb.title; if (descs[i]) descs[i].value = cb.desc; });
+  }
+}
+
+function populateDeckFromKB(keys) {
+  if (keys.length > 0) {
+    const p = PROJECT_KB[keys[0]];
+    document.getElementById('dk-title').value = `${p.creditType} Portfolio`;
+    document.getElementById('dk-subtitle').value = `ClearSky Project Opportunities`;
+  }
+  keys.forEach((k, i) => {
+    const p = PROJECT_KB[k];
+    const names = document.querySelectorAll('.dk-proj-name');
+    const countries = document.querySelectorAll('.dk-proj-country');
+    const types = document.querySelectorAll('.dk-proj-type');
+    const metrics = document.querySelectorAll('.dk-proj-metric');
+    const descs = document.querySelectorAll('.dk-proj-desc');
+    if (names[i]) names[i].value = p.name;
+    if (countries[i]) countries[i].value = p.country;
+    if (types[i]) types[i].value = p.creditType;
+    if (metrics[i]) metrics[i].value = `${p.wcc} WCC + ${p.wrc} WRC / year`;
+    if (descs[i]) descs[i].value = p.overview.substring(0, 250);
+  });
+}
+
+function populateFields(brief, type) {
+  if (type === 'tearsheet') {
+    const setVal = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
+    setVal('ts-project-name', brief.projectName); setVal('ts-country', brief.country);
+    setVal('ts-credit-type', brief.creditType); setVal('ts-verra-id', brief.verraId);
+    setVal('ts-methodology', brief.methodology); setVal('ts-overview', brief.overview);
+    setVal('ts-wcc', brief.wcc); setVal('ts-wrc', brief.wrc); setVal('ts-total-cp1', brief.totalCp1);
+    setVal('ts-jobs', brief.jobs); setVal('ts-period', brief.period); setVal('ts-material', brief.material);
+    setVal('ts-output', brief.output); setVal('ts-vvb', brief.vvb); setVal('ts-sdgs', brief.sdgs);
+    setVal('ts-additionality', brief.additionality); setVal('ts-traceability', brief.traceability);
+    setVal('ts-impact', brief.impact); setVal('ts-contact-name', brief.contactName);
+    setVal('ts-contact-email', brief.contactEmail); setVal('ts-counterparty', brief.counterparty);
+    if (brief.cobenefits) {
+      const titles = document.querySelectorAll('.cb-title');
+      const descs = document.querySelectorAll('.cb-desc');
+      brief.cobenefits.forEach((cb, i) => { if (titles[i]) titles[i].value = cb.title; if (descs[i]) descs[i].value = cb.desc; });
+    }
+  } else if (type === 'deck') {
+    const setVal = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
+    setVal('dk-title', brief.title); setVal('dk-subtitle', brief.subtitle);
+    setVal('dk-summary', brief.summary); setVal('dk-market', brief.market);
+    setVal('dk-contact-name', brief.contactName); setVal('dk-contact-email', brief.contactEmail);
+    setVal('dk-counterparty', brief.counterparty);
+    if (brief.stats) {
+      const nums = document.querySelectorAll('.dk-stat-num');
+      const labels = document.querySelectorAll('.dk-stat-label');
+      brief.stats.forEach((s, i) => { if (nums[i]) nums[i].value = s.num; if (labels[i]) labels[i].value = s.label; });
+    }
+    if (brief.projects) {
+      const names = document.querySelectorAll('.dk-proj-name');
+      const countries = document.querySelectorAll('.dk-proj-country');
+      const types = document.querySelectorAll('.dk-proj-type');
+      const metrics = document.querySelectorAll('.dk-proj-metric');
+      const descs = document.querySelectorAll('.dk-proj-desc');
+      brief.projects.forEach((p, i) => {
+        if (names[i]) names[i].value = p.name;
+        if (countries[i]) countries[i].value = p.country;
+        if (types[i]) types[i].value = p.type;
+        if (metrics[i]) metrics[i].value = p.metric;
+        if (descs[i]) descs[i].value = p.desc;
+      });
+    }
+  } else if (type === 'whitepaper') {
+    const setVal = (id, v) => { const el = document.getElementById(id); if (el && v) el.value = v; };
+    setVal('wp-title', brief.title); setVal('wp-subtitle', brief.subtitle);
+    if (brief.sections) document.getElementById('wp-sections').value = brief.sections.join('\n');
+  }
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ════════════════════════════════════════════
+// PPTX GENERATION — PPTXGENJS
+// ════════════════════════════════════════════
+const DN='0D1B3E', LB='5B9BD5', GD='D4A843', OW='F5F7FA', DT='2C3E50', MG='6B7B8D', LG='E8ECF1', TG='1A8A6E', SR='C0392B';
+
+function v(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
+function generatePPTX() {
+  if (typeof PptxGenJS === 'undefined') {
+    showStatus('PptxGenJS library failed to load. Check your internet connection and refresh the page.', 'error');
+    return;
+  }
+  try {
+    setStep(2);
+    if (selectedType === 'tearsheet') buildTearsheet();
+    else if (selectedType === 'deck') buildDeck();
+    else if (selectedType === 'whitepaper') buildWhitePaper();
+  } catch (e) {
+    showStatus('Error generating PPTX: ' + e.message, 'error');
+    console.error(e);
+  }
+}
+
+function buildTearsheet() {
+  const pptx = new PptxGenJS();
+  pptx.defineLayout({ name: 'A4', width: 8.27, height: 11.69 });
+  pptx.layout = 'A4';
+
+  const name = v('ts-project-name') || '[Project Name]';
+  const country = v('ts-country') || '[Country]';
+  const creditType = v('ts-credit-type') || '[Credit Type]';
+  const verraId = v('ts-verra-id');
+  const overview = v('ts-overview') || '[Project overview to be added]';
+  const methodology = v('ts-methodology') || '[TBD]';
+  const period = v('ts-period') || '[TBD]';
+  const material = v('ts-material') || '[TBD]';
+  const output = v('ts-output') || '[TBD]';
+  const vvb = v('ts-vvb') || '[TBD]';
+  const sdgs = v('ts-sdgs');
+  const additionality = v('ts-additionality') || '[To be added]';
+  const traceability = v('ts-traceability') || '[To be added]';
+  const impact = v('ts-impact') || '[To be added]';
+  const contactName = v('ts-contact-name') || 'ClearSky Trading';
+  const contactEmail = v('ts-contact-email') || 'trading@clearskyltd.com';
+  const contactPhone = v('ts-contact-phone');
+  const counterparty = v('ts-counterparty');
+
+  const metrics = [
+    { num: v('ts-wcc') || '[TBD]', label: 'WCC / Year' },
+    { num: v('ts-wrc') || '[TBD]', label: 'WRC / Year' },
+    { num: v('ts-total-cp1') || '[TBD]', label: 'Total CP1' },
+    { num: v('ts-jobs') || '[TBD]', label: 'Jobs Created' }
+  ];
+
+  const cobenefits = [];
+  const cbTitles = document.querySelectorAll('.cb-title');
+  const cbDescs = document.querySelectorAll('.cb-desc');
+  for (let i = 0; i < 4; i++) {
+    if (cbTitles[i]?.value) cobenefits.push({ title: cbTitles[i].value, desc: cbDescs[i]?.value || '' });
+  }
+
+  // ── PAGE 1: Hero + Overview ──
+  let s = pptx.addSlide();
+  // Header
+  s.addText('PROJECT TEARSHEET', { x: 5.1, y: 0.2, w: 2.6, h: 0.25, fontSize: 7, color: GD, bold: true, align: 'right' });
+  s.addShape(pptx.ShapeType.rect, { x: 0.59, y: 0.59, w: 7.09, h: 0.02, fill: { color: LG } });
+
+  // Hero placeholder
+  s.addShape(pptx.ShapeType.rect, { x: 0.59, y: 0.79, w: 7.09, h: 2.17, fill: { color: 'DDDDDD' } });
+  s.addText('[Insert Project Hero Photo]', { x: 0.59, y: 0.79, w: 7.09, h: 2.17, align: 'center', valign: 'middle', fontSize: 10, color: MG });
+
+  // Title bar
+  s.addShape(pptx.ShapeType.rect, { x: 0.59, y: 3.04, w: 7.09, h: 0.79, fill: { color: DN } });
+  s.addText(name, { x: 0.71, y: 3.07, w: 5.5, h: 0.39, fontSize: 17, color: 'FFFFFF', bold: true, fontFace: 'Georgia', shrinkText: true });
+  const subtitleParts = [country, creditType, verraId ? `Verra ID: ${verraId}` : ''].filter(Boolean).join('  |  ');
+  s.addText(subtitleParts, { x: 0.71, y: 3.46, w: 6.5, h: 0.28, fontSize: 9, color: LB, shrinkText: true });
+
+  // Metrics row
+  metrics.forEach((m, i) => {
+    const mx = 0.59 + i * 1.77;
+    s.addShape(pptx.ShapeType.rect, { x: mx, y: 4.02, w: 1.69, h: 0.63, fill: { color: OW } });
+    s.addText(m.num, { x: mx, y: 4.02, w: 1.69, h: 0.35, fontSize: 17, color: DN, bold: true, align: 'center', valign: 'middle', fontFace: 'Georgia', shrinkText: true });
+    s.addText(m.label, { x: mx, y: 4.37, w: 1.69, h: 0.24, fontSize: 7, color: MG, align: 'center' });
+  });
+
+  // Overview
+  s.addText('Project Overview', { x: 0.59, y: 4.88, w: 7.09, h: 0.28, fontSize: 11, color: DN, bold: true, fontFace: 'Georgia' });
+  s.addText(overview, { x: 0.59, y: 5.2, w: 7.09, h: 0.87, fontSize: 9, color: DT, shrinkText: true, lineSpacingMultiple: 1.2 });
+
+  // Details — two columns
+  const details = [
+    { label: 'Methodology', val: methodology, x: 0.59, y: 6.22 },
+    { label: 'Crediting Period', val: period, x: 4.22, y: 6.22 },
+    { label: 'Material Type', val: material, x: 0.59, y: 6.77 },
+    { label: 'Output', val: output, x: 4.22, y: 6.77 },
+    { label: 'Verification Body', val: vvb, x: 0.59, y: 7.32 },
+    { label: 'Registry', val: verraId ? `registry.verra.org/${verraId}` : '[TBD]', x: 4.22, y: 7.32 },
+  ];
+  details.forEach(d => {
+    s.addText(d.label, { x: d.x, y: d.y, w: 3.35, h: 0.2, fontSize: 8.5, color: DN, bold: true });
+    s.addText(d.val, { x: d.x, y: d.y + 0.2, w: 3.35, h: 0.28, fontSize: 8, color: DT, shrinkText: true });
+  });
+
+  // SDGs
+  if (sdgs) {
+    s.addText('SDG Alignment', { x: 0.59, y: 7.87, w: 3, h: 0.2, fontSize: 8.5, color: DN, bold: true });
+    const sdgList = sdgs.split(',').map(s => s.trim()).filter(Boolean);
+    sdgList.forEach((sdg, i) => {
+      const sx = 0.59 + i * 0.55;
+      s.addShape(pptx.ShapeType.rect, { x: sx, y: 8.11, w: 0.43, h: 0.43, fill: { color: LB }, rectRadius: 0.04 });
+      s.addText(sdg, { x: sx, y: 8.11, w: 0.43, h: 0.43, fontSize: 9, color: 'FFFFFF', bold: true, align: 'center', valign: 'middle' });
+    });
+  }
+
+  // Footer
+  s.addShape(pptx.ShapeType.rect, { x: 0.59, y: 11.02, w: 7.09, h: 0.02, fill: { color: LG } });
+  s.addText('ClearSky Limited  •  Confidential', { x: 0.59, y: 11.06, w: 4, h: 0.2, fontSize: 6, color: MG });
+  s.addText('1/3', { x: 6.89, y: 11.06, w: 0.8, h: 0.2, fontSize: 6, color: MG, align: 'right' });
+
+  // ── PAGE 2: Technical ──
+  s = pptx.addSlide();
+  // Header
+  s.addText('PROJECT TEARSHEET', { x: 5.1, y: 0.2, w: 2.6, h: 0.25, fontSize: 7, color: GD, bold: true, align: 'right' });
+  s.addShape(pptx.ShapeType.rect, { x: 0.59, y: 0.59, w: 7.09, h: 0.02, fill: { color: LG } });
+
+  // Volume table placeholder
+  s.addText('Credit Volumes & Verification', { x: 0.59, y: 0.87, w: 7.09, h: 0.28, fontSize: 11, color: DN, bold: true, fontFace: 'Georgia' });
+
+  const volRows = [
+    [{ text: 'Period', options: { bold: true, color: 'FFFFFF', fontSize: 7.5 } }, { text: 'WCC Volume', options: { bold: true, color: 'FFFFFF', fontSize: 7.5 } }, { text: 'WRC Volume', options: { bold: true, color: 'FFFFFF', fontSize: 7.5 } }, { text: 'Status', options: { bold: true, color: 'FFFFFF', fontSize: 7.5 } }],
+    [{ text: 'Year 1' }, { text: v('ts-wcc') || '[TBD]' }, { text: v('ts-wrc') || '[TBD]' }, { text: 'Verified' }],
+    [{ text: 'Year 2' }, { text: v('ts-wcc') || '[TBD]' }, { text: v('ts-wrc') || '[TBD]' }, { text: 'Projected' }],
+    [{ text: 'Year 3' }, { text: v('ts-wcc') || '[TBD]' }, { text: v('ts-wrc') || '[TBD]' }, { text: 'Projected' }],
+    [{ text: 'CP1 Total' }, { text: v('ts-total-cp1') || '[TBD]' }, { text: '' }, { text: '' }],
+  ];
+  s.addTable(volRows, {
+    x: 0.59, y: 1.26, w: 7.09,
+    colW: [1.77, 1.77, 1.77, 1.77],
+    fontSize: 7.5, color: DT,
+    border: { type: 'solid', pt: 0.5, color: LG },
+    rowH: [0.31, 0.28, 0.28, 0.28, 0.28],
+    autoPage: false
+  });
+  // Header row fill
+  volRows[0].forEach(cell => { cell.options = { ...cell.options, fill: { color: DN } }; });
+
+  // Value chain photo placeholders
+  s.addText('Value Chain', { x: 0.59, y: 3.07, w: 7.09, h: 0.28, fontSize: 11, color: DN, bold: true, fontFace: 'Georgia' });
+  ['Collection', 'Sorting / Processing', 'End Product'].forEach((label, i) => {
+    const bx = 0.59 + i * 2.44;
+    s.addShape(pptx.ShapeType.rect, { x: bx, y: 3.46, w: 2.28, h: 1.5, fill: { color: 'DDDDDD' } });
+    s.addText(`[${label}]`, { x: bx, y: 3.46, w: 2.28, h: 1.5, align: 'center', valign: 'middle', fontSize: 9, color: MG });
+    s.addText(`[Caption]`, { x: bx, y: 5.0, w: 2.28, h: 0.2, align: 'center', fontSize: 6, color: MG, italic: true });
+  });
+
+  // Co-benefits
+  s.addText('Co-Benefits & Impact', { x: 0.59, y: 5.43, w: 7.09, h: 0.28, fontSize: 11, color: DN, bold: true, fontFace: 'Georgia' });
+  (cobenefits.length > 0 ? cobenefits : [{ title: '[TBD]', desc: '[To be added]' }]).forEach((cb, i) => {
+    const cy = 5.79 + i * 0.47;
+    s.addShape(pptx.ShapeType.rect, { x: 0.59, y: cy, w: 7.09, h: 0.39, fill: { color: OW } });
+    s.addShape(pptx.ShapeType.rect, { x: 0.59, y: cy, w: 0.047, h: 0.39, fill: { color: i === 0 ? GD : LB } });
+    s.addText(cb.title, { x: 0.75, y: cy, w: 1.57, h: 0.39, fontSize: 8, color: DN, bold: true, valign: 'middle', shrinkText: true });
+    s.addText(cb.desc, { x: 2.36, y: cy, w: 5.24, h: 0.39, fontSize: 7.5, color: DT, valign: 'middle', shrinkText: true });
+  });
+
+  // Additionality
+  s.addText('Additionality', { x: 0.59, y: 7.87, w: 7.09, h: 0.28, fontSize: 11, color: DN, bold: true, fontFace: 'Georgia' });
+  s.addText(additionality, { x: 0.59, y: 8.19, w: 7.09, h: 0.63, fontSize: 8.5, color: DT, shrinkText: true, lineSpacingMultiple: 1.2 });
+
+  // Footer
+  s.addShape(pptx.ShapeType.rect, { x: 0.59, y: 11.02, w: 7.09, h: 0.02, fill: { color: LG } });
+  s.addText('ClearSky Limited  •  Confidential', { x: 0.59, y: 11.06, w: 4, h: 0.2, fontSize: 6, color: MG });
+  s.addText('2/3', { x: 6.89, y: 11.06, w: 0.8, h: 0.2, fontSize: 6, color: MG, align: 'right' });
+
+  // ── PAGE 3: Investment Case + CTA ──
+  s = pptx.addSlide();
+  s.addText('PROJECT TEARSHEET', { x: 5.1, y: 0.2, w: 2.6, h: 0.25, fontSize: 7, color: GD, bold: true, align: 'right' });
+  s.addShape(pptx.ShapeType.rect, { x: 0.59, y: 0.59, w: 7.09, h: 0.02, fill: { color: LG } });
+
+  s.addText('Why This Project', { x: 0.59, y: 0.87, w: 7.09, h: 0.28, fontSize: 11, color: DN, bold: true, fontFace: 'Georgia' });
+
+  // Three cards
+  const cards = [
+    { title: 'Additionality', text: additionality, color: DN },
+    { title: 'Traceability', text: traceability, color: LB },
+    { title: 'Impact', text: impact, color: GD }
+  ];
+  cards.forEach((c, i) => {
+    const cx = 0.59 + i * 2.44;
+    s.addShape(pptx.ShapeType.rect, { x: cx, y: 1.34, w: 2.28, h: 1.97, fill: { color: OW } });
+    s.addShape(pptx.ShapeType.rect, { x: cx, y: 1.34, w: 2.28, h: 0.35, fill: { color: c.color } });
+    s.addText(c.title, { x: cx, y: 1.34, w: 2.28, h: 0.35, fontSize: 8.5, color: 'FFFFFF', bold: true, align: 'center', valign: 'middle' });
+    s.addText(c.text, { x: cx + 0.12, y: 1.77, w: 2.05, h: 1.46, fontSize: 7.5, color: DT, shrinkText: true, lineSpacingMultiple: 1.2 });
+  });
+
+  // Photo placeholder
+  s.addShape(pptx.ShapeType.rect, { x: 0.59, y: 3.54, w: 7.09, h: 1.65, fill: { color: 'DDDDDD' } });
+  s.addText('[Insert Project Photo — Community / Scale]', { x: 0.59, y: 3.54, w: 7.09, h: 1.65, align: 'center', valign: 'middle', fontSize: 10, color: MG });
+
+  // Availability box
+  s.addShape(pptx.ShapeType.rect, { x: 0.59, y: 5.51, w: 7.09, h: 0.94, fill: { color: OW } });
+  s.addShape(pptx.ShapeType.rect, { x: 0.59, y: 5.51, w: 0.047, h: 0.94, fill: { color: GD } });
+  s.addText('Availability & Pricing', { x: 0.75, y: 5.55, w: 6.85, h: 0.24, fontSize: 10, color: DN, bold: true });
+  s.addText(counterparty ? `Contact us for volume pricing and vintage availability tailored to ${counterparty}'s requirements.` : 'Contact us for volume pricing and vintage availability.', { x: 0.75, y: 5.79, w: 6.85, h: 0.55, fontSize: 8.5, color: DT, shrinkText: true });
+
+  // CTA bar
+  s.addShape(pptx.ShapeType.rect, { x: 0.59, y: 6.69, w: 7.09, h: 1.1, fill: { color: DN } });
+  s.addText(counterparty ? `Interested in ${name}?` : 'Interested in This Project?', { x: 0.71, y: 6.73, w: 6.85, h: 0.31, fontSize: 13, color: 'FFFFFF', bold: true, fontFace: 'Georgia', shrinkText: true });
+  const contactLine = [contactName, contactEmail, contactPhone].filter(Boolean).join('  |  ');
+  s.addText(contactLine, { x: 0.71, y: 7.08, w: 6.85, h: 0.24, fontSize: 9, color: LB, shrinkText: true });
+  s.addText('www.clearskyltd.com', { x: 0.71, y: 7.36, w: 6.85, h: 0.2, fontSize: 8, color: MG });
+
+  // Footer
+  s.addShape(pptx.ShapeType.rect, { x: 0.59, y: 11.02, w: 7.09, h: 0.02, fill: { color: LG } });
+  s.addText('ClearSky Limited  •  Confidential', { x: 0.59, y: 11.06, w: 4, h: 0.2, fontSize: 6, color: MG });
+  s.addText('3/3', { x: 6.89, y: 11.06, w: 0.8, h: 0.2, fontSize: 6, color: MG, align: 'right' });
+
+  // Save
+  const filename = `ClearSky_Tearsheet_${name.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30)}.pptx`;
+  pptx.writeFile({ fileName: filename }).then(() => {
+    showStatus(`Downloaded: ${filename}`, 'success');
+  });
+}
+
+function buildDeck() {
+  const pptx = new PptxGenJS();
+  pptx.defineLayout({ name: '16x9', width: 10, height: 5.625 });
+  pptx.layout = '16x9';
+
+  const title = v('dk-title') || '[Deck Title]';
+  const subtitle = v('dk-subtitle') || '[Subtitle]';
+  const summary = v('dk-summary') || '[Executive summary to be added]';
+  const market = v('dk-market') || '[Market context to be added]';
+  const contactName = v('dk-contact-name') || 'Luis Adaime';
+  const contactEmail = v('dk-contact-email') || 'trading@clearskyltd.com';
+  const counterparty = v('dk-counterparty');
+
+  const stats = [];
+  const sNums = document.querySelectorAll('.dk-stat-num');
+  const sLabels = document.querySelectorAll('.dk-stat-label');
+  for (let i = 0; i < 4; i++) { if (sNums[i]?.value) stats.push({ num: sNums[i].value, label: sLabels[i]?.value || '' }); }
+
+  const projects = [];
+  const pNames = document.querySelectorAll('.dk-proj-name');
+  const pCountries = document.querySelectorAll('.dk-proj-country');
+  const pTypes = document.querySelectorAll('.dk-proj-type');
+  const pMetrics = document.querySelectorAll('.dk-proj-metric');
+  const pDescs = document.querySelectorAll('.dk-proj-desc');
+  for (let i = 0; i < 3; i++) { if (pNames[i]?.value) projects.push({ name: pNames[i].value, country: pCountries[i]?.value, type: pTypes[i]?.value, metric: pMetrics[i]?.value, desc: pDescs[i]?.value }); }
+
+  function deckFooter(s) {
+    s.addShape(pptx.ShapeType.rect, { x: 0, y: 5.31, w: 10, h: 0.315, fill: { color: DN } });
+    s.addText('CONFIDENTIAL  |  ClearSky Limited', { x: 6.3, y: 5.35, w: 3.46, h: 0.2, fontSize: 6, color: 'AABBCC', align: 'right' });
+  }
+
+  // S1: Cover
+  let s = pptx.addSlide();
+  s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 10, h: 5.625, fill: { color: DN } });
+  s.addShape(pptx.ShapeType.rect, { x: 5, y: 0, w: 5, h: 5.625, fill: { color: 'DDDDDD' } });
+  s.addText('[Cover Photo — Right Half]', { x: 5, y: 0, w: 5, h: 5.625, align: 'center', valign: 'middle', fontSize: 10, color: MG });
+  s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 5.2, h: 5.625, fill: { color: DN } });
+  s.addShape(pptx.ShapeType.rect, { x: 0.47, y: 1.77, w: 0.98, h: 0.04, fill: { color: GD } });
+  s.addText(title, { x: 0.47, y: 1.97, w: 4.53, h: 0.63, fontSize: 28, color: 'FFFFFF', bold: true, fontFace: 'Georgia', shrinkText: true });
+  s.addText(subtitle, { x: 0.47, y: 2.68, w: 4.53, h: 0.39, fontSize: 14, color: LB, shrinkText: true });
+  if (counterparty) s.addText(`Prepared for ${counterparty}`, { x: 0.47, y: 3.15, w: 4.53, h: 0.31, fontSize: 9, color: MG, italic: true });
+  s.addText(new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) + '  |  clearskyltd.com', { x: 0.47, y: 4.72, w: 4.53, h: 0.24, fontSize: 7, color: 'AABBCC' });
+
+  // S2: Executive Summary
+  s = pptx.addSlide();
+  s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 10, h: 0.12, fill: { color: GD } });
+  s.addText('Executive Summary', { x: 0.47, y: 0.31, w: 9.06, h: 0.39, fontSize: 18, color: DN, bold: true, fontFace: 'Georgia' });
+  s.addShape(pptx.ShapeType.rect, { x: 0.47, y: 0.79, w: 1.57, h: 0.02, fill: { color: GD } });
+  s.addText(summary, { x: 0.47, y: 1.1, w: 4.25, h: 1.77, fontSize: 10, color: DT, shrinkText: true, lineSpacingMultiple: 1.3 });
+  // Stats on right
+  stats.forEach((st, i) => {
+    const sy = 1.1 + i * 1.26;
+    s.addShape(pptx.ShapeType.rect, { x: 5.12, y: sy, w: 4.41, h: 1.1, fill: { color: OW } });
+    s.addShape(pptx.ShapeType.rect, { x: 5.12, y: sy, w: 0.06, h: 1.1, fill: { color: i === 0 ? GD : LB } });
+    s.addText(st.num, { x: 5.31, y: sy + 0.08, w: 1.57, h: 0.47, fontSize: 22, color: DN, bold: true, fontFace: 'Georgia', shrinkText: true });
+    s.addText(st.label, { x: 5.31, y: sy + 0.55, w: 4.06, h: 0.39, fontSize: 8.5, color: MG, shrinkText: true });
+  });
+  deckFooter(s);
+
+  // S3: Market Context
+  if (market) {
+    s = pptx.addSlide();
+    s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 10, h: 0.12, fill: { color: GD } });
+    s.addText('Market Context', { x: 0.47, y: 0.31, w: 9.06, h: 0.39, fontSize: 18, color: DN, bold: true, fontFace: 'Georgia' });
+    s.addShape(pptx.ShapeType.rect, { x: 0.47, y: 0.79, w: 1.57, h: 0.02, fill: { color: GD } });
+    s.addText(market, { x: 0.47, y: 1.1, w: 9.06, h: 2.36, fontSize: 10, color: DT, shrinkText: true, lineSpacingMultiple: 1.3 });
+    deckFooter(s);
+  }
+
+  // Project slides
+  projects.forEach((p, i) => {
+    s = pptx.addSlide();
+    s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 10, h: 0.12, fill: { color: GD } });
+    s.addText(p.name || `Project ${i + 1}`, { x: 0.47, y: 0.31, w: 9.06, h: 0.39, fontSize: 18, color: DN, bold: true, fontFace: 'Georgia', shrinkText: true });
+    s.addShape(pptx.ShapeType.rect, { x: 0.47, y: 0.79, w: 1.57, h: 0.02, fill: { color: GD } });
+
+    // Photo placeholder left
+    s.addShape(pptx.ShapeType.rect, { x: 0.47, y: 1.1, w: 4.33, h: 3.54, fill: { color: 'DDDDDD' } });
+    s.addText('[Project Photo]', { x: 0.47, y: 1.1, w: 4.33, h: 3.54, align: 'center', valign: 'middle', fontSize: 10, color: MG });
+
+    // Details right
+    if (p.country) s.addText(`Country: ${p.country}`, { x: 5.12, y: 1.1, w: 4.41, h: 0.28, fontSize: 10, color: DT });
+    if (p.type) s.addText(`Credit Type: ${p.type}`, { x: 5.12, y: 1.42, w: 4.41, h: 0.28, fontSize: 10, color: DT });
+    if (p.metric) {
+      s.addShape(pptx.ShapeType.rect, { x: 5.12, y: 1.85, w: 4.41, h: 0.55, fill: { color: OW } });
+      s.addShape(pptx.ShapeType.rect, { x: 5.12, y: 1.85, w: 0.06, h: 0.55, fill: { color: GD } });
+      s.addText(p.metric, { x: 5.31, y: 1.85, w: 4.14, h: 0.55, fontSize: 11, color: DN, bold: true, valign: 'middle', shrinkText: true });
+    }
+    if (p.desc) s.addText(p.desc, { x: 5.12, y: 2.56, w: 4.41, h: 2.05, fontSize: 9, color: DT, shrinkText: true, lineSpacingMultiple: 1.3 });
+    deckFooter(s);
+  });
+
+  // Comparison table if multiple projects
+  if (projects.length > 1) {
+    s = pptx.addSlide();
+    s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 10, h: 0.12, fill: { color: GD } });
+    s.addText('Project Comparison', { x: 0.47, y: 0.31, w: 9.06, h: 0.39, fontSize: 18, color: DN, bold: true, fontFace: 'Georgia' });
+    s.addShape(pptx.ShapeType.rect, { x: 0.47, y: 0.79, w: 1.57, h: 0.02, fill: { color: GD } });
+
+    const colW = projects.length === 2 ? [2, 3.5, 3.5] : [1.5, 2.8, 2.8, 2.8];
+    const headers = [{ text: 'Feature', options: { bold: true, color: 'FFFFFF', fontSize: 8, fill: { color: DN } } }];
+    projects.forEach(p => headers.push({ text: p.name || 'Project', options: { bold: true, color: 'FFFFFF', fontSize: 8, fill: { color: DN } } }));
+    const rows = [headers];
+    ['Country', 'Credit Type', 'Key Metric'].forEach(label => {
+      const row = [{ text: label, options: { bold: true, fontSize: 8 } }];
+      projects.forEach(p => {
+        const val = label === 'Country' ? p.country : label === 'Credit Type' ? p.type : p.metric;
+        row.push({ text: val || '[TBD]', options: { fontSize: 8 } });
+      });
+      rows.push(row);
+    });
+    s.addTable(rows, { x: 0.47, y: 1.1, w: 9.06, colW, border: { type: 'solid', pt: 0.5, color: LG }, rowH: [0.35, 0.31, 0.31, 0.31], autoPage: false });
+    deckFooter(s);
+  }
+
+  // Contact slide
+  s = pptx.addSlide();
+  s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 10, h: 5.625, fill: { color: DN } });
+  s.addShape(pptx.ShapeType.rect, { x: 4.21, y: 2.05, w: 1.57, h: 0.04, fill: { color: GD } });
+  s.addText(counterparty ? `Next Steps with ${counterparty}` : 'Next Steps', { x: 1.06, y: 2.36, w: 7.87, h: 0.55, fontSize: 22, color: 'FFFFFF', bold: true, fontFace: 'Georgia', align: 'center', shrinkText: true });
+  s.addText(`${contactName}  |  ${contactEmail}`, { x: 1.06, y: 3.15, w: 7.87, h: 0.31, fontSize: 11, color: LB, align: 'center' });
+  s.addText('www.clearskyltd.com', { x: 1.06, y: 3.62, w: 7.87, h: 0.31, fontSize: 10, color: MG, align: 'center' });
+  deckFooter(s);
+
+  const filename = `ClearSky_Deck_${title.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30)}.pptx`;
+  pptx.writeFile({ fileName: filename }).then(() => {
+    showStatus(`Downloaded: ${filename}`, 'success');
+  });
+}
+
+function buildWhitePaper() {
+  const pptx = new PptxGenJS();
+  pptx.defineLayout({ name: 'A4', width: 8.27, height: 11.69 });
+  pptx.layout = 'A4';
+
+  const title = v('wp-title') || '[Document Title]';
+  const subtitle = v('wp-subtitle') || '[Subtitle]';
+  const sections = (v('wp-sections') || 'Section 1\nSection 2\nSection 3').split('\n').filter(Boolean).slice(0, 10);
+
+  // Cover
+  let s = pptx.addSlide();
+  s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 8.27, h: 11.69, fill: { color: DN } });
+  s.addShape(pptx.ShapeType.rect, { x: 0, y: 0, w: 8.27, h: 2.56, fill: { color: '060E1F' } });
+  s.addShape(pptx.ShapeType.rect, { x: 0.59, y: 3.07, w: 1.18, h: 0.05, fill: { color: GD } });
+  s.addText(title, { x: 0.59, y: 3.27, w: 7.09, h: 0.71, fontSize: 34, color: 'FFFFFF', bold: true, fontFace: 'Georgia', shrinkText: true });
+  s.addText(subtitle, { x: 0.59, y: 4.06, w: 7.09, h: 0.63, fontSize: 15, color: LB, shrinkText: true });
+  s.addShape(pptx.ShapeType.rect, { x: 0, y: 7.48, w: 8.27, h: 4.21, fill: { color: 'DDDDDD' } });
+  s.addText('[Cover Photo — Full Bleed]', { x: 0, y: 7.48, w: 8.27, h: 4.21, align: 'center', valign: 'middle', fontSize: 10, color: MG });
+  s.addText(new Date().toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) + '  |  clearskyltd.com', { x: 0.59, y: 11.3, w: 7.09, h: 0.24, fontSize: 8, color: 'AABBCC' });
+
+  // TOC
+  s = pptx.addSlide();
+  s.addShape(pptx.ShapeType.rect, { x: 0.59, y: 0.59, w: 7.09, h: 0.02, fill: { color: LG } });
+  s.addText('Contents', { x: 0.59, y: 0.87, w: 7.09, h: 0.39, fontSize: 20, color: DN, bold: true, fontFace: 'Georgia' });
+  sections.forEach((sec, i) => {
+    const ty = 1.5 + i * 0.43;
+    s.addShape(pptx.ShapeType.rect, { x: 0.59, y: ty, w: 0.31, h: 0.31, fill: { color: DN } });
+    s.addText(String(i + 1).padStart(2, '0'), { x: 0.59, y: ty, w: 0.31, h: 0.31, fontSize: 8, color: 'FFFFFF', bold: true, align: 'center', valign: 'middle' });
+    s.addText(sec, { x: 1.02, y: ty, w: 6.3, h: 0.31, fontSize: 11, color: DT, valign: 'middle' });
+    s.addShape(pptx.ShapeType.rect, { x: 1.02, y: ty + 0.35, w: 6.65, h: 0.02, fill: { color: LG } });
+  });
+  s.addShape(pptx.ShapeType.rect, { x: 0.59, y: 11.02, w: 7.09, h: 0.02, fill: { color: LG } });
+  s.addText('ClearSky Limited  •  Confidential', { x: 0.59, y: 11.06, w: 4, h: 0.2, fontSize: 6, color: MG });
+
+  // Section placeholder pages
+  sections.forEach((sec, i) => {
+    s = pptx.addSlide();
+    s.addShape(pptx.ShapeType.rect, { x: 0.59, y: 0.59, w: 7.09, h: 0.02, fill: { color: LG } });
+    s.addShape(pptx.ShapeType.rect, { x: 0.59, y: 0.87, w: 0.35, h: 0.35, fill: { color: DN } });
+    s.addText(String(i + 1).padStart(2, '0'), { x: 0.59, y: 0.87, w: 0.35, h: 0.35, fontSize: 10, color: 'FFFFFF', bold: true, align: 'center', valign: 'middle' });
+    s.addText(sec, { x: 1.06, y: 0.87, w: 6.61, h: 0.35, fontSize: 16, color: DN, bold: true, fontFace: 'Georgia', valign: 'middle', shrinkText: true });
+    s.addText('[Section content to be added. Use 9pt Calibri body text with 1.25 line spacing.]', { x: 0.59, y: 1.42, w: 7.09, h: 0.71, fontSize: 9, color: MG, italic: true });
+    // Placeholder content area
+    s.addShape(pptx.ShapeType.rect, { x: 0.59, y: 2.36, w: 7.09, h: 0.04, fill: { color: LG } });
+    s.addText('[Body text area — edit in PowerPoint]', { x: 0.59, y: 2.56, w: 7.09, h: 4.72, fontSize: 9, color: 'CCCCCC' });
+    // Footer
+    s.addShape(pptx.ShapeType.rect, { x: 0.59, y: 11.02, w: 7.09, h: 0.02, fill: { color: LG } });
+    s.addText('ClearSky Limited  •  Confidential', { x: 0.59, y: 11.06, w: 4, h: 0.2, fontSize: 6, color: MG });
+    s.addText(`Page ${i + 3}`, { x: 6.69, y: 11.06, w: 1, h: 0.2, fontSize: 6, color: MG, align: 'right' });
+  });
+
+  const filename = `ClearSky_WhitePaper_${title.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30)}.pptx`;
+  pptx.writeFile({ fileName: filename }).then(() => {
+    showStatus(`Downloaded: ${filename}`, 'success');
+  });
+}
+
+// ════════════════════════════════════════════
+// BRIEF DOWNLOAD
+// ════════════════════════════════════════════
+function downloadBrief() {
+  try {
+    const brief = collectCurrentBrief();
+    const json = JSON.stringify(brief, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ClearSky_Brief_${selectedType}_${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showStatus('Brief JSON downloaded.', 'success');
+  } catch (e) {
+    showStatus('Error downloading brief: ' + e.message, 'error');
+    console.error(e);
+  }
+}
+
+function collectCurrentBrief() {
+  const brief = { type: selectedType, prompt: document.getElementById('prompt').value, generatedAt: new Date().toISOString() };
+  if (selectedType === 'tearsheet') {
+    Object.assign(brief, {
+      projectName: v('ts-project-name'), country: v('ts-country'), creditType: v('ts-credit-type'),
+      verraId: v('ts-verra-id'), methodology: v('ts-methodology'), overview: v('ts-overview'),
+      wcc: v('ts-wcc'), wrc: v('ts-wrc'), totalCp1: v('ts-total-cp1'),
+      jobs: v('ts-jobs'), period: v('ts-period'), material: v('ts-material'),
+      output: v('ts-output'), vvb: v('ts-vvb'), sdgs: v('ts-sdgs'),
+      additionality: v('ts-additionality'), traceability: v('ts-traceability'), impact: v('ts-impact'),
+      contactName: v('ts-contact-name'), contactEmail: v('ts-contact-email'), contactPhone: v('ts-contact-phone'),
+      counterparty: v('ts-counterparty')
+    });
+    const cbs = [];
+    const titles = document.querySelectorAll('.cb-title');
+    const descs = document.querySelectorAll('.cb-desc');
+    for (let i = 0; i < 4; i++) { if (titles[i]?.value) cbs.push({ title: titles[i].value, desc: descs[i]?.value || '' }); }
+    brief.cobenefits = cbs;
+  }
+  return brief;
+}
+</script>
+</body>
+</html>

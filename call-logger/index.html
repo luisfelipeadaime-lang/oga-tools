@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0D1B3E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>ClearSky Call Logger</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0D1B3E;--midnight:#1B2A4A;--steel:#5B9BD5;--gold:#D4A843;
+  --emerald:#1A8A6E;--frost:#F5F7FA;--slate:#8A8F9A;--white:#FFFFFF;
+  --positive:#2ECC71;--caution:#F39C12;--negative:#E74C3C;
+  --radius:12px;--shadow:0 2px 12px rgba(0,0,0,.12);
+}
+html,body{height:100%;font-family:'Roboto',Arial,sans-serif;background:var(--frost);color:var(--navy);-webkit-tap-highlight-color:transparent}
+body{display:flex;flex-direction:column;overflow:hidden}
+
+/* ===== PIN SCREEN ===== */
+#pin-screen{position:fixed;inset:0;z-index:1000;background:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px}
+#pin-screen.hidden{display:none}
+#pin-screen h1{color:var(--white);font-size:22px;font-weight:600;letter-spacing:.5px}
+#pin-screen p{color:var(--slate);font-size:14px}
+.pin-dots{display:flex;gap:16px}
+.pin-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--steel);transition:all .15s}
+.pin-dot.filled{background:var(--steel);border-color:var(--steel)}
+.pin-dot.error{border-color:var(--negative);background:var(--negative)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,72px);gap:12px;margin-top:16px}
+.pin-key{width:72px;height:72px;border-radius:50%;border:2px solid rgba(255,255,255,.2);background:transparent;color:var(--white);font-size:28px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;user-select:none;-webkit-user-select:none}
+.pin-key:active{background:rgba(255,255,255,.1);transform:scale(.92)}
+.pin-key.fn{font-size:14px;font-weight:500;border-color:transparent}
+
+/* ===== APP SHELL ===== */
+.app-bar{background:var(--navy);color:var(--white);padding:12px 16px;display:flex;align-items:center;gap:12px;position:relative;z-index:10}
+.app-bar h1{font-size:18px;font-weight:600;flex:1}
+.app-bar .lock-btn{background:none;border:none;color:var(--slate);font-size:20px;cursor:pointer;padding:4px 8px}
+
+.views{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.view{display:none;padding:16px;padding-bottom:100px}
+.view.active{display:block}
+
+.bottom-nav{background:var(--white);border-top:1px solid rgba(0,0,0,.08);display:flex;position:relative;z-index:10;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border:none;background:none;color:var(--slate);font-size:11px;font-weight:500;cursor:pointer;transition:color .15s}
+.nav-btn.active{color:var(--steel)}
+.nav-btn svg{width:22px;height:22px}
+
+/* ===== SEARCH ===== */
+.search-box{position:relative;margin-bottom:16px}
+.search-box input{width:100%;padding:14px 16px 14px 44px;border:1px solid rgba(0,0,0,.1);border-radius:var(--radius);font-size:16px;font-family:inherit;background:var(--white);outline:none;transition:border-color .15s}
+.search-box input:focus{border-color:var(--steel)}
+.search-box svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:20px;height:20px;color:var(--slate)}
+.search-hint{text-align:center;color:var(--slate);font-size:14px;margin-top:40px}
+
+/* ===== CONTACT CARDS ===== */
+.contact-card{background:var(--white);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow);cursor:pointer;transition:transform .1s}
+.contact-card:active{transform:scale(.98)}
+.contact-card .name{font-size:16px;font-weight:600;margin-bottom:2px}
+.contact-card .company{font-size:13px;color:var(--steel);margin-bottom:4px}
+.contact-card .meta{font-size:12px;color:var(--slate);display:flex;gap:12px;flex-wrap:wrap}
+
+.selected-contact{background:var(--midnight);color:var(--white);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.selected-contact .avatar{width:40px;height:40px;border-radius:50%;background:var(--steel);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:var(--white);flex-shrink:0}
+.selected-contact .info{flex:1;min-width:0}
+.selected-contact .info .name{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.selected-contact .info .company{font-size:12px;color:var(--steel)}
+.selected-contact .change-btn{background:none;border:1px solid rgba(255,255,255,.2);border-radius:8px;color:var(--white);font-size:12px;padding:6px 12px;cursor:pointer;white-space:nowrap}
+
+/* ===== FORMS ===== */
+.form-section{margin-bottom:20px}
+.form-label{font-size:13px;font-weight:600;color:var(--slate);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:block}
+.toggle-group{display:flex;gap:8px}
+.toggle-btn{flex:1;padding:12px;border:2px solid rgba(0,0,0,.08);border-radius:var(--radius);background:var(--white);font-size:14px;font-weight:500;font-family:inherit;cursor:pointer;text-align:center;transition:all .15s;color:var(--navy)}
+.toggle-btn.active{border-color:var(--steel);background:rgba(91,155,213,.08);color:var(--steel)}
+.form-input{width:100%;padding:14px 16px;border:1px solid rgba(0,0,0,.1);border-radius:var(--radius);font-size:16px;font-family:inherit;background:var(--white);outline:none;resize:vertical}
+.form-input:focus{border-color:var(--steel)}
+textarea.form-input{min-height:100px}
+
+.duration-picker{display:flex;align-items:center;gap:12px}
+.duration-picker input{width:80px;text-align:center;padding:14px;border:1px solid rgba(0,0,0,.1);border-radius:var(--radius);font-size:20px;font-weight:600;font-family:inherit;background:var(--white);outline:none}
+.duration-picker input:focus{border-color:var(--steel)}
+.duration-picker span{color:var(--slate);font-size:14px}
+
+.submit-btn{width:100%;padding:16px;border:none;border-radius:var(--radius);background:var(--emerald);color:var(--white);font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .15s;margin-top:8px}
+.submit-btn:active{transform:scale(.98);opacity:.9}
+.submit-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ===== RECENT ACTIVITY ===== */
+.activity-item{background:var(--white);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow);border-left:4px solid var(--steel)}
+.activity-item.meeting{border-left-color:var(--gold)}
+.activity-item .type-badge{display:inline-block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:2px 8px;border-radius:4px;margin-bottom:6px}
+.activity-item .type-badge.call{background:rgba(91,155,213,.1);color:var(--steel)}
+.activity-item .type-badge.meeting{background:rgba(212,168,67,.1);color:var(--gold)}
+.activity-item .title{font-size:15px;font-weight:600;margin-bottom:4px}
+.activity-item .body{font-size:13px;color:var(--slate);margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.activity-item .timestamp{font-size:12px;color:var(--slate)}
+
+.empty-state{text-align:center;color:var(--slate);padding:40px 20px}
+.empty-state svg{width:48px;height:48px;margin-bottom:12px;opacity:.4}
+.empty-state p{font-size:14px}
+
+/* ===== TOAST ===== */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--navy);color:var(--white);padding:12px 24px;border-radius:var(--radius);font-size:14px;font-weight:500;z-index:100;transition:transform .3s ease;box-shadow:0 4px 20px rgba(0,0,0,.3);max-width:calc(100% - 32px);text-align:center}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.error{background:var(--negative)}
+.toast.success{background:var(--emerald)}
+
+/* ===== LOADING ===== */
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid rgba(255,255,255,.3);border-top-color:var(--white);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-overlay{position:absolute;inset:0;background:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;z-index:5;border-radius:var(--radius)}
+.loading-overlay .spinner{border-color:rgba(13,27,62,.2);border-top-color:var(--navy);width:32px;height:32px}
+
+/* ===== INSTALL BANNER ===== */
+.install-banner{background:var(--midnight);color:var(--white);padding:12px 16px;display:flex;align-items:center;gap:12px;font-size:13px}
+.install-banner.hidden{display:none}
+.install-banner button{background:var(--steel);border:none;border-radius:8px;color:var(--white);padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.install-banner .dismiss{background:none;border:none;color:var(--slate);font-size:18px;cursor:pointer;padding:0 4px}
+</style>
+</head>
+<body>
+
+<!-- PIN SCREEN -->
+<div id="pin-screen">
+  <h1>ClearSky Call Logger</h1>
+  <p>Enter PIN to continue</p>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+  </div>
+  <div class="pin-pad" id="pin-pad">
+    <button class="pin-key" data-key="1">1</button>
+    <button class="pin-key" data-key="2">2</button>
+    <button class="pin-key" data-key="3">3</button>
+    <button class="pin-key" data-key="4">4</button>
+    <button class="pin-key" data-key="5">5</button>
+    <button class="pin-key" data-key="6">6</button>
+    <button class="pin-key" data-key="7">7</button>
+    <button class="pin-key" data-key="8">8</button>
+    <button class="pin-key" data-key="9">9</button>
+    <button class="pin-key fn" data-key="clear">CLR</button>
+    <button class="pin-key" data-key="0">0</button>
+    <button class="pin-key fn" data-key="back">&larr;</button>
+  </div>
+</div>
+
+<!-- INSTALL BANNER -->
+<div class="install-banner hidden" id="install-banner">
+  <span style="flex:1">Install this app for quick access</span>
+  <button id="install-btn">Install</button>
+  <button class="dismiss" id="install-dismiss">&times;</button>
+</div>
+
+<!-- APP BAR -->
+<div class="app-bar">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>
+  <h1>Call Logger</h1>
+  <button class="lock-btn" id="lock-btn" title="Lock">&#128274;</button>
+</div>
+
+<!-- VIEWS -->
+<div class="views">
+
+  <!-- SEARCH VIEW -->
+  <div class="view active" id="view-search">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="search-input" placeholder="Search contacts..." autocomplete="off">
+    </div>
+    <div id="search-results"></div>
+    <div class="search-hint" id="search-hint">
+      <p>Search by name, email, or company</p>
+    </div>
+  </div>
+
+  <!-- LOG CALL VIEW -->
+  <div class="view" id="view-call">
+    <div id="call-contact-bar"></div>
+    <div id="call-no-contact" class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v-2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      <p>Select a contact first from Search</p>
+    </div>
+    <form id="call-form" style="display:none">
+      <div class="form-section">
+        <span class="form-label">Call Type</span>
+        <div class="toggle-group">
+          <button type="button" class="toggle-btn active" data-field="callType" data-value="WhatsApp">WhatsApp</button>
+          <button type="button" class="toggle-btn" data-field="callType" data-value="Phone">Phone</button>
+        </div>
+      </div>
+      <div class="form-section">
+        <span class="form-label">Direction</span>
+        <div class="toggle-group">
+          <button type="button" class="toggle-btn active" data-field="direction" data-value="OUTBOUND">Outbound</button>
+          <button type="button" class="toggle-btn" data-field="direction" data-value="INBOUND">Inbound</button>
+        </div>
+      </div>
+      <div class="form-section">
+        <span class="form-label">Duration</span>
+        <div class="duration-picker">
+          <input type="number" id="call-duration" value="5" min="1" max="300">
+          <span>minutes</span>
+        </div>
+      </div>
+      <div class="form-section">
+        <span class="form-label">Notes</span>
+        <textarea class="form-input" id="call-notes" placeholder="Call summary..."></textarea>
+      </div>
+      <button type="submit" class="submit-btn" id="call-submit">Log Call</button>
+    </form>
+  </div>
+
+  <!-- LOG MEETING VIEW -->
+  <div class="view" id="view-meeting">
+    <div id="meeting-contact-bar"></div>
+    <div id="meeting-no-contact" class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <p>Select a contact first from Search</p>
+    </div>
+    <form id="meeting-form" style="display:none">
+      <div class="form-section">
+        <span class="form-label">Meeting Title</span>
+        <input type="text" class="form-input" id="meeting-title" placeholder="e.g. Project kickoff">
+      </div>
+      <div class="form-section">
+        <span class="form-label">Date &amp; Time</span>
+        <input type="datetime-local" class="form-input" id="meeting-datetime">
+      </div>
+      <div class="form-section">
+        <span class="form-label">Duration</span>
+        <div class="duration-picker">
+          <input type="number" id="meeting-duration" value="30" min="5" max="480">
+          <span>minutes</span>
+        </div>
+      </div>
+      <div class="form-section">
+        <span class="form-label">Notes</span>
+        <textarea class="form-input" id="meeting-notes" placeholder="Meeting agenda or summary..."></textarea>
+      </div>
+      <button type="submit" class="submit-btn" id="meeting-submit">Log Meeting</button>
+    </form>
+  </div>
+
+  <!-- RECENT ACTIVITY VIEW -->
+  <div class="view" id="view-recent">
+    <div id="recent-contact-bar"></div>
+    <div id="recent-no-contact" class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <p>Select a contact first from Search</p>
+    </div>
+    <div id="recent-list"></div>
+    <div id="recent-loading" style="display:none;text-align:center;padding:30px"><div class="spinner" style="border-color:rgba(13,27,62,.2);border-top-color:var(--navy);width:32px;height:32px"></div></div>
+  </div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-view="search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    Search
+  </button>
+  <button class="nav-btn" data-view="call">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.12.73.28 1.45.47 2.15a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.7.19 1.42.35 2.15.47A2 2 0 0122 16.92z"/></svg>
+    Log Call
+  </button>
+  <button class="nav-btn" data-view="meeting">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Meeting
+  </button>
+  <button class="nav-btn" data-view="recent">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    Recent
+  </button>
+</nav>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+(function() {
+  'use strict';
+
+  // ===== CONFIG =====
+  var API = 'https://api-tools.oga.earth';
+  var PIN_CODE = '1234';
+  var PIN_KEY = 'clearsky_call_logger_pin';
+
+  // ===== STATE =====
+  var selectedContact = null;
+  var pinEntry = '';
+  var searchTimeout = null;
+  var deferredPrompt = null;
+
+  // ===== DOM REFS =====
+  var pinScreen = document.getElementById('pin-screen');
+  var pinDots = document.querySelectorAll('.pin-dot');
+  var views = document.querySelectorAll('.view');
+  var navBtns = document.querySelectorAll('.nav-btn');
+  var searchInput = document.getElementById('search-input');
+  var searchResults = document.getElementById('search-results');
+  var searchHint = document.getElementById('search-hint');
+  var toastEl = document.getElementById('toast');
+  var installBanner = document.getElementById('install-banner');
+
+  // ===== PIN =====
+  function checkPinAuth() {
+    if (localStorage.getItem(PIN_KEY) === 'ok') {
+      pinScreen.classList.add('hidden');
+    }
+  }
+
+  function handlePinKey(key) {
+    if (key === 'clear') {
+      pinEntry = '';
+    } else if (key === 'back') {
+      pinEntry = pinEntry.slice(0, -1);
+    } else {
+      pinEntry += key;
+    }
+    updatePinDots();
+    if (pinEntry.length === 4) {
+      if (pinEntry === PIN_CODE) {
+        localStorage.setItem(PIN_KEY, 'ok');
+        pinScreen.classList.add('hidden');
+        pinEntry = '';
+      } else {
+        pinDots.forEach(function(d) { d.classList.add('error'); });
+        setTimeout(function() {
+          pinEntry = '';
+          updatePinDots();
+          pinDots.forEach(function(d) { d.classList.remove('error'); });
+        }, 500);
+      }
+    }
+  }
+
+  function updatePinDots() {
+    pinDots.forEach(function(dot, i) {
+      dot.classList.toggle('filled', i < pinEntry.length);
+    });
+  }
+
+  document.getElementById('pin-pad').addEventListener('click', function(e) {
+    var btn = e.target.closest('.pin-key');
+    if (btn) handlePinKey(btn.dataset.key);
+  });
+
+  document.getElementById('lock-btn').addEventListener('click', function() {
+    localStorage.removeItem(PIN_KEY);
+    pinEntry = '';
+    updatePinDots();
+    pinScreen.classList.remove('hidden');
+  });
+
+  // ===== NAVIGATION =====
+  function switchView(name) {
+    views.forEach(function(v) { v.classList.toggle('active', v.id === 'view-' + name); });
+    navBtns.forEach(function(b) { b.classList.toggle('active', b.dataset.view === name); });
+    if (name === 'search') searchInput.focus();
+    if (name === 'call') renderContactBar('call');
+    if (name === 'meeting') renderContactBar('meeting');
+    if (name === 'recent') { renderContactBar('recent'); if (selectedContact) loadRecent(); }
+  }
+
+  navBtns.forEach(function(btn) {
+    btn.addEventListener('click', function() { switchView(btn.dataset.view); });
+  });
+
+  // ===== TOAST =====
+  var toastTimer = null;
+  function toast(msg, type) {
+    toastEl.textContent = msg;
+    toastEl.className = 'toast ' + (type || '') + ' show';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() { toastEl.classList.remove('show'); }, 3000);
+  }
+
+  // ===== API HELPER =====
+  function api(path, opts) {
+    opts = opts || {};
+    var url = API + path;
+    var fetchOpts = { method: opts.method || 'GET', headers: { 'Content-Type': 'application/json' } };
+    if (opts.body) fetchOpts.body = JSON.stringify(opts.body);
+    return fetch(url, fetchOpts).then(function(r) { return r.json().then(function(d) { return { ok: r.ok, status: r.status, data: d }; }); });
+  }
+
+  // ===== CONTACT SEARCH =====
+  searchInput.addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    var q = searchInput.value.trim();
+    if (q.length < 2) {
+      searchResults.innerHTML = '';
+      searchHint.style.display = q.length === 0 ? 'block' : 'none';
+      return;
+    }
+    searchHint.style.display = 'none';
+    searchTimeout = setTimeout(function() { doSearch(q); }, 300);
+  });
+
+  function doSearch(query) {
+    searchResults.innerHTML = '<div style="text-align:center;padding:20px"><div class="spinner" style="border-color:rgba(13,27,62,.2);border-top-color:var(--navy);width:28px;height:28px"></div></div>';
+    api('/api/hubspot/contacts/search', { method: 'POST', body: { query: query } }).then(function(res) {
+      if (!res.ok) { searchResults.innerHTML = '<p style="color:var(--negative);text-align:center;padding:20px">Search failed</p>'; return; }
+      var contacts = res.data.results || [];
+      if (contacts.length === 0) {
+        searchResults.innerHTML = '<p style="color:var(--slate);text-align:center;padding:20px">No contacts found</p>';
+        return;
+      }
+      searchResults.innerHTML = contacts.map(function(c) {
+        var p = c.properties || {};
+        var name = ((p.firstname || '') + ' ' + (p.lastname || '')).trim() || 'Unknown';
+        var company = p.company || '';
+        var email = p.email || '';
+        var phone = p.phone || '';
+        return '<div class="contact-card" data-id="' + c.id + '" data-name="' + escHtml(name) + '" data-company="' + escHtml(company) + '" data-email="' + escHtml(email) + '">' +
+          '<div class="name">' + escHtml(name) + '</div>' +
+          (company ? '<div class="company">' + escHtml(company) + '</div>' : '') +
+          '<div class="meta">' +
+          (email ? '<span>' + escHtml(email) + '</span>' : '') +
+          (phone ? '<span>' + escHtml(phone) + '</span>' : '') +
+          '</div></div>';
+      }).join('');
+    }).catch(function() {
+      searchResults.innerHTML = '<p style="color:var(--negative);text-align:center;padding:20px">Network error</p>';
+    });
+  }
+
+  searchResults.addEventListener('click', function(e) {
+    var card = e.target.closest('.contact-card');
+    if (!card) return;
+    selectedContact = {
+      id: card.dataset.id,
+      name: card.dataset.name,
+      company: card.dataset.company,
+      email: card.dataset.email,
+    };
+    toast('Selected: ' + selectedContact.name, 'success');
+    renderContactBar('call');
+    renderContactBar('meeting');
+    renderContactBar('recent');
+  });
+
+  // ===== CONTACT BAR =====
+  function renderContactBar(section) {
+    var barEl = document.getElementById(section + '-contact-bar');
+    var noEl = document.getElementById(section + '-no-contact');
+    var formEl = document.getElementById(section + '-form');
+
+    if (!selectedContact) {
+      barEl.innerHTML = '';
+      if (noEl) noEl.style.display = 'block';
+      if (formEl) formEl.style.display = 'none';
+      return;
+    }
+    if (noEl) noEl.style.display = 'none';
+    if (formEl) formEl.style.display = 'block';
+
+    var initials = selectedContact.name.split(' ').map(function(w) { return w[0]; }).join('').toUpperCase().slice(0, 2);
+    barEl.innerHTML = '<div class="selected-contact">' +
+      '<div class="avatar">' + initials + '</div>' +
+      '<div class="info"><div class="name">' + escHtml(selectedContact.name) + '</div>' +
+      (selectedContact.company ? '<div class="company">' + escHtml(selectedContact.company) + '</div>' : '') +
+      '</div><button class="change-btn" onclick="document.querySelectorAll(\'.nav-btn\')[0].click()">Change</button></div>';
+  }
+
+  // ===== TOGGLE BUTTONS =====
+  document.addEventListener('click', function(e) {
+    if (!e.target.classList.contains('toggle-btn')) return;
+    e.preventDefault();
+    var group = e.target.parentElement;
+    group.querySelectorAll('.toggle-btn').forEach(function(b) { b.classList.remove('active'); });
+    e.target.classList.add('active');
+  });
+
+  // ===== LOG CALL =====
+  document.getElementById('call-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!selectedContact) return;
+    var btn = document.getElementById('call-submit');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+
+    var callType = document.querySelector('[data-field="callType"].active').dataset.value;
+    var direction = document.querySelector('[data-field="direction"].active').dataset.value;
+    var mins = parseInt(document.getElementById('call-duration').value) || 5;
+    var notes = document.getElementById('call-notes').value.trim();
+
+    api('/api/hubspot/log-call', {
+      method: 'POST',
+      body: {
+        contactId: selectedContact.id,
+        callType: callType,
+        direction: direction,
+        durationMs: mins * 60 * 1000,
+        notes: notes,
+        title: callType + ' call with ' + selectedContact.name,
+        timestamp: new Date().toISOString(),
+      }
+    }).then(function(res) {
+      btn.disabled = false;
+      btn.textContent = 'Log Call';
+      if (res.ok) {
+        toast('Call logged successfully', 'success');
+        document.getElementById('call-notes').value = '';
+      } else {
+        toast('Failed to log call: ' + (res.data.error || 'Unknown error'), 'error');
+      }
+    }).catch(function() {
+      btn.disabled = false;
+      btn.textContent = 'Log Call';
+      toast('Network error', 'error');
+    });
+  });
+
+  // ===== LOG MEETING =====
+  // Set default datetime to now
+  var dtInput = document.getElementById('meeting-datetime');
+  var now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  dtInput.value = now.toISOString().slice(0, 16);
+
+  document.getElementById('meeting-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!selectedContact) return;
+    var btn = document.getElementById('meeting-submit');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+
+    var title = document.getElementById('meeting-title').value.trim() || 'Meeting';
+    var startStr = document.getElementById('meeting-datetime').value;
+    var mins = parseInt(document.getElementById('meeting-duration').value) || 30;
+    var notes = document.getElementById('meeting-notes').value.trim();
+
+    var startTime = new Date(startStr).toISOString();
+    var endTime = new Date(new Date(startStr).getTime() + mins * 60000).toISOString();
+
+    api('/api/hubspot/log-meeting', {
+      method: 'POST',
+      body: {
+        contactId: selectedContact.id,
+        title: title,
+        notes: notes,
+        startTime: startTime,
+        endTime: endTime,
+        outcome: 'COMPLETED',
+      }
+    }).then(function(res) {
+      btn.disabled = false;
+      btn.textContent = 'Log Meeting';
+      if (res.ok) {
+        toast('Meeting logged successfully', 'success');
+        document.getElementById('meeting-title').value = '';
+        document.getElementById('meeting-notes').value = '';
+      } else {
+        toast('Failed to log meeting: ' + (res.data.error || 'Unknown error'), 'error');
+      }
+    }).catch(function() {
+      btn.disabled = false;
+      btn.textContent = 'Log Meeting';
+      toast('Network error', 'error');
+    });
+  });
+
+  // ===== RECENT ACTIVITY =====
+  function loadRecent() {
+    if (!selectedContact) return;
+    var listEl = document.getElementById('recent-list');
+    var loadingEl = document.getElementById('recent-loading');
+    listEl.innerHTML = '';
+    loadingEl.style.display = 'block';
+
+    api('/api/hubspot/recent/' + selectedContact.id).then(function(res) {
+      loadingEl.style.display = 'none';
+      if (!res.ok || !res.data.recent || res.data.recent.length === 0) {
+        listEl.innerHTML = '<div class="empty-state"><p>No recent activity</p></div>';
+        return;
+      }
+      listEl.innerHTML = res.data.recent.map(function(item) {
+        var p = item.properties || {};
+        var isCall = item.type === 'call';
+        var title = isCall ? (p.hs_call_title || 'Call') : (p.hs_meeting_title || 'Meeting');
+        var body = isCall ? (p.hs_call_body || '') : (p.hs_meeting_body || '');
+        var ts = p.hs_timestamp ? new Date(p.hs_timestamp) : null;
+        var timeStr = ts ? ts.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' at ' + ts.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : '';
+        var durationStr = '';
+        if (isCall && p.hs_call_duration) {
+          var secs = parseInt(p.hs_call_duration) / 1000;
+          durationStr = ' (' + Math.round(secs / 60) + ' min)';
+        }
+        return '<div class="activity-item ' + item.type + '">' +
+          '<span class="type-badge ' + item.type + '">' + item.type + '</span>' +
+          '<div class="title">' + escHtml(title) + durationStr + '</div>' +
+          (body ? '<div class="body">' + escHtml(body) + '</div>' : '') +
+          '<div class="timestamp">' + timeStr + '</div>' +
+          '</div>';
+      }).join('');
+    }).catch(function() {
+      loadingEl.style.display = 'none';
+      listEl.innerHTML = '<div class="empty-state"><p>Failed to load activity</p></div>';
+    });
+  }
+
+  // ===== PWA INSTALL =====
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBanner.classList.remove('hidden');
+  });
+
+  document.getElementById('install-btn').addEventListener('click', function() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function() { installBanner.classList.add('hidden'); deferredPrompt = null; });
+  });
+
+  document.getElementById('install-dismiss').addEventListener('click', function() {
+    installBanner.classList.add('hidden');
+  });
+
+  // ===== SERVICE WORKER =====
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(function() {});
+  }
+
+  // ===== UTIL =====
+  function escHtml(s) {
+    var d = document.createElement('div');
+    d.textContent = s || '';
+    return d.innerHTML;
+  }
+
+  // ===== INIT =====
+  checkPinAuth();
+
+})();
+</script>
+</body>
+</html>

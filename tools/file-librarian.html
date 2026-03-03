@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClearSky | File Librarian</title>
+<link rel="icon" href="/assets/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="/assets/jszip.min.js"></script>
+<style>
+:root{--navy:#0A1628;--navy-light:#0F1D32;--navy-mid:#142540;--gold:#C8A951;--gold-dim:rgba(200,169,81,.12);--gold-glow:rgba(200,169,81,.25);--white:#F0F0F0;--gray:#8899AA;--green:#48BB78;--green-dim:rgba(72,187,120,.12);--amber:#ED8936;--amber-dim:rgba(237,137,54,.12);--red:#FC8181;--blue:#63B3ED;--blue-dim:rgba(99,179,237,.12);--radius:8px;--radius-lg:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--navy);color:var(--white);min-height:100vh}
+.topnav{display:flex;align-items:center;justify-content:space-between;padding:12px 24px;background:var(--navy-light);border-bottom:1px solid rgba(200,169,81,.1);position:sticky;top:0;z-index:100}
+.topnav-brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.topnav-brand img{height:28px}
+.topnav-brand span{color:var(--gold);font-weight:600;font-size:14px;letter-spacing:.5px;text-transform:uppercase}
+.topnav a.back{color:var(--gray);font-size:13px;text-decoration:none}
+.topnav a.back:hover{color:var(--gold)}
+.main{max-width:900px;margin:0 auto;padding:40px 24px}
+.dropzone{border:2px dashed rgba(200,169,81,.25);border-radius:16px;padding:80px 40px;text-align:center;cursor:pointer;transition:.25s;background:rgba(200,169,81,.02);position:relative;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.dropzone:hover,.dropzone.dragover{border-color:var(--gold);background:var(--gold-dim)}
+.dropzone input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.dz-icon{font-size:56px;margin-bottom:16px}
+.dz-title{font-size:22px;font-weight:700;color:var(--white);margin-bottom:8px}
+.dz-sub{font-size:14px;color:var(--gray);margin-bottom:16px;line-height:1.5}
+.dz-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;background:var(--green-dim);color:var(--green);border-radius:20px;font-size:12px;font-weight:600}
+.processing{display:none;text-align:center;padding:60px 20px}
+.processing.active{display:block}
+.spinner{width:48px;height:48px;border:3px solid var(--navy-mid);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 20px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.processing h2{font-size:18px;font-weight:600;color:var(--white);margin-bottom:8px}
+.processing .status{font-size:13px;color:var(--gray)}
+.pbar{width:300px;height:6px;background:var(--navy-mid);border-radius:3px;margin:16px auto 0;overflow:hidden}
+.pfill{height:100%;background:var(--gold);border-radius:3px;transition:width .3s;width:0%}
+.results{display:none}
+.results.active{display:block}
+.results-header{text-align:center;margin-bottom:24px}
+.results-header h2{font-size:20px;font-weight:700;color:var(--gold);margin-bottom:6px}
+.results-header p{font-size:13px;color:var(--gray)}
+.download-btn{display:block;width:100%;max-width:400px;margin:0 auto 12px;padding:16px 24px;background:var(--gold);color:var(--navy);border:none;border-radius:var(--radius-lg);font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;transition:.2s;text-align:center}
+.download-btn:hover{background:#D4B85E;transform:translateY(-1px);box-shadow:0 4px 20px rgba(200,169,81,.3)}
+.download-sub{text-align:center;font-size:12px;color:var(--gray);margin-bottom:24px}
+.file-tree{background:var(--navy-light);border:1px solid rgba(200,169,81,.08);border-radius:var(--radius-lg);overflow:hidden}
+.tree-header{padding:14px 18px;border-bottom:1px solid rgba(200,169,81,.06);display:flex;justify-content:space-between;align-items:center}
+.tree-header h3{font-size:13px;font-weight:600;color:var(--gold)}
+.tree-header span{font-size:11px;color:var(--gray)}
+.tree-body{max-height:400px;overflow-y:auto}
+.tree-row{display:grid;grid-template-columns:24px 1fr 80px 24px;align-items:center;padding:7px 18px;gap:8px;border-bottom:1px solid rgba(200,169,81,.03);font-size:12px}
+.tree-row:hover{background:rgba(200,169,81,.03)}
+.tree-icon{text-align:center;font-size:14px}
+.tree-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tree-name .nn{color:var(--white);font-weight:500}
+.tree-name .on{color:var(--gray);font-size:10px;display:block}
+.tree-folder{padding:7px 18px;font-size:11px;font-weight:600;color:var(--gold);background:rgba(200,169,81,.04);letter-spacing:.3px}
+.tt{display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:600;text-align:center}
+.tt-nda{background:var(--blue-dim);color:var(--blue)}
+.tt-kyc{background:var(--amber-dim);color:var(--amber)}
+.tt-marketing{background:var(--green-dim);color:var(--green)}
+.tt-advisory{background:rgba(183,148,246,.12);color:#B794F6}
+.tt-cross_referral{background:rgba(252,129,129,.12);color:var(--red)}
+.tt-other{background:rgba(200,169,81,.08);color:var(--gray)}
+.tree-ok{color:var(--green);text-align:center}
+.reset-link{text-align:center;margin-top:20px}
+.reset-link a{color:var(--gray);font-size:12px;text-decoration:none;cursor:pointer}
+.reset-link a:hover{color:var(--gold)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);z-index:300;background:var(--navy-mid);border:1px solid var(--gold);color:var(--gold);padding:10px 20px;border-radius:var(--radius);font-size:13px;opacity:0;transition:.3s;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+</style>
+</head>
+<body>
+<div class="topnav">
+  <div style="display:flex;align-items:center;gap:20px">
+    <a class="topnav-brand" href="/"><img src="/assets/logos/logo-gold.png" alt="CS" onerror="this.style.display='none'"><span>ClearSky</span></a>
+    <span style="font-size:15px;font-weight:500">File Librarian</span>
+  </div>
+  <a class="back" href="/">← Dashboard</a>
+</div>
+<div class="main">
+  <div id="s1">
+    <div class="dropzone" id="dropzone">
+      <input type="file" multiple webkitdirectory id="fileInput" onchange="go(this.files)">
+      <div class="dz-icon">📂</div>
+      <div class="dz-title">Drop a folder here</div>
+      <div class="dz-sub">Files are auto-classified, renamed, and zipped<br>for you to upload to SharePoint</div>
+      <div class="dz-badge">🔒 Nothing is uploaded to any server</div>
+    </div>
+  </div>
+  <div class="processing" id="s2">
+    <div class="spinner"></div>
+    <h2 id="pt">Reading files…</h2>
+    <div class="status" id="ps"></div>
+    <div class="pbar"><div class="pfill" id="pb"></div></div>
+  </div>
+  <div class="results" id="s3">
+    <div class="results-header">
+      <h2>✓ <span id="rc">0</span> files organized</h2>
+      <p id="rs"></p>
+    </div>
+    <button class="download-btn" onclick="dl()">📦 Download Organized .zip</button>
+    <div class="download-sub" id="zs"></div>
+    <div class="file-tree">
+      <div class="tree-header"><h3>📋 File Map</h3><span id="tc"></span></div>
+      <div class="tree-body" id="tb"></div>
+    </div>
+    <div class="reset-link"><a onclick="reset()">↺ Start over with a different folder</a></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const API=window.location.hostname==='localhost'?'':'https://api-tools.oga.earth';
+const DT=[
+  {id:'nda',l:'NDA',f:'1. NDA',k:['nda','mnda','non-disclosure','non_disclosure','confidential']},
+  {id:'kyc',l:'KYC',f:'2. KYC',k:['kyc','know your customer','client onboarding','cob','due diligence','compliance']},
+  {id:'marketing',l:'Marketing',f:'3. Marketing Agreement',k:['marketing agreement','marketing services','ma_']},
+  {id:'advisory',l:'Advisory',f:'4. Advisory',k:['advisory','consultancy','msa','master services','master advisory','sow','statement of work']},
+  {id:'cross_referral',l:'Cross-Ref',f:'5. Cross-Referral',k:['cross-referral','cross referral','referral','fee sharing','xref']},
+  {id:'internal',l:'Internal',f:'6. Internal',k:['internal','memo','minutes','board','invoice','receipt']},
+];
+const CO=['Bepex','EGE Haina','Charm Industrial','Woodcache','Eco2 International','Offcarbon','Numerco','Bosquia','Orizon Agriculture','Greenline Climate','CarbonOf','Infinite Solutions','Tradewater','Salamander Broking','ALMAC Works','RNG Connect','Catapult Environmental','Boomitra','The Climate Trust','LyonDellBasell','Agrocortex','BrightSpot','Equus','AtmosClear','Sistema.bio','Yepas','K Animus','Jaguar Corridor','Royal Bank of Canada','Corsia Credits','Aider','True Manufacturing','Caely','ClearSky','Clear Sky','TotalEnergies','Caja Rural','NatureBrain','Desarrollo y Agronomia','BioFlight','Bioflight Fuels'];
+
+let F=[],Z=null;
+
+// Dropzone
+const dz=document.getElementById('dropzone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+dz.addEventListener('drop',e=>{
+  e.preventDefault();dz.classList.remove('dragover');
+  const items=e.dataTransfer.items;if(!items)return;
+  const entries=[];
+  for(const i of items)if(i.kind==='file'){const en=i.webkitGetAsEntry?i.webkitGetAsEntry():null;if(en)entries.push(en);}
+  if(entries.length)walkAll(entries).then(go);
+});
+
+async function walkAll(entries){
+  const files=[];
+  async function walk(e){
+    if(e.isFile){const f=await new Promise(r=>e.file(x=>r(x)));f._p=e.fullPath;files.push(f);}
+    else if(e.isDirectory){const rd=e.createReader();const ch=await new Promise(r=>rd.readEntries(x=>r(x)));for(const c of ch)await walk(c);}
+  }
+  for(const e of entries)await walk(e);
+  return files;
+}
+
+// Main pipeline
+async function go(input){
+  const files=Array.from(input);if(!files.length)return;
+  show('s2');sp('Reading files…',files.length+' items',5);
+
+  F=[];
+  let root='';
+  const fp=files[0]?.webkitRelativePath||files[0]?._p||'';
+  if(fp.includes('/'))root=fp.split('/')[0]+'/';
+
+  for(const f of files){
+    const raw=f.webkitRelativePath||f._p||f.name;
+    const bn=raw.split('/').pop();
+    if(bn.startsWith('.')||/^(Thumbs\.db|desktop\.ini|\.DS_Store)$/i.test(bn)||f.size===0)continue;
+    let rp=raw;
+    if(root&&rp.startsWith(root))rp=rp.substring(root.length);
+    if(rp.startsWith('/'))rp=rp.substring(1);
+    F.push({fo:f,orig:bn,rp,ext:bn.split('.').pop().toLowerCase(),sz:f.size,dt:'other',dl:'Other',co:'',ver:'',nn:'',fp:''});
+  }
+
+  sp('Classifying…',F.length+' files',15);
+
+  // Local heuristics
+  F.forEach(f=>{
+    const lo=(f.orig+' '+f.rp).toLowerCase();
+    for(const d of DT){for(const k of d.k){const v=[k,k.replace(/ /g,'_'),k.replace(/ /g,'-'),k.replace(/ /g,'')];for(const x of v){if(lo.includes(x)){f.dt=d.id;f.dl=d.l;break;}}if(f.dt!=='other')break;}if(f.dt!=='other')break;}
+    for(const c of CO){const v=[c.toLowerCase(),c.toLowerCase().replace(/ /g,'_'),c.toLowerCase().replace(/ /g,'-'),c.toLowerCase().replace(/ /g,'')];for(const x of v){if(lo.includes(x)){f.co=c;break;}}if(f.co)break;}
+    if(/executed|signed|final/i.test(lo))f.ver='EXECUTED';
+    else if(/draft/i.test(lo))f.ver='DRAFT';
+    else if(/redline|markup|tracked/i.test(lo))f.ver='REDLINE';
+  });
+
+  // AI classification
+  try{
+    const payload=F.map(f=>({id:f.rp,path:f.rp,name:f.orig,ext:f.ext,local_type:f.dt,local_company:f.co}));
+    for(let i=0;i<payload.length;i+=80){
+      const batch=payload.slice(i,i+80);
+      const r=await fetch(API+'/api/classify-files',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({files:batch})});
+      if(r.ok){
+        const d=await r.json();
+        if(d.classifications)for(const c of d.classifications){
+          const f=F.find(x=>x.rp===c.id);if(!f)continue;
+          if(c.doc_type&&c.doc_type!=='other'){const dt=DT.find(d=>d.id===c.doc_type);if(dt){f.dt=dt.id;f.dl=dt.l;}}
+          if(c.company)f.co=c.company;
+          if(c.version)f.ver=c.version;
+        }
+      }
+      sp('Classifying…',Math.min(i+80,payload.length)+'/'+payload.length,15+Math.round(((i+80)/payload.length)*30));
+    }
+  }catch(e){console.warn('AI unavailable:',e.message)}
+
+  // Generate filenames
+  F.forEach(f=>{
+    const d=DT.find(x=>x.id===f.dt);
+    f.nn=mkName(d,f.co,f.ver,f.ext,f.orig);
+    f.fp=mkPath(d,f.co);
+  });
+
+  sp('Building zip…',F.length+' files',50);
+
+  // Build zip
+  if(typeof JSZip==='undefined'){toast('Error: JSZip not loaded');show('s1');return;}
+  const zip=new JSZip();
+  const seen={};
+  for(let i=0;i<F.length;i++){
+    const f=F[i];
+    let op=f.fp+'/'+f.nn;
+    if(seen[op]){seen[op]++;op=f.fp+'/'+f.nn.replace(/\.([^.]+)$/,'_'+seen[op]+'.$1');}
+    else seen[op]=1;
+    zip.file(op,await f.fo.arrayBuffer());
+    if(i%5===0)sp('Building zip…',(i+1)+'/'+F.length,50+Math.round(((i+1)/F.length)*40));
+  }
+  sp('Compressing…','',92);
+  Z=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:1}},m=>sp('Compressing…',Math.round(m.percent)+'%',92+Math.round(m.percent*.08)));
+
+  // Results
+  show('s3');
+  const mb=(F.reduce((s,f)=>s+f.sz,0)/1048576).toFixed(1);
+  const zmb=(Z.size/1048576).toFixed(1);
+  const cos=[...new Set(F.map(f=>f.co).filter(Boolean))];
+  document.getElementById('rc').textContent=F.length;
+  document.getElementById('rs').textContent=cos.length+' companies · '+mb+' MB → '+zmb+' MB zip';
+  document.getElementById('zs').textContent=zmb+' MB compressed';
+  document.getElementById('tc').textContent=F.length+' files';
+
+  const byF={};F.forEach(f=>{if(!byF[f.fp])byF[f.fp]=[];byF[f.fp].push(f);});
+  let h='';
+  Object.keys(byF).sort().forEach(folder=>{
+    h+=`<div class="tree-folder">📁 ${folder}</div>`;
+    byF[folder].forEach(f=>{
+      const tc='tt-'+(f.dt==='cross_referral'?'cross_referral':f.dt);
+      const ic={pdf:'📄',docx:'📝',doc:'📝',xlsx:'📊',pptx:'📊',png:'🖼️',jpg:'🖼️'}[f.ext]||'📁';
+      h+=`<div class="tree-row"><div class="tree-icon">${ic}</div><div class="tree-name"><span class="nn">${f.nn}</span><span class="on">← ${f.orig}</span></div><div><span class="tt ${tc}">${f.dl}</span></div><div class="tree-ok">✓</div></div>`;
+    });
+  });
+  document.getElementById('tb').innerHTML=h;
+}
+
+function san(s){return s.replace(/[^a-zA-Z0-9_.-]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'');}
+function mkName(d,co,ver,ext,orig){
+  const y=new Date().getFullYear(),c=co?san(co):'Unknown';
+  let b;
+  if(!d||d.id==='other')b=san(orig.replace(/\.[^.]+$/,''));
+  else switch(d.id){
+    case'nda':b=`MNDA_${c}_ClearSky_Limited`;break;
+    case'kyc':b=`KYC_${c}_(CSL)`;break;
+    case'marketing':b=`MA_${c}_${y}`;break;
+    case'advisory':b=`MSA_${c}_${y}`;break;
+    case'cross_referral':b=`XRef_${c}_${y}`;break;
+    default:b=san(orig.replace(/\.[^.]+$/,''));
+  }
+  if(ver)b+='_'+ver;
+  return b+'.'+ext;
+}
+function mkPath(d,co){return'Counterparties/'+(co||'Unclassified')+'/'+(d?d.f:'9. Other');}
+
+function dl(){if(!Z)return;const u=URL.createObjectURL(Z);const a=document.createElement('a');a.href=u;a.download='ClearSky_Files_'+new Date().toISOString().slice(0,10)+'.zip';a.click();URL.revokeObjectURL(u);toast('Download started');}
+function show(id){['s1','s2','s3'].forEach(s=>{const el=document.getElementById(s);el.style.display=s===id?'block':'none';if(s==='s2')el.className='processing'+(s===id?' active':'');if(s==='s3')el.className='results'+(s===id?' active':'');});}
+function sp(t,s,p){document.getElementById('pt').textContent=t;document.getElementById('ps').textContent=s;document.getElementById('pb').style.width=p+'%';}
+function reset(){F=[];Z=null;show('s1');document.getElementById('fileInput').value='';}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+</script>
+</body>
+</html>

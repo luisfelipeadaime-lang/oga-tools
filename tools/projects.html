@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spain Projects — ClearSky</title>
+<link rel="icon" href="/assets/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --navy:#0A1628;--navy-light:#122140;--navy-mid:#1a3058;
+  --gold:#C8A951;--gold-dim:#9e8540;--gold-bg:rgba(200,169,81,0.08);
+  --white:#F5F5F0;--text:#E8E4DC;--text-dim:#8A8678;
+  --green:#4ADE80;--green-bg:rgba(74,222,128,0.12);
+  --red:#F87171;--red-bg:rgba(248,113,113,0.12);
+  --amber:#FBBF24;--amber-bg:rgba(251,191,36,0.12);
+  --blue:#60A5FA;--purple:#A855F7;
+  --radius:10px;--shadow:0 2px 12px rgba(0,0,0,0.3);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);min-height:100vh}
+a{color:var(--gold);text-decoration:none}
+
+.nav{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid rgba(200,169,81,0.15);background:var(--navy);position:sticky;top:0;z-index:100}
+.nav-brand{display:flex;align-items:center;gap:12px}
+.nav-brand img{height:28px}
+.nav-brand span{font-size:13px;color:var(--text-dim);letter-spacing:1.5px;text-transform:uppercase;font-weight:500}
+.nav-actions{display:flex;gap:10px}
+.btn{padding:8px 18px;border-radius:6px;border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;transition:all .15s}
+.btn-gold{background:var(--gold);color:var(--navy)}.btn-gold:hover{background:#d4b55e}
+.btn-outline{background:transparent;color:var(--gold);border:1px solid var(--gold-dim)}.btn-outline:hover{background:var(--gold-bg)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-green{background:var(--green);color:var(--navy)}.btn-green:hover{background:#6ee7a0}
+
+.summary{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;padding:20px 32px;border-bottom:1px solid rgba(200,169,81,0.08)}
+.stat{background:var(--navy-light);border:1px solid rgba(200,169,81,0.1);border-radius:var(--radius);padding:14px 16px}
+.stat-label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.stat-value{font-size:22px;font-weight:700;color:var(--white);font-family:'JetBrains Mono',monospace}
+.stat-sub{font-size:11px;color:var(--text-dim);margin-top:2px}
+.stat-value.positive{color:var(--green)}.stat-value.negative{color:var(--red)}.stat-value.gold{color:var(--gold)}
+
+.controls{display:flex;align-items:center;justify-content:space-between;padding:16px 32px}
+.view-tabs{display:flex;gap:2px;background:var(--navy-light);border-radius:8px;padding:3px}
+.view-tab{padding:7px 16px;border-radius:6px;border:none;background:transparent;color:var(--text-dim);font-family:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s}
+.view-tab.active{background:var(--gold);color:var(--navy)}
+.controls-right{display:flex;gap:10px;align-items:center}
+.search-box{background:var(--navy-light);border:1px solid rgba(200,169,81,0.15);border-radius:6px;padding:7px 12px;color:var(--text);font-family:inherit;font-size:13px;width:220px;outline:none}
+.search-box:focus{border-color:var(--gold)}.search-box::placeholder{color:var(--text-dim)}
+
+.table-wrap{padding:0 32px 32px;overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--navy-light);padding:10px 14px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);font-weight:600;border-bottom:2px solid var(--gold-dim);white-space:nowrap;cursor:pointer;user-select:none;transition:color .15s}
+thead th:hover{color:var(--gold)}
+thead th .sort-arrow{font-size:10px;margin-left:4px;opacity:0.4}
+thead th.sorted .sort-arrow{opacity:1;color:var(--gold)}
+tbody tr{border-bottom:1px solid rgba(200,169,81,0.06);cursor:pointer;transition:background .1s}
+tbody tr:hover{background:rgba(200,169,81,0.04)}
+tbody tr.total-row{background:var(--gold-bg);border-top:2px solid var(--gold-dim);cursor:default}
+tbody tr.total-row td{font-weight:700;color:var(--gold)}
+tbody tr.silvareira-row{background:rgba(96,165,250,0.04);border-top:1px solid rgba(96,165,250,0.15);cursor:default}
+tbody tr.silvareira-row td{color:var(--blue);font-weight:600;font-size:12px}
+tbody td{padding:10px 14px;font-size:13px;white-space:nowrap}
+.mono{font-family:'JetBrains Mono',monospace;font-size:12px}
+.cell-right{text-align:right}
+
+.zamora-badge{display:inline-block;width:16px;height:16px;border-radius:50%;background:var(--gold);color:var(--navy);font-size:9px;font-weight:700;text-align:center;line-height:16px;margin-left:6px;vertical-align:middle}
+.stale-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.stale-green{background:var(--green)}.stale-amber{background:var(--amber)}.stale-red{background:var(--red)}
+
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.badge-contracted{background:var(--green-bg);color:var(--green)}
+.badge-contract_sent{background:rgba(96,165,250,0.15);color:var(--blue)}
+.badge-contract_negotiation{background:rgba(96,165,250,0.15);color:var(--blue)}
+.badge-due_diligence{background:var(--amber-bg);color:var(--amber)}
+.badge-prospecting{background:rgba(200,169,81,0.12);color:var(--gold)}
+.badge-preparation{background:rgba(200,169,81,0.08);color:var(--text-dim)}
+.badge-engineering,.badge-miteco_filing{background:rgba(74,222,128,0.12);color:var(--green)}
+.badge-registered{background:var(--green);color:var(--navy)}
+.badge-paused{background:var(--red-bg);color:var(--red)}
+
+.kanban{display:flex;gap:14px;padding:0 32px 32px;overflow-x:auto;min-height:60vh}
+.kanban-col{min-width:260px;flex:1;background:var(--navy-light);border-radius:var(--radius);border:1px solid rgba(200,169,81,0.08);display:flex;flex-direction:column;transition:border-color .2s,background .2s}
+.kanban-col.drag-over{border-color:var(--gold);background:var(--gold-bg)}
+.kanban-header{padding:12px 14px;border-bottom:1px solid rgba(200,169,81,0.1)}
+.kanban-header h3{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);font-weight:600;display:flex;align-items:center;justify-content:space-between}
+.kanban-count{background:var(--navy);padding:2px 8px;border-radius:10px;font-size:11px;color:var(--text-dim);font-family:'JetBrains Mono',monospace}
+.kanban-subtotals{padding:8px 14px;font-size:11px;color:var(--text-dim);border-bottom:1px solid rgba(200,169,81,0.06);font-family:'JetBrains Mono',monospace;display:flex;gap:12px;flex-wrap:wrap}
+.kanban-subtotals span{white-space:nowrap}
+.kanban-cards{padding:10px;flex:1;display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:60px}
+.card{background:var(--navy);border:1px solid rgba(200,169,81,0.1);border-radius:8px;padding:14px;cursor:grab;transition:all .15s;position:relative}
+.card:active{cursor:grabbing}
+.card:hover{border-color:var(--gold-dim);transform:translateY(-1px);box-shadow:var(--shadow)}
+.card.dragging{opacity:0.4;transform:rotate(2deg)}
+.card-name{font-size:14px;font-weight:600;color:var(--white);margin-bottom:6px}
+.card-region{font-size:11px;color:var(--text-dim);margin-bottom:8px}
+.card-metrics{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.card-metric{font-size:11px}
+.card-metric span{color:var(--text-dim)}.card-metric strong{color:var(--text);font-family:'JetBrains Mono',monospace}
+.card-blocker{margin-top:8px;padding:6px 8px;background:var(--red-bg);border-radius:4px;font-size:11px;color:var(--red)}
+.card-warning{margin-top:8px;padding:6px 8px;background:var(--amber-bg);border-radius:4px;font-size:11px;color:var(--amber)}
+.card-stale{border-left:3px solid var(--amber)}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;justify-content:center;align-items:flex-start;padding:40px;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal{background:var(--navy);border:1px solid rgba(200,169,81,0.15);border-radius:14px;width:100%;max-width:900px;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;border-bottom:1px solid rgba(200,169,81,0.1)}
+.modal-header h2{font-size:20px;color:var(--white)}
+.modal-close{width:32px;height:32px;border-radius:6px;border:none;background:var(--navy-light);color:var(--text-dim);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{color:var(--gold)}
+.modal-body{padding:24px 28px}
+.detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.detail-stat{background:var(--navy-light);border-radius:8px;padding:12px}
+.detail-stat .stat-label{font-size:10px}.detail-stat .stat-value{font-size:18px}
+.detail-section{margin-bottom:24px}
+.detail-section h3{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid rgba(200,169,81,0.1)}
+.notes-box{background:var(--navy-light);border-radius:8px;padding:14px;font-size:13px;line-height:1.6}
+
+.upload-zone{border:2px dashed rgba(200,169,81,0.25);border-radius:var(--radius);padding:32px;text-align:center;margin:20px 32px;cursor:pointer;transition:all .2s;display:none}
+.upload-zone.visible{display:block}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--gold);background:var(--gold-bg)}
+.upload-zone h3{color:var(--gold);margin-bottom:6px;font-size:15px}
+.upload-zone p{color:var(--text-dim);font-size:13px}
+.upload-zone input{display:none}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy-light);border:1px solid var(--gold);border-radius:8px;padding:14px 20px;color:var(--gold);font-size:13px;font-weight:600;z-index:300;transform:translateY(100px);opacity:0;transition:all .3s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+
+@media(max-width:1200px){.summary{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:768px){.summary{grid-template-columns:repeat(2,1fr)}.nav{padding:12px 16px}.controls,.table-wrap,.kanban{padding-left:16px;padding-right:16px}.kanban{flex-direction:column}.kanban-col{min-width:auto}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">
+    <img src="/assets/logos/logo-gold.png" alt="ClearSky" onerror="this.style.display='none'">
+    <span>Spain Projects</span>
+  </div>
+  <div class="nav-actions">
+    <button class="btn btn-green btn-sm" onclick="downloadExcel()">⬇ Excel</button>
+    <button class="btn btn-outline btn-sm" onclick="toggleUpload()">⬆ Upload .xlsx</button>
+    <button class="btn btn-outline btn-sm" onclick="refreshHubSpot()">⟳ HubSpot</button>
+    <a href="/tools/revenue.html" class="btn btn-outline btn-sm">Revenue →</a>
+  </div>
+</nav>
+
+<div class="summary" id="summaryBar"></div>
+
+<div class="upload-zone" id="uploadZone" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event)">
+  <h3>Drop MITECO Model (.xlsx) here</h3>
+  <p>Parses v5 model template — extracts hectares, credits, MOIC, IRR, NPV, capex, revenue</p>
+  <input type="file" id="fileInput" accept=".xlsx" onchange="handleFileSelect(event)">
+  <button class="btn btn-gold btn-sm" style="margin-top:12px" onclick="document.getElementById('fileInput').click()">Choose File</button>
+</div>
+
+<div class="controls">
+  <div class="view-tabs">
+    <button class="view-tab active" data-view="table" onclick="setView('table')">Table</button>
+    <button class="view-tab" data-view="kanban" onclick="setView('kanban')">Pipeline</button>
+  </div>
+  <div class="controls-right">
+    <input type="text" class="search-box" placeholder="Search projects..." oninput="filterProjects(this.value)">
+  </div>
+</div>
+
+<div class="table-wrap" id="tableView"><table><thead><tr id="tableHead"></tr></thead><tbody id="tableBody"></tbody></table></div>
+<div class="kanban" id="kanbanView" style="display:none"></div>
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()"><div class="modal fade-in" id="modalContent"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API='https://api-tools.oga.earth/api/projects';
+const STATUSES=['prospecting','preparation','due_diligence','contract_negotiation','contract_sent','contracted','engineering','miteco_filing','registered'];
+const SL={prospecting:'Prospecting',preparation:'Preparation',due_diligence:'Due Diligence',contract_negotiation:'Contract Neg.',contract_sent:'Contract Sent',contracted:'Contracted',engineering:'Engineering',miteco_filing:'MITECO Filing',registered:'Registered',paused:'Paused'};
+const SILV=['santa_maria','viascon','borben','pazos','loureiro','san_xurxo'];
+
+let P=[
+  {id:'amoedo',name:'Amoedo',region:'Galicia',land_type:'CMVMC',status:'contracted',blocker:'Waiting for MITECO registration',owner:'Luis / Emmanuel',hectares:0,estimated_credits:10000,capex_12mo:0,revenue_12mo:240000,pnl_12mo:0,moic:null,irr:null,npv:null,project_life:null,credit_price:18,lease_ha:null,buyer:'Caja Rural Zamora',counterparties:'CMVMC Amoedo / Silvareira',zamora:'Y',last_update:'2025-12-01',notes:'First project sold. EUR 240k to Zamora @ EUR 18.',ha_forested:0,ha_reforest:0,model_source:'manual'},
+  {id:'santa_maria',name:'Santa María',region:'Galicia',land_type:'CMVMC',status:'contract_sent',blocker:'Contracts sent — waiting for CMVMC lawyers',owner:'Luis',hectares:93,estimated_credits:72430,capex_12mo:140000,revenue_12mo:1810748,pnl_12mo:1670748,moic:1.54,irr:0.95,npv:74020,project_life:35,credit_price:25,lease_ha:160,buyer:'Caja Rural Zamora',counterparties:'CMVMC Santa María (José Puente) / Redenor',zamora:'Y',last_update:'2026-02-26',notes:'93 ha (37 forested + 56 reforestation). Lease EUR 160/ha blended.',ha_forested:37,ha_reforest:56,model_source:'silvareira_feb2026'},
+  {id:'viascon',name:'Viascon',region:'Galicia',land_type:'CMVMC',status:'due_diligence',blocker:'Waiting for Juan Carlos review',owner:'Luis / JC',hectares:77,estimated_credits:53721,capex_12mo:412900,revenue_12mo:966979,pnl_12mo:554079,moic:0.96,irr:null,npv:395996,project_life:35,credit_price:25,lease_ha:177,buyer:'Caja Rural Zamora',counterparties:'Amancio / Silvareira / JC (Cuatrecasas)',zamora:'Y',last_update:'2026-02-26',notes:'77 ha (18 forested + 59 reforestation).',ha_forested:18,ha_reforest:59,model_source:'silvareira_feb2026'},
+  {id:'borben',name:'Borbén',region:'Galicia',land_type:'CMVMC',status:'due_diligence',blocker:'Waiting for Juan Carlos review',owner:'Luis / JC',hectares:55,estimated_credits:33178,capex_12mo:151200,revenue_12mo:597203,pnl_12mo:446003,moic:1.17,irr:13.74,npv:349635,project_life:35,credit_price:25,lease_ha:150,buyer:'Caja Rural Zamora',counterparties:'Amancio / Silvareira / JC (Cuatrecasas)',zamora:'Y',last_update:'2026-02-26',notes:'55 ha (43 forested + 12 reforestation). Best risk-adjusted.',ha_forested:43,ha_reforest:12,model_source:'silvareira_feb2026'},
+  {id:'pazos',name:'Pazos',region:'Galicia',land_type:'CMVMC',status:'contract_sent',blocker:'Contracts sent — waiting for CMVMC lawyers',owner:'Luis / JC',hectares:38.98,estimated_credits:21143,capex_12mo:106152,revenue_12mo:380583,pnl_12mo:274431,moic:1.12,irr:22.64,npv:214775,project_life:35,credit_price:25,lease_ha:170,buyer:'Caja Rural Zamora',counterparties:'Amancio / Silvareira / JC (Cuatrecasas)',zamora:'N',last_update:'2026-02-26',notes:'38.98 ha (100% forested). Best IRR 22.6%.',ha_forested:38.98,ha_reforest:0,model_source:'silvareira_feb2026'},
+  {id:'loureiro',name:'Loureiro',region:'Galicia',land_type:'CMVMC',status:'contract_sent',blocker:'Contracts sent — waiting for CMVMC lawyers',owner:'Luis',hectares:128,estimated_credits:56992,capex_12mo:339800,revenue_12mo:1025848,pnl_12mo:686048,moic:0.94,irr:22.14,npv:512180,project_life:30,credit_price:25,lease_ha:160,buyer:'Caja Rural Zamora',counterparties:'Amancio / Silvareira',zamora:'Y',last_update:'2026-02-26',notes:'128 ha (109 forested + 19 reforestation). Largest. 30-yr.',ha_forested:109,ha_reforest:19,model_source:'silvareira_feb2026'},
+  {id:'san_xurxo',name:'San Xurxo',region:'Galicia',land_type:'CMVMC',status:'prospecting',blocker:'⚠️ NEGATIVE NPV/IRR — review viability',owner:'Luis',hectares:42,estimated_credits:29108,capex_12mo:183000,revenue_12mo:132441,pnl_12mo:-50559,moic:1.88,irr:-1.16,npv:-92680,project_life:35,credit_price:25,lease_ha:200,buyer:'Caja Rural Zamora',counterparties:'Amancio / Silvareira',zamora:'N',last_update:'2026-02-26',notes:'42 ha. Lease EUR 200/ha destroys economics.',ha_forested:15,ha_reforest:27,model_source:'silvareira_feb2026'},
+  {id:'pontevedra',name:'Pontevedra (Enersol)',region:'Galicia',land_type:'Private',status:'contract_negotiation',blocker:'Landowner review + Enersol broker contract',owner:'Luis',hectares:35.31,estimated_credits:42444,capex_12mo:107689,revenue_12mo:234310,pnl_12mo:126621,moic:null,irr:null,npv:null,project_life:50,credit_price:25,lease_ha:150,buyer:'Caja Rural Zamora',counterparties:'Enersol (broker) / Redenor / Private landowner',zamora:'N',last_update:'2026-02-26',notes:'v5 model. 35.31 ha ARR Type A. 50-yr life.',ha_forested:0,ha_reforest:35.31,model_source:'enersol_v5'},
+  {id:'bosquia',name:'Bosquia (Asturias)',region:'Asturias',land_type:'Private',status:'contract_negotiation',blocker:'Awaiting Bosquia legal docs for JC DD',owner:'Luis / Brian',hectares:16.96,estimated_credits:22000,capex_12mo:210000,revenue_12mo:400000,pnl_12mo:190000,moic:null,irr:null,npv:null,project_life:null,credit_price:18,lease_ha:null,buyer:'Caja Rural Zamora',counterparties:'Bosquia',zamora:'',last_update:'2026-01-08',notes:'EUR 12.4k/ha (EUR 210k total). Brian reopened Jan 8.',ha_forested:null,ha_reforest:null,model_source:'manual'},
+  {id:'la_culebra',name:'La Culebra',region:'Zamora',land_type:'Public Auction',status:'preparation',blocker:'Redenor contract being drafted by JC',owner:'Luis / JC',hectares:0,estimated_credits:0,capex_12mo:0,revenue_12mo:0,pnl_12mo:0,moic:null,irr:null,npv:null,project_life:null,credit_price:null,lease_ha:null,buyer:'Caja Rural Zamora',counterparties:'Redenor / JC (Cuatrecasas)',zamora:'',last_update:'2026-01-08',notes:'Public land auction. Redenor executor.',ha_forested:null,ha_reforest:null,model_source:'none'},
+];
+
+let searchFilter='',sortCol=null,sortDir='asc',isDragging=false;
+
+document.addEventListener('DOMContentLoaded',()=>{loadAPI();render()});
+async function loadAPI(){try{const r=await fetch(API);if(r.ok){const d=await r.json();if(d.length>0)P=d}}catch(e){}render()}
+
+function render(){renderSummary();renderTable();renderKanban()}
+function fil(){if(!searchFilter)return P;const q=searchFilter.toLowerCase();return P.filter(p=>p.name.toLowerCase().includes(q)||p.region.toLowerCase().includes(q)||(p.counterparties||'').toLowerCase().includes(q)||(p.blocker||'').toLowerCase().includes(q))}
+
+function renderSummary(){
+  const ps=P,ha=ps.reduce((s,p)=>s+(p.hectares||0),0),cr=ps.reduce((s,p)=>s+(p.estimated_credits||0),0),cx=ps.reduce((s,p)=>s+(p.capex_12mo||0),0),rv=ps.reduce((s,p)=>s+(p.revenue_12mo||0),0),pn=ps.reduce((s,p)=>s+(p.pnl_12mo||0),0);
+  document.getElementById('summaryBar').innerHTML=`
+    <div class="stat"><div class="stat-label">Projects</div><div class="stat-value gold">${ps.filter(p=>!['registered','paused'].includes(p.status)).length}</div><div class="stat-sub">${ps.length} total</div></div>
+    <div class="stat"><div class="stat-label">Hectares</div><div class="stat-value">${fmt(ha,0)}</div></div>
+    <div class="stat"><div class="stat-label">Lifetime Credits</div><div class="stat-value">${fK(cr)}</div></div>
+    <div class="stat"><div class="stat-label">Pipeline Capex</div><div class="stat-value">€${fK(cx)}</div></div>
+    <div class="stat"><div class="stat-label">Pipeline Revenue</div><div class="stat-value">€${fK(rv)}</div></div>
+    <div class="stat"><div class="stat-label">Pipeline PNL</div><div class="stat-value ${pn>=0?'positive':'negative'}">€${fK(pn)}</div></div>`;
+}
+
+function renderTable(){
+  let ps=fil();
+  if(sortCol){const num=['hectares','estimated_credits','capex_12mo','revenue_12mo','pnl_12mo','moic','irr','npv'].includes(sortCol);ps=[...ps].sort((a,b)=>{let va=a[sortCol]??-1e18,vb=b[sortCol]??-1e18;if(!num){va=String(va);vb=String(vb)}return sortDir==='asc'?(num?va-vb:va.localeCompare(vb)):(num?vb-va:vb.localeCompare(va))})}
+
+  const cols=[['name','Project'],['region','Region'],['land_type','Type'],['status','Status'],['hectares','Ha'],['estimated_credits','Credits'],['capex_12mo','Capex'],['revenue_12mo','Revenue'],['pnl_12mo','PNL'],['moic','MOIC'],['irr','IRR'],['npv','NPV'],['blocker','Blocker'],['last_update','Updated']];
+  const rCols=['hectares','estimated_credits','capex_12mo','revenue_12mo','pnl_12mo','moic','irr','npv'];
+
+  document.getElementById('tableHead').innerHTML=cols.map(([k,l])=>`<th class="${rCols.includes(k)?'cell-right':''} ${sortCol===k?'sorted':''}" onclick="doSort('${k}')">${l}<span class="sort-arrow">${sortCol===k?(sortDir==='asc'?'▲':'▼'):'⇅'}</span></th>`).join('');
+
+  const t={ha:ps.reduce((s,p)=>s+(p.hectares||0),0),cr:ps.reduce((s,p)=>s+(p.estimated_credits||0),0),cx:ps.reduce((s,p)=>s+(p.capex_12mo||0),0),rv:ps.reduce((s,p)=>s+(p.revenue_12mo||0),0),pn:ps.reduce((s,p)=>s+(p.pnl_12mo||0),0)};
+  let h=`<tr class="total-row"><td>📊 TOTAL (${ps.length})</td><td></td><td></td><td></td><td class="cell-right mono">${fmt(t.ha,1)}</td><td class="cell-right mono">${fN(t.cr)}</td><td class="cell-right mono">€${fN(t.cx)}</td><td class="cell-right mono">€${fN(t.rv)}</td><td class="cell-right mono ${t.pn>=0?'positive':'negative'}">€${fN(t.pn)}</td><td></td><td></td><td></td><td></td><td></td></tr>`;
+
+  const sv=ps.filter(p=>SILV.includes(p.id));
+  if(sv.length>1){const s={ha:sv.reduce((a,p)=>a+(p.hectares||0),0),cr:sv.reduce((a,p)=>a+(p.estimated_credits||0),0),cx:sv.reduce((a,p)=>a+(p.capex_12mo||0),0),rv:sv.reduce((a,p)=>a+(p.revenue_12mo||0),0),pn:sv.reduce((a,p)=>a+(p.pnl_12mo||0),0)};
+  h+=`<tr class="silvareira-row" title="Silvareira/Amancio consolidated: MOIC 1.15 | IRR 8.7%"><td>┗ Silvareira 6 consolidated</td><td>Galicia</td><td>CMVMC</td><td></td><td class="cell-right mono">${fmt(s.ha,0)}</td><td class="cell-right mono">${fN(s.cr)}</td><td class="cell-right mono">€${fN(s.cx)}</td><td class="cell-right mono">€${fN(s.rv)}</td><td class="cell-right mono">€${fN(s.pn)}</td><td class="cell-right mono">1.15x</td><td class="cell-right mono">8.7%</td><td></td><td></td><td></td></tr>`}
+
+  ps.forEach(p=>{
+    const w=p.npv&&p.npv<0,d=ds(p.last_update),sc=d<=7?'stale-green':d<=14?'stale-amber':'stale-red',z=p.zamora==='Y'?'<span class="zamora-badge" title="Zamora mandate">Z</span>':'';
+    h+=`<tr onclick="openP('${p.id}')" ${w?'style="border-left:3px solid var(--red)"':''}><td><strong>${p.name}</strong>${z}</td><td>${p.region}</td><td style="font-size:11px">${p.land_type}</td><td><span class="badge badge-${p.status}">${SL[p.status]||p.status}</span></td><td class="cell-right mono">${p.hectares?fmt(p.hectares,1):'—'}</td><td class="cell-right mono">${p.estimated_credits?fN(p.estimated_credits):'—'}</td><td class="cell-right mono">${p.capex_12mo?'€'+fN(p.capex_12mo):'—'}</td><td class="cell-right mono">${p.revenue_12mo?'€'+fN(p.revenue_12mo):'—'}</td><td class="cell-right mono ${(p.pnl_12mo||0)<0?'negative':''}">${p.pnl_12mo!=null?'€'+fN(p.pnl_12mo):'—'}</td><td class="cell-right mono">${p.moic?fmt(p.moic,2)+'x':'—'}</td><td class="cell-right mono">${p.irr!=null?fmt(p.irr,1)+'%':'—'}</td><td class="cell-right mono ${p.npv&&p.npv<0?'negative':''}">${p.npv!=null?'€'+fN(p.npv):'—'}</td><td style="max-width:200px;white-space:normal;font-size:12px;color:${w?'var(--red)':'var(--text-dim)'}">${p.blocker||''}</td><td class="mono" style="font-size:11px"><span class="stale-dot ${sc}"></span>${p.last_update||''}</td></tr>`;
+  });
+  document.getElementById('tableBody').innerHTML=h;
+}
+function doSort(k){if(sortCol===k)sortDir=sortDir==='asc'?'desc':'asc';else{sortCol=k;sortDir='desc'}renderTable()}
+
+function renderKanban(){
+  const ps=fil(),cols=STATUSES.filter(s=>ps.some(p=>p.status===s));
+  document.getElementById('kanbanView').innerHTML=cols.map(status=>{
+    const items=ps.filter(p=>p.status===status),sub={ha:items.reduce((s,p)=>s+(p.hectares||0),0),cr:items.reduce((s,p)=>s+(p.estimated_credits||0),0),rv:items.reduce((s,p)=>s+(p.revenue_12mo||0),0)};
+    return`<div class="kanban-col" data-status="${status}" ondragover="event.preventDefault();event.dataTransfer.dropEffect='move';this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="kDrop(event,this)">
+      <div class="kanban-header"><h3>${SL[status]||status}<span class="kanban-count">${items.length}</span></h3></div>
+      <div class="kanban-subtotals"><span>${fmt(sub.ha,0)} ha</span><span>${fK(sub.cr)} cr</span><span>€${fK(sub.rv)}</span></div>
+      <div class="kanban-cards">${items.map(p=>{const stale=ds(p.last_update)>14,z=p.zamora==='Y'?'<span class="zamora-badge">Z</span>':'';
+        return`<div class="card ${stale?'card-stale':''}" draggable="true" data-id="${p.id}" ondragstart="kStart(event,this)" ondragend="kEnd(this)" onclick="if(!isDragging)openP('${p.id}')">
+          <div class="card-name">${p.name}${z}</div><div class="card-region">${p.region} · ${p.land_type}</div>
+          <div class="card-metrics"><div class="card-metric"><span>Ha</span> <strong>${p.hectares?fmt(p.hectares,0):'—'}</strong></div><div class="card-metric"><span>Credits</span> <strong>${p.estimated_credits?fK(p.estimated_credits):'—'}</strong></div><div class="card-metric"><span>Rev</span> <strong>${p.revenue_12mo?'€'+fK(p.revenue_12mo):'—'}</strong></div><div class="card-metric"><span>PNL</span> <strong>${p.pnl_12mo!=null?'€'+fK(p.pnl_12mo):'—'}</strong></div></div>
+          ${p.blocker?`<div class="${p.npv&&p.npv<0?'card-blocker':'card-warning'}">${p.blocker}</div>`:''}
+          ${stale?`<div class="card-warning">⚠ No update in ${ds(p.last_update)}d</div>`:''}
+        </div>`}).join('')}</div></div>`}).join('');
+}
+
+function kStart(e,el){isDragging=true;el.classList.add('dragging');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',el.dataset.id)}
+function kEnd(el){el.classList.remove('dragging');setTimeout(()=>isDragging=false,50)}
+function kDrop(e,col){
+  e.preventDefault();col.classList.remove('drag-over');
+  const id=e.dataTransfer.getData('text/plain'),ns=col.dataset.status,p=P.find(x=>x.id===id);
+  if(!p||p.status===ns)return;
+  const os=p.status;p.status=ns;p.last_update=new Date().toISOString().split('T')[0];
+  render();toast(`${p.name}: ${SL[os]} → ${SL[ns]}`);
+  fetch(`${API}/${id}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:ns,last_update:p.last_update})}).catch(()=>{});
+}
+
+function openP(id){
+  const p=P.find(x=>x.id===id);if(!p)return;
+  const z=p.zamora==='Y'?'<span class="zamora-badge" style="margin-left:10px">Z</span>':'';
+  document.getElementById('modalContent').innerHTML=`
+    <div class="modal-header"><h2>${p.name}${z} <span class="badge badge-${p.status}" style="margin-left:10px">${SL[p.status]}</span></h2><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="detail-grid">
+        <div class="detail-stat"><div class="stat-label">Hectares</div><div class="stat-value">${p.hectares?fmt(p.hectares,1):'—'}</div><div class="stat-sub">${p.ha_forested?fmt(p.ha_forested,0)+' forested + '+fmt(p.ha_reforest||0,0)+' reforest':''}</div></div>
+        <div class="detail-stat"><div class="stat-label">Lifetime Credits</div><div class="stat-value">${p.estimated_credits?fN(p.estimated_credits):'—'}</div><div class="stat-sub">${p.project_life?p.project_life+'yr':''} ${p.credit_price?'@ €'+p.credit_price:''}</div></div>
+        <div class="detail-stat"><div class="stat-label">Revenue Y1</div><div class="stat-value">€${p.revenue_12mo?fN(p.revenue_12mo):'—'}</div><div class="stat-sub">Capex: €${p.capex_12mo?fN(p.capex_12mo):'—'}</div></div>
+        <div class="detail-stat"><div class="stat-label">PNL</div><div class="stat-value ${(p.pnl_12mo||0)<0?'negative':'positive'}">€${p.pnl_12mo!=null?fN(p.pnl_12mo):'—'}</div><div class="stat-sub">${p.moic?'MOIC '+fmt(p.moic,2)+'x':''} ${p.irr!=null?'| IRR '+fmt(p.irr,1)+'%':''}</div></div>
+      </div>
+      ${p.npv!=null?`<div class="detail-grid" style="grid-template-columns:repeat(3,1fr)"><div class="detail-stat"><div class="stat-label">NPV</div><div class="stat-value ${p.npv<0?'negative':''}">€${fN(p.npv)}</div></div><div class="detail-stat"><div class="stat-label">Lease / ha</div><div class="stat-value">${p.lease_ha?'€'+fmt(p.lease_ha,0):'—'}</div></div><div class="detail-stat"><div class="stat-label">Zamora</div><div class="stat-value">${p.zamora||'—'}</div></div></div>`:''}
+      <div class="detail-section"><h3>Blocker</h3><div class="notes-box" style="${p.npv&&p.npv<0?'border-left:3px solid var(--red)':''}">${p.blocker||'None'}</div></div>
+      <div class="detail-section"><h3>Notes</h3><div class="notes-box">${p.notes||'—'}</div></div>
+      <div class="detail-section"><h3>Counterparties</h3><div class="notes-box">${p.counterparties||'—'}</div></div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:16px">Owner: ${p.owner||'—'} · Buyer: ${p.buyer||'—'} · Source: ${p.model_source||'—'}</div>
+    </div>`;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open')}
+
+function downloadExcel(){
+  const rows=P.map(p=>({'Project':p.name,'Region':p.region,'Land Type':p.land_type,'Status':SL[p.status]||p.status,'Hectares':p.hectares||0,'Ha Forested':p.ha_forested||0,'Ha Reforest':p.ha_reforest||0,'Credits':p.estimated_credits||0,'Capex (EUR)':p.capex_12mo||0,'Revenue (EUR)':p.revenue_12mo||0,'PNL (EUR)':p.pnl_12mo||0,'MOIC':p.moic||'','IRR (%)':p.irr!=null?p.irr:'','NPV (EUR)':p.npv!=null?p.npv:'','Life (yr)':p.project_life||'','Price':p.credit_price||'','Lease/ha':p.lease_ha||'','Zamora':p.zamora||'','Buyer':p.buyer||'','Counterparties':p.counterparties||'','Blocker':p.blocker||'','Owner':p.owner||'','Updated':p.last_update||'','Notes':p.notes||''}));
+  const t=P.reduce((a,p)=>({ha:a.ha+(p.hectares||0),cr:a.cr+(p.estimated_credits||0),cx:a.cx+(p.capex_12mo||0),rv:a.rv+(p.revenue_12mo||0),pn:a.pn+(p.pnl_12mo||0)}),{ha:0,cr:0,cx:0,rv:0,pn:0});
+  rows.unshift({'Project':'TOTAL PIPELINE','Hectares':t.ha,'Credits':t.cr,'Capex (EUR)':t.cx,'Revenue (EUR)':t.rv,'PNL (EUR)':t.pn});
+  const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Spain Projects');
+  ws['!cols']=[{wch:22},{wch:10},{wch:14},{wch:16},{wch:10},{wch:10},{wch:10},{wch:14},{wch:14},{wch:14},{wch:14},{wch:8},{wch:8},{wch:14},{wch:6},{wch:6},{wch:8},{wch:6},{wch:18},{wch:30},{wch:30},{wch:12},{wch:12},{wch:40}];
+  XLSX.writeFile(wb,`ClearSky_Spain_Projects_${new Date().toISOString().split('T')[0]}.xlsx`);toast('Excel downloaded');
+}
+
+function toggleUpload(){document.getElementById('uploadZone').classList.toggle('visible')}
+function handleDrop(e){e.preventDefault();e.target.closest('.upload-zone').classList.remove('dragover');if(e.dataTransfer.files[0])uploadFile(e.dataTransfer.files[0])}
+function handleFileSelect(e){if(e.target.files[0])uploadFile(e.target.files[0])}
+async function uploadFile(file){if(!file.name.endsWith('.xlsx')){alert('Please upload .xlsx');return}try{const fd=new FormData();fd.append('file',file);const r=await fetch(`${API}/ingest`,{method:'POST',body:fd});if(r.ok){const d=await r.json();toast(`✅ ${d.project_name} updated`);await loadAPI();return}}catch(e){}alert('API not deployed yet. File: '+file.name)}
+async function refreshHubSpot(){try{const r=await fetch('https://api-tools.oga.earth/api/hubspot/activity/recent');if(r.ok){const d=await r.json();toast(`HubSpot: ${d.results?.length||0} activities`)}else toast('HubSpot: HTTP '+r.status)}catch(e){toast('HubSpot proxy not reachable')}}
+
+function setView(v){document.querySelectorAll('.view-tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));document.getElementById('tableView').style.display=v==='table'?'block':'none';document.getElementById('kanbanView').style.display=v==='kanban'?'flex':'none'}
+function filterProjects(q){searchFilter=q;renderTable();renderKanban()}
+function fmt(n,d){return n!=null?Number(n).toFixed(d):'—'}
+function fN(n){return n!=null?Number(n).toLocaleString('en-US',{maximumFractionDigits:0}):'—'}
+function fK(n){if(n==null)return'—';const a=Math.abs(n);return a>=1e6?(n/1e6).toFixed(1)+'M':a>=1e3?(n/1e3).toFixed(0)+'k':fN(n)}
+function ds(d){return d?Math.floor((Date.now()-new Date(d).getTime())/864e5):999}
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+</script>
+</body>
+</html>

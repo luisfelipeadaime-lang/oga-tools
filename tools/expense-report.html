@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expense Report | ClearSky Tools</title>
+<link rel="icon" href="/assets/favicon.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0A1628;
+  --navy-light: #132039;
+  --navy-mid: #1A2B47;
+  --gold: #C8A951;
+  --gold-light: #E8D494;
+  --gold-dim: rgba(200,169,81,0.15);
+  --white: #F8F9FA;
+  --gray-100: #E8ECF1;
+  --gray-200: #C5CDD8;
+  --gray-400: #7A8BA0;
+  --gray-600: #4A5568;
+  --green: #34D399;
+  --green-dim: rgba(52,211,153,0.12);
+  --red: #F87171;
+  --red-dim: rgba(248,113,113,0.12);
+  --blue: #60A5FA;
+  --blue-dim: rgba(96,165,250,0.12);
+  --font: 'DM Sans', -apple-system, sans-serif;
+  --mono: 'DM Mono', 'SF Mono', monospace;
+  --radius: 10px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.25);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font);
+  background: var(--navy);
+  color: var(--white);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+a { color: var(--gold); text-decoration: none; }
+a:hover { color: var(--gold-light); }
+
+/* Header */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 28px;
+  background: var(--navy-light);
+  border-bottom: 1px solid rgba(200,169,81,0.1);
+}
+.header-left { display: flex; align-items: center; gap: 14px; }
+.header-left img { height: 28px; }
+.header-left .divider { width: 1px; height: 24px; background: var(--gray-400); opacity: 0.3; }
+.header-left h1 { font-size: 15px; font-weight: 600; letter-spacing: 0.5px; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 600;
+  border: none; cursor: pointer; transition: all 0.2s;
+  font-family: var(--font);
+}
+.btn-gold { background: var(--gold); color: var(--navy); }
+.btn-gold:hover { background: var(--gold-light); }
+.btn-outline { background: transparent; color: var(--gold); border: 1px solid var(--gold); }
+.btn-outline:hover { background: var(--gold-dim); }
+.btn-ghost { background: transparent; color: var(--gray-200); }
+.btn-ghost:hover { background: rgba(255,255,255,0.05); color: var(--white); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-danger { background: var(--red-dim); color: var(--red); border: 1px solid transparent; }
+.btn-danger:hover { border-color: var(--red); }
+
+/* Layout */
+.container { max-width: 1200px; margin: 0 auto; padding: 28px; }
+
+/* Cards */
+.card {
+  background: var(--navy-light);
+  border: 1px solid rgba(200,169,81,0.08);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.card-title { font-size: 14px; font-weight: 600; color: var(--gold); letter-spacing: 0.5px; text-transform: uppercase; }
+
+/* Form */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-label { font-size: 11px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.8px; }
+.form-input, .form-select {
+  background: var(--navy); border: 1px solid rgba(200,169,81,0.15);
+  border-radius: 6px; padding: 9px 12px; color: var(--white);
+  font-family: var(--font); font-size: 13px;
+  transition: border-color 0.2s;
+}
+.form-input:focus, .form-select:focus { outline: none; border-color: var(--gold); }
+.form-select { cursor: pointer; }
+.form-select option { background: var(--navy-light); }
+
+/* Drop Zone */
+.drop-zone {
+  border: 2px dashed rgba(200,169,81,0.25);
+  border-radius: var(--radius);
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: rgba(200,169,81,0.03);
+}
+.drop-zone:hover, .drop-zone.dragover {
+  border-color: var(--gold);
+  background: var(--gold-dim);
+}
+.drop-zone-icon { font-size: 36px; margin-bottom: 8px; }
+.drop-zone-text { font-size: 14px; color: var(--gray-200); }
+.drop-zone-sub { font-size: 11px; color: var(--gray-400); margin-top: 4px; }
+
+/* File List */
+.file-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.file-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--navy);
+  border-radius: 6px;
+  border: 1px solid rgba(200,169,81,0.08);
+}
+.file-info { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+.file-icon { font-size: 18px; flex-shrink: 0; }
+.file-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-size { font-size: 11px; color: var(--gray-400); flex-shrink: 0; }
+.file-status { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.status-badge {
+  font-size: 10px; font-weight: 600; padding: 2px 8px;
+  border-radius: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.status-pending { background: var(--gold-dim); color: var(--gold); }
+.status-done { background: var(--green-dim); color: var(--green); }
+.status-error { background: var(--red-dim); color: var(--red); }
+.status-processing { background: var(--blue-dim); color: var(--blue); }
+
+/* Expense Table */
+.expense-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+.expense-table th {
+  font-size: 10px; font-weight: 600; color: var(--gray-400);
+  text-transform: uppercase; letter-spacing: 0.8px;
+  padding: 8px 10px; text-align: left;
+  border-bottom: 1px solid rgba(200,169,81,0.12);
+}
+.expense-table th.r { text-align: right; }
+.expense-table td {
+  font-size: 12px; padding: 10px; vertical-align: middle;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.expense-table td.r { text-align: right; font-family: var(--mono); font-size: 11px; }
+.expense-table td.mono { font-family: var(--mono); font-size: 11px; }
+.expense-table tr:hover td { background: rgba(200,169,81,0.03); }
+.expense-table .total-row td {
+  font-weight: 700; border-top: 2px solid var(--gold);
+  border-bottom: none; padding-top: 12px;
+}
+.cat-badge {
+  font-size: 10px; font-weight: 600; padding: 2px 8px;
+  border-radius: 4px; background: var(--gold-dim); color: var(--gold);
+}
+.cur-eur { color: var(--blue); }
+.cur-usd { color: var(--green); }
+
+/* Actions bar */
+.actions-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0; gap: 12px;
+}
+
+/* Summary cards */
+.summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+.summary-card {
+  background: var(--navy-light); border: 1px solid rgba(200,169,81,0.08);
+  border-radius: var(--radius); padding: 16px;
+}
+.summary-label { font-size: 10px; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.8px; }
+.summary-value { font-size: 22px; font-weight: 700; font-family: var(--mono); margin-top: 4px; }
+.summary-sub { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+
+/* Progress */
+.progress-bar {
+  height: 3px; background: var(--navy); border-radius: 2px;
+  overflow: hidden; margin-top: 8px;
+}
+.progress-fill {
+  height: 100%; background: var(--gold); border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+/* Spinner */
+.spinner {
+  display: inline-block; width: 14px; height: 14px;
+  border: 2px solid rgba(200,169,81,0.2); border-top-color: var(--gold);
+  border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  padding: 12px 20px; border-radius: 8px;
+  font-size: 13px; font-weight: 500;
+  background: var(--navy-mid); border: 1px solid var(--gold);
+  color: var(--white); box-shadow: var(--shadow);
+  transform: translateY(120%); transition: transform 0.3s ease;
+  z-index: 1000;
+}
+.toast.show { transform: translateY(0); }
+
+/* Modal overlay */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: none; align-items: center; justify-content: center; z-index: 999;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--navy-light); border: 1px solid rgba(200,169,81,0.15);
+  border-radius: var(--radius); padding: 28px; max-width: 480px; width: 90%;
+}
+.modal h3 { font-size: 16px; margin-bottom: 16px; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .form-row { grid-template-columns: 1fr; }
+  .summary-grid { grid-template-columns: repeat(2, 1fr); }
+  .header { padding: 12px 16px; }
+  .container { padding: 16px; }
+}
+
+/* Fade in animation */
+.fade-in { animation: fadeIn 0.4s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <a href="/"><img src="/assets/logos/logo-white.png" alt="ClearSky" onerror="this.style.display='none'"></a>
+    <div class="divider"></div>
+    <h1>EXPENSE REPORT</h1>
+  </div>
+  <div class="header-right">
+    <a href="/" class="btn btn-ghost btn-sm">← Tools</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Step 1: Claim Info -->
+  <div class="card fade-in" id="step-info">
+    <div class="card-header">
+      <span class="card-title">① Claim Information</span>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Employee Name</label>
+        <input class="form-input" id="employeeName" value="Luis Felipe Adaime" placeholder="Full name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Expense Month</label>
+        <input class="form-input" id="expenseMonth" type="month" value="2026-02">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Base Currency (reporting)</label>
+        <select class="form-select" id="baseCurrency">
+          <option value="USD" selected>USD — US Dollar</option>
+          <option value="EUR">EUR — Euro</option>
+          <option value="GBP">GBP — British Pound</option>
+          <option value="BRL">BRL — Brazilian Real</option>
+          <option value="CAD">CAD — Canadian Dollar</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Trip / Purpose</label>
+        <input class="form-input" id="tripPurpose" placeholder="e.g. NYC client meetings" value="">
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2: Upload Receipts -->
+  <div class="card fade-in" id="step-upload">
+    <div class="card-header">
+      <span class="card-title">② Upload Receipts</span>
+      <span style="font-size:11px;color:var(--gray-400);" id="fileCount">0 files</span>
+    </div>
+    <div class="drop-zone" id="dropZone">
+      <div class="drop-zone-icon">📄</div>
+      <div class="drop-zone-text">Drop receipt files here or click to browse</div>
+      <div class="drop-zone-sub">JPG, PNG, PDF — taxi receipts, flight emails, hotel confirmations, Uber receipts</div>
+    </div>
+    <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.pdf,.heic,.webp" hidden>
+    <div class="file-list" id="fileList"></div>
+    <div style="margin-top:16px;text-align:right;" id="processSection" hidden>
+      <button class="btn btn-gold" id="processBtn" onclick="processAllReceipts()">
+        ⚡ Extract All Receipts
+      </button>
+    </div>
+  </div>
+
+  <!-- Step 3: Extracted Expenses -->
+  <div class="card fade-in" id="step-expenses" hidden>
+    <div class="card-header">
+      <span class="card-title">③ Extracted Expenses</span>
+      <div>
+        <button class="btn btn-outline btn-sm" onclick="addManualRow()">+ Add Row</button>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-grid" id="summaryGrid"></div>
+
+    <!-- Table -->
+    <div style="overflow-x:auto;">
+      <table class="expense-table" id="expenseTable">
+        <thead>
+          <tr>
+            <th style="width:30px">#</th>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th class="r">Amount</th>
+            <th>Ccy</th>
+            <th class="r">FX</th>
+            <th class="r">USD</th>
+            <th style="width:40px"></th>
+          </tr>
+        </thead>
+        <tbody id="expenseBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Step 4: Generate & Send -->
+  <div class="card fade-in" id="step-generate" hidden>
+    <div class="card-header">
+      <span class="card-title">④ Generate & Submit</span>
+    </div>
+    <div class="actions-bar">
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-gold" onclick="generateExcel()">📊 Download Excel</button>
+        <button class="btn btn-outline" onclick="generatePDF()">📄 Download PDF Report</button>
+      </div>
+      <button class="btn btn-outline" onclick="composeEmail()">✉️ Draft Email</button>
+    </div>
+    <div id="emailDraft" hidden style="margin-top:16px;">
+      <div class="form-group">
+        <label class="form-label">To</label>
+        <input class="form-input" id="emailTo" value="payments@clearskyltd.com">
+      </div>
+      <div class="form-group" style="margin-top:8px;">
+        <label class="form-label">Subject</label>
+        <input class="form-input" id="emailSubject" value="">
+      </div>
+      <div class="form-group" style="margin-top:8px;">
+        <label class="form-label">Body</label>
+        <textarea class="form-input" id="emailBody" rows="8" style="resize:vertical;"></textarea>
+      </div>
+      <div style="margin-top:10px;text-align:right;">
+        <button class="btn btn-sm btn-ghost" onclick="copyEmail()">📋 Copy to Clipboard</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script>
+
+// ==================== CONFIG ====================
+const API_BASE = 'https://api-tools.oga.earth';
+const CATEGORIES = [
+  'Flight (Intercontinental)', 'Flight (Europe)', 'Flight (Memberships)',
+  'Taxi', 'Public Transport', 'Trains', 'Rental Car & Fuel', 'Fuel', 'Parking',
+  'Hotel', 'Breakfast', 'Lunch', 'Dinner', 'Restaurant (Team)',
+  'Telephone', 'Prof. Development', 'Other', 'Paid on behalf'
+];
+const CURRENCIES = ['USD', 'EUR', 'GBP', 'BRL', 'CAD', 'CHF', 'MXN', 'CLP', 'ZAR', 'KES', 'JPY', 'AUD', 'NZD', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'HUF', 'TRY', 'INR', 'CNY'];
+
+// ==================== STATE ====================
+let uploadedFiles = []; // {file, name, type, size, status, extractedData, dataUrl}
+let expenses = [];      // {id, date, category, description, qty, currency, amount, fx, usdAmount, fileIndex}
+let fxCache = {};       // "EUR-USD-2026-02-21" -> rate
+
+// ==================== FILE UPLOAD ====================
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+async function handleFiles(files) {
+  for (const file of files) {
+    const dataUrl = await readFileAsDataUrl(file);
+    uploadedFiles.push({
+      file, name: file.name, type: file.type, size: file.size,
+      status: 'pending', extractedData: null, dataUrl
+    });
+  }
+  renderFileList();
+  document.getElementById('processSection').hidden = false;
+  document.getElementById('fileCount').textContent = `${uploadedFiles.length} files`;
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+function renderFileList() {
+  const list = document.getElementById('fileList');
+  list.innerHTML = uploadedFiles.map((f, i) => {
+    const icon = f.type.includes('pdf') ? '📄' : '🖼️';
+    const size = (f.size / 1024).toFixed(0) + ' KB';
+    const statusClass = f.status === 'done' ? 'status-done' :
+                        f.status === 'error' ? 'status-error' :
+                        f.status === 'processing' ? 'status-processing' : 'status-pending';
+    return `<div class="file-item">
+      <div class="file-info">
+        <span class="file-icon">${icon}</span>
+        <span class="file-name">${f.name}</span>
+        <span class="file-size">${size}</span>
+      </div>
+      <div class="file-status">
+        ${f.status === 'processing' ? '<span class="spinner"></span>' : ''}
+        <span class="status-badge ${statusClass}">${f.status}</span>
+        <button class="btn btn-sm btn-ghost" onclick="removeFile(${i})" title="Remove">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function removeFile(i) {
+  uploadedFiles.splice(i, 1);
+  renderFileList();
+  document.getElementById('fileCount').textContent = `${uploadedFiles.length} files`;
+  if (uploadedFiles.length === 0) document.getElementById('processSection').hidden = true;
+}
+
+// ==================== RECEIPT EXTRACTION ====================
+async function processAllReceipts() {
+  const btn = document.getElementById('processBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Processing...';
+
+  for (let i = 0; i < uploadedFiles.length; i++) {
+    if (uploadedFiles[i].status === 'done') continue;
+    uploadedFiles[i].status = 'processing';
+    renderFileList();
+
+    try {
+      const result = await parseReceipt(uploadedFiles[i]);
+      uploadedFiles[i].status = 'done';
+      uploadedFiles[i].extractedData = result;
+
+      // Add to expenses
+      if (result && result.amount) {
+        const fx = await getFxRate(result.currency, document.getElementById('baseCurrency').value, result.date);
+        expenses.push({
+          id: crypto.randomUUID(),
+          date: result.date,
+          category: result.category,
+          description: result.description,
+          qty: result.qty || 1,
+          currency: result.currency,
+          amount: parseFloat(result.amount),
+          fx: fx,
+          usdAmount: parseFloat(result.amount) * fx,
+          fileIndex: i
+        });
+      }
+    } catch (err) {
+      console.error('Parse error:', err);
+      uploadedFiles[i].status = 'error';
+      toast('Failed to parse ' + uploadedFiles[i].name);
+    }
+    renderFileList();
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '⚡ Extract All Receipts';
+
+  // Sort expenses by date
+  expenses.sort((a, b) => a.date.localeCompare(b.date));
+
+  renderExpenses();
+  document.getElementById('step-expenses').hidden = false;
+  document.getElementById('step-generate').hidden = false;
+  toast(`Extracted ${expenses.length} expenses from ${uploadedFiles.length} files`);
+}
+
+async function parseReceipt(fileObj) {
+  const base64 = fileObj.dataUrl.split(',')[1];
+  const mediaType = fileObj.type || (fileObj.name.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
+
+  const resp = await fetch(`${API_BASE}/api/expense/parse-receipt`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ file: base64, media_type: mediaType, filename: fileObj.name })
+  });
+
+  if (!resp.ok) throw new Error(`API ${resp.status}`);
+  return await resp.json();
+}
+
+// ==================== FX RATES ====================
+async function getFxRate(from, to, date) {
+  if (from === to) return 1.0;
+  const key = `${from}-${to}-${date}`;
+  if (fxCache[key]) return fxCache[key];
+
+  try {
+    const resp = await fetch(`${API_BASE}/api/expense/fx-rate?from=${from}&to=${to}&date=${date}`);
+    if (resp.ok) {
+      const data = await resp.json();
+      fxCache[key] = data.rate;
+      return data.rate;
+    }
+  } catch (e) {
+    console.error('FX fetch error:', e);
+  }
+  // Fallback: return 1.0 and let user edit
+  toast(`Could not fetch ${from}/${to} rate — please enter manually`);
+  return 1.0;
+}
+
+// ==================== EXPENSE TABLE ====================
+function renderExpenses() {
+  const baseCur = document.getElementById('baseCurrency').value;
+  const tbody = document.getElementById('expenseBody');
+
+  let totalOriginal = 0;
+  let totalConverted = 0;
+  const catTotals = {};
+
+  tbody.innerHTML = expenses.map((e, i) => {
+    totalOriginal += e.amount;
+    totalConverted += e.usdAmount;
+    catTotals[e.category] = (catTotals[e.category] || 0) + e.usdAmount;
+
+    return `<tr>
+      <td class="mono">${i + 1}</td>
+      <td><input type="date" value="${e.date}" class="form-input" style="padding:4px 6px;font-size:11px;width:130px;"
+           onchange="updateExpense(${i},'date',this.value)"></td>
+      <td><select class="form-select" style="padding:4px 6px;font-size:11px;width:140px;"
+           onchange="updateExpense(${i},'category',this.value)">
+        ${CATEGORIES.map(c => `<option ${c === e.category ? 'selected' : ''}>${c}</option>`).join('')}
+      </select></td>
+      <td><input type="text" value="${e.description}" class="form-input" style="padding:4px 6px;font-size:11px;width:100%;"
+           onchange="updateExpense(${i},'description',this.value)"></td>
+      <td class="r"><input type="number" value="${e.amount.toFixed(2)}" step="0.01" class="form-input" style="padding:4px 6px;font-size:11px;width:80px;text-align:right;font-family:var(--mono);"
+           onchange="updateExpense(${i},'amount',parseFloat(this.value))"></td>
+      <td><select class="form-select" style="padding:4px 6px;font-size:11px;width:68px;"
+           onchange="updateCurrency(${i},this.value)">
+        ${CURRENCIES.map(c => `<option ${c === e.currency ? 'selected' : ''}>${c}</option>`).join('')}
+      </select></td>
+      <td class="r"><input type="number" value="${e.fx.toFixed(4)}" step="0.0001" class="form-input" style="padding:4px 6px;font-size:11px;width:76px;text-align:right;font-family:var(--mono);"
+           onchange="updateExpense(${i},'fx',parseFloat(this.value))"></td>
+      <td class="r mono" style="font-weight:600;">${e.usdAmount.toFixed(2)}</td>
+      <td><button class="btn btn-sm btn-ghost" onclick="removeExpense(${i})" title="Remove">✕</button></td>
+    </tr>`;
+  }).join('');
+
+  // Total row
+  tbody.innerHTML += `<tr class="total-row">
+    <td colspan="4" style="text-align:right;font-size:13px;">TOTAL</td>
+    <td></td><td></td><td></td>
+    <td class="r mono" style="font-size:14px;color:var(--gold);">${baseCur === 'USD' ? '$' : ''}${totalConverted.toFixed(2)}</td>
+    <td></td>
+  </tr>`;
+
+  // Summary cards
+  const catCount = Object.keys(catTotals).length;
+  const topCat = Object.entries(catTotals).sort((a,b) => b[1]-a[1])[0];
+  document.getElementById('summaryGrid').innerHTML = `
+    <div class="summary-card">
+      <div class="summary-label">Total (${baseCur})</div>
+      <div class="summary-value" style="color:var(--gold);">$${totalConverted.toFixed(2)}</div>
+      <div class="summary-sub">${expenses.length} line items</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Receipts</div>
+      <div class="summary-value">${uploadedFiles.length}</div>
+      <div class="summary-sub">${uploadedFiles.filter(f=>f.status==='done').length} parsed</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Categories</div>
+      <div class="summary-value">${catCount}</div>
+      <div class="summary-sub">Top: ${topCat ? topCat[0] : '—'}</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Largest Expense</div>
+      <div class="summary-value">$${expenses.length ? Math.max(...expenses.map(e=>e.usdAmount)).toFixed(0) : 0}</div>
+      <div class="summary-sub">${expenses.length ? expenses.reduce((a,b)=>a.usdAmount>b.usdAmount?a:b).category : '—'}</div>
+    </div>
+  `;
+
+  // Update email draft
+  updateEmailDraft();
+}
+
+function updateExpense(i, field, value) {
+  expenses[i][field] = value;
+  if (field === 'amount' || field === 'fx') {
+    expenses[i].usdAmount = expenses[i].amount * expenses[i].fx;
+  }
+  renderExpenses();
+}
+
+async function updateCurrency(i, newCurrency) {
+  const baseCur = document.getElementById('baseCurrency').value;
+  expenses[i].currency = newCurrency;
+  // Auto-fetch new FX rate
+  const fx = await getFxRate(newCurrency, baseCur, expenses[i].date);
+  expenses[i].fx = fx;
+  expenses[i].usdAmount = expenses[i].amount * fx;
+  renderExpenses();
+  toast(`Updated FX: 1 ${newCurrency} = ${fx.toFixed(4)} ${baseCur}`);
+}
+
+function removeExpense(i) {
+  expenses.splice(i, 1);
+  renderExpenses();
+}
+
+function addManualRow() {
+  const month = document.getElementById('expenseMonth').value;
+  expenses.push({
+    id: crypto.randomUUID(),
+    date: month + '-01',
+    category: 'Other',
+    description: '',
+    qty: 1,
+    currency: 'EUR',
+    amount: 0,
+    fx: 1.0,
+    usdAmount: 0,
+    fileIndex: -1
+  });
+  renderExpenses();
+}
+
+// ==================== EXCEL GENERATION ====================
+function generateExcel() {
+  const name = document.getElementById('employeeName').value;
+  const monthInput = document.getElementById('expenseMonth').value;
+  const [year, month] = monthInput.split('-');
+  const monthName = new Date(year, month - 1).toLocaleString('en', { month: 'long' });
+
+  // Build worksheet data
+  const wsData = [
+    ['Clear Sky Limited', '', '', `EXPENSES CLAIM DETAILS`],
+    ['by:', name, '', `EXPENSES MONTH: ${monthName} ${year}`],
+    ['Ref.', 'Date of Expense', 'Category', 'Description', 'No. of\n(flights, nights)', 'Currency', 'Amount', 'FX', 'USD'],
+  ];
+
+  expenses.forEach((e, i) => {
+    wsData.push([
+      i + 1,
+      e.date,
+      e.category,
+      e.description,
+      e.qty,
+      e.currency,
+      e.amount,
+      e.fx,
+      e.usdAmount
+    ]);
+  });
+
+  // Empty rows + total
+  wsData.push([]);
+  const totalRow = wsData.length;
+  wsData.push(['', '', '', 'TOTAL', '', '',
+    expenses.reduce((s, e) => s + e.amount, 0),
+    '',
+    expenses.reduce((s, e) => s + e.usdAmount, 0)
+  ]);
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Column widths
+  ws['!cols'] = [
+    { wch: 5 }, { wch: 16 }, { wch: 24 }, { wch: 55 },
+    { wch: 10 }, { wch: 8 }, { wch: 12 }, { wch: 10 }, { wch: 12 }
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Claim');
+
+  // Category sheet
+  const catData = CATEGORIES.map(c => [c]);
+  const wsCat = XLSX.utils.aoa_to_sheet(catData);
+  XLSX.utils.book_append_sheet(wb, wsCat, 'Category');
+
+  const filename = `CSL_Expense_Claim_${name.replace(/\s+/g, '_')}_${monthName.toLowerCase()}${year}.xlsx`;
+  XLSX.writeFile(wb, filename);
+  toast('Excel downloaded: ' + filename);
+}
+
+// ==================== PDF GENERATION ====================
+async function generatePDF() {
+  const { PDFDocument, rgb, StandardFonts } = PDFLib;
+  const doc = await PDFDocument.create();
+  const font = await doc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
+
+  const name = document.getElementById('employeeName').value;
+  const monthInput = document.getElementById('expenseMonth').value;
+  const [year, month] = monthInput.split('-');
+  const monthName = new Date(year, month - 1).toLocaleString('en', { month: 'long' });
+  const baseCur = document.getElementById('baseCurrency').value;
+  const trip = document.getElementById('tripPurpose').value;
+  const totalUsd = expenses.reduce((s, e) => s + e.usdAmount, 0);
+
+  // === PAGE 1: Summary ===
+  let page = doc.addPage([595, 842]); // A4
+  const navy = rgb(0.04, 0.09, 0.16);
+  const gold = rgb(0.78, 0.66, 0.32);
+  const black = rgb(0, 0, 0);
+  const gray = rgb(0.4, 0.4, 0.4);
+  let y = 790;
+
+  page.drawText('Clear Sky Limited', { x: 50, y, size: 16, font: fontBold, color: navy });
+  y -= 20;
+  page.drawText('EXPENSE CLAIM REPORT', { x: 50, y, size: 13, font: fontBold, color: navy });
+  y -= 24;
+  page.drawLine({ start: { x: 50, y }, end: { x: 545, y }, thickness: 1.5, color: gold });
+  y -= 20;
+
+  const infoLines = [
+    `Employee: ${name}`,
+    `Period: ${monthName} ${year}`,
+    trip ? `Purpose: ${trip}` : null,
+    `Date Submitted: ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'})}`,
+    `FX Source: poundsterlinglive.com (daily close rates)`,
+  ].filter(Boolean);
+
+  for (const line of infoLines) {
+    page.drawText(line, { x: 50, y, size: 9, font, color: gray });
+    y -= 14;
+  }
+  y -= 10;
+
+  // Table header
+  const cols = [50, 100, 170, 280, 390, 430, 470, 520];
+  const headers = ['#', 'Date', 'Category', 'Description', 'Amount', 'Ccy', 'FX', baseCur];
+  page.drawRectangle({ x: 48, y: y - 2, width: 499, height: 16, color: navy });
+  headers.forEach((h, i) => {
+    page.drawText(h, { x: cols[i], y: y + 1, size: 7, font: fontBold, color: rgb(1, 1, 1) });
+  });
+  y -= 18;
+
+  // Table rows
+  for (let i = 0; i < expenses.length; i++) {
+    if (y < 80) {
+      page = doc.addPage([595, 842]);
+      y = 790;
+    }
+    const e = expenses[i];
+    const rowColor = i % 2 === 0 ? rgb(1, 1, 1) : rgb(0.96, 0.97, 0.98);
+    page.drawRectangle({ x: 48, y: y - 3, width: 499, height: 14, color: rowColor });
+    page.drawText(`${i + 1}`, { x: 53, y, size: 7, font, color: black });
+    page.drawText(e.date, { x: 100, y, size: 7, font, color: black });
+    page.drawText(e.category.substring(0, 20), { x: 170, y, size: 7, font, color: black });
+    page.drawText(e.description.substring(0, 35), { x: 280, y, size: 7, font, color: black });
+    page.drawText(e.amount.toFixed(2), { x: 390, y, size: 7, font, color: black });
+    page.drawText(e.currency, { x: 430, y, size: 7, font, color: black });
+    page.drawText(e.fx.toFixed(4), { x: 470, y, size: 7, font, color: black });
+    page.drawText(e.usdAmount.toFixed(2), { x: 520, y, size: 7, font: fontBold, color: black });
+    y -= 15;
+  }
+
+  // Total
+  y -= 4;
+  page.drawLine({ start: { x: 48, y: y + 12 }, end: { x: 547, y: y + 12 }, thickness: 1.5, color: gold });
+  page.drawText('TOTAL', { x: 280, y, size: 9, font: fontBold, color: navy });
+  page.drawText(`$${totalUsd.toFixed(2)}`, { x: 515, y, size: 9, font: fontBold, color: navy });
+
+  // === APPENDIX: Receipt images ===
+  for (let i = 0; i < uploadedFiles.length; i++) {
+    const f = uploadedFiles[i];
+    if (!f.dataUrl) continue;
+
+    page = doc.addPage([595, 842]);
+    page.drawText(`Receipt #${i + 1}: ${f.name}`, { x: 50, y: 800, size: 10, font: fontBold, color: navy });
+
+    if (f.extractedData) {
+      const info = `${f.extractedData.date || ''} | ${f.extractedData.currency || ''} ${f.extractedData.amount || ''} | ${f.extractedData.description || ''}`;
+      page.drawText(info, { x: 50, y: 784, size: 8, font, color: gray });
+    }
+
+    try {
+      const base64 = f.dataUrl.split(',')[1];
+      let img;
+      if (f.type.includes('png')) {
+        img = await doc.embedPng(Uint8Array.from(atob(base64), c => c.charCodeAt(0)));
+      } else if (f.type.includes('jpeg') || f.type.includes('jpg')) {
+        img = await doc.embedJpg(Uint8Array.from(atob(base64), c => c.charCodeAt(0)));
+      } else {
+        // PDF receipts — skip embedding, just note it
+        page.drawText('[PDF receipt — see original attachment]', { x: 50, y: 750, size: 9, font, color: gray });
+        continue;
+      }
+      const dims = img.scaleToFit(495, 700);
+      page.drawImage(img, { x: 50, y: 770 - dims.height, width: dims.width, height: dims.height });
+    } catch (err) {
+      page.drawText('[Could not embed image]', { x: 50, y: 750, size: 9, font, color: gray });
+    }
+  }
+
+  const bytes = await doc.save();
+  const blob = new Blob([bytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `CSL_Expense_Report_${name.replace(/\s+/g,'_')}_${monthName}${year}.pdf`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('PDF downloaded');
+}
+
+// ==================== EMAIL ====================
+function composeEmail() {
+  document.getElementById('emailDraft').hidden = false;
+  updateEmailDraft();
+}
+
+function updateEmailDraft() {
+  const name = document.getElementById('employeeName').value;
+  const monthInput = document.getElementById('expenseMonth').value;
+  const [year, month] = monthInput.split('-');
+  const monthName = new Date(year, month - 1).toLocaleString('en', { month: 'long' });
+  const trip = document.getElementById('tripPurpose').value;
+  const totalUsd = expenses.reduce((s, e) => s + e.usdAmount, 0);
+
+  document.getElementById('emailSubject').value =
+    `Expense Claim - ${name} - ${monthName} ${year} (Spain)`;
+
+  document.getElementById('emailBody').value =
+`Hi,
+
+Please find attached my expense claim for ${monthName} ${year}.
+
+${trip ? `This covers ${trip}.` : ''}
+
+Summary:
+- Total: $${totalUsd.toFixed(2)} USD
+- ${expenses.length} line items
+- Receipts included in PDF report appendix
+
+Attachments:
+1. CSL_Expense_Claim_${name.replace(/\s+/g,'_')}_${monthName.toLowerCase()}${year}.xlsx
+2. CSL_Expense_Report_${name.replace(/\s+/g,'_')}_${monthName}${year}.pdf
+
+Best regards,
+${name}`;
+}
+
+function copyEmail() {
+  const body = document.getElementById('emailBody').value;
+  navigator.clipboard.writeText(body);
+  toast('Email copied to clipboard');
+}
+
+// ==================== UTILITIES ====================
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+</script>
+</body>
+</html>

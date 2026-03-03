@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClearSky Tools</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%230A1628' width='32' height='32' rx='6'/><text x='6' y='23' fill='%23C8A951' font-size='18' font-weight='bold'>CS</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#0A1628;--navy-mid:#0F2140;--navy-light:#1A3155;
+  --gold:#C8A951;--gold-light:#E8D49A;--gold-dim:rgba(200,169,81,.15);
+  --green:#16A34A;--green-bg:#0A2A18;--green-glow:rgba(22,163,74,.2);
+  --red:#DC2626;--red-bg:#2A0A0A;
+  --amber:#F59E0B;--amber-bg:#2A1F0A;
+  --blue:#3B82F6;--blue-bg:#0A1A2A;
+  --bg:#060E1A;--card:#0C1829;--card-hover:#101E33;
+  --border:rgba(200,169,81,.12);--border-bright:rgba(200,169,81,.25);
+  --text:#E8ECF2;--muted:#7A8BA0;--faint:#4A5568;
+  --radius:10px;
+  --shadow:0 4px 20px rgba(0,0,0,.3);
+}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;overflow-x:hidden}
+
+/* ── NOISE TEXTURE ── */
+body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.65' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
+
+/* ── GRADIENT BACKDROP ── */
+.glow{position:fixed;top:-200px;left:50%;width:800px;height:800px;transform:translateX(-50%);background:radial-gradient(ellipse,rgba(200,169,81,.06),transparent 70%);pointer-events:none;z-index:0}
+
+/* ── LOGIN PAGE ── */
+.login-page{display:flex;align-items:center;justify-content:center;min-height:100vh;position:relative;z-index:1}
+.login-box{width:380px;max-width:90vw;text-align:center}
+.login-brand{font-family:'Playfair Display',serif;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;font-weight:600}
+.login-title{font-family:'Playfair Display',serif;font-size:32px;color:#fff;margin-bottom:8px;font-weight:700}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:32px}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:28px 24px;text-align:left}
+.login-field{margin-bottom:16px}
+.login-field label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.login-field input{width:100%;padding:11px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:inherit;transition:all .2s}
+.login-field input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-dim)}
+.login-field input::placeholder{color:var(--faint)}
+.login-btn{width:100%;padding:13px;background:var(--gold);color:var(--navy);border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;margin-top:4px}
+.login-btn:hover{background:var(--gold-light);transform:translateY(-1px);box-shadow:0 4px 16px rgba(200,169,81,.3)}
+.login-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.login-err{color:var(--red);font-size:12px;margin-top:10px;text-align:center;display:none}
+.login-err.show{display:block}
+
+/* ── HEADER ── */
+.hdr{background:var(--card);border-bottom:1px solid var(--border);padding:0 32px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;backdrop-filter:blur(12px);background:rgba(12,24,41,.85)}
+.hdr-left{display:flex;align-items:center;gap:16px}
+.hdr-brand{font-family:'Playfair Display',serif;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);font-weight:600}
+.hdr h1{color:#fff;font-size:15px;font-weight:600}
+.hdr-right{display:flex;align-items:center;gap:12px}
+.hdr-user{font-size:12px;color:var(--muted)}
+.hdr-user strong{color:var(--text)}
+.hdr-logout{background:none;border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s}
+.hdr-logout:hover{border-color:var(--red);color:var(--red)}
+
+/* ── MAIN ── */
+.main{max-width:1100px;margin:0 auto;padding:32px 32px 80px;position:relative;z-index:1}
+
+/* ── WELCOME ── */
+.welcome{margin-bottom:32px}
+.welcome h2{font-family:'Playfair Display',serif;font-size:26px;color:#fff;font-weight:700;margin-bottom:4px}
+.welcome p{font-size:13px;color:var(--muted)}
+
+/* ── TOOL SECTIONS ── */
+.section{margin-bottom:32px}
+.section-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.section-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.section-icon.rfp{background:var(--green-bg);color:var(--green)}
+.section-icon.pres{background:var(--blue-bg);color:var(--blue)}
+.section-icon.reg{background:var(--amber-bg);color:var(--amber)}
+.section-icon.lib{background:var(--gold-dim);color:var(--gold)}
+.section-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
+
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+
+/* ── TOOL CARD ── */
+.tool{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 18px 14px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.tool::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--gold);transform:scaleX(0);transition:transform .25s;transform-origin:left}
+.tool:hover{border-color:var(--border-bright);background:var(--card-hover);transform:translateY(-2px);box-shadow:var(--shadow)}
+.tool:hover::before{transform:scaleX(1)}
+.tool-status{position:absolute;top:12px;right:12px}
+.tool-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.5px}
+.tool-badge.live{background:var(--green-bg);color:var(--green);border:1px solid rgba(22,163,74,.25)}
+.tool-badge.dev{background:var(--amber-bg);color:var(--amber);border:1px solid rgba(245,158,11,.25)}
+.tool-badge.plan{background:rgba(255,255,255,.05);color:var(--faint);border:1px solid rgba(255,255,255,.08)}
+.tool-badge.soon{background:var(--blue-bg);color:var(--blue);border:1px solid rgba(59,130,246,.25)}
+.tool-name{font-size:15px;font-weight:700;color:#fff;margin-bottom:4px;padding-right:60px}
+.tool-desc{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px}
+.tool-meta{display:flex;gap:10px;font-size:10px;color:var(--faint)}
+.tool-meta span{display:flex;align-items:center;gap:3px}
+
+/* ── ADMIN SECTION ── */
+.admin-section{margin-top:40px;padding-top:24px;border-top:1px solid var(--border)}
+.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.admin-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.admin-card h3{font-size:13px;font-weight:700;color:var(--gold);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+.admin-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px}
+.admin-row:last-child{border:none}
+.admin-email{color:var(--text)}.admin-role{color:var(--faint);font-size:10px;text-transform:uppercase}
+.admin-add{display:flex;gap:8px;margin-top:10px}
+.admin-add input,.admin-add select{flex:1;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-family:inherit}
+.admin-add input:focus,.admin-add select:focus{outline:none;border-color:var(--gold)}
+.admin-btn{padding:7px 14px;background:var(--gold);color:var(--navy);border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
+.admin-btn:hover{background:var(--gold-light)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .main{padding:20px 16px 60px}
+  .tools-grid{grid-template-columns:1fr}
+  .admin-grid{grid-template-columns:1fr}
+  .hdr{padding:0 16px}
+}
+
+/* ── ANIMATION ── */
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.fade{animation:fadeIn .4s ease both}
+.fade-d1{animation-delay:.05s}.fade-d2{animation-delay:.1s}.fade-d3{animation-delay:.15s}.fade-d4{animation-delay:.2s}
+.fade-d5{animation-delay:.25s}.fade-d6{animation-delay:.3s}.fade-d7{animation-delay:.35s}.fade-d8{animation-delay:.4s}
+</style>
+</head>
+<body>
+
+<div class="glow"></div>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div class="login-page" id="login-page">
+  <div class="login-box">
+    <div class="login-brand">ClearSky Limited</div>
+    <div class="login-title">Tools</div>
+    <div class="login-sub">Internal platform for project screening, analysis & deal management</div>
+    <div class="login-card">
+      <div class="login-field">
+        <label>Email</label>
+        <input id="l-email" type="email" placeholder="name@clearskyltd.com" autocomplete="email">
+      </div>
+      <div class="login-field">
+        <label>Password</label>
+        <input id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="login-btn" id="l-btn" onclick="doLogin()">Sign In</button>
+      <div class="login-err" id="l-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ SETUP (first run only) ═══════════════ -->
+<div class="login-page" id="setup-page" style="display:none">
+  <div class="login-box">
+    <div class="login-brand">ClearSky Limited</div>
+    <div class="login-title">First-Time Setup</div>
+    <div class="login-sub">Create the admin account</div>
+    <div class="login-card">
+      <div class="login-field"><label>Your name</label><input id="s-name" placeholder="Luis Adaime"></div>
+      <div class="login-field"><label>Email</label><input id="s-email" type="email" placeholder="luis.adaime@clearskyltd.com"></div>
+      <div class="login-field"><label>Password</label><input id="s-pass" type="password" placeholder="Choose a strong password"></div>
+      <button class="login-btn" onclick="doSetup()">Create Admin Account</button>
+      <div class="login-err" id="s-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ DASHBOARD ═══════════════ -->
+<div id="dashboard" style="display:none">
+
+<div class="hdr">
+  <div class="hdr-left"><div><div class="hdr-brand">ClearSky Limited</div><h1>Tools</h1></div></div>
+  <div class="hdr-right">
+    <div class="hdr-user"><strong id="user-name"></strong> <span id="user-role"></span></div>
+    <button class="hdr-logout" onclick="logout()">Sign out</button>
+  </div>
+</div>
+
+<div class="main">
+
+<div class="welcome fade">
+  <h2>Good <span id="greeting"></span>, <span id="welcome-name"></span></h2>
+  <p id="welcome-sub"></p>
+</div>
+
+<!-- ═══ RFPs ═══ -->
+<div class="section fade fade-d1">
+  <div class="section-head"><div class="section-icon rfp">📋</div><div class="section-title">RFP Screeners</div></div>
+  <div class="tools-grid">
+    <div class="tool fade fade-d2" onclick="go('/tools/rfp-screener.html')">
+      <div class="tool-status"><span class="tool-badge live">Live</span></div>
+      <div class="tool-name">EY Abatable</div>
+      <div class="tool-desc">ARR & Biochar RFP screening with AI analysis, report generation, and draft Abatable answers</div>
+      <div class="tool-meta"><span>📅 Due 27 Feb</span><span id="ey-count">— projects</span></div>
+    </div>
+    <div class="tool fade fade-d3" onclick="go('/tools/goodcarbon.html')">
+      <div class="tool-status"><span class="tool-badge dev">Building</span></div>
+      <div class="tool-name">goodcarbon</div>
+      <div class="tool-desc">600k tCO₂e NBS portfolio screening for F&B buyer. Nature Analytics Framework alignment</div>
+      <div class="tool-meta"><span>Rolling deadline</span></div>
+    </div>
+    <div class="tool fade fade-d4">
+      <div class="tool-status"><span class="tool-badge soon">Next</span></div>
+      <div class="tool-name">Microsoft CDR</div>
+      <div class="tool-desc">FY26 application builder for WoodCache La Veta TSB expansion. Auto-fills form sections</div>
+      <div class="tool-meta"><span>BiCRS pathway</span></div>
+    </div>
+    <div class="tool fade fade-d5">
+      <div class="tool-status"><span class="tool-badge plan">Planned</span></div>
+      <div class="tool-name">Frontier</div>
+      <div class="tool-desc">Pre-application screening for carbon removal procurement. Pathway and TRL matching</div>
+    </div>
+    <div class="tool fade fade-d6">
+      <div class="tool-status"><span class="tool-badge plan">Planned</span></div>
+      <div class="tool-name">Milkywire</div>
+      <div class="tool-desc">Category B/C application builder for scale-up carbon removal projects</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PRESENTATIONS ═══ -->
+<div class="section fade fade-d3">
+  <div class="section-head"><div class="section-icon pres">📊</div><div class="section-title">Presentations</div></div>
+  <div class="tools-grid">
+    <div class="tool fade fade-d4">
+      <div class="tool-status"><span class="tool-badge dev">Building</span></div>
+      <div class="tool-name">Deck Generator</div>
+      <div class="tool-desc">Upload project brief → AI generates ClearSky-branded PPTX with commercial positioning</div>
+      <div class="tool-meta"><span>Brand v10</span><span>Multi-template</span></div>
+    </div>
+    <div class="tool fade fade-d5">
+      <div class="tool-status"><span class="tool-badge plan">Planned</span></div>
+      <div class="tool-name">Project Teaser</div>
+      <div class="tool-desc">One-page project teasers for buyer outreach. Auto-populates from knowledge library</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ REGISTRY & ANALYSIS ═══ -->
+<div class="section fade fade-d4">
+  <div class="section-head"><div class="section-icon reg">🗺️</div><div class="section-title">Registry & Analysis Agents</div></div>
+  <div class="tools-grid">
+    <div class="tool fade fade-d5">
+      <div class="tool-status"><span class="tool-badge dev">Building</span></div>
+      <div class="tool-name">MITECO Agent</div>
+      <div class="tool-desc">Spanish forest engineer AI. GIS analysis, CORINE land cover, slope maps, DD report generation for carbon absorption projects</div>
+      <div class="tool-meta"><span>QGIS/PyQGIS</span><span>Desktop agent</span></div>
+    </div>
+    <div class="tool fade fade-d6">
+      <div class="tool-status"><span class="tool-badge dev">Building</span></div>
+      <div class="tool-name">Alberta TIER Agent</div>
+      <div class="tool-desc">Offset Project Plan & Report builder for Alberta emission offset credits. Aerobic composting protocol quantification</div>
+      <div class="tool-meta"><span>Catapult project</span><span>Desktop agent</span></div>
+    </div>
+    <div class="tool fade fade-d7">
+      <div class="tool-status"><span class="tool-badge plan">Planned</span></div>
+      <div class="tool-name">Registry Explorer</div>
+      <div class="tool-desc">Search Verra, Gold Standard, Puro.earth registries. Extract project data into knowledge library</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ KNOWLEDGE LIBRARY ═══ -->
+<div class="section fade fade-d5">
+  <div class="section-head"><div class="section-icon lib">📚</div><div class="section-title">Knowledge Library</div></div>
+  <div class="tools-grid">
+    <div class="tool fade fade-d6" onclick="go('/tools/wiki.html')">
+      <div class="tool-status"><span class="tool-badge live">Live</span></div>
+      <div class="tool-name">Knowledge Wiki</div>
+      <div class="tool-desc">Upload documents, search your knowledge library, and ask AI questions with cited answers. Bulk upload with auto-extraction.</div>
+      <div class="tool-meta"><span id="lib-count">— documents</span><span>AI Q&amp;A</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ADMIN ═══ -->
+<div class="admin-section fade fade-d7" id="admin-panel" style="display:none">
+  <div class="section-head"><div class="section-icon" style="background:rgba(255,255,255,.05);color:var(--faint)">⚙️</div><div class="section-title">Admin</div></div>
+  <div class="admin-grid">
+    <div class="admin-card">
+      <h3>Team Members</h3>
+      <div id="user-list"></div>
+      <div class="admin-add">
+        <input id="a-name" placeholder="Name">
+        <input id="a-email" placeholder="email@clearskyltd.com">
+        <input id="a-pass" placeholder="Password" type="password">
+        <select id="a-role"><option value="user">User</option><option value="admin">Admin</option></select>
+        <button class="admin-btn" onclick="addUser()">Add</button>
+      </div>
+    </div>
+    <div class="admin-card">
+      <h3>Platform</h3>
+      <div class="admin-row"><span class="admin-email">Tenant</span><span class="admin-role" id="a-tenant">clearsky</span></div>
+      <div class="admin-row"><span class="admin-email">API</span><span class="admin-role">api-tools.oga.earth</span></div>
+      <div class="admin-row"><span class="admin-email">Database</span><span class="admin-role">D1: clearsky-tools-db</span></div>
+      <div class="admin-row"><span class="admin-email">Storage</span><span class="admin-role">R2: clearsky-files</span></div>
+      <div class="admin-row"><span class="admin-email">Worker</span><span class="admin-role">clearsky-api</span></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /dashboard -->
+
+<script>
+var API='https://api-tools.oga.earth';
+var token=localStorage.getItem('cs_token');
+var user=null;
+
+async function api(path,opts){
+  opts=opts||{};opts.headers=opts.headers||{};
+  if(token)opts.headers['Authorization']='Bearer '+token;
+  if(!(opts.body instanceof FormData)&&opts.body)opts.headers['Content-Type']='application/json';
+  var r=await fetch(API+path,opts);
+  if(r.status===401){logout();throw new Error('Session expired')}
+  return r.json();
+}
+
+// ── CHECK SESSION ──
+async function init(){
+  // Check if any users exist (for first-time setup)
+  if(!token){
+    try{
+      var r=await fetch(API+'/api/auth/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});
+      var d=await r.json();
+      // If we get "Email, password, and name required" it means no users exist yet
+      if(d.error&&d.error.includes('required')){showSetup();return}
+    }catch(e){}
+    showLogin();return;
+  }
+  try{
+    var r=await api('/api/auth/me');
+    if(r.user){user=r.user;showDashboard()}
+    else{token=null;localStorage.removeItem('cs_token');showLogin()}
+  }catch(e){token=null;localStorage.removeItem('cs_token');showLogin()}
+}
+
+function showLogin(){document.getElementById('login-page').style.display='flex';document.getElementById('setup-page').style.display='none';document.getElementById('dashboard').style.display='none'}
+function showSetup(){document.getElementById('login-page').style.display='none';document.getElementById('setup-page').style.display='flex';document.getElementById('dashboard').style.display='none'}
+function showDashboard(){
+  document.getElementById('login-page').style.display='none';
+  document.getElementById('setup-page').style.display='none';
+  document.getElementById('dashboard').style.display='block';
+  var h=new Date().getHours();
+  document.getElementById('greeting').textContent=h<12?'morning':h<17?'afternoon':'evening';
+  document.getElementById('welcome-name').textContent=(user.name||'').split(' ')[0];
+  document.getElementById('user-name').textContent=user.name;
+  document.getElementById('user-role').textContent='('+user.role+')';
+  document.getElementById('a-tenant').textContent=user.tenant;
+  // Show admin panel for admins
+  if(user.role==='admin'){document.getElementById('admin-panel').style.display='block';loadUsers()}
+  loadStats();
+}
+
+// ── LOGIN ──
+async function doLogin(){
+  var email=document.getElementById('l-email').value.trim();
+  var pass=document.getElementById('l-pass').value;
+  if(!email||!pass){showErr('l-err','Enter email and password');return}
+  var btn=document.getElementById('l-btn');btn.disabled=true;btn.textContent='Signing in...';
+  try{
+    var r=await fetch(API+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,password:pass})});
+    var d=await r.json();
+    if(d.error){showErr('l-err',d.error);btn.disabled=false;btn.textContent='Sign In';return}
+    token=d.token;user=d.user;localStorage.setItem('cs_token',token);
+    showDashboard();
+  }catch(e){showErr('l-err','Connection failed — check network');btn.disabled=false;btn.textContent='Sign In'}
+}
+
+// ── SETUP ──
+async function doSetup(){
+  var name=document.getElementById('s-name').value.trim();
+  var email=document.getElementById('s-email').value.trim();
+  var pass=document.getElementById('s-pass').value;
+  if(!name||!email||!pass){showErr('s-err','Fill all fields');return}
+  try{
+    var r=await fetch(API+'/api/auth/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,email:email,password:pass})});
+    var d=await r.json();
+    if(d.error){showErr('s-err',d.error);return}
+    token=d.token;user=d.user;localStorage.setItem('cs_token',token);
+    showDashboard();
+  }catch(e){showErr('s-err','Connection failed')}
+}
+
+function showErr(id,msg){var el=document.getElementById(id);el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show')},4000)}
+function logout(){token=null;user=null;localStorage.removeItem('cs_token');showLogin()}
+
+// Enter key on login
+document.getElementById('l-pass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin()});
+document.getElementById('l-email').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('l-pass').focus()});
+
+// ── STATS ──
+async function loadStats(){
+  try{var r=await api('/api/ey-rfp/projects');var n=(r.projects||[]).length;document.getElementById('ey-count').textContent=n+' project'+(n!==1?'s':'')}catch(e){}
+  try{var r=await api('/api/knowledge/docs?limit=1');document.getElementById('lib-count').textContent=(r.total||0)+' documents'}catch(e){}
+}
+
+// ── ADMIN: USERS ──
+async function loadUsers(){
+  try{
+    var r=await api('/api/auth/users');
+    var ul=document.getElementById('user-list');ul.innerHTML='';
+    (r.users||[]).forEach(function(u){
+      ul.innerHTML+='<div class="admin-row"><span class="admin-email">'+esc(u.name)+' — '+esc(u.email)+'</span><span class="admin-role">'+u.role+'</span></div>';
+    });
+  }catch(e){}
+}
+async function addUser(){
+  var name=document.getElementById('a-name').value.trim();
+  var email=document.getElementById('a-email').value.trim();
+  var pass=document.getElementById('a-pass').value;
+  var role=document.getElementById('a-role').value;
+  if(!name||!email||!pass)return;
+  try{await api('/api/auth/users',{method:'POST',body:JSON.stringify({name:name,email:email,password:pass,role:role})});loadUsers();document.getElementById('a-name').value='';document.getElementById('a-email').value='';document.getElementById('a-pass').value=''}catch(e){alert('Failed: '+e.message)}
+}
+
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function go(path){window.location.href=path}
+
+init();
+</script>
+</body>
+</html>
