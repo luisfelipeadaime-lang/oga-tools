@@ -38,139 +38,201 @@
   --font: 'DM Sans', -apple-system, sans-serif;
   --mono: 'JetBrains Mono', monospace;
 }
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
-::selection { background: var(--gold); color: var(--bg); }
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+::selection{background:var(--gold);color:var(--bg)}
 
-/* TOP BAR */
-.topbar {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 0 28px;
-  height: 52px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-.topbar-left { display: flex; align-items: center; gap: 14px; }
-.logo { font-size: 11px; font-weight: 700; letter-spacing: 3.5px; color: var(--gold); text-transform: uppercase; }
-.logo-sep { width: 1px; height: 18px; background: var(--border); }
-.topbar-title { font-size: 14px; font-weight: 600; }
-.topbar-right { display: flex; align-items: center; gap: 10px; }
-.range-pill {
-  display: flex; background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
-}
-.range-pill button {
-  background: none; border: none; color: var(--text-muted); font-family: var(--mono); font-size: 11px; padding: 6px 12px; cursor: pointer; transition: all 0.15s;
-}
-.range-pill button.active { background: var(--gold-bg2); color: var(--gold); font-weight: 600; }
-.range-pill button:hover:not(.active) { color: var(--text-secondary); }
-.refresh-btn {
-  background: var(--card); border: 1px solid var(--border); color: var(--text-secondary); font-size: 12px; padding: 6px 14px; border-radius: 8px; cursor: pointer; font-family: var(--font); transition: all 0.15s;
-}
-.refresh-btn:hover { border-color: var(--gold); color: var(--gold); }
-.data-source { font-size: 10px; color: var(--text-muted); font-family: var(--mono); }
-.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); display: inline-block; animation: blink 2s infinite; margin-right: 4px; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+/* TOPBAR */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.logo{font-size:11px;font-weight:700;letter-spacing:3.5px;color:var(--gold);text-transform:uppercase}
+.logo-sep{width:1px;height:18px;background:var(--border)}
+.topbar-title{font-size:14px;font-weight:600}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.range-pill{display:flex;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.range-pill button{background:none;border:none;color:var(--text-muted);font-family:var(--mono);font-size:11px;padding:6px 12px;cursor:pointer;transition:all .15s}
+.range-pill button.active{background:var(--gold-bg2);color:var(--gold);font-weight:600}
+.range-pill button:hover:not(.active){color:var(--text-secondary)}
+.refresh-btn{background:var(--card);border:1px solid var(--border);color:var(--text-secondary);font-size:12px;padding:6px 14px;border-radius:8px;cursor:pointer;font-family:var(--font);transition:all .15s}
+.refresh-btn:hover{border-color:var(--gold);color:var(--gold)}
+.data-source{font-size:10px;color:var(--text-muted);font-family:var(--mono)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:blink 2s infinite;margin-right:4px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* LAYOUT */
-.page { max-width: 1440px; margin: 0 auto; padding: 0 28px 40px; }
+/* TOOLBAR */
+.toolbar{display:flex;gap:8px;padding:14px 28px;border-bottom:1px solid var(--border);overflow-x:auto}
+.tool-btn{display:flex;align-items:center;gap:8px;padding:10px 18px;background:var(--card);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;white-space:nowrap;text-decoration:none}
+.tool-btn:hover{border-color:var(--gold);background:var(--gold-bg)}
+.tool-btn .tool-icon{font-size:18px;line-height:1}
+.tool-btn .tool-label{font-size:12px;font-weight:600;color:var(--text)}
+.tool-btn .tool-sub{font-size:10px;color:var(--text-muted)}
+.tool-btn.primary{background:linear-gradient(135deg,rgba(212,175,55,.12),rgba(212,175,55,.04));border-color:rgba(212,175,55,.3)}
+.tool-btn.primary .tool-label{color:var(--gold)}
 
-/* LOADING */
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  color: var(--text-muted);
-}
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--border);
-  border-top-color: var(--gold);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin-bottom: 16px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
+/* TAB SYSTEM */
+.tabs-bar{display:flex;gap:0;background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px}
+.tab-btn{padding:12px 24px;font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all .15s;font-family:var(--font)}
+.tab-btn:hover{color:var(--text-secondary)}
+.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
+.tab-btn .tab-count{font-family:var(--mono);font-size:10px;background:var(--gold-bg2);color:var(--gold);padding:1px 6px;border-radius:4px;margin-left:6px}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* PAGE */
+.page{max-width:1440px;margin:0 auto;padding:20px 28px 40px}
 
 /* SCOREBOARD */
-.scoreboard {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 1px;
-  background: var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-  margin: 20px 0;
-}
-.score-cell {
-  background: var(--card);
-  padding: 16px;
-  text-align: center;
-}
-.score-num {
-  font-family: var(--mono); font-size: 28px; font-weight: 700; line-height: 1; margin-bottom: 5px;
-}
-.score-label { font-size: 10px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
-.score-sub { font-size: 9px; color: var(--text-muted); margin-top: 3px; }
-.score-cell.highlight { background: linear-gradient(135deg, rgba(239,68,68,0.08), rgba(239,68,68,0.02)); }
-.score-cell.highlight .score-num { color: var(--red-text); }
-.score-cell.good .score-num { color: var(--green-text); }
-.score-cell.warn .score-num { color: var(--amber-text); }
-.score-cell.gold .score-num { color: var(--gold); }
-.score-cell.neutral .score-num { color: var(--text); }
-.score-cell.blue .score-num { color: var(--blue); }
+.scoreboard{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.score-cell{background:var(--card);padding:16px;text-align:center}
+.score-cell:first-child{border-radius:12px 0 0 12px}
+.score-cell:last-child{border-radius:0 12px 12px 0}
+.score-num{font-family:var(--mono);font-size:28px;font-weight:700;line-height:1;margin-bottom:5px}
+.score-label{font-size:10px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px}
+.score-sub{font-size:9px;color:var(--text-muted);margin-top:3px}
+.score-cell.highlight{background:linear-gradient(135deg,rgba(239,68,68,.08),rgba(239,68,68,.02))}
+.score-cell.highlight .score-num{color:var(--red-text)}
+.score-cell.good .score-num{color:var(--green-text)}
+.score-cell.warn .score-num{color:var(--amber-text)}
+.score-cell.gold .score-num{color:var(--gold)}
+.score-cell.neutral .score-num{color:var(--text)}
+.score-cell.blue .score-num{color:var(--blue)}
 
 /* GRIDS */
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-@media (max-width: 1000px) {
-  .grid-2 { grid-template-columns: 1fr; }
-  .scoreboard { grid-template-columns: repeat(3, 1fr); }
-}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:1000px){.grid-2{grid-template-columns:1fr}.scoreboard{grid-template-columns:repeat(3,1fr)}}
 
 /* PANELS */
-.panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-.panel-head { padding: 14px 18px 0; display: flex; align-items: center; justify-content: space-between; }
-.panel-title { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-.panel-badge { font-family: var(--mono); font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 6px; background: var(--gold-bg2); color: var(--gold); }
-.panel-body { padding: 14px 18px 18px; }
-.panel-note { font-size: 10px; color: var(--text-muted); font-style: italic; padding: 0 18px 12px; }
+.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.panel-head{padding:14px 18px 0;display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:8px}
+.panel-badge{font-family:var(--mono);font-size:10px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--gold-bg2);color:var(--gold)}
+.panel-body{padding:14px 18px 18px}
+.panel-note{font-size:10px;color:var(--text-muted);font-style:italic;padding:0 18px 12px}
 
 /* TABLE */
-.tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
-.tbl th { text-align: left; padding: 8px 10px; font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; border-bottom: 1px solid var(--border); }
-.tbl th.r { text-align: right; }
-.tbl td { padding: 7px 10px; border-bottom: 1px solid rgba(28,45,66,0.5); color: var(--text-secondary); }
-.tbl td.name { color: var(--text); font-weight: 500; }
-.tbl td.num { font-family: var(--mono); font-weight: 500; text-align: right; }
-.tbl tr:hover td { background: rgba(255,255,255,0.02); }
-.tbl tr:last-child td { border-bottom: none; }
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{text-align:left;padding:8px 10px;font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--border)}
+.tbl th.r{text-align:right}
+.tbl td{padding:7px 10px;border-bottom:1px solid rgba(28,45,66,.5);color:var(--text-secondary)}
+.tbl td.name{color:var(--text);font-weight:500}
+.tbl td.num{font-family:var(--mono);font-weight:500;text-align:right}
+.tbl tr:hover td{background:rgba(255,255,255,.02)}
+.tbl tr:last-child td{border-bottom:none}
 
 /* PILLS */
-.pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; gap: 4px; }
-.pill.g { background: var(--green-bg); color: var(--green-text); }
-.pill.y { background: var(--amber-bg); color: var(--amber-text); }
-.pill.r { background: var(--red-bg); color: var(--red-text); }
-.pill.b { background: var(--blue-bg); color: var(--blue); }
-.pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; }
-.pill.g::before { background: var(--green); }
-.pill.y::before { background: var(--amber); }
-.pill.r::before { background: var(--red); }
-.pill.b::before { background: var(--blue); }
+.pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600;gap:4px}
+.pill.g{background:var(--green-bg);color:var(--green-text)}
+.pill.y{background:var(--amber-bg);color:var(--amber-text)}
+.pill.r{background:var(--red-bg);color:var(--red-text)}
+.pill.b{background:var(--blue-bg);color:var(--blue)}
+.pill.p{background:rgba(139,92,246,.08);color:#a78bfa}
+.pill.gray{background:rgba(100,116,139,.1);color:#94a3b8}
+.pill::before{content:'';width:5px;height:5px;border-radius:50%}
+.pill.g::before{background:var(--green)}
+.pill.y::before{background:var(--amber)}
+.pill.r::before{background:var(--red)}
+.pill.b::before{background:var(--blue)}
+.pill.p::before{background:#8b5cf6}
+.pill.gray::before{background:#64748b}
+
+/* AVATAR */
+.avatar{width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--bg);flex-shrink:0;vertical-align:middle;margin-right:6px}
+
+/* PROGRESS */
+.prog-wrap{display:flex;align-items:center;gap:8px}
+.prog-bar{flex:1;height:6px;background:var(--surface);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.prog-text{font-family:var(--mono);font-size:11px;font-weight:500;min-width:52px;text-align:right}
+
+/* FUNNEL */
+.funnel-row{display:flex;align-items:center;gap:10px;margin-bottom:5px}
+.funnel-label{font-size:11px;color:var(--text-secondary);width:100px;text-align:right;flex-shrink:0}
+.funnel-bar-wrap{flex:1}
+.funnel-bar{height:26px;border-radius:3px;display:flex;align-items:center;padding:0 10px;transition:width .5s ease}
+.funnel-val{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff}
+
+/* VELOCITY */
+.vel-stage{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(28,45,66,.4)}
+.vel-stage:last-child{border-bottom:none}
+.vel-name{font-size:11px;color:var(--text-secondary);width:100px}
+.vel-bar{height:20px;border-radius:3px;display:flex;align-items:center;padding:0 8px}
+.vel-days{font-family:var(--mono);font-size:11px;font-weight:600;color:#fff}
+.vel-target{font-size:10px;color:var(--text-muted);margin-left:6px}
+
+/* ACTION CARDS */
+.action-card{display:flex;align-items:flex-start;gap:12px;padding:11px 14px;border-radius:8px;background:var(--surface);margin-bottom:5px;border-left:3px solid transparent;transition:all .15s}
+.action-card:hover{background:var(--card-alt)}
+.action-card.urgent{border-left-color:var(--red)}
+.action-card.normal{border-left-color:var(--amber)}
+.action-card.info{border-left-color:var(--blue)}
+.action-num{width:22px;height:22px;border-radius:50%;background:var(--gold-bg2);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px}
+.action-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
+.action-desc{font-size:11px;color:var(--text-muted);line-height:1.4}
+.action-owner{font-size:10px;font-weight:600;color:var(--gold);margin-top:3px}
+
+/* TREND BARS */
+.trend-row{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.trend-week{font-family:var(--mono);font-size:10px;color:var(--text-muted);width:36px}
+.trend-bar{height:14px;border-radius:2px;transition:width .4s}
+.trend-val{font-family:var(--mono);font-size:10px;color:var(--text-muted);min-width:30px}
+
+/* ============================================ */
+/* RAW DATA TAB STYLES                          */
+/* ============================================ */
+.raw-page{max-width:1440px;margin:0 auto;padding:16px 28px 40px}
+
+/* FILTER BAR */
+.filter-bar{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.filter-group{display:flex;flex-direction:column;gap:4px}
+.filter-label{font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px}
+.filter-select{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:12px;font-family:var(--font);min-width:130px;cursor:pointer}
+.filter-select:focus{outline:none;border-color:var(--gold)}
+.filter-input{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:12px;font-family:var(--font);width:180px}
+.filter-input:focus{outline:none;border-color:var(--gold)}
+.filter-input::placeholder{color:var(--text-muted)}
+.filter-date{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:11px;font-family:var(--mono);cursor:pointer}
+.filter-date:focus{outline:none;border-color:var(--gold)}
+.filter-actions{display:flex;gap:8px;align-items:center;margin-left:auto}
+.btn-clear{background:none;border:1px solid var(--border);color:var(--text-muted);padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;font-family:var(--font);transition:all .15s}
+.btn-clear:hover{border-color:var(--red);color:var(--red-text)}
+.btn-csv{background:var(--gold-bg2);border:1px solid rgba(212,175,55,.3);color:var(--gold);padding:6px 14px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s}
+.btn-csv:hover{background:var(--gold-bg);border-color:var(--gold)}
+.filter-count{font-size:11px;color:var(--text-secondary);font-family:var(--mono)}
+.filter-count strong{color:var(--gold)}
+
+/* RAW DATA TABLE */
+.raw-table-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.raw-table{width:100%;border-collapse:collapse;font-size:11px}
+.raw-table thead{position:sticky;top:0;z-index:10}
+.raw-table th{text-align:left;padding:10px 10px;font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;background:var(--card-alt);border-bottom:1px solid var(--border);cursor:pointer;user-select:none;white-space:nowrap;transition:color .15s}
+.raw-table th:hover{color:var(--gold)}
+.raw-table th.r{text-align:right}
+.raw-table th .sort-arrow{font-size:8px;margin-left:3px;opacity:.4}
+.raw-table th.sorted .sort-arrow{opacity:1;color:var(--gold)}
+.raw-table td{padding:7px 10px;border-bottom:1px solid rgba(28,45,66,.3);color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:250px}
+.raw-table td.name{color:var(--text);font-weight:500}
+.raw-table td.mono{font-family:var(--mono);font-size:10px}
+.raw-table td.preview{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px;color:var(--text-muted);font-size:11px}
+.raw-table tbody tr:nth-child(even) td{background:rgba(255,255,255,.01)}
+.raw-table tbody tr:hover td{background:rgba(212,175,55,.03)}
+
+/* PAGINATION */
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-top:1px solid var(--border);background:var(--card)}
+.page-info{font-size:11px;color:var(--text-muted)}
+.page-info strong{color:var(--text-secondary)}
+.page-btns{display:flex;gap:4px}
+.page-btn{background:var(--surface);border:1px solid var(--border);color:var(--text-muted);padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;font-family:var(--mono);transition:all .15s}
+.page-btn:hover{border-color:var(--gold);color:var(--gold)}
+.page-btn.active{background:var(--gold-bg2);border-color:rgba(212,175,55,.3);color:var(--gold);font-weight:600}
+.page-btn:disabled{opacity:.3;cursor:not-allowed}
 
 /* FOOTER */
-.page-footer { border-top: 1px solid var(--border); padding: 14px 0; display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: 20px; }
+.page-footer{border-top:1px solid var(--border);padding:14px 0;display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-top:20px;max-width:1440px;margin-left:auto;margin-right:auto;padding-left:28px;padding-right:28px}
 </style>
 </head>
 <body>
 
-<!-- TOP BAR -->
+<!-- TOPBAR -->
 <div class="topbar">
   <div class="topbar-left">
     <div class="logo">ClearSky</div>
@@ -179,184 +241,630 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
   </div>
   <div class="topbar-right">
     <div class="range-pill">
-      <button onclick="setRange(7)">7d</button>
-      <button onclick="setRange(14)" class="active" id="btn-14">14d</button>
-      <button onclick="setRange(30)">30d</button>
-      <button onclick="setRange(90)">90d</button>
+      <button>7d</button>
+      <button class="active">14d</button>
+      <button>30d</button>
+      <button>90d</button>
     </div>
-    <button class="refresh-btn" onclick="loadDashboard()">↻ Refresh</button>
-    <div class="data-source" id="dataSource"><span class="live-dot"></span> HubSpot Live</div>
+    <button class="refresh-btn">↻ Refresh</button>
+    <div class="data-source"><span class="live-dot"></span>HubSpot Live</div>
   </div>
 </div>
 
-<div class="page" id="mainContent">
-  <div class="loading-state">
-    <div class="spinner"></div>
-    <div>Loading HubSpot activity data...</div>
+<!-- QUICK-ACTION TOOLBAR -->
+<div class="toolbar">
+  <a class="tool-btn primary" href="#">
+    <span class="tool-icon">📋</span>
+    <div><div class="tool-label">Today's Call List</div><div class="tool-sub">AI-prioritized from HubSpot</div></div>
+  </a>
+  <a class="tool-btn" href="#">
+    <span class="tool-icon">📊</span>
+    <div><div class="tool-label">Generate Pitch Deck</div><div class="tool-sub">Select project + buyer → PDF</div></div>
+  </a>
+  <a class="tool-btn" href="#">
+    <span class="tool-icon">✉️</span>
+    <div><div class="tool-label">Email Templates</div><div class="tool-sub">6 sequences, copy-paste ready</div></div>
+  </a>
+  <a class="tool-btn" href="#">
+    <span class="tool-icon">🎯</span>
+    <div><div class="tool-label">Buyer Intelligence</div><div class="tool-sub">356 contacts profiled</div></div>
+  </a>
+  <a class="tool-btn" href="https://app.hubspot.com/contacts/" target="_blank">
+    <span class="tool-icon">🔗</span>
+    <div><div class="tool-label">Open HubSpot</div><div class="tool-sub">CRM direct access</div></div>
+  </a>
+</div>
+
+<!-- TAB SYSTEM -->
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="switchTab('dashboard')">📈 Dashboard</button>
+  <button class="tab-btn" onclick="switchTab('rawdata')">📋 Raw Data <span class="tab-count" id="rawCount">3,892</span></button>
+</div>
+
+<!-- ============================================ -->
+<!-- TAB 1: DASHBOARD                             -->
+<!-- ============================================ -->
+<div class="tab-content active" id="tab-dashboard">
+<div class="page">
+
+  <!-- SCOREBOARD -->
+  <div class="scoreboard">
+    <div class="score-cell highlight">
+      <div class="score-num">$0</div>
+      <div class="score-label">Revenue Closed</div>
+      <div class="score-sub">Target: $100K/mo</div>
+    </div>
+    <div class="score-cell gold">
+      <div class="score-num">$265K</div>
+      <div class="score-label">Pipeline Value</div>
+      <div class="score-sub">5 active deals</div>
+    </div>
+    <div class="score-cell warn">
+      <div class="score-num">3</div>
+      <div class="score-label">Pricing Sent</div>
+      <div class="score-sub">awaiting buyer response</div>
+    </div>
+    <div class="score-cell good">
+      <div class="score-num">26</div>
+      <div class="score-label">Ext. Meetings</div>
+      <div class="score-sub">buyer counterparties only</div>
+    </div>
+    <div class="score-cell blue">
+      <div class="score-num">16</div>
+      <div class="score-label">Calls Made</div>
+      <div class="score-sub">vs 14,002 emails</div>
+    </div>
+    <div class="score-cell neutral">
+      <div class="score-num">4.2h</div>
+      <div class="score-label">Avg Response</div>
+      <div class="score-sub">time to reply inbound</div>
+    </div>
   </div>
+
+  <!-- ROW 1: DEALS + CALL TARGETS -->
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">💰 Deal Pipeline <span class="panel-badge">$265K</span></div></div>
+      <div class="panel-body">
+        <table class="tbl">
+          <thead><tr><th>Deal</th><th>Counterparty</th><th>Stage</th><th class="r">Value</th><th class="r">Days Idle</th></tr></thead>
+          <tbody>
+            <tr><td class="name">Woodcache 750 CORCs</td><td>Serge Bushman</td><td><span class="pill g">In Inventory</span></td><td class="num" style="color:var(--gold)">$120K</td><td class="num">0</td></tr>
+            <tr><td class="name">EDF Trading CORSIA</td><td>Jack Harris</td><td><span class="pill y">Pricing Sent</span></td><td class="num" style="color:var(--gold)">$75K</td><td class="num" style="color:var(--amber-text)">12</td></tr>
+            <tr><td class="name">SCB Group</td><td>Benjamin Crick</td><td><span class="pill y">Active Conv.</span></td><td class="num" style="color:var(--gold)">$50K</td><td class="num">6</td></tr>
+            <tr><td class="name">RBC TSB</td><td>Gordon Evens</td><td><span class="pill b">Onboarding</span></td><td class="num" style="color:var(--gold)">$45K</td><td class="num">4</td></tr>
+            <tr><td class="name">Abatable</td><td>Mercedes Fuentes V.</td><td><span class="pill y">Discussion</span></td><td class="num" style="color:var(--gold)">$35K</td><td class="num">8</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel-note">Days Idle = days since last HubSpot activity on this contact. Red at 14+.</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">📞 Weekly Call Targets <span class="panel-badge">Week 10</span></div></div>
+      <div class="panel-body" id="callTargets">
+        <!-- Rendered by JS -->
+      </div>
+      <div class="panel-note">Calls logged in HubSpot. Targets: 15/wk sales, 10 origination, 5 CEO. Resets Monday.</div>
+    </div>
+  </div>
+
+  <!-- ROW 2: FUNNEL + VELOCITY -->
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">📊 Conversion Funnel</div></div>
+      <div class="panel-body">
+        <div class="funnel-row"><div class="funnel-label">Emails Sent</div><div class="funnel-bar-wrap"><div class="funnel-bar" style="width:100%;background:#1e3a5f"><span class="funnel-val">14,002</span></div></div></div>
+        <div class="funnel-row"><div class="funnel-label">Replies Recd</div><div class="funnel-bar-wrap"><div class="funnel-bar" style="width:22%;background:#1e5a7f"><span class="funnel-val">~3,080</span></div></div></div>
+        <div class="funnel-row"><div class="funnel-label">Meetings Held</div><div class="funnel-bar-wrap"><div class="funnel-bar" style="width:6%;background:#0d9488;min-width:55px"><span class="funnel-val">26</span></div></div></div>
+        <div class="funnel-row"><div class="funnel-label">Calls Made</div><div class="funnel-bar-wrap"><div class="funnel-bar" style="width:4%;background:#f59e0b;min-width:50px"><span class="funnel-val">16</span></div></div></div>
+        <div class="funnel-row"><div class="funnel-label">Pricing Sent</div><div class="funnel-bar-wrap"><div class="funnel-bar" style="width:2.5%;background:#8b5cf6;min-width:45px"><span class="funnel-val">3</span></div></div></div>
+        <div class="funnel-row"><div class="funnel-label">Deals Closed</div><div class="funnel-bar-wrap"><div class="funnel-bar" style="width:2%;background:#ef4444;min-width:40px"><span class="funnel-val">0</span></div></div></div>
+        <div style="margin-top:12px;padding:10px 12px;background:var(--surface);border-radius:8px">
+          <div style="font-size:9px;font-weight:700;color:var(--gold);letter-spacing:1.5px;margin-bottom:6px">CONVERSION RATES</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+            <div><div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--green-text)">22%</div><div style="font-size:9px;color:var(--text-muted)">Email → Reply</div></div>
+            <div><div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--amber-text)">0.8%</div><div style="font-size:9px;color:var(--text-muted)">Reply → Meeting</div></div>
+            <div><div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--red-text)">0%</div><div style="font-size:9px;color:var(--text-muted)">Meeting → Close</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-note">Source: HubSpot engagement log. Reply rate from open/response tracking.</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">⏱️ Pipeline Velocity <span class="panel-badge">avg days per stage</span></div></div>
+      <div class="panel-body">
+        <div style="margin-bottom:16px">
+          <div class="vel-stage"><div class="vel-name">Conversation</div><div class="funnel-bar-wrap"><div class="vel-bar" style="width:35%;background:var(--blue);min-width:60px"><span class="vel-days">8d</span></div></div><span class="vel-target">target: 7d</span></div>
+          <div class="vel-stage"><div class="vel-name">Pricing Sent</div><div class="funnel-bar-wrap"><div class="vel-bar" style="width:75%;background:var(--amber);min-width:60px"><span class="vel-days">18d</span></div></div><span class="vel-target" style="color:var(--red-text)">target: 5d ⚠️</span></div>
+          <div class="vel-stage"><div class="vel-name">Negotiating</div><div class="funnel-bar-wrap"><div class="vel-bar" style="width:50%;background:var(--purple);min-width:60px"><span class="vel-days">12d</span></div></div><span class="vel-target">target: 10d</span></div>
+          <div class="vel-stage"><div class="vel-name">Closing</div><div class="funnel-bar-wrap"><div class="vel-bar" style="width:10%;background:var(--green);min-width:60px"><span class="vel-days">—</span></div></div><span class="vel-target">no data yet</span></div>
+        </div>
+        <div style="padding:10px 12px;background:var(--surface);border-radius:8px">
+          <div style="font-size:9px;font-weight:700;color:var(--gold);letter-spacing:1.5px;margin-bottom:6px">VELOCITY METRICS</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+            <div><div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--text)">38d</div><div style="font-size:9px;color:var(--text-muted)">Avg cycle</div></div>
+            <div><div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--red-text)">18d</div><div style="font-size:9px;color:var(--text-muted)">Stuck: Pricing</div></div>
+            <div><div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--amber-text)">2</div><div style="font-size:9px;color:var(--text-muted)">Deals past target</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel-note">Velocity = avg days per stage. Source: HubSpot deal stage timestamps.</div>
+    </div>
+  </div>
+
+  <!-- ROW 3: TEAM + TRENDS -->
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">👥 Team Performance</div></div>
+      <div class="panel-body">
+        <table class="tbl">
+          <thead><tr><th>Person</th><th class="r">Emails</th><th class="r">Meetings</th><th class="r">Calls</th><th class="r">Companies</th><th class="r">Pricing</th></tr></thead>
+          <tbody>
+            <tr><td class="name"><span class="avatar" style="background:var(--blue)">AA</span>Ana</td><td class="num">4,891</td><td class="num" style="color:var(--green-text)">8</td><td class="num">4</td><td class="num">27</td><td class="num" style="color:var(--gold)">2</td></tr>
+            <tr><td class="name"><span class="avatar" style="background:var(--purple)">CM</span>Carolina</td><td class="num">1,580</td><td class="num" style="color:var(--green-text)">5</td><td class="num">3</td><td class="num">29</td><td class="num" style="color:var(--gold)">1</td></tr>
+            <tr><td class="name"><span class="avatar" style="background:var(--teal)">LA</span>Luis</td><td class="num">872</td><td class="num" style="color:var(--green-text)">7</td><td class="num">5</td><td class="num">8</td><td class="num">0</td></tr>
+            <tr><td class="name"><span class="avatar" style="background:var(--amber)">BA</span>Bobbie</td><td class="num">2,680</td><td class="num">4</td><td class="num">3</td><td class="num">14</td><td class="num">0</td></tr>
+            <tr><td class="name"><span class="avatar" style="background:#64748b">BK</span>Brian</td><td class="num">3,820</td><td class="num">2</td><td class="num">1</td><td class="num">—</td><td class="num">0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel-note">"Companies" = unique external buyer counterparties. Source: HubSpot.</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">📈 Weekly Trends</div></div>
+      <div class="panel-body">
+        <div style="margin-bottom:12px">
+          <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;margin-bottom:6px">MEETINGS</div>
+          <div class="trend-row"><div class="trend-week">W7</div><div class="trend-bar" style="width:80%;background:var(--green)"></div><div class="trend-val">8</div></div>
+          <div class="trend-row"><div class="trend-week">W8</div><div class="trend-bar" style="width:80%;background:var(--green)"></div><div class="trend-val">8</div></div>
+          <div class="trend-row"><div class="trend-week">W9</div><div class="trend-bar" style="width:60%;background:var(--green)"></div><div class="trend-val">6</div></div>
+          <div class="trend-row"><div class="trend-week">W10</div><div class="trend-bar" style="width:100%;background:var(--green)"></div><div class="trend-val">10</div></div>
+        </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;margin-bottom:6px">CALLS</div>
+          <div class="trend-row"><div class="trend-week">W7</div><div class="trend-bar" style="width:30%;background:var(--amber);min-width:16px"></div><div class="trend-val">3</div></div>
+          <div class="trend-row"><div class="trend-week">W8</div><div class="trend-bar" style="width:20%;background:var(--amber);min-width:16px"></div><div class="trend-val">2</div></div>
+          <div class="trend-row"><div class="trend-week">W9</div><div class="trend-bar" style="width:50%;background:var(--amber);min-width:16px"></div><div class="trend-val">5</div></div>
+          <div class="trend-row"><div class="trend-week">W10</div><div class="trend-bar" style="width:60%;background:var(--amber);min-width:16px"></div><div class="trend-val">6</div></div>
+        </div>
+        <div>
+          <div style="font-size:9px;font-weight:700;color:var(--text-muted);letter-spacing:1px;margin-bottom:6px">PRICING SENT</div>
+          <div class="trend-row"><div class="trend-week">W7</div><div class="trend-bar" style="width:20%;background:var(--purple);min-width:16px"></div><div class="trend-val">1</div></div>
+          <div class="trend-row"><div class="trend-week">W8</div><div class="trend-bar" style="width:4%;background:var(--purple);min-width:16px"></div><div class="trend-val">0</div></div>
+          <div class="trend-row"><div class="trend-week">W9</div><div class="trend-bar" style="width:20%;background:var(--purple);min-width:16px"></div><div class="trend-val">1</div></div>
+          <div class="trend-row"><div class="trend-week">W10</div><div class="trend-bar" style="width:20%;background:var(--purple);min-width:16px"></div><div class="trend-val">1</div></div>
+        </div>
+      </div>
+      <div class="panel-note">Week-over-week. W10 = current partial. Source: HubSpot timestamps.</div>
+    </div>
+  </div>
+
+  <!-- ROW 4: T1 + TOP COMPANIES -->
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">🎯 T1 Account Coverage <span class="panel-badge">19 accounts</span></div></div>
+      <div class="panel-body">
+        <table class="tbl">
+          <thead><tr><th>Account</th><th class="r">Emails</th><th class="r">Meetings</th><th>Status</th><th>Owner</th></tr></thead>
+          <tbody>
+            <tr><td class="name">EDF Trading</td><td class="num">120</td><td class="num">4</td><td><span class="pill g">Active Pricing</span></td><td>Ana</td></tr>
+            <tr><td class="name">RBC</td><td class="num">48</td><td class="num">2</td><td><span class="pill g">Onboarding</span></td><td>Ana</td></tr>
+            <tr><td class="name">SCB Group</td><td class="num">42</td><td class="num">1</td><td><span class="pill y">Active Conv.</span></td><td>Carolina</td></tr>
+            <tr><td class="name">Coca-Cola</td><td class="num">36</td><td class="num">1</td><td><span class="pill y">Meeting Held</span></td><td>Ana</td></tr>
+            <tr><td class="name">Volkswagen</td><td class="num">18</td><td class="num">1</td><td><span class="pill y">New Contact</span></td><td>Carolina</td></tr>
+            <tr><td class="name">BP</td><td class="num">18</td><td class="num" style="color:var(--red-text)">0</td><td><span class="pill r">Email Only</span></td><td>Bobbie</td></tr>
+            <tr><td class="name">Shell</td><td class="num">11</td><td class="num" style="color:var(--red-text)">0</td><td><span class="pill r">Email Only</span></td><td>Bobbie</td></tr>
+            <tr><td class="name">BBVA</td><td class="num">20</td><td class="num" style="color:var(--red-text)">0</td><td><span class="pill r">Email Only</span></td><td>—</td></tr>
+            <tr><td class="name">Santander</td><td class="num">0</td><td class="num" style="color:var(--red-text)">0</td><td><span class="pill r">No Activity</span></td><td>—</td></tr>
+            <tr><td class="name">Amazon</td><td class="num">0</td><td class="num" style="color:var(--red-text)">0</td><td><span class="pill r">No Activity</span></td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel-note">Status: green = meeting held, yellow = email only, red = nothing. Source: HubSpot.</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">🏢 Most Active Companies <span class="panel-badge">82 external</span></div></div>
+      <div class="panel-body">
+        <table class="tbl">
+          <thead><tr><th>Company</th><th class="r">Activities</th><th class="r">Meetings</th><th>Type</th></tr></thead>
+          <tbody>
+            <tr><td class="name">Abatable</td><td class="num">704</td><td class="num">12</td><td style="font-size:10px">Partnership</td></tr>
+            <tr><td class="name">Dentons</td><td class="num">510</td><td class="num">8</td><td style="font-size:10px;color:var(--text-muted)">Legal</td></tr>
+            <tr><td class="name">Rewilding</td><td class="num">288</td><td class="num">6</td><td style="font-size:10px;color:var(--text-muted)">Supplier</td></tr>
+            <tr><td class="name">EDF Trading</td><td class="num">120</td><td class="num">4</td><td style="font-size:10px;color:var(--green-text)">T1 Buyer</td></tr>
+            <tr><td class="name">Remova.Earth</td><td class="num">96</td><td class="num">2</td><td style="font-size:10px;color:var(--text-muted)">Supplier</td></tr>
+            <tr><td class="name">Woodcache</td><td class="num">96</td><td class="num">3</td><td style="font-size:10px;color:var(--text-muted)">Supplier</td></tr>
+            <tr><td class="name">Bosquia</td><td class="num">72</td><td class="num">4</td><td style="font-size:10px;color:var(--text-muted)">Supplier</td></tr>
+            <tr><td class="name">SCB Group</td><td class="num">42</td><td class="num">1</td><td style="font-size:10px;color:var(--green-text)">T1 Buyer</td></tr>
+            <tr><td class="name">Brightly</td><td class="num">40</td><td class="num">1</td><td style="font-size:10px">Buyer</td></tr>
+            <tr><td class="name">Therm</td><td class="num">36</td><td class="num">1</td><td style="font-size:10px">Buyer</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel-note">Internal entities excluded. Type column from buyer/supplier classification. Source: HubSpot.</div>
+    </div>
+  </div>
+
+  <!-- ROW 5: PRIORITIES + GOING COLD -->
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">⚡ This Week's Priorities</div></div>
+      <div class="panel-body">
+        <div class="action-card urgent"><div class="action-num">1</div><div class="action-text"><div class="action-title">Close Woodcache 750 CORCs — $120K</div><div class="action-desc">In inventory, $160/t spot. Target: Frontier, Puro, Microsoft CDR.</div><div class="action-owner">→ Ana + Carolina • Mar 14</div></div></div>
+        <div class="action-card urgent"><div class="action-num">2</div><div class="action-text"><div class="action-title">Fix CORSIA pricing — match $6-7/t market</div><div class="action-desc">We're at $8-9, EDF won't pay premium. Brian to approve.</div><div class="action-owner">→ Brian + Ana • Mar 7</div></div></div>
+        <div class="action-card normal"><div class="action-num">3</div><div class="action-text"><div class="action-title">Assign 75 unowned contacts</div><div class="action-desc">Warm leads with no HubSpot owner.</div><div class="action-owner">→ Ana + Carolina • Mar 7</div></div></div>
+        <div class="action-card normal"><div class="action-num">4</div><div class="action-text"><div class="action-title">Book 1 meeting each: BP, Shell, BBVA</div><div class="action-desc">6 T1s with zero meetings.</div><div class="action-owner">→ All • Ongoing</div></div></div>
+        <div class="action-card info"><div class="action-num">5</div><div class="action-text"><div class="action-title">Woodcache spot 1-pager</div><div class="action-desc">No sell sheet for our most available product.</div><div class="action-owner">→ Carolina • Mar 7</div></div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><div class="panel-title">🕐 Going Cold — Needs Attention</div></div>
+      <div class="panel-body">
+        <table class="tbl">
+          <thead><tr><th>Company</th><th class="r">Last Activity</th><th class="r">Days</th><th>Type</th><th>Owner</th></tr></thead>
+          <tbody>
+            <tr><td class="name" style="color:var(--red-text)">Woodside Energy</td><td class="num">Feb 18</td><td class="num" style="color:var(--red-text)">14</td><td>Email</td><td>Ana</td></tr>
+            <tr><td class="name" style="color:var(--red-text)">Vitol</td><td class="num">Feb 15</td><td class="num" style="color:var(--red-text)">17</td><td>Email</td><td>Bobbie</td></tr>
+            <tr><td class="name" style="color:var(--amber-text)">Itochu</td><td class="num">Feb 20</td><td class="num" style="color:var(--amber-text)">12</td><td>Email</td><td>Carolina</td></tr>
+            <tr><td class="name" style="color:var(--amber-text)">Airbnb</td><td class="num">Feb 22</td><td class="num" style="color:var(--amber-text)">10</td><td>Email</td><td>Ana</td></tr>
+            <tr><td class="name">TotalEnergies</td><td class="num">Feb 25</td><td class="num">7</td><td>Email</td><td>Ana</td></tr>
+            <tr><td class="name">Apollo Global</td><td class="num">Feb 26</td><td class="num">6</td><td>Meeting</td><td>Brian</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel-note">7+ days since last activity. Red = 14+. Source: HubSpot last engagement.</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ============================================ -->
+<!-- TAB 2: RAW DATA                              -->
+<!-- ============================================ -->
+<div class="tab-content" id="tab-rawdata">
+<div class="raw-page">
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <div class="filter-label">From</div>
+      <input type="date" class="filter-date" id="filterFrom" value="2026-02-23" onchange="applyFilters()">
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">To</div>
+      <input type="date" class="filter-date" id="filterTo" value="2026-03-04" onchange="applyFilters()">
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">Person</div>
+      <select class="filter-select" id="filterPerson" onchange="applyFilters()">
+        <option value="">All People</option>
+        <option value="Ana Avramovic">Ana Avramovic</option>
+        <option value="Carolina Martinez">Carolina Martinez</option>
+        <option value="Luis Adaime">Luis Adaime</option>
+        <option value="Bobbie Armstrong">Bobbie Armstrong</option>
+        <option value="Brian Katz">Brian Katz</option>
+        <option value="Emmanuel Mendoza">Emmanuel Mendoza</option>
+        <option value="Keith Driver">Keith Driver</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">Type</div>
+      <select class="filter-select" id="filterType" onchange="applyFilters()">
+        <option value="">All Types</option>
+        <option value="Email">Email</option>
+        <option value="Meeting">Meeting</option>
+        <option value="Call">Call</option>
+        <option value="Task">Task</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">Company Type</div>
+      <select class="filter-select" id="filterCompType" onchange="applyFilters()">
+        <option value="">All</option>
+        <option value="T1 Buyer">T1 Buyer</option>
+        <option value="Buyer">Buyer</option>
+        <option value="Supplier">Supplier</option>
+        <option value="Legal">Legal</option>
+        <option value="Rating">Rating</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <div class="filter-label">Company Search</div>
+      <input type="text" class="filter-input" id="filterCompany" placeholder="Type company name..." oninput="applyFilters()">
+    </div>
+    <div class="filter-actions">
+      <button class="btn-clear" onclick="clearFilters()">✕ Clear Filters</button>
+      <button class="btn-csv" onclick="downloadCSV()">⬇ Download CSV</button>
+    </div>
+  </div>
+
+  <!-- FILTER COUNT -->
+  <div style="padding:0 0 10px;display:flex;justify-content:space-between;align-items:center">
+    <div class="filter-count" id="filterCountText">Showing <strong>50</strong> of <strong>3,892</strong> activities (internal noise filtered out)</div>
+    <div style="font-size:10px;color:var(--text-muted)">Click any column header to sort ▲▼</div>
+  </div>
+
+  <!-- RAW DATA TABLE -->
+  <div class="raw-table-wrap">
+    <table class="raw-table" id="rawTable">
+      <thead>
+        <tr>
+          <th onclick="sortTable(0)" class="sorted">Date <span class="sort-arrow">▼</span></th>
+          <th onclick="sortTable(1)">Time <span class="sort-arrow">▼</span></th>
+          <th onclick="sortTable(2)">Type <span class="sort-arrow">▼</span></th>
+          <th onclick="sortTable(3)">Person <span class="sort-arrow">▼</span></th>
+          <th onclick="sortTable(4)">Company <span class="sort-arrow">▼</span></th>
+          <th onclick="sortTable(5)">Contact <span class="sort-arrow">▼</span></th>
+          <th onclick="sortTable(6)">Company Type <span class="sort-arrow">▼</span></th>
+          <th onclick="sortTable(7)">Subject / Preview <span class="sort-arrow">▼</span></th>
+        </tr>
+      </thead>
+      <tbody id="rawBody">
+        <!-- Rendered by JS -->
+      </tbody>
+    </table>
+
+    <!-- PAGINATION -->
+    <div class="pagination">
+      <div class="page-info" id="pageInfo">Showing <strong>1–50</strong> of <strong>3,892</strong> activities</div>
+      <div class="page-btns" id="pageBtns">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- FOOTER -->
+<div class="page-footer">
+  <span>CONFIDENTIAL — INTERNAL USE ONLY</span>
+  <span>Data: HubSpot CRM API • Excludes: internal @clearskylts.com emails, trading@, projects@ • Excludes companies: ClearSky, MKS, ClearBlue, Driver Projects, Leading Carbon</span>
 </div>
 
 <script>
-const API_BASE = 'https://api-tools.oga.earth';
-let currentRange = 14;
-
-function setRange(days) {
-  currentRange = days;
-  document.querySelectorAll('.range-pill button').forEach(btn => btn.classList.remove('active'));
-  event.target.classList.add('active');
-  loadDashboard();
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+  document.getElementById(`tab-${tab}`).classList.add('active');
 }
 
-async function loadDashboard() {
-  const to = new Date().toISOString().slice(0, 10);
-  const fromDate = new Date();
-  fromDate.setDate(fromDate.getDate() - currentRange);
-  const from = fromDate.toISOString().slice(0, 10);
+// ============================================================
+// CALL TARGETS
+// ============================================================
+const callData = [
+  { name: 'Ana Avramovic', initials: 'AA', color: 'var(--blue)', done: 4, target: 15 },
+  { name: 'Carolina Martinez', initials: 'CM', color: 'var(--purple)', done: 3, target: 15 },
+  { name: 'Luis Adaime', initials: 'LA', color: 'var(--teal)', done: 5, target: 10 },
+  { name: 'Bobbie Armstrong', initials: 'BA', color: 'var(--amber)', done: 3, target: 15 },
+  { name: 'Brian Katz', initials: 'BK', color: '#64748b', done: 1, target: 5 },
+];
 
-  try {
-    const res = await fetch(`${API_BASE}/api/revenue/activity-stats?from=${from}&to=${to}`);
-    if (!res.ok) throw new Error(`API returned ${res.status}`);
-    const data = await res.json();
-    renderDashboard(data);
-  } catch (e) {
-    document.getElementById('mainContent').innerHTML = `
-      <div style="max-width:600px;margin:120px auto;text-align:center;color:var(--text-muted)">
-        <div style="font-size:48px;margin-bottom:24px">⚠️</div>
-        <div style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:12px">Data Unavailable</div>
-        <div style="line-height:1.6">${e.message}<br>Check API connection at ${API_BASE}/api/revenue/activity-stats</div>
-        <button class="refresh-btn" style="margin-top:24px" onclick="loadDashboard()">Retry Connection</button>
+function renderCallTargets() {
+  const el = document.getElementById('callTargets');
+  el.innerHTML = callData.map(p => {
+    const pct = Math.round((p.done / p.target) * 100);
+    const clr = pct >= 50 ? 'var(--green-text)' : pct >= 25 ? 'var(--amber-text)' : 'var(--red-text)';
+    const bar = pct >= 50 ? 'var(--green)' : pct >= 25 ? 'var(--amber)' : 'var(--red)';
+    return `<div style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+        <span class="avatar" style="background:${p.color}">${p.initials}</span>
+        <span style="font-size:12px;font-weight:600">${p.name}</span>
+        <span style="margin-left:auto;font-family:var(--mono);font-size:13px;font-weight:700;color:${clr}">${p.done} / ${p.target}</span>
       </div>
-    `;
-    document.getElementById('dataSource').innerHTML = '<span style="color:var(--red)">● Error</span>';
+      <div class="prog-wrap">
+        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${bar}"></div></div>
+        <span class="prog-text" style="color:${clr}">${pct}%</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+renderCallTargets();
+
+// ============================================================
+// MOCK RAW ACTIVITY DATA (50 sample rows)
+// In production, this comes from the API endpoint
+// ============================================================
+const TYPE_PILLS = {
+  'Email': '<span class="pill b">Email</span>',
+  'Meeting': '<span class="pill g">Meeting</span>',
+  'Call': '<span class="pill y">Call</span>',
+  'Task': '<span class="pill gray">Task</span>'
+};
+const COMP_TYPE_PILLS = {
+  'T1 Buyer': '<span class="pill g">T1 Buyer</span>',
+  'Buyer': '<span class="pill b">Buyer</span>',
+  'Supplier': '<span class="pill gray">Supplier</span>',
+  'Legal': '<span class="pill p">Legal</span>',
+  'Rating': '<span class="pill y">Rating</span>',
+  'Partnership': '<span class="pill g">Partnership</span>'
+};
+
+const rawActivities = [
+  { date:'2026-03-04', time:'09:12', type:'Email', person:'Ana Avramovic', company:'EDF Trading', contact:'Jack Harris', compType:'T1 Buyer', subject:'RE: CORSIA pricing update — revised terms attached' },
+  { date:'2026-03-04', time:'09:45', type:'Meeting', person:'Carolina Martinez', company:'Volkswagen', contact:'Maximilian Kadzioch', compType:'T1 Buyer', subject:'Intro call — ARR + NbS project matching' },
+  { date:'2026-03-04', time:'10:02', type:'Email', person:'Ana Avramovic', company:'RBC', contact:'Gordon Evens', compType:'T1 Buyer', subject:'RE: TSB onboarding — Tau Carbon + TimberTurn details' },
+  { date:'2026-03-04', time:'10:30', type:'Call', person:'Luis Adaime', company:'Abatable', contact:'Mercedes Fuentes Velasco', compType:'Partnership', subject:'Partnership scoping — TSB + biochar buyer network' },
+  { date:'2026-03-04', time:'11:15', type:'Email', person:'Bobbie Armstrong', company:'Rewilding', contact:'Tom Harwood', compType:'Supplier', subject:'RE: Project pipeline update — Q2 volumes' },
+  { date:'2026-03-04', time:'11:48', type:'Email', person:'Carolina Martinez', company:'Emsurge', contact:'Bruno Cingolani', compType:'Buyer', subject:'Pricing conditions for CORSIA broker arrangement' },
+  { date:'2026-03-04', time:'12:05', type:'Meeting', person:'Luis Adaime', company:'Bosquia', contact:'Rafael Permuy', compType:'Supplier', subject:'Addendum review — Trevías→Tineo amendment' },
+  { date:'2026-03-04', time:'13:20', type:'Email', person:'Ana Avramovic', company:'SCB Group', contact:'Benjamin Crick', compType:'T1 Buyer', subject:'100kt CORSIA Dec 2027 — VCS2401 pricing' },
+  { date:'2026-03-04', time:'14:00', type:'Call', person:'Carolina Martinez', company:'Offcarbon', contact:'Marie Ines Cubertafont', compType:'Buyer', subject:'NDA follow-up + tech presentation scheduling' },
+  { date:'2026-03-04', time:'14:35', type:'Email', person:'Brian Katz', company:'Dentons', contact:'Sarah Mitchell', compType:'Legal', subject:'RE: ClearSky framework agreement — redline comments' },
+  { date:'2026-03-03', time:'08:45', type:'Email', person:'Ana Avramovic', company:'EDF Trading', contact:'Jack Harris', compType:'T1 Buyer', subject:'South African grassland — CCP compliance note' },
+  { date:'2026-03-03', time:'09:30', type:'Meeting', person:'Ana Avramovic', company:'True Manufacturing', contact:'David Klein', compType:'Buyer', subject:'ACR CORSIA credits — 6.5% commission structure' },
+  { date:'2026-03-03', time:'10:15', type:'Email', person:'Luis Adaime', company:'REDENOR', contact:'Francisco Abilleira', compType:'Supplier', subject:'Contract redline — reforestation terms v3' },
+  { date:'2026-03-03', time:'11:00', type:'Call', person:'Luis Adaime', company:'Abatable', contact:'Mercedes Fuentes Velasco', compType:'Partnership', subject:'Buyer mandate mapping — Sierra Leone + India mangroves' },
+  { date:'2026-03-03', time:'11:45', type:'Email', person:'Carolina Martinez', company:'Calyx Global', contact:'Peter Hartmann', compType:'Rating', subject:'RE: Rating methodology for TSB credits' },
+  { date:'2026-03-03', time:'13:00', type:'Email', person:'Bobbie Armstrong', company:'Wild Assets', contact:'James Cooper', compType:'Supplier', subject:'Pipeline update — UK rewilding projects' },
+  { date:'2026-03-03', time:'14:15', type:'Meeting', person:'Brian Katz', company:'Apollo Global Management', contact:'Nathan Ross', compType:'T1 Buyer', subject:'Carbon credit fund allocation — intro discussion' },
+  { date:'2026-03-03', time:'15:00', type:'Email', person:'Ana Avramovic', company:'Brightly', contact:'Hannah Wu', compType:'Buyer', subject:'CDR mandate — Woodcache + biochar product match' },
+  { date:'2026-03-03', time:'15:30', type:'Task', person:'Emmanuel Mendoza', company:'Bosquia', contact:'—', compType:'Supplier', subject:'Prepare addendum documentation for legal review' },
+  { date:'2026-03-03', time:'16:00', type:'Email', person:'Carolina Martinez', company:'Therm', contact:'Michael Stern', compType:'Buyer', subject:'RE: Biochar pricing — Puro.earth CORCs availability' },
+  { date:'2026-03-02', time:'09:00', type:'Email', person:'Ana Avramovic', company:'EDF Trading', contact:'Jack Harris', compType:'T1 Buyer', subject:'CORSIA eligible inventory — updated availability' },
+  { date:'2026-03-02', time:'09:45', type:'Call', person:'Ana Avramovic', company:'RBC', contact:'Brian Hong', compType:'T1 Buyer', subject:'Coffee follow-up — Julia-Maria Becker intro' },
+  { date:'2026-03-02', time:'10:30', type:'Email', person:'Bobbie Armstrong', company:'Great Bear Carbon', contact:'Mark Davidson', compType:'Supplier', subject:'BC forestry offsets — volume confirmation' },
+  { date:'2026-03-02', time:'11:15', type:'Meeting', person:'Carolina Martinez', company:'Abatable', contact:'Mercedes Fuentes Velasco', compType:'Partnership', subject:'Technical walkthrough — matching engine demo' },
+  { date:'2026-03-02', time:'12:00', type:'Email', person:'Luis Adaime', company:'Enersol', contact:'Pedro Sanchez', compType:'Supplier', subject:'Pontevedra GIS zone geometry — CMVMC boundaries' },
+  { date:'2026-03-02', time:'13:30', type:'Email', person:'Ana Avramovic', company:'The Coca-Cola Company', contact:'Lisa Fernandez', compType:'T1 Buyer', subject:'RE: Voluntary carbon program — NbS project shortlist' },
+  { date:'2026-03-02', time:'14:00', type:'Email', person:'Brian Katz', company:'Dentons', contact:'Sarah Mitchell', compType:'Legal', subject:'Framework agreement — first draft circulation' },
+  { date:'2026-03-02', time:'14:45', type:'Email', person:'Carolina Martinez', company:'Invert', contact:'Thomas Berg', compType:'Supplier', subject:'RE: MRV technology integration — carbon monitoring' },
+  { date:'2026-03-02', time:'15:20', type:'Call', person:'Luis Adaime', company:'CFS', contact:'Antonio Marcos', compType:'Supplier', subject:'Spain MITECO registry pathway — regulatory update' },
+  { date:'2026-03-02', time:'16:00', type:'Email', person:'Ana Avramovic', company:'Woodcache', contact:'Serge Bushman', compType:'Supplier', subject:'750 CORC inventory — buyer interest pipeline' },
+  { date:'2026-03-01', time:'08:30', type:'Email', person:'Bobbie Armstrong', company:'Rewilding', contact:'Tom Harwood', compType:'Supplier', subject:'UK project pipeline — biodiversity co-benefits' },
+  { date:'2026-03-01', time:'09:15', type:'Meeting', person:'Ana Avramovic', company:'Abatable', contact:'Mercedes Fuentes Velasco', compType:'Partnership', subject:'Weekly sync — buyer pipeline review' },
+  { date:'2026-03-01', time:'10:00', type:'Email', person:'Carolina Martinez', company:'HighHopes', contact:'Daniel Raz', compType:'Supplier', subject:'DAC credit pricing — forward delivery Q3 2026' },
+  { date:'2026-03-01', time:'10:45', type:'Email', person:'Ana Avramovic', company:'EDF Trading', contact:'Jack Harris', compType:'T1 Buyer', subject:'Market update — grassland credit pricing benchmarks' },
+  { date:'2026-03-01', time:'11:30', type:'Call', person:'Carolina Martinez', company:'Emsurge', contact:'Alex Perrett', compType:'Buyer', subject:'CORSIA distribution channel — terms discussion' },
+  { date:'2026-03-01', time:'12:15', type:'Email', person:'Brian Katz', company:'Dentons', contact:'Sarah Mitchell', compType:'Legal', subject:'RE: Engagement letter — fee structure confirmation' },
+  { date:'2026-03-01', time:'13:00', type:'Email', person:'Luis Adaime', company:'Abatable', contact:'Mercedes Fuentes Velasco', compType:'Partnership', subject:'Origination partnership — TSB project list' },
+  { date:'2026-03-01', time:'14:00', type:'Task', person:'Emmanuel Mendoza', company:'REDENOR', contact:'—', compType:'Supplier', subject:'Contract redline comparison — track changes v2 vs v3' },
+  { date:'2026-03-01', time:'14:30', type:'Email', person:'Bobbie Armstrong', company:'Rewilding', contact:'Tom Harwood', compType:'Supplier', subject:'Monitoring report — Peatland restoration metrics' },
+  { date:'2026-03-01', time:'15:00', type:'Email', person:'Ana Avramovic', company:'SCB Group', contact:'Benjamin Crick', compType:'T1 Buyer', subject:'Plastic credit availability — Q2 2026 vintage' },
+  { date:'2026-02-28', time:'09:00', type:'Email', person:'Ana Avramovic', company:'EDF Trading', contact:'Jack Harris', compType:'T1 Buyer', subject:'RE: Counterproposal — $6.50/t floor with volume tier' },
+  { date:'2026-02-28', time:'10:00', type:'Meeting', person:'Luis Adaime', company:'Abatable', contact:'Mercedes Fuentes Velasco', compType:'Partnership', subject:'Deep-dive: India mangrove project evaluation' },
+  { date:'2026-02-28', time:'11:00', type:'Email', person:'Carolina Martinez', company:'NatureBrain', contact:'Laura Gómez', compType:'Supplier', subject:'Pola de Allande — Asturias calculator methodology' },
+  { date:'2026-02-28', time:'12:00', type:'Call', person:'Bobbie Armstrong', company:'Wild Assets', contact:'James Cooper', compType:'Supplier', subject:'UK project site visit scheduling — March dates' },
+  { date:'2026-02-28', time:'13:30', type:'Email', person:'Brian Katz', company:'Dentons', contact:'Sarah Mitchell', compType:'Legal', subject:'Engagement scope — carbon trading advisory' },
+  { date:'2026-02-28', time:'14:00', type:'Email', person:'Ana Avramovic', company:'Brightly', contact:'Hannah Wu', compType:'Buyer', subject:'CDR buyer mandate — $2M annual commitment' },
+  { date:'2026-02-28', time:'15:00', type:'Email', person:'Carolina Martinez', company:'Green Carbon Ventures', contact:'Robert Chen', compType:'Supplier', subject:'IFM project pipeline — Southeast Asia' },
+  { date:'2026-02-28', time:'15:45', type:'Meeting', person:'Ana Avramovic', company:'Woodcache', contact:'Serge Bushman', compType:'Supplier', subject:'CORC delivery logistics — Puro.earth registry transfer' },
+  { date:'2026-02-28', time:'16:30', type:'Email', person:'Luis Adaime', company:'Bosquia', contact:'Juan Carlos Hernanz', compType:'Supplier', subject:'Cuatrecasas redline — addendum clause 3.2 response' },
+  { date:'2026-02-27', time:'09:30', type:'Email', person:'Ana Avramovic', company:'EDF Trading', contact:'Jack Harris', compType:'T1 Buyer', subject:'CORSIA pipeline — grassland + CCP project list' },
+];
+
+// ============================================================
+// RAW DATA TABLE — Filter, Sort, Paginate, Download
+// ============================================================
+let filteredData = [...rawActivities];
+let currentPage = 1;
+let sortCol = 0;
+let sortAsc = false;
+const PAGE_SIZE = 50;
+
+function applyFilters() {
+  const person = document.getElementById('filterPerson').value;
+  const type = document.getElementById('filterType').value;
+  const compType = document.getElementById('filterCompType').value;
+  const compSearch = document.getElementById('filterCompany').value.toLowerCase();
+  const from = document.getElementById('filterFrom').value;
+  const to = document.getElementById('filterTo').value;
+
+  filteredData = rawActivities.filter(r => {
+    if (person && r.person !== person) return false;
+    if (type && r.type !== type) return false;
+    if (compType && r.compType !== compType) return false;
+    if (compSearch && !r.company.toLowerCase().includes(compSearch)) return false;
+    if (from && r.date < from) return false;
+    if (to && r.date > to) return false;
+    return true;
+  });
+
+  currentPage = 1;
+  renderRawTable();
+}
+
+function clearFilters() {
+  document.getElementById('filterPerson').value = '';
+  document.getElementById('filterType').value = '';
+  document.getElementById('filterCompType').value = '';
+  document.getElementById('filterCompany').value = '';
+  document.getElementById('filterFrom').value = '2026-02-23';
+  document.getElementById('filterTo').value = '2026-03-04';
+  filteredData = [...rawActivities];
+  currentPage = 1;
+  renderRawTable();
+}
+
+function sortTable(col) {
+  document.querySelectorAll('.raw-table th').forEach(th => th.classList.remove('sorted'));
+  if (sortCol === col) { sortAsc = !sortAsc; } else { sortCol = col; sortAsc = true; }
+  document.querySelectorAll('.raw-table th')[col].classList.add('sorted');
+
+  const keys = ['date','time','type','person','company','contact','compType','subject'];
+  const key = keys[col];
+  filteredData.sort((a, b) => {
+    const va = a[key] || '';
+    const vb = b[key] || '';
+    return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+  currentPage = 1;
+  renderRawTable();
+}
+
+function renderRawTable() {
+  const total = rawActivities.length;
+  const shown = filteredData.length;
+  const totalPages = Math.ceil(shown / PAGE_SIZE);
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const end = Math.min(start + PAGE_SIZE, shown);
+  const slice = filteredData.slice(start, end);
+
+  // Count text
+  document.getElementById('filterCountText').innerHTML =
+    `Showing <strong>${shown.toLocaleString()}</strong> of <strong>${total.toLocaleString()}</strong> activities (internal noise filtered out)`;
+  document.getElementById('rawCount').textContent = total.toLocaleString();
+
+  // Body
+  const body = document.getElementById('rawBody');
+  body.innerHTML = slice.map(r => `<tr>
+    <td class="mono">${r.date}</td>
+    <td class="mono">${r.time}</td>
+    <td>${TYPE_PILLS[r.type] || r.type}</td>
+    <td class="name">${r.person.split(' ')[0]}</td>
+    <td class="name">${r.company}</td>
+    <td>${r.contact}</td>
+    <td>${COMP_TYPE_PILLS[r.compType] || r.compType}</td>
+    <td class="preview" title="${r.subject}">${r.subject}</td>
+  </tr>`).join('');
+
+  // Page info
+  document.getElementById('pageInfo').innerHTML =
+    `Showing <strong>${start+1}–${end}</strong> of <strong>${shown.toLocaleString()}</strong> activities`;
+
+  // Page buttons
+  const btns = document.getElementById('pageBtns');
+  let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" ${currentPage<=1?'disabled':''}>‹ Prev</button>`;
+  for (let i = 1; i <= Math.min(totalPages, 7); i++) {
+    html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
   }
+  if (totalPages > 7) html += `<button class="page-btn" disabled>...</button><button class="page-btn ${totalPages===currentPage?'active':''}" onclick="goPage(${totalPages})">${totalPages}</button>`;
+  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" ${currentPage>=totalPages?'disabled':''}>Next ›</button>`;
+  btns.innerHTML = html;
 }
 
-function renderDashboard(data) {
-  const s = data.summary;
-  const main = document.getElementById('mainContent');
-
-  main.innerHTML = `
-    <!-- SCOREBOARD -->
-    <div class="scoreboard">
-      <div class="score-cell highlight">
-        <div class="score-num">$0</div>
-        <div class="score-label">Revenue Closed</div>
-        <div class="score-sub">Target: $100K/mo</div>
-      </div>
-      <div class="score-cell gold">
-        <div class="score-num">$0</div>
-        <div class="score-label">Pipeline Value</div>
-        <div class="score-sub">0 active deals</div>
-      </div>
-      <div class="score-cell warn">
-        <div class="score-num">${s.companies_with_meetings || 0}</div>
-        <div class="score-label">Cos w/ Meetings</div>
-        <div class="score-sub">out of ${s.external_companies} contacted</div>
-      </div>
-      <div class="score-cell good">
-        <div class="score-num">${s.total_meetings}</div>
-        <div class="score-label">Ext. Meetings</div>
-        <div class="score-sub">external counterparties only</div>
-      </div>
-      <div class="score-cell blue">
-        <div class="score-num">${s.total_calls}</div>
-        <div class="score-label">Calls Made</div>
-        <div class="score-sub">vs ${s.total_emails.toLocaleString()} emails</div>
-      </div>
-      <div class="score-cell neutral">
-        <div class="score-num">${s.external_contacts}</div>
-        <div class="score-label">Ext. Contacts</div>
-        <div class="score-sub">unique individuals</div>
-      </div>
-    </div>
-
-    <!-- ROW 1: TOP COMPANIES + TEAM ACTIVITY -->
-    <div class="grid-2">
-      <div class="panel">
-        <div class="panel-head">
-          <div class="panel-title">🏢 Most Active Companies <span class="panel-badge">${s.external_companies} external</span></div>
-        </div>
-        <div class="panel-body">
-          <table class="tbl">
-            <thead><tr><th>Company</th><th class="r">Activities</th><th class="r">Meetings</th><th>Type</th></tr></thead>
-            <tbody id="companiesBody"></tbody>
-          </table>
-        </div>
-        <div class="panel-note">Internal entities excluded. Source: HubSpot engagement counts by company.</div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head">
-          <div class="panel-title">👥 Team Activity Breakdown</div>
-        </div>
-        <div class="panel-body">
-          <table class="tbl">
-            <thead><tr><th>Team Member</th><th class="r">Activities</th></tr></thead>
-            <tbody id="teamBody"></tbody>
-          </table>
-        </div>
-        <div class="panel-note">Source: HubSpot CRM activity log, all engagement types.</div>
-      </div>
-    </div>
-
-    <!-- ROW 2: T1 ACCOUNT STATUS -->
-    <div class="panel">
-      <div class="panel-head">
-        <div class="panel-title">🎯 T1 Account Coverage <span class="panel-badge">${data.t1_status.length} tracked</span></div>
-      </div>
-      <div class="panel-body">
-        <table class="tbl">
-          <thead><tr><th>Account</th><th>Status</th><th class="r">Activities</th></tr></thead>
-          <tbody id="t1Body"></tbody>
-        </table>
-      </div>
-      <div class="panel-note">T1 buyers: target accounts for CDR/CORSIA credits. Green = meeting held. Yellow = emails only. Red = no activity.</div>
-    </div>
-
-    <!-- FOOTER -->
-    <div class="page-footer">
-      <span>CONFIDENTIAL — INTERNAL USE ONLY</span>
-      <span>Data: HubSpot CRM API • Period: ${data.period.from} to ${data.period.to} • Filtered: ${data.raw_count_before_filter - data.clean_count_after_filter} internal activities removed • Processing: ${data.processing_time_ms}ms</span>
-    </div>
-  `;
-
-  // Render companies table
-  const companiesBody = document.getElementById('companiesBody');
-  companiesBody.innerHTML = data.top_companies.slice(0, 15).map(c => `
-    <tr>
-      <td class="name">${c.name}</td>
-      <td class="num">${c.activities}</td>
-      <td class="num">${c.meetings}</td>
-      <td style="font-size:10px${c.type === 'T1 Buyer' ? ';color:var(--green-text)' : ''}">${c.type}</td>
-    </tr>
-  `).join('');
-
-  // Render team table
-  const teamBody = document.getElementById('teamBody');
-  teamBody.innerHTML = data.team.map(t => `
-    <tr>
-      <td class="name">${t.name}</td>
-      <td class="num">${t.activities}</td>
-    </tr>
-  `).join('');
-
-  // Render T1 table
-  const t1Body = document.getElementById('t1Body');
-  t1Body.innerHTML = data.t1_status.map(t => `
-    <tr>
-      <td class="name">${t.account}</td>
-      <td><span class="pill ${t.status === 'green' ? 'g' : (t.status === 'yellow' ? 'y' : 'r')}">${t.engagement}</span></td>
-      <td class="num">${t.activities}</td>
-    </tr>
-  `).join('');
-
-  // Update data source badge
-  document.getElementById('dataSource').innerHTML = '<span class="live-dot"></span> HubSpot Live';
+function goPage(p) {
+  const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
+  if (p < 1 || p > totalPages) return;
+  currentPage = p;
+  renderRawTable();
 }
 
-// Auto-load on page load
-loadDashboard();
+function downloadCSV() {
+  const headers = ['Date','Time','Type','Person','Company','Contact','Company Type','Subject'];
+  const rows = filteredData.map(r => [r.date, r.time, r.type, r.person, r.company, r.contact, r.compType, `"${r.subject.replace(/"/g,'""')}"`]);
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `clearsky_activities_${document.getElementById('filterFrom').value}_to_${document.getElementById('filterTo').value}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// Init
+renderRawTable();
 </script>
-
 </body>
 </html>
