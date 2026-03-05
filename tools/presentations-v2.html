@@ -368,7 +368,7 @@ function renderProjects(){
   grid.innerHTML=filtered.map(function(p){
     var isSel=selectedIds.indexOf(p.id)>=0;
     var tags=(p.tags||[]).slice(0,4).map(function(t){return'<span class="proj-tag">'+esc(t.value)+'</span>'}).join('');
-    var wc=p.word_count?p.word_count.toLocaleString()+' words':'';
+    var wc=p.word_count?p.word_count.toLocaleString()+' words':'<span style="color:var(--wa)">pending extraction</span>';
     var displayTitle=p.title||'Untitled';
     // Clean filenames: replace underscores/hyphens, remove extensions
     if(displayTitle.match(/[_-]/)&&!displayTitle.match(/\s/)){
@@ -410,6 +410,21 @@ function resetUploadZone(){
   document.getElementById('pds-file').value='';
 }
 
+async function retryExtract(docId){
+  var stream=document.getElementById('pds-status');
+  stream.innerHTML='<div class="line loading"><span class="spin"></span> Retrying extraction...</div>';
+  try{
+    var r=await apiCall('/api/presentations/v2/retry-extract/'+docId,{method:'POST'});
+    stream.innerHTML='<div class="line ok">&#x2713; Extraction succeeded: '+(esc(r.title)||'Project')+' ('+r.word_count+' words)</div>';
+    await loadProjects();
+    renderProjects();
+    toast('Extraction completed','ok');
+  }catch(e){
+    stream.innerHTML='<div class="line" style="color:var(--er)">&#x2717; Retry failed: '+esc(e.message)+'</div>'
+      +'<div style="margin-top:8px"><button onclick="retryExtract(\''+docId+'\')" style="background:var(--wa);color:#000;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600">Retry Again</button></div>';
+  }
+}
+
 // PDS Upload
 function onPdsDragOver(e){e.preventDefault();e.currentTarget.classList.add('dragover')}
 function onPdsDragLeave(e){e.currentTarget.classList.remove('dragover')}
@@ -430,10 +445,19 @@ async function onPdsSelected(file){
   try{
     stream.innerHTML+='<div class="line loading"><span class="spin"></span> Extracting project data...</div>';
     var r=await apiCall('/api/presentations/v2/ingest-pds',{method:'POST',body:fd});
-    stream.innerHTML='<div class="line ok">&#x2713; Reading document...</div>'
-      +'<div class="line ok">&#x2713; Extracting project data...</div>'
-      +'<div class="line ok">&#x2713; Found: '+(esc(r.title)||'Project')+' ('+r.word_count+' words)</div>'
-      +'<div class="line ok">&#x2713; Saved to project library</div>';
+
+    if(r.status==='extraction_failed'){
+      // Upload succeeded but extraction failed — show warning + retry button
+      stream.innerHTML='<div class="line ok">&#x2713; File uploaded</div>'
+        +'<div class="line" style="color:var(--wa)">&#x26A0; Extraction failed: '+(esc(r.extraction_error||'unknown error'))+'</div>'
+        +'<div class="line" style="color:var(--wa)">Project saved — you can retry extraction later</div>'
+        +'<div style="margin-top:8px"><button onclick="retryExtract(\''+r.project_id+'\')" style="background:var(--wa);color:#000;border:none;border-radius:6px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:600">Retry Extraction</button></div>';
+    } else {
+      stream.innerHTML='<div class="line ok">&#x2713; Reading document...</div>'
+        +'<div class="line ok">&#x2713; Extracting project data...</div>'
+        +'<div class="line ok">&#x2713; Found: '+(esc(r.title)||'Project')+' ('+r.word_count+' words)</div>'
+        +'<div class="line ok">&#x2713; Saved to project library</div>';
+    }
 
     if(r.title)document.getElementById('pds-name').value=r.title;
 
@@ -443,13 +467,12 @@ async function onPdsSelected(file){
       selectedIds.push(r.project_id);
       renderProjects();
     }
-    toast('Project added to library','ok');
+    toast(r.status==='extraction_failed'?'Project saved (extraction failed)':'Project added to library', r.status==='extraction_failed'?'warn':'ok');
 
     // Reset upload zone for next project
     document.getElementById('pds-name').value='';
     document.getElementById('pds-file').value='';
     document.getElementById('pds-dropzone').classList.remove('dragover','uploaded');
-    // Show upload-another link
     setTimeout(function(){
       stream.innerHTML+='<div style="margin-top:8px"><a href="#" onclick="resetUploadZone();return false" style="color:var(--lb);font-size:12px;font-weight:600">+ Upload another project</a></div>';
     },500);
