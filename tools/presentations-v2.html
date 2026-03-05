@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presentations V2 — ClearSky Tools</title>
+<link rel="icon" href="/assets/favicon.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"></script>
+<script>if(typeof PptxGenJS==='undefined')document.write('<script src="https://unpkg.com/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"><\/script>');</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{
+  --dn:#0D1B3E;--dn-l:#1a2d4a;--gd:#D4A843;--gd-h:#d4b862;--wh:#FFFFFF;--ow:#F5F7FA;
+  --lb:#5B9BD5;--dt:#2C3E50;--mg:#6B7B8D;--lg:#E8ECF1;--ok:#10b981;--er:#ef4444;
+  --bg:#F8F9FB;--font-head:'Georgia','Times New Roman',serif;
+  --font-body:'Segoe UI','Helvetica Neue',Arial,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font-body);background:var(--bg);color:var(--dt);min-height:100vh}
+
+/* NAV */
+.nav{background:var(--dn);padding:12px 24px;display:flex;align-items:center;gap:16px}
+.nav img{height:28px}.nav-sep{color:var(--mg);font-size:14px}
+.nav-title{color:var(--wh);font-size:14px;font-weight:600;letter-spacing:.02em}
+.nav-back{color:var(--lb);font-size:13px;text-decoration:none;margin-left:auto}
+.nav-back:hover{color:var(--gd)}
+
+/* CONTAINER */
+.container{max-width:1100px;margin:0 auto;padding:32px 24px}
+.hero{margin-bottom:24px}
+.hero h1{font-family:var(--font-head);font-size:26px;color:var(--dn);margin-bottom:6px}
+.hero p{color:var(--mg);font-size:14px}
+
+/* STEPS */
+.steps{display:flex;gap:4px;margin-bottom:28px}
+.step{flex:1;height:4px;background:var(--lg);border-radius:2px;transition:background .3s}
+.step.active{background:var(--gd)}.step.done{background:var(--ok)}
+
+/* BUTTONS */
+.btn{padding:10px 24px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px;font-family:var(--font-body)}
+.btn-gold{background:var(--gd);color:var(--dn)}.btn-gold:hover{background:var(--gd-h)}
+.btn-gold:disabled{opacity:.5;cursor:not-allowed}
+.btn-navy{background:var(--dn);color:var(--wh)}.btn-navy:hover{background:var(--dn-l)}
+.btn-outline{background:none;color:var(--dn);border:1.5px solid var(--lg)}.btn-outline:hover{border-color:var(--lb)}
+.btn-row{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap}
+.btn-full{width:100%}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;max-width:360px}
+.toast.show{opacity:1}.toast.ok{background:var(--ok);color:#fff}.toast.err{background:var(--er);color:#fff}
+
+/* PHASES */
+.phase{display:none}.phase.visible{display:block}
+
+/* ═══ PHASE 1: PROJECT SELECT ═══ */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:24px;min-height:420px}
+.panel{background:var(--wh);border:1px solid var(--lg);border-radius:8px;padding:20px}
+.panel h3{font-family:var(--font-head);font-size:16px;color:var(--dn);margin-bottom:12px}
+.search-box{width:100%;padding:9px 12px 9px 34px;border:1.5px solid var(--lg);border-radius:6px;font-size:13px;font-family:var(--font-body);color:var(--dt);transition:border-color .2s;margin-bottom:12px}
+.search-box:focus{outline:none;border-color:var(--lb)}
+.search-wrap{position:relative}.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--mg);pointer-events:none}
+.proj-grid{display:grid;grid-template-columns:1fr;gap:8px;max-height:380px;overflow-y:auto}
+.proj-card{border:2px solid var(--lg);border-radius:8px;padding:12px 14px;cursor:pointer;transition:all .15s;position:relative}
+.proj-card:hover{border-color:var(--lb);background:rgba(91,155,213,.04)}
+.proj-card.selected{border-color:var(--gd);background:rgba(212,168,67,.06)}
+.proj-card.selected::after{content:'✓';position:absolute;top:8px;right:10px;width:22px;height:22px;border-radius:50%;background:var(--gd);color:var(--wh);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.proj-name{font-size:14px;font-weight:600;color:var(--dn);margin-bottom:4px;padding-right:30px}
+.proj-meta{font-size:11px;color:var(--mg);display:flex;gap:8px;flex-wrap:wrap}
+.proj-tag{padding:2px 6px;border-radius:10px;background:var(--ow);font-size:10px;font-weight:600;color:var(--mg)}
+.proj-empty{text-align:center;padding:40px 16px;color:var(--mg);font-size:13px}
+.selected-count{font-size:12px;color:var(--gd);font-weight:600;margin-bottom:8px}
+
+/* Upload panel */
+.dropzone{border:2px dashed var(--lg);border-radius:8px;padding:32px 16px;text-align:center;cursor:pointer;transition:all .2s}
+.dropzone:hover,.dropzone.dragover{border-color:var(--gd);background:rgba(212,168,67,.04)}
+.dropzone h4{font-size:14px;color:var(--dt);margin-bottom:4px}
+.dropzone p{font-size:12px;color:var(--mg)}
+.dropzone small{font-size:10px;color:var(--mg);display:block;margin-top:8px}
+.field-group{margin-bottom:12px}
+.field-group label{font-size:12px;font-weight:600;color:var(--dn);margin-bottom:4px;display:block}
+.field-group input,.field-group textarea,.field-group select{width:100%;padding:8px 12px;border:1.5px solid var(--lg);border-radius:6px;font-size:13px;font-family:var(--font-body);color:var(--dt);transition:border-color .2s}
+.field-group input:focus,.field-group textarea:focus{outline:none;border-color:var(--lb)}
+
+/* Status stream */
+.status-stream{margin-top:16px;font-size:13px;line-height:2}
+.status-stream .line{display:flex;align-items:center;gap:6px}
+.status-stream .line.ok{color:var(--ok)}.status-stream .line.loading{color:var(--mg)}
+.status-stream .spin{display:inline-block;width:14px;height:14px;border:2px solid var(--lg);border-top:2px solid var(--gd);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ═══ PHASE 2: DESIGN ═══ */
+.section-label{font-size:13px;font-weight:600;color:var(--dn);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.palette{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.swatch{width:28px;height:28px;border-radius:4px;border:1px solid rgba(0,0,0,.1)}
+.font-preview{font-size:12px;color:var(--mg);margin-top:4px}
+.asset-section{margin-top:16px;border-top:1px solid var(--lg);padding-top:16px}
+.asset-section h4{font-size:14px;font-weight:600;color:var(--dn);margin-bottom:8px}
+.thumb-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.thumb{width:64px;height:64px;border-radius:6px;background:var(--lg);object-fit:cover;border:1px solid var(--lg)}
+
+/* ═══ PHASE 3: BRIEF ═══ */
+.pill-row{display:flex;gap:8px;margin-bottom:16px}
+.pill{padding:8px 18px;border:2px solid var(--lg);border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;background:var(--wh);color:var(--dt)}
+.pill:hover{border-color:var(--lb)}.pill.active{border-color:var(--gd);background:rgba(212,168,67,.08);color:var(--dn)}
+.gen-status{background:var(--wh);border:1px solid var(--lg);border-radius:8px;padding:20px;margin-top:16px;display:none}
+.gen-status .progress{height:4px;background:var(--lg);border-radius:2px;overflow:hidden;margin-top:12px}
+.gen-status .progress .bar{height:100%;background:var(--gd);border-radius:2px;transition:width .5s;width:0}
+
+/* ═══ PHASE 4: PREVIEW ═══ */
+.preview-split{display:grid;grid-template-columns:280px 1fr;gap:20px;min-height:500px}
+.slide-list{display:flex;flex-direction:column;gap:6px;max-height:600px;overflow-y:auto}
+.slide-thumb{background:var(--wh);border:2px solid var(--lg);border-radius:8px;padding:10px 12px;cursor:pointer;transition:all .15s}
+.slide-thumb:hover{border-color:var(--lb)}.slide-thumb.active{border-color:var(--gd);background:rgba(212,168,67,.04)}
+.slide-num{font-size:10px;font-weight:700;color:var(--mg);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;display:flex;align-items:center;gap:6px}
+.slide-type-badge{padding:1px 6px;border-radius:8px;background:var(--ow);font-size:9px;font-weight:700;color:var(--mg)}
+.slide-title-preview{font-size:12px;font-weight:600;color:var(--dn);line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.score-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.score-dot.green{background:var(--ok)}.score-dot.yellow{background:#f59e0b}.score-dot.red{background:var(--er)}
+.edit-panel{background:var(--wh);border:1px solid var(--lg);border-radius:8px;padding:20px}
+.edit-panel h3{font-family:var(--font-head);font-size:16px;color:var(--dn);margin-bottom:16px}
+.edit-panel .field-group textarea{min-height:60px;resize:vertical}
+.stat-editor{display:grid;grid-template-columns:1fr 1fr 100px;gap:8px;margin-bottom:8px}
+.stat-editor input{padding:6px 10px;border:1.5px solid var(--lg);border-radius:4px;font-size:12px;font-family:var(--font-body)}
+.flag-box{background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:10px 12px;font-size:12px;color:#c2410c;margin-top:12px}
+.score-reason{font-size:11px;color:var(--mg);margin-top:6px}
+.bottom-bar{background:var(--wh);border:1px solid var(--lg);border-radius:8px;padding:16px 20px;margin-top:16px}
+.suggestions{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.sug-pill{padding:5px 12px;border-radius:14px;border:1px solid var(--lg);font-size:11px;color:var(--mg);cursor:pointer;transition:all .15s}
+.sug-pill:hover{border-color:var(--gd);color:var(--gd)}
+.missing-warn{background:#fef3c7;border:1px solid #fcd34d;border-radius:6px;padding:8px 12px;font-size:12px;color:#92400e;margin-bottom:12px}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .split,.preview-split{grid-template-columns:1fr}
+  .container{padding:20px 16px}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <img src="/assets/logos/logo-white.png" alt="ClearSky" onerror="this.style.display='none'">
+  <span class="nav-sep">|</span>
+  <span class="nav-title">Presentations V2</span>
+  <a href="/tools/clearsky-tools-index.html" class="nav-back">Back to Tools</a>
+</nav>
+
+<div class="container">
+  <div class="hero">
+    <h1>Presentation Engine</h1>
+    <p>Generate branded ClearSky decks from your project library. Select projects, set the brief, download PPTX.</p>
+  </div>
+
+  <div class="steps">
+    <div class="step active" id="step0"></div>
+    <div class="step" id="step1"></div>
+    <div class="step" id="step2"></div>
+    <div class="step" id="step3"></div>
+  </div>
+
+  <!-- ═══ PHASE 1: PROJECT SELECTION ═══ -->
+  <div class="phase visible" id="phase-project">
+    <div class="split">
+      <div class="panel">
+        <h3>Project Library</h3>
+        <div class="selected-count" id="sel-count">0 of 3 selected</div>
+        <div class="search-wrap">
+          <span class="search-icon">&#x1F50D;</span>
+          <input class="search-box" id="proj-search" placeholder="Search projects..." oninput="filterProjects()">
+        </div>
+        <div class="proj-grid" id="proj-grid">
+          <div class="proj-empty">Loading projects...</div>
+        </div>
+      </div>
+      <div class="panel" id="upload-panel">
+        <h3>Add New Project</h3>
+        <p style="font-size:12px;color:var(--mg);margin-bottom:16px">Upload a project document (PDS, monitoring report, technical brief) to create a new project in your library.</p>
+        <div class="dropzone" id="pds-dropzone" onclick="document.getElementById('pds-file').click()" ondrop="onPdsDrop(event)" ondragover="onPdsDragOver(event)" ondragleave="onPdsDragLeave(event)">
+          <h4>Drop PDF here or click to browse</h4>
+          <p>PDS, verification report, methodology document</p>
+          <small>PDF, DOCX — max 10MB</small>
+          <input type="file" id="pds-file" hidden accept=".pdf,.doc,.docx" onchange="onPdsSelected(this.files[0])">
+        </div>
+        <div class="field-group" style="margin-top:12px">
+          <label>Project Name (auto-detected from PDF)</label>
+          <input type="text" id="pds-name" placeholder="Will be filled after upload...">
+        </div>
+        <div class="status-stream" id="pds-status"></div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-gold" id="btn-next1" onclick="goPhase(1)" disabled>Next: Design &amp; Assets &#x2192;</button>
+    </div>
+  </div>
+
+  <!-- ═══ PHASE 2: DESIGN & ASSETS ═══ -->
+  <div class="phase" id="phase-design">
+    <div class="split">
+      <div class="panel">
+        <h3>Presentation Model (optional)</h3>
+        <p style="font-size:12px;color:var(--mg);margin-bottom:12px">Upload an existing PPTX to extract its color palette and fonts.</p>
+        <div class="dropzone" id="pptx-dropzone" onclick="document.getElementById('pptx-file').click()" ondrop="onPptxDrop(event)" ondragover="onPdsDragOver(event)" ondragleave="onPdsDragLeave(event)">
+          <h4>Drop PPTX here</h4>
+          <p>We'll extract its color scheme and fonts</p>
+          <input type="file" id="pptx-file" hidden accept=".pptx" onchange="extractPptxTheme(this.files[0])">
+        </div>
+        <div id="theme-preview" style="margin-top:12px">
+          <div class="section-label">Active Palette</div>
+          <div class="palette" id="palette-swatches">
+            <div class="swatch" style="background:#0D1B3E" title="Navy"></div>
+            <div class="swatch" style="background:#D4A843" title="Gold"></div>
+            <div class="swatch" style="background:#FFFFFF;border-color:#ccc" title="White"></div>
+            <div class="swatch" style="background:#5B9BD5" title="Light Blue"></div>
+          </div>
+          <div class="font-preview" id="font-info">Fonts: Georgia (headings), Segoe UI (body) — ClearSky default</div>
+        </div>
+      </div>
+      <div class="panel" style="overflow-y:auto;max-height:520px">
+        <h3>Project Assets</h3>
+        <p style="font-size:12px;color:var(--mg);margin-bottom:12px">Upload photos and logos for each selected project.</p>
+        <div id="asset-sections"></div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="goPhase(0)">&#x2190; Back</button>
+      <button class="btn btn-gold" onclick="goPhase(2)">Next: Brief &#x2192;</button>
+    </div>
+  </div>
+
+  <!-- ═══ PHASE 3: BRIEF ═══ -->
+  <div class="phase" id="phase-brief">
+    <div class="panel" style="max-width:700px;margin:0 auto">
+      <div class="field-group">
+        <label>Counterparty Name</label>
+        <input type="text" id="inp-counterparty" placeholder="e.g., TotalEnergies">
+      </div>
+      <div class="section-label" style="margin-top:16px">Output Type</div>
+      <div class="pill-row">
+        <div class="pill active" data-ot="tearsheet" onclick="selectOT(this)">Tearsheet</div>
+        <div class="pill" data-ot="deck" onclick="selectOT(this)">Deck</div>
+        <div class="pill" data-ot="whitepaper" onclick="selectOT(this)">White Paper</div>
+      </div>
+      <div class="field-group">
+        <label>What do you need?</label>
+        <textarea id="inp-intent" style="min-height:120px" placeholder="e.g., 'Build a deck comparing Sierra Leone and Bosquia for TotalEnergies, focusing on carbon volumes and co-benefits'"></textarea>
+      </div>
+      <button class="btn btn-gold btn-full" id="btn-generate" onclick="doGenerate()">Generate &#x2192;</button>
+
+      <div class="gen-status" id="gen-status">
+        <div class="status-stream" id="gen-stream"></div>
+        <div class="progress"><div class="bar" id="gen-bar"></div></div>
+      </div>
+    </div>
+    <div class="btn-row" style="max-width:700px;margin:16px auto 0">
+      <button class="btn btn-outline" onclick="goPhase(1)">&#x2190; Back</button>
+    </div>
+  </div>
+
+  <!-- ═══ PHASE 4: PREVIEW ═══ -->
+  <div class="phase" id="phase-preview">
+    <div class="preview-split">
+      <div>
+        <div class="section-label">Slides</div>
+        <div class="slide-list" id="slide-list"></div>
+      </div>
+      <div class="edit-panel" id="edit-panel">
+        <h3 id="edit-title">Select a slide to edit</h3>
+        <div id="edit-fields"></div>
+      </div>
+    </div>
+    <div class="bottom-bar">
+      <div class="section-label">Suggested Additions</div>
+      <div class="suggestions" id="suggestions"></div>
+      <div class="missing-warn" id="missing-warn" style="display:none"></div>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn btn-gold" onclick="downloadPPTX()">Download PPTX</button>
+        <button class="btn btn-outline" onclick="saveBrief()">Save Brief</button>
+        <button class="btn btn-outline" onclick="goPhase(2)">&#x2190; Edit Brief</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var API='https://api-tools.oga.earth';
+var token=localStorage.getItem('cs_token');
+
+// ═══════════ STATE ═══════════
+var allProjects=[];
+var selectedIds=[];
+var pptxTheme=null;
+var outputType='tearsheet';
+var briefData=null;
+var activeSlideIdx=0;
+
+// ═══════════ HELPERS ═══════════
+async function apiCall(path,opts){
+  opts=opts||{};opts.headers=opts.headers||{};
+  if(token)opts.headers['Authorization']='Bearer '+token;
+  if(!(opts.body instanceof FormData)&&opts.body&&!opts.headers['Content-Type'])opts.headers['Content-Type']='application/json';
+  var r=await fetch(API+path,opts);
+  if(!r.ok){var err=await r.json().catch(function(){return{error:'Request failed'}});throw new Error(err.error||'Request failed')}
+  return r.json();
+}
+
+function toast(msg,type){var el=document.getElementById('toast');el.textContent=msg;el.className='toast '+type+' show';setTimeout(function(){el.classList.remove('show')},4000)}
+function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+function setStep(n){
+  for(var i=0;i<4;i++){
+    var el=document.getElementById('step'+i);
+    el.className='step'+(i<n?' done':i===n?' active':'');
+  }
+}
+
+function goPhase(n){
+  var phases=['project','design','brief','preview'];
+  phases.forEach(function(p,i){document.getElementById('phase-'+p).className='phase'+(i===n?' visible':'')});
+  setStep(n);
+  if(n===1)buildAssetSections();
+  window.scrollTo(0,0);
+}
+
+// ═══════════ PHASE 1: PROJECT LIBRARY ═══════════
+async function loadProjects(){
+  try{
+    var r=await apiCall('/api/knowledge/docs?type=project_dossier&limit=100');
+    allProjects=(r.docs||[]).filter(function(d){return d.document_type==='project_dossier'});
+  }catch(e){
+    // Fallback: load all and filter
+    try{
+      var r=await apiCall('/api/wiki/docs?limit=100');
+      allProjects=(r.docs||[]).filter(function(d){return d.document_type==='project_dossier'});
+    }catch(e2){allProjects=[]}
+  }
+  renderProjects();
+}
+
+function renderProjects(){
+  var grid=document.getElementById('proj-grid');
+  var q=(document.getElementById('proj-search').value||'').toLowerCase();
+  var filtered=allProjects;
+  if(q)filtered=allProjects.filter(function(p){return(p.title||'').toLowerCase().includes(q)||(p.summary||'').toLowerCase().includes(q)||((p.tags||[]).some(function(t){return(t.value||'').toLowerCase().includes(q)}))});
+
+  if(!filtered.length){grid.innerHTML='<div class="proj-empty">'+(allProjects.length?'No matching projects':'No project dossiers yet. Upload a PDS to get started.')+'</div>';return}
+
+  grid.innerHTML=filtered.map(function(p){
+    var isSel=selectedIds.indexOf(p.id)>=0;
+    var tags=(p.tags||[]).slice(0,4).map(function(t){return'<span class="proj-tag">'+esc(t.value)+'</span>'}).join('');
+    var wc=p.word_count?p.word_count.toLocaleString()+' words':'';
+    return'<div class="proj-card'+(isSel?' selected':'')+'" data-id="'+p.id+'" onclick="toggleProject(\''+p.id+'\')">'
+      +'<div class="proj-name">'+esc(p.title||'Untitled')+'</div>'
+      +'<div class="proj-meta">'+tags+(wc?'<span>'+wc+'</span>':'')+'</div></div>';
+  }).join('');
+
+  document.getElementById('sel-count').textContent=selectedIds.length+' of 3 selected';
+  document.getElementById('btn-next1').disabled=selectedIds.length===0;
+}
+
+function toggleProject(id){
+  var idx=selectedIds.indexOf(id);
+  if(idx>=0)selectedIds.splice(idx,1);
+  else if(selectedIds.length<3)selectedIds.push(id);
+  else{toast('Maximum 3 projects','err');return}
+  renderProjects();
+}
+
+function filterProjects(){renderProjects()}
+
+// PDS Upload
+function onPdsDragOver(e){e.preventDefault();e.currentTarget.classList.add('dragover')}
+function onPdsDragLeave(e){e.currentTarget.classList.remove('dragover')}
+function onPdsDrop(e){e.preventDefault();e.currentTarget.classList.remove('dragover');if(e.dataTransfer.files.length)onPdsSelected(e.dataTransfer.files[0])}
+
+async function onPdsSelected(file){
+  if(!file)return;
+  if(file.size>10*1024*1024){toast('File exceeds 10MB limit','err');return}
+
+  var stream=document.getElementById('pds-status');
+  stream.innerHTML='<div class="line loading"><span class="spin"></span> Reading document...</div>';
+
+  var fd=new FormData();
+  fd.append('file',file);
+  fd.append('project_name',document.getElementById('pds-name').value.trim()||'');
+  fd.append('owner','clearsky');
+
+  try{
+    stream.innerHTML+='<div class="line loading"><span class="spin"></span> Extracting project data...</div>';
+    var r=await apiCall('/api/presentations/v2/ingest-pds',{method:'POST',body:fd});
+    stream.innerHTML='<div class="line ok">&#x2713; Reading document...</div>'
+      +'<div class="line ok">&#x2713; Extracting project data...</div>'
+      +'<div class="line ok">&#x2713; Found: '+(esc(r.title)||'Project')+' ('+r.word_count+' words)</div>'
+      +'<div class="line ok">&#x2713; Saved to project library</div>';
+
+    if(r.title)document.getElementById('pds-name').value=r.title;
+
+    // Reload projects and auto-select
+    await loadProjects();
+    if(r.project_id){
+      selectedIds.push(r.project_id);
+      renderProjects();
+    }
+    toast('Project added to library','ok');
+  }catch(e){
+    stream.innerHTML+='<div class="line" style="color:var(--er)">&#x2717; '+esc(e.message)+'</div>';
+    toast('Upload failed: '+e.message,'err');
+  }
+}
+
+// ═══════════ PHASE 2: DESIGN & ASSETS ═══════════
+function onPptxDrop(e){e.preventDefault();e.currentTarget.classList.remove('dragover');if(e.dataTransfer.files.length)extractPptxTheme(e.dataTransfer.files[0])}
+
+async function extractPptxTheme(file){
+  if(!file)return;
+  if(typeof JSZip==='undefined'){toast('JSZip not loaded','err');return}
+
+  try{
+    var zip=await JSZip.loadAsync(file);
+    var themeXml=null;
+    var slideXml=null;
+
+    // Find theme file
+    var themeFile=zip.file('ppt/theme/theme1.xml');
+    if(themeFile)themeXml=await themeFile.async('text');
+
+    // Find first slide for fonts
+    var slideFile=zip.file('ppt/slides/slide1.xml');
+    if(slideFile)slideXml=await slideFile.async('text');
+
+    var colors={};
+    var fonts={heading:'Georgia',body:'Segoe UI'};
+
+    if(themeXml){
+      // Extract theme colors
+      var colorNames=['dk1','lt1','dk2','lt2','accent1','accent2','accent3','accent4','accent5','accent6'];
+      colorNames.forEach(function(cn){
+        var re=new RegExp('<a:'+cn+'>.*?<a:srgbClr val="([A-Fa-f0-9]{6})"','s');
+        var m=themeXml.match(re);
+        if(m)colors[cn]='#'+m[1];
+        else{
+          var re2=new RegExp('<a:'+cn+'>.*?<a:sysClr.*?lastClr="([A-Fa-f0-9]{6})"','s');
+          var m2=themeXml.match(re2);
+          if(m2)colors[cn]='#'+m2[1];
+        }
+      });
+
+      // Extract font names from theme
+      var majFontMatch=themeXml.match(/<a:majorFont>.*?<a:latin typeface="([^"]+)"/s);
+      var minFontMatch=themeXml.match(/<a:minorFont>.*?<a:latin typeface="([^"]+)"/s);
+      if(majFontMatch)fonts.heading=majFontMatch[1];
+      if(minFontMatch)fonts.body=minFontMatch[1];
+    }
+
+    if(slideXml){
+      // Also try to find fonts from slide content
+      var latinMatches=slideXml.match(/<a:latin typeface="([^"]+)"/g);
+      if(latinMatches&&latinMatches.length&&!themeXml){
+        var m=latinMatches[0].match(/typeface="([^"]+)"/);
+        if(m)fonts.heading=m[1];
+      }
+    }
+
+    pptxTheme={colors:colors,fonts:fonts};
+    renderPalette();
+    toast('Design extracted from PPTX','ok');
+  }catch(e){
+    console.error('PPTX parse error:',e);
+    toast('Could not read PPTX theme. Using ClearSky defaults.','err');
+    pptxTheme=null;
+    renderPalette();
+  }
+}
+
+function renderPalette(){
+  var swatches=document.getElementById('palette-swatches');
+  var fontInfo=document.getElementById('font-info');
+
+  if(pptxTheme&&Object.keys(pptxTheme.colors).length){
+    swatches.innerHTML=Object.entries(pptxTheme.colors).map(function(e){
+      return'<div class="swatch" style="background:'+e[1]+'" title="'+e[0]+': '+e[1]+'"></div>';
+    }).join('');
+    fontInfo.textContent='Fonts: '+pptxTheme.fonts.heading+' (headings), '+pptxTheme.fonts.body+' (body) — extracted from PPTX';
+  }else{
+    swatches.innerHTML='<div class="swatch" style="background:#0D1B3E" title="Navy"></div>'
+      +'<div class="swatch" style="background:#D4A843" title="Gold"></div>'
+      +'<div class="swatch" style="background:#FFFFFF;border-color:#ccc" title="White"></div>'
+      +'<div class="swatch" style="background:#5B9BD5" title="Light Blue"></div>';
+    fontInfo.textContent='Fonts: Georgia (headings), Segoe UI (body) — ClearSky default';
+  }
+}
+
+function buildAssetSections(){
+  var container=document.getElementById('asset-sections');
+  container.innerHTML='';
+  selectedIds.forEach(function(pid){
+    var proj=allProjects.find(function(p){return p.id===pid});
+    var name=proj?proj.title:'Project';
+    var sec=document.createElement('div');
+    sec.className='asset-section';
+    sec.innerHTML='<h4>'+esc(name)+'</h4>'
+      +'<div class="dropzone" style="padding:16px" onclick="document.getElementById(\'asset-file-'+pid+'\').click()" ondragover="this.classList.add(\'dragover\')" ondragleave="this.classList.remove(\'dragover\')" ondrop="onAssetDrop(event,\''+pid+'\')">'
+      +'<p style="font-size:12px">Drop photos or logos here</p>'
+      +'<input type="file" id="asset-file-'+pid+'" hidden multiple accept="image/*" onchange="uploadAssets(this.files,\''+pid+'\')">'
+      +'</div>'
+      +'<div class="thumb-grid" id="thumbs-'+pid+'"></div>';
+    container.appendChild(sec);
+    loadAssets(pid);
+  });
+}
+
+function onAssetDrop(e,pid){e.preventDefault();e.currentTarget.classList.remove('dragover');if(e.dataTransfer.files.length)uploadAssets(e.dataTransfer.files,pid)}
+
+async function uploadAssets(files,pid){
+  for(var i=0;i<files.length;i++){
+    var f=files[i];
+    if(!f.type.startsWith('image/')){toast(f.name+' is not an image','err');continue}
+    var fd=new FormData();
+    fd.append('file',f);
+    fd.append('project_dossier_id',pid);
+    fd.append('asset_type','photo');
+    try{
+      await apiCall('/api/presentations/v2/upload-asset',{method:'POST',body:fd});
+    }catch(e){toast('Upload failed: '+e.message,'err')}
+  }
+  loadAssets(pid);
+  toast('Assets uploaded','ok');
+}
+
+async function loadAssets(pid){
+  try{
+    var r=await apiCall('/api/presentations/v2/assets/'+pid);
+    var grid=document.getElementById('thumbs-'+pid);
+    if(!grid)return;
+    grid.innerHTML=(r.assets||[]).map(function(a){
+      return'<div class="swatch" style="background:var(--lg);display:flex;align-items:center;justify-content:center;width:64px;height:64px;font-size:10px;color:var(--mg);text-align:center;overflow:hidden" title="'+esc(a.original_name)+'">'+esc(a.original_name.substring(0,12))+'</div>';
+    }).join('');
+  }catch(e){}
+}
+
+// ═══════════ PHASE 3: BRIEF GENERATION ═══════════
+function selectOT(el){
+  document.querySelectorAll('.pill').forEach(function(p){p.classList.remove('active')});
+  el.classList.add('active');
+  outputType=el.dataset.ot;
+}
+
+async function doGenerate(){
+  var intent=document.getElementById('inp-intent').value.trim();
+  if(!intent){toast('Describe what you need','err');return}
+  if(!selectedIds.length){toast('Go back and select projects first','err');return}
+
+  var btn=document.getElementById('btn-generate');
+  btn.disabled=true;
+  var statusPanel=document.getElementById('gen-status');
+  statusPanel.style.display='block';
+  var stream=document.getElementById('gen-stream');
+  var bar=document.getElementById('gen-bar');
+
+  stream.innerHTML='<div class="line ok">&#x2713; Projects loaded ('+selectedIds.length+' dossier'+(selectedIds.length>1?'s':'')+')</div>';
+  bar.style.width='20%';
+
+  await sleep(300);
+  stream.innerHTML+='<div class="line ok">&#x2713; Design system ready</div>';
+  bar.style.width='30%';
+
+  await sleep(200);
+  stream.innerHTML+='<div class="line loading"><span class="spin"></span> Generating slide structure...</div>';
+  bar.style.width='50%';
+
+  try{
+    var r=await apiCall('/api/presentations/v2/generate',{
+      method:'POST',
+      body:JSON.stringify({
+        project_ids:selectedIds,
+        intent:intent,
+        pptx_theme:pptxTheme,
+        counterparty:document.getElementById('inp-counterparty').value.trim(),
+        output_type:outputType
+      })
+    });
+
+    bar.style.width='80%';
+    stream.innerHTML+='<div class="line ok">&#x2713; '+(r.slides||[]).length+' slides generated</div>';
+
+    await sleep(200);
+    stream.innerHTML+='<div class="line loading"><span class="spin"></span> Building preview...</div>';
+    bar.style.width='90%';
+
+    briefData=r;
+    await sleep(300);
+    bar.style.width='100%';
+    stream.innerHTML+='<div class="line ok">&#x2713; Ready</div>';
+
+    await sleep(400);
+    renderPreview();
+    goPhase(3);
+  }catch(e){
+    stream.innerHTML+='<div class="line" style="color:var(--er)">&#x2717; '+esc(e.message)+'</div>';
+    toast('Generation failed: '+e.message,'err');
+  }
+
+  btn.disabled=false;
+}
+
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+
+// ═══════════ PHASE 4: PREVIEW & EDIT ═══════════
+function renderPreview(){
+  if(!briefData||!briefData.slides)return;
+  var list=document.getElementById('slide-list');
+  list.innerHTML=briefData.slides.map(function(s,i){
+    var score=s.mckinsey_score||'green';
+    return'<div class="slide-thumb'+(i===0?' active':'')+'" data-idx="'+i+'" onclick="selectSlide('+i+')">'
+      +'<div class="slide-num"><span class="score-dot '+score+'"></span> Slide '+(i+1)+' <span class="slide-type-badge">'+esc(s.slide_type||'')+'</span></div>'
+      +'<div class="slide-title-preview">'+esc((s.title||'').substring(0,60))+'</div></div>';
+  }).join('');
+
+  // Suggestions
+  var sugEl=document.getElementById('suggestions');
+  sugEl.innerHTML=(briefData.suggested_additions||[]).map(function(s){
+    return'<span class="sug-pill" onclick="addSuggestedSlide(this,\''+esc(s).replace(/'/g,"\\'")+'\')" title="Click to add">+ '+esc(s)+'</span>';
+  }).join('');
+
+  // Missing data warning
+  var missEl=document.getElementById('missing-warn');
+  if(briefData.missing_data&&briefData.missing_data.length){
+    missEl.style.display='block';
+    missEl.textContent='Missing data: '+briefData.missing_data.join(', ');
+  }else missEl.style.display='none';
+
+  selectSlide(0);
+}
+
+function selectSlide(idx){
+  activeSlideIdx=idx;
+  document.querySelectorAll('.slide-thumb').forEach(function(el,i){el.classList.toggle('active',i===idx)});
+
+  var s=briefData.slides[idx];
+  if(!s)return;
+
+  var ep=document.getElementById('edit-panel');
+  document.getElementById('edit-title').textContent='Slide '+(idx+1)+': '+s.slide_type;
+
+  var html='<div class="field-group"><label>Title</label><input type="text" value="'+esc(s.title||'')+'" onchange="briefData.slides['+idx+'].title=this.value;updateThumb('+idx+')"></div>';
+  html+='<div class="field-group"><label>Subtitle</label><input type="text" value="'+esc(s.subtitle||'')+'" onchange="briefData.slides['+idx+'].subtitle=this.value"></div>';
+
+  if(s.body)html+='<div class="field-group"><label>Body</label><textarea onchange="briefData.slides['+idx+'].body=this.value">'+esc(s.body)+'</textarea></div>';
+
+  if(s.stats&&s.stats.length){
+    html+='<div class="section-label" style="margin-top:12px">Statistics</div>';
+    s.stats.forEach(function(st,si){
+      html+='<div class="stat-editor">'
+        +'<input placeholder="Value" value="'+esc(st.value||'')+'" onchange="briefData.slides['+idx+'].stats['+si+'].value=this.value">'
+        +'<input placeholder="Label" value="'+esc(st.label||'')+'" onchange="briefData.slides['+idx+'].stats['+si+'].label=this.value">'
+        +'<input placeholder="Unit" value="'+esc(st.unit||'')+'" onchange="briefData.slides['+idx+'].stats['+si+'].unit=this.value">'
+        +'</div>';
+    });
+  }
+
+  if(s.notes)html+='<div class="flag-box">'+esc(s.notes)+'</div>';
+  if(s.mckinsey_reason)html+='<div class="score-reason"><span class="score-dot '+(s.mckinsey_score||'green')+'"></span> '+esc(s.mckinsey_reason)+'</div>';
+
+  document.getElementById('edit-fields').innerHTML=html;
+}
+
+function updateThumb(idx){
+  var thumbs=document.querySelectorAll('.slide-thumb');
+  if(thumbs[idx]){
+    var titleEl=thumbs[idx].querySelector('.slide-title-preview');
+    if(titleEl)titleEl.textContent=(briefData.slides[idx].title||'').substring(0,60);
+  }
+}
+
+function addSuggestedSlide(el,text){
+  briefData.slides.push({
+    slide_number:briefData.slides.length+1,
+    slide_type:'exec_summary',
+    title:text,
+    subtitle:'',
+    body:'[Content to be added]',
+    stats:[],
+    visual_type:'full_text',
+    mckinsey_score:'yellow',
+    mckinsey_reason:'Suggested addition — needs content'
+  });
+  el.remove();
+  renderPreview();
+  toast('Slide added','ok');
+}
+
+function saveBrief(){
+  localStorage.setItem('cs_pres_brief',JSON.stringify(briefData));
+  toast('Brief saved to browser','ok');
+}
+
+// ═══════════ PPTX GENERATION ═══════════
+function downloadPPTX(){
+  if(!briefData||!briefData.slides||!briefData.slides.length){toast('No slides to generate','err');return}
+
+  var pptx=new PptxGenJS();
+  pptx.defineLayout({name:'WIDE',w:13.333,h:7.5});
+  pptx.layout='WIDE';
+
+  // Theme colors
+  var navy=pptxTheme&&pptxTheme.colors&&pptxTheme.colors.dk1?pptxTheme.colors.dk1:'#0D1B3E';
+  var gold=pptxTheme&&pptxTheme.colors&&pptxTheme.colors.accent1?pptxTheme.colors.accent1:'#D4A843';
+  var white='#FFFFFF';
+  var lightBlue=pptxTheme&&pptxTheme.colors&&pptxTheme.colors.accent2?pptxTheme.colors.accent2:'#5B9BD5';
+  var offWhite='#F5F7FA';
+  var fontHead=pptxTheme&&pptxTheme.fonts?pptxTheme.fonts.heading:'Georgia';
+  var fontBody=pptxTheme&&pptxTheme.fonts?pptxTheme.fonts.body:'Segoe UI';
+
+  briefData.slides.forEach(function(s){
+    var slide=pptx.addSlide();
+    var type=s.slide_type||'exec_summary';
+
+    if(type==='cover')buildCover(slide,s,navy,gold,white,fontHead,fontBody);
+    else if(type==='exec_summary')buildExecSummary(slide,s,navy,gold,white,offWhite,fontHead,fontBody);
+    else if(type==='metrics')buildMetrics(slide,s,navy,gold,white,offWhite,fontHead,fontBody);
+    else if(type==='project')buildProject(slide,s,navy,gold,white,lightBlue,offWhite,fontHead,fontBody);
+    else if(type==='comparison')buildComparison(slide,s,navy,gold,white,offWhite,fontHead,fontBody);
+    else if(type==='contact')buildContact(slide,s,navy,gold,white,fontHead,fontBody);
+    else buildExecSummary(slide,s,navy,gold,white,offWhite,fontHead,fontBody);
+  });
+
+  var cp=document.getElementById('inp-counterparty').value.trim()||'ClearSky';
+  var d=new Date();
+  var dateStr=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);
+  pptx.writeFile({fileName:'clearsky_'+outputType+'_'+dateStr+'.pptx'});
+  toast('PPTX downloaded','ok');
+}
+
+function buildCover(slide,s,navy,gold,white,fontHead,fontBody){
+  slide.background={fill:navy};
+  // Gold accent bar left edge
+  slide.addShape(pptx.ShapeType.rect,{x:0,y:0,w:0.15,h:7.5,fill:{color:gold.replace('#','')}});
+  slide.addText(s.title||'',{x:1,y:2,w:10,h:2,fontSize:36,fontFace:fontHead,color:white.replace('#',''),shrinkText:true});
+  slide.addText(s.subtitle||'',{x:1,y:4,w:10,h:1,fontSize:20,fontFace:fontBody,color:gold.replace('#',''),shrinkText:true});
+  var cp=document.getElementById('inp-counterparty').value.trim();
+  var now=new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  if(cp)slide.addText(cp+' | '+now,{x:8,y:6.5,w:4.5,h:0.5,fontSize:12,fontFace:fontBody,color:'AAAAAA',align:'right',shrinkText:true});
+}
+
+function buildExecSummary(slide,s,navy,gold,white,offWhite,fontHead,fontBody){
+  slide.background={fill:white};
+  slide.addText(s.title||'',{x:.6,y:.4,w:12,h:.8,fontSize:22,fontFace:fontHead,color:navy.replace('#',''),bold:true,shrinkText:true});
+  // Gold underline
+  slide.addShape(pptx.ShapeType.rect,{x:.6,y:1.2,w:2,h:.04,fill:{color:gold.replace('#','')}});
+
+  if(s.body){
+    var bw=s.stats&&s.stats.length?6.5:11.5;
+    slide.addText(s.body,{x:.6,y:1.6,w:bw,h:4.5,fontSize:14,fontFace:fontBody,color:navy.replace('#',''),valign:'top',shrinkText:true,lineSpacing:22});
+  }
+
+  if(s.stats&&s.stats.length){
+    var sx=7.5;
+    s.stats.forEach(function(st,i){
+      var sy=1.6+i*1.3;
+      slide.addShape(pptx.ShapeType.rect,{x:sx,y:sy,w:5,h:1.1,fill:{color:offWhite.replace('#','')},rectRadius:.08});
+      slide.addText(st.value||'',{x:sx+.3,y:sy+.1,w:2,h:.6,fontSize:28,fontFace:fontHead,color:gold.replace('#',''),bold:true,shrinkText:true});
+      slide.addText((st.label||'')+(st.unit?' '+st.unit:''),{x:sx+2.5,y:sy+.15,w:2.2,h:.5,fontSize:11,fontFace:fontBody,color:navy.replace('#',''),shrinkText:true});
+    });
+  }
+}
+
+function buildMetrics(slide,s,navy,gold,white,offWhite,fontHead,fontBody){
+  slide.background={fill:white};
+  slide.addText(s.title||'',{x:.6,y:.4,w:12,h:.8,fontSize:22,fontFace:fontHead,color:navy.replace('#',''),bold:true,shrinkText:true});
+  slide.addShape(pptx.ShapeType.rect,{x:.6,y:1.2,w:2,h:.04,fill:{color:gold.replace('#','')}});
+
+  var stats=s.stats||[];
+  var cols=stats.length<=2?2:2;
+  var rows=Math.ceil(stats.length/cols);
+  var bw=5.5,bh=2.2;
+  stats.forEach(function(st,i){
+    var col=i%cols,row=Math.floor(i/cols);
+    var sx=1.5+col*(bw+.5),sy=2+row*(bh+.3);
+    slide.addShape(pptx.ShapeType.rect,{x:sx,y:sy,w:bw,h:bh,fill:{color:offWhite.replace('#','')},rectRadius:.1});
+    slide.addText(st.value||'',{x:sx,y:sy+.3,w:bw,h:1,fontSize:42,fontFace:fontHead,color:gold.replace('#',''),bold:true,align:'center',shrinkText:true});
+    slide.addText((st.label||'')+(st.unit?' '+st.unit:''),{x:sx,y:sy+1.4,w:bw,h:.5,fontSize:13,fontFace:fontBody,color:navy.replace('#',''),align:'center',shrinkText:true});
+  });
+}
+
+function buildProject(slide,s,navy,gold,white,lightBlue,offWhite,fontHead,fontBody){
+  slide.background={fill:white};
+  slide.addText(s.title||'',{x:.6,y:.4,w:12,h:.8,fontSize:20,fontFace:fontHead,color:navy.replace('#',''),bold:true,shrinkText:true});
+  slide.addShape(pptx.ShapeType.rect,{x:.6,y:1.15,w:2,h:.04,fill:{color:gold.replace('#','')}});
+
+  // Left column: metadata
+  var meta=[];
+  if(s.stats){
+    s.stats.forEach(function(st){
+      meta.push({text:(st.label||'')+': ',options:{bold:true,fontSize:12,fontFace:fontBody,color:navy.replace('#','')}});
+      meta.push({text:(st.value||'')+(st.unit?' '+st.unit:'')+'\n',options:{fontSize:12,fontFace:fontBody,color:navy.replace('#','')}});
+    });
+  }
+  if(meta.length)slide.addText(meta,{x:.6,y:1.5,w:5.5,h:4.5,valign:'top',shrinkText:true,lineSpacing:20});
+
+  // Right column: body text
+  if(s.body)slide.addText(s.body,{x:6.5,y:1.5,w:6,h:4.5,fontSize:12,fontFace:fontBody,color:navy.replace('#',''),valign:'top',shrinkText:true,lineSpacing:20});
+}
+
+function buildComparison(slide,s,navy,gold,white,offWhite,fontHead,fontBody){
+  slide.background={fill:white};
+  slide.addText(s.title||'',{x:.6,y:.4,w:12,h:.8,fontSize:20,fontFace:fontHead,color:navy.replace('#',''),bold:true,shrinkText:true});
+  slide.addShape(pptx.ShapeType.rect,{x:.6,y:1.15,w:2,h:.04,fill:{color:gold.replace('#','')}});
+
+  if(s.table&&s.table.headers&&s.table.rows){
+    var tableData=[s.table.headers.map(function(h){return{text:h,options:{bold:true,fill:{color:navy.replace('#','')},color:'FFFFFF',fontSize:11,fontFace:fontBody}}})];
+    s.table.rows.forEach(function(row,ri){
+      tableData.push(row.map(function(cell){
+        return{text:String(cell||''),options:{fill:{color:ri%2===0?offWhite.replace('#',''):'FFFFFF'},fontSize:11,fontFace:fontBody,color:navy.replace('#','')}};
+      }));
+    });
+    slide.addTable(tableData,{x:.6,y:1.5,w:12,colW:12/s.table.headers.length,border:{pt:0.5,color:'E0E0E0'},autoPage:false});
+  }else if(s.body){
+    slide.addText(s.body,{x:.6,y:1.5,w:12,h:5,fontSize:13,fontFace:fontBody,color:navy.replace('#',''),shrinkText:true,valign:'top'});
+  }
+}
+
+function buildContact(slide,s,navy,gold,white,fontHead,fontBody){
+  slide.background={fill:navy};
+  slide.addShape(pptx.ShapeType.rect,{x:0,y:3.5,w:13.333,h:.04,fill:{color:gold.replace('#','')}});
+  slide.addText('ClearSky Limited',{x:0,y:2,w:13.333,h:1,fontSize:32,fontFace:fontHead,color:white.replace('#',''),align:'center',shrinkText:true});
+  slide.addText(s.subtitle||s.body||'trading@clearskyltd.com',{x:0,y:4,w:13.333,h:1,fontSize:16,fontFace:fontBody,color:gold.replace('#',''),align:'center',shrinkText:true});
+  slide.addText(s.title||'',{x:0,y:5.2,w:13.333,h:.6,fontSize:13,fontFace:fontBody,color:'AAAAAA',align:'center',shrinkText:true});
+}
+
+// ═══════════ INIT ═══════════
+loadProjects();
+</script>
+</body>
+</html>
