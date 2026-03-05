@@ -160,33 +160,34 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--dt);min-heigh
 
   <!-- ═══ PHASE 1: PROJECT SELECTION ═══ -->
   <div class="phase visible" id="phase-project">
-    <div class="split">
-      <div class="panel">
-        <h3>Project Library</h3>
-        <div class="selected-count" id="sel-count">0 of 3 selected</div>
-        <div class="search-wrap">
-          <span class="search-icon">&#x1F50D;</span>
-          <input class="search-box" id="proj-search" placeholder="Search projects..." oninput="filterProjects()">
-        </div>
-        <div class="proj-grid" id="proj-grid">
-          <div class="proj-empty">Loading projects...</div>
-        </div>
+    <div class="panel" style="margin-bottom:16px">
+      <h3>Project Library</h3>
+      <div class="selected-count" id="sel-count">0 of 3 selected</div>
+      <div class="search-wrap">
+        <span class="search-icon">&#x1F50D;</span>
+        <input class="search-box" id="proj-search" placeholder="Search projects..." oninput="filterProjects()">
       </div>
-      <div class="panel" id="upload-panel">
-        <h3>Add New Project</h3>
-        <p style="font-size:12px;color:var(--mg);margin-bottom:16px">Upload a project document (PDS, monitoring report, technical brief) to create a new project in your library.</p>
-        <div class="dropzone" id="pds-dropzone" onclick="document.getElementById('pds-file').click()" ondrop="onPdsDrop(event)" ondragover="onPdsDragOver(event)" ondragleave="onPdsDragLeave(event)">
-          <h4>Drop PDF here or click to browse</h4>
-          <p>PDS, verification report, methodology document</p>
-          <small>PDF, DOCX — max 10MB</small>
-          <input type="file" id="pds-file" hidden accept=".pdf,.doc,.docx" onchange="onPdsSelected(this.files[0])">
-        </div>
-        <div class="field-group" style="margin-top:12px">
-          <label>Project Name (auto-detected from PDF)</label>
-          <input type="text" id="pds-name" placeholder="Will be filled after upload...">
-        </div>
-        <div class="status-stream" id="pds-status"></div>
+      <div class="proj-grid" id="proj-grid" style="max-height:340px">
+        <div class="proj-empty">Loading projects...</div>
       </div>
+    </div>
+    <div style="margin-bottom:16px">
+      <button class="btn btn-outline" id="btn-toggle-upload" onclick="toggleUploadPanel()" style="font-size:13px">+ Add new project</button>
+    </div>
+    <div class="panel" id="upload-panel" style="display:none">
+      <h3>Add New Project</h3>
+      <p style="font-size:12px;color:var(--mg);margin-bottom:16px">Upload a project document (PDS, monitoring report, technical brief) to create a new project in your library.</p>
+      <div class="dropzone" id="pds-dropzone" onclick="document.getElementById('pds-file').click()" ondrop="onPdsDrop(event)" ondragover="onPdsDragOver(event)" ondragleave="onPdsDragLeave(event)">
+        <h4>Drop PDF here or click to browse</h4>
+        <p>PDS, verification report, methodology document</p>
+        <small>PDF, DOCX — max 10MB</small>
+        <input type="file" id="pds-file" hidden accept=".pdf,.doc,.docx" onchange="onPdsSelected(this.files[0])">
+      </div>
+      <div class="field-group" style="margin-top:12px">
+        <label>Project Name (auto-detected from PDF)</label>
+        <input type="text" id="pds-name" placeholder="Will be filled after upload...">
+      </div>
+      <div class="status-stream" id="pds-status"></div>
     </div>
     <div class="btn-row">
       <button class="btn btn-gold" id="btn-next1" onclick="goPhase(1)" disabled>Next: Design &amp; Assets &#x2192;</button>
@@ -230,22 +231,23 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--dt);min-heigh
   <!-- ═══ PHASE 3: BRIEF ═══ -->
   <div class="phase" id="phase-brief">
     <div class="panel" style="max-width:700px;margin:0 auto">
-      <div class="field-group">
-        <label>Counterparty Name</label>
-        <input type="text" id="inp-counterparty" placeholder="e.g., TotalEnergies">
+      <div id="brief-form">
+        <div class="field-group">
+          <label>Counterparty Name</label>
+          <input type="text" id="inp-counterparty" placeholder="e.g., TotalEnergies">
+        </div>
+        <div class="section-label" style="margin-top:16px">Output Type</div>
+        <div class="pill-row">
+          <div class="pill active" data-ot="tearsheet" onclick="selectOT(this)">Tearsheet</div>
+          <div class="pill" data-ot="deck" onclick="selectOT(this)">Deck</div>
+          <div class="pill" data-ot="whitepaper" onclick="selectOT(this)">White Paper</div>
+        </div>
+        <div class="field-group">
+          <label>What do you need?</label>
+          <textarea id="inp-intent" style="min-height:120px" placeholder="e.g., 'Build a deck comparing Sierra Leone and Bosquia for TotalEnergies, focusing on carbon volumes and co-benefits'"></textarea>
+        </div>
+        <button class="btn btn-gold btn-full" id="btn-generate" onclick="doGenerate()">Generate &#x2192;</button>
       </div>
-      <div class="section-label" style="margin-top:16px">Output Type</div>
-      <div class="pill-row">
-        <div class="pill active" data-ot="tearsheet" onclick="selectOT(this)">Tearsheet</div>
-        <div class="pill" data-ot="deck" onclick="selectOT(this)">Deck</div>
-        <div class="pill" data-ot="whitepaper" onclick="selectOT(this)">White Paper</div>
-      </div>
-      <div class="field-group">
-        <label>What do you need?</label>
-        <textarea id="inp-intent" style="min-height:120px" placeholder="e.g., 'Build a deck comparing Sierra Leone and Bosquia for TotalEnergies, focusing on carbon volumes and co-benefits'"></textarea>
-      </div>
-      <button class="btn btn-gold btn-full" id="btn-generate" onclick="doGenerate()">Generate &#x2192;</button>
-
       <div class="gen-status" id="gen-status">
         <div class="status-stream" id="gen-stream"></div>
         <div class="progress"><div class="bar" id="gen-bar"></div></div>
@@ -291,6 +293,7 @@ var token=localStorage.getItem('cs_token');
 var allProjects=[];
 var selectedIds=[];
 var pptxTheme=null;
+var basePptxKey=null;
 var outputType='tearsheet';
 var briefData=null;
 var activeSlideIdx=0;
@@ -320,6 +323,15 @@ function goPhase(n){
   phases.forEach(function(p,i){document.getElementById('phase-'+p).className='phase'+(i===n?' visible':'')});
   setStep(n);
   if(n===1)buildAssetSections();
+  if(n===2){
+    // Restore form when going back to brief
+    var form=document.getElementById('brief-form');
+    if(form)form.style.display='block';
+    var status=document.getElementById('gen-status');
+    if(status)status.style.display='none';
+    var bar=document.getElementById('gen-bar');
+    if(bar)bar.style.width='0';
+  }
   window.scrollTo(0,0);
 }
 
@@ -336,6 +348,13 @@ async function loadProjects(){
     }catch(e2){allProjects=[]}
   }
   renderProjects();
+  // Auto-expand upload panel if library is empty
+  if(!allProjects.length){
+    var panel=document.getElementById('upload-panel');
+    if(panel)panel.style.display='block';
+    var btn=document.getElementById('btn-toggle-upload');
+    if(btn)btn.textContent='- Hide upload panel';
+  }
 }
 
 function renderProjects(){
@@ -350,8 +369,14 @@ function renderProjects(){
     var isSel=selectedIds.indexOf(p.id)>=0;
     var tags=(p.tags||[]).slice(0,4).map(function(t){return'<span class="proj-tag">'+esc(t.value)+'</span>'}).join('');
     var wc=p.word_count?p.word_count.toLocaleString()+' words':'';
+    var displayTitle=p.title||'Untitled';
+    // Clean filenames: replace underscores/hyphens, remove extensions
+    if(displayTitle.match(/[_-]/)&&!displayTitle.match(/\s/)){
+      displayTitle=displayTitle.replace(/\.[^.]+$/,'').replace(/[_-]/g,' ');
+    }
+    if(displayTitle.length>60)displayTitle=displayTitle.substring(0,57)+'...';
     return'<div class="proj-card'+(isSel?' selected':'')+'" data-id="'+p.id+'" onclick="toggleProject(\''+p.id+'\')">'
-      +'<div class="proj-name">'+esc(p.title||'Untitled')+'</div>'
+      +'<div class="proj-name">'+esc(displayTitle)+'</div>'
       +'<div class="proj-meta">'+tags+(wc?'<span>'+wc+'</span>':'')+'</div></div>';
   }).join('');
 
@@ -368,6 +393,22 @@ function toggleProject(id){
 }
 
 function filterProjects(){renderProjects()}
+
+function toggleUploadPanel(){
+  var panel=document.getElementById('upload-panel');
+  var btn=document.getElementById('btn-toggle-upload');
+  if(panel.style.display==='none'){
+    panel.style.display='block';btn.textContent='- Hide upload panel';
+  }else{
+    panel.style.display='none';btn.textContent='+ Add new project';
+  }
+}
+
+function resetUploadZone(){
+  document.getElementById('pds-status').innerHTML='';
+  document.getElementById('pds-name').value='';
+  document.getElementById('pds-file').value='';
+}
 
 // PDS Upload
 function onPdsDragOver(e){e.preventDefault();e.currentTarget.classList.add('dragover')}
@@ -403,6 +444,15 @@ async function onPdsSelected(file){
       renderProjects();
     }
     toast('Project added to library','ok');
+
+    // Reset upload zone for next project
+    document.getElementById('pds-name').value='';
+    document.getElementById('pds-file').value='';
+    document.getElementById('pds-dropzone').classList.remove('dragover','uploaded');
+    // Show upload-another link
+    setTimeout(function(){
+      stream.innerHTML+='<div style="margin-top:8px"><a href="#" onclick="resetUploadZone();return false" style="color:var(--lb);font-size:12px;font-weight:600">+ Upload another project</a></div>';
+    },500);
   }catch(e){
     stream.innerHTML+='<div class="line" style="color:var(--er)">&#x2717; '+esc(e.message)+'</div>';
     toast('Upload failed: '+e.message,'err');
@@ -464,11 +514,24 @@ async function extractPptxTheme(file){
 
     pptxTheme={colors:colors,fonts:fonts};
     renderPalette();
+
+    // Upload base PPTX to R2 for slide append
+    try{
+      var pptxFd=new FormData();
+      pptxFd.append('file',file);
+      var uploadRes=await apiCall('/api/presentations/v2/upload-base-pptx',{method:'POST',body:pptxFd});
+      basePptxKey=uploadRes.r2_key;
+      document.getElementById('font-info').textContent+=' | Presentation model saved — design will be preserved';
+    }catch(ue){
+      console.error('Base PPTX upload error:',ue);
+      basePptxKey=null;
+    }
     toast('Design extracted from PPTX','ok');
   }catch(e){
     console.error('PPTX parse error:',e);
     toast('Could not read PPTX theme. Using ClearSky defaults.','err');
     pptxTheme=null;
+    basePptxKey=null;
     renderPalette();
   }
 }
@@ -553,6 +616,7 @@ async function doGenerate(){
 
   var btn=document.getElementById('btn-generate');
   btn.disabled=true;
+  document.getElementById('brief-form').style.display='none';
   var statusPanel=document.getElementById('gen-status');
   statusPanel.style.display='block';
   var stream=document.getElementById('gen-stream');
@@ -576,6 +640,7 @@ async function doGenerate(){
         project_ids:selectedIds,
         intent:intent,
         pptx_theme:pptxTheme,
+        base_pptx_key:basePptxKey||null,
         counterparty:document.getElementById('inp-counterparty').value.trim(),
         output_type:outputType
       })
@@ -599,6 +664,9 @@ async function doGenerate(){
   }catch(e){
     stream.innerHTML+='<div class="line" style="color:var(--er)">&#x2717; '+esc(e.message)+'</div>';
     toast('Generation failed: '+e.message,'err');
+    // Restore form on failure
+    document.getElementById('brief-form').style.display='block';
+    statusPanel.style.display='none';
   }
 
   btn.disabled=false;
@@ -699,11 +767,18 @@ function saveBrief(){
 function downloadPPTX(){
   if(!briefData||!briefData.slides||!briefData.slides.length){toast('No slides to generate','err');return}
 
+  if(briefData.base_pptx_base64){
+    appendSlidesToExistingPptx(briefData);
+  }else{
+    buildNewPptx(briefData);
+  }
+}
+
+function buildNewPptx(brief){
   var pptx=new PptxGenJS();
   pptx.defineLayout({name:'WIDE',w:13.333,h:7.5});
   pptx.layout='WIDE';
 
-  // Theme colors
   var navy=pptxTheme&&pptxTheme.colors&&pptxTheme.colors.dk1?pptxTheme.colors.dk1:'#0D1B3E';
   var gold=pptxTheme&&pptxTheme.colors&&pptxTheme.colors.accent1?pptxTheme.colors.accent1:'#D4A843';
   var white='#FFFFFF';
@@ -712,7 +787,7 @@ function downloadPPTX(){
   var fontHead=pptxTheme&&pptxTheme.fonts?pptxTheme.fonts.heading:'Georgia';
   var fontBody=pptxTheme&&pptxTheme.fonts?pptxTheme.fonts.body:'Segoe UI';
 
-  briefData.slides.forEach(function(s){
+  brief.slides.forEach(function(s){
     var slide=pptx.addSlide();
     var type=s.slide_type||'exec_summary';
 
@@ -730,6 +805,125 @@ function downloadPPTX(){
   var dateStr=d.getFullYear()+('0'+(d.getMonth()+1)).slice(-2)+('0'+d.getDate()).slice(-2);
   pptx.writeFile({fileName:'clearsky_'+outputType+'_'+dateStr+'.pptx'});
   toast('PPTX downloaded','ok');
+}
+
+async function appendSlidesToExistingPptx(brief){
+  try{
+    // Decode base64 to ArrayBuffer
+    var binary=atob(brief.base_pptx_base64);
+    var bytes=new Uint8Array(binary.length);
+    for(var i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+
+    var zip=await JSZip.loadAsync(bytes.buffer);
+
+    // Count existing slides
+    var existingSlides=Object.keys(zip.files)
+      .filter(function(f){return f.match(/^ppt\/slides\/slide\d+\.xml$/)}).length;
+
+    // Get template slide XML (clone slide 1)
+    var templateSlideXml=await zip.file('ppt/slides/slide1.xml').async('string');
+    var templateRelsXml='';
+    var relsFile=zip.file('ppt/slides/_rels/slide1.xml.rels');
+    if(relsFile)templateRelsXml=await relsFile.async('string');
+
+    var presentationXml=await zip.file('ppt/presentation.xml').async('string');
+    var contentTypesXml=await zip.file('[Content_Types].xml').async('string');
+    var presRelsXml=await zip.file('ppt/_rels/presentation.xml.rels').async('string');
+
+    // For each new slide, create XML and update references
+    for(var i=0;i<brief.slides.length;i++){
+      var slide=brief.slides[i];
+      var newSlideNum=existingSlides+i+1;
+
+      var slideXml=buildSlideXml(templateSlideXml,slide);
+      zip.file('ppt/slides/slide'+newSlideNum+'.xml',slideXml);
+      if(templateRelsXml)zip.file('ppt/slides/_rels/slide'+newSlideNum+'.xml.rels',templateRelsXml);
+
+      // Add to presentation.xml sldIdLst
+      var newId=256+newSlideNum;
+      var newRid='rId'+(200+newSlideNum);
+      presentationXml=presentationXml.replace('</p:sldIdLst>',
+        '<p:sldId id="'+newId+'" r:id="'+newRid+'"/></p:sldIdLst>');
+
+      // Add to [Content_Types].xml
+      contentTypesXml=contentTypesXml.replace('</Types>',
+        '<Override PartName="/ppt/slides/slide'+newSlideNum+'.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/></Types>');
+
+      // Add to presentation.xml.rels
+      presRelsXml=presRelsXml.replace('</Relationships>',
+        '<Relationship Id="'+newRid+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide'+newSlideNum+'.xml"/></Relationships>');
+    }
+
+    zip.file('ppt/presentation.xml',presentationXml);
+    zip.file('[Content_Types].xml',contentTypesXml);
+    zip.file('ppt/_rels/presentation.xml.rels',presRelsXml);
+
+    // Generate and download
+    var blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;
+    var cp=document.getElementById('inp-counterparty').value.trim()||'ClearSky';
+    a.download=cp+'_'+new Date().toISOString().slice(0,10)+'.pptx';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('PPTX downloaded (slides appended to original)','ok');
+  }catch(e){
+    console.error('PPTX append error:',e);
+    toast('Append failed, falling back to new PPTX','err');
+    buildNewPptx(brief);
+  }
+}
+
+function buildSlideXml(template,slide){
+  var xml=template;
+
+  // Strategy: find all <a:t> text nodes and replace content
+  // Replace title text (first text run in first shape typically)
+  var titleSet=false;
+  var bodySet=false;
+
+  // Build body text from slide data
+  var bodyText='';
+  if(slide.body)bodyText=slide.body;
+  else if(slide.stats&&slide.stats.length){
+    bodyText=slide.stats.map(function(s){return(s.value||'')+' '+(s.unit||'')+' — '+(s.label||'')}).join('\n');
+  }
+
+  // Replace text in placeholder shapes
+  // Title placeholder: idx="0" or type="title" or type="ctrTitle"
+  xml=xml.replace(/(<p:ph[^>]*(?:type="(?:title|ctrTitle)"|idx="0")[^\/]*\/>[\s\S]*?<a:p>)([\s\S]*?)(<\/a:p>)/,
+    function(match,before,content,after){
+      titleSet=true;
+      return before+'<a:r><a:t>'+escXml(slide.title||'')+'</a:t></a:r>'+after;
+    });
+
+  // Body placeholder: idx="1" or type="body" or type="subTitle"
+  if(bodyText){
+    xml=xml.replace(/(<p:ph[^>]*(?:idx="1"|type="(?:body|subTitle)")[^\/]*\/>[\s\S]*?<a:txBody>[\s\S]*?)((?:<a:p>[\s\S]*?<\/a:p>\s*)+)(<\/a:txBody>)/,
+      function(match,before,oldParas,after){
+        bodySet=true;
+        var newParas=bodyText.split('\n').map(function(line){
+          return'<a:p><a:r><a:t>'+escXml(line)+'</a:t></a:r></a:p>';
+        }).join('');
+        return before+newParas+after;
+      });
+  }
+
+  // Fallback: if placeholders not found, replace all <a:t> text nodes sequentially
+  if(!titleSet){
+    var firstReplace=true;
+    xml=xml.replace(/<a:t>[^<]*<\/a:t>/,function(match){
+      if(firstReplace){firstReplace=false;return'<a:t>'+escXml(slide.title||'')+'</a:t>';}
+      return match;
+    });
+  }
+
+  return xml;
+}
+
+function escXml(str){
+  return(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
 }
 
 function buildCover(slide,s,navy,gold,white,fontHead,fontBody){
