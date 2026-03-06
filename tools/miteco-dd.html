@@ -405,8 +405,10 @@ function renderKPIs() {
   const activeSubs = state.subparcelas.filter(s => s.active);
   const totalHa = activeSubs.reduce((s, r) => s + (r.superficie_ha || 0), 0);
   const tco2 = p.total_tco2 || 0;
-  const bolsa = tco2 * 0.1;
-  const disp = tco2 * 0.1;
+  // MITECO formula: B = absorciones registradas útiles (20%), C = bolsa garantía (B/11)
+  const B = Math.round(tco2 * 0.20);
+  const bolsa = Math.round(B / 11);
+  const disp = B - bolsa;
 
   document.getElementById('kpiHa').textContent   = fmt(totalHa, 4);
   document.getElementById('kpiCO2').textContent  = fmt(tco2, 0) + ' tCO₂';
@@ -850,10 +852,13 @@ AMOEDO_MITECO_SUBSANACION_CLEARSKY/
 
 ────────────────────────────────────────────────────────
 KEY NUMBERS (verify these match ALL documents before submitting):
-  Total area:      ${totalHa.toFixed(4)} ha
-  tCO2 total:      ${tco2.toLocaleString('es-ES', {minimumFractionDigits:2})} tCO2
-  Periodo:         2018–2068 (50 años)
-  N° subparcelas:  ${subs.length} activas
+  Total area:           ${totalHa.toFixed(4)} ha
+  tCO2 total:           ${tco2.toLocaleString('es-ES', {minimumFractionDigits:2})} tCO2
+  Abs. reg. útiles (B): ${Math.round(tco2 * 0.20).toLocaleString('es-ES')} tCO2
+  Bolsa garantía (C):   ${Math.round(Math.round(tco2 * 0.20) / 11).toLocaleString('es-ES')} tCO2
+  Disponibles (B−C):    ${(Math.round(tco2 * 0.20) - Math.round(Math.round(tco2 * 0.20) / 11)).toLocaleString('es-ES')} tCO2
+  Periodo:              2018–2068 (50 años)
+  N° subparcelas:       ${subs.length} activas
 
 DELIVERY:
   Share ONE Google Drive link, view-only.
