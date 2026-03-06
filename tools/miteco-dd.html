@@ -300,6 +300,7 @@ const DOC_TYPES = [
   { type: 'certificado_secretario',   label: 'Certificado Secretario CMVMC',ext: '.pdf',  required: true,  engineerDoc: false },
   { type: 'memoria_breve',            label: 'Memoria descriptiva < 1 pág', ext: '.pdf',  required: true,  engineerDoc: false },
   { type: 'planos',                   label: 'Planos (PDF)',                ext: '.pdf',  required: false, engineerDoc: false },
+  { type: 'fcc_anexo',                label: 'Anexo FCC Técnico',           ext: '.pdf',  required: true,  engineerDoc: false },
 ];
 
 // ── State ─────────────────────────────────────────────────────
@@ -679,16 +680,38 @@ Documento: 03_geodata/
 
 ────────────────────────────────────────────────────────
 OBSERVACIÓN 4
-Tipología "terreno forestal incendiado".
+Tipología "terreno forestal incendiado" — elegibilidad de superficie.
 
 RESPUESTA:
-Se ha revisado el ámbito de actuación eliminando la superficie
-que no contaba con bosque previo al incendio del 15/10/2017.
-La elegibilidad del terreno se acredita mediante:
-- Cartografía EFFIS/WILDFIRE (Copernicus) — incendio 15/10/2017
-- Registro de incendios XUNTA de Galicia (Xorfor 2010-2021)
-- Ortofotografía PNOA 2016 (vuelo anterior al incendio)
-Ver Plano 3 (Elegibilidad) adjunto en memoria técnica.
+Se adjunta Anexo Técnico de Verificación FCC (Fracción de Cabida
+Cubierta) que acredita mediante tres fuentes de datos independientes
+la existencia de masa forestal arborada con FCC ≥ 20% previa al
+incendio del 15/10/2017:
+
+  Fuente 1 — Sentinel-2 L2A (20 mayo 2017, 5 meses antes del incendio)
+  Escena S2B_MSIL2A_20170520T112109, tile T29TNG, resolución 10m.
+  NDVI calculado por subparcela. Umbral ≥ 0,30 para masa forestal.
+
+  Fuente 2 — MFE50 (Mapa Forestal de España, Pontevedra)
+  Campo TFCCARB ≥ 20% = PASS. Fuente MITECO/Banco de Datos Naturaleza.
+
+  Fuente 3 — Ortofoto PNOA 2014 (vuelo histórico pre-incendio)
+  Índice ExG (Excess Green) ≥ 20% píxeles verdes dominantes = PASS.
+
+Metodología de síntesis: regla de mayoría 2/3. Si ≥ 2 fuentes
+clasifican FCC ≥ 20%, la subparcela se clasifica como Bosque
+Incendiado Elegible (Tipo B).
+
+Resultado: 19 de 20 subparcelas analizadas cumplen criterio Tipo B.
+  — 7 subparcelas: ALTA confianza (3/3 fuentes)
+  — 12 subparcelas: MEDIA confianza (2/3 fuentes)
+  — 1 subparcela EXCLUIDA (0,0184 ha, Quercus robur, Ref.
+    36037A03100078-e): solo 1/3 fuentes. Eliminada del proyecto.
+    Superficie definitiva: ${totalHa.toFixed(4)} ha.
+
+El shapefile adjunto refleja correctamente las 19 subparcelas elegibles.
+Documentos: 05_anexos/anexo_fcc_tecnico_amoedo.pdf
+            03_geodata/ (shapefile zona actuación corregida, 19 polígonos)
 
 ────────────────────────────────────────────────────────
 OBSERVACIÓN 5
@@ -846,6 +869,7 @@ AMOEDO_MITECO_SUBSANACION_CLEARSKY/
 └── 06_anexos/
       plan_gestion_amoedo_v2.pdf
       anexo_i_amoedo_firmado.pdf
+      anexo_fcc_tecnico_amoedo.pdf
       convenio_cesion_absorciones_amoedo.pdf
       declaracion_permanencia_firmada.pdf
       nota_simple_finca6105.pdf
