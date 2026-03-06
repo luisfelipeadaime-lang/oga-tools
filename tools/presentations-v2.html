@@ -657,16 +657,18 @@ async function doGenerate(){
   bar.style.width='50%';
 
   try{
+    var payload={
+      project_ids:selectedIds,
+      intent:intent,
+      pptx_theme:pptxTheme,
+      base_pptx_key:basePptxKey||null,
+      counterparty:document.getElementById('inp-counterparty').value.trim(),
+      output_type:outputType
+    };
+    console.log('DEBUG generate payload:',JSON.stringify(payload));
     var r=await apiCall('/api/presentations/v2/generate',{
       method:'POST',
-      body:JSON.stringify({
-        project_ids:selectedIds,
-        intent:intent,
-        pptx_theme:pptxTheme,
-        base_pptx_key:basePptxKey||null,
-        counterparty:document.getElementById('inp-counterparty').value.trim(),
-        output_type:outputType
-      })
+      body:JSON.stringify(payload)
     });
 
     bar.style.width='80%';
