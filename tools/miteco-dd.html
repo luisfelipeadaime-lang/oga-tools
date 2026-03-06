@@ -388,7 +388,9 @@ async function selectProject(id) {
     renderKPIs();
     renderDocList();
     renderSubparcelas();
-    renderIssues(data.audit_json ? JSON.parse(data.audit_json).findings : []);
+    let auditFindings = [];
+    try { if (data.audit_json) auditFindings = JSON.parse(data.audit_json).findings || []; } catch(e) { /* malformed audit_json */ }
+    renderIssues(auditFindings);
 
     document.getElementById('projectTitle').textContent = data.name;
     document.getElementById('actionBar').style.display = 'flex';
