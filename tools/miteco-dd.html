@@ -259,7 +259,10 @@ td.area-cell.mismatch { color: var(--error); font-weight: 600; }
 
     <div class="datos-field"><label>Domicilio promotor</label><input id="dp_promotor_domicilio"></div>
     <div class="datos-field"><label>Tipo proyecto</label>
-      <select id="dp_tipo_proyecto"><option value="">—</option><option>Bosque incendiado</option><option>Cambio de uso de suelo</option><option>Forestación</option><option>Reforestación</option></select>
+      <div style="display:flex;gap:4px;align-items:center">
+        <select id="dp_tipo_proyecto" style="flex:1"><option value="">—</option><option>Bosque incendiado</option><option>Cambio de uso de suelo</option><option>Forestación</option><option>Reforestación</option></select>
+        <button onclick="switchProjectType()" style="font-size:10px;padding:2px 8px;background:#b45309;color:white;border:none;border-radius:4px;cursor:pointer;white-space:nowrap" title="Switch type and cascade changes">Switch</button>
+      </div>
     </div>
 
     <div class="datos-field"><label>Municipio promotor</label><input id="dp_promotor_municipio"></div>
@@ -438,6 +441,7 @@ const DOC_TYPES = [
   { type: 'planos',                   label: 'Planos (PDF)',                ext: '.pdf',  required: false, engineerDoc: false },
   { type: 'fcc_anexo',                label: 'Anexo FCC Técnico',           ext: '.pdf',  required: true,  engineerDoc: false },
   { type: 'formulario_pa',            label: 'Formulario PA (Excel)',        ext: '.xlsx', required: true,  engineerDoc: false },
+  { type: 'doc_uso_suelo_1989',       label: 'Doc. Uso Suelo 1989',         ext: '.pdf',  required: false, engineerDoc: false },
 ];
 
 // ── State ─────────────────────────────────────────────────────
@@ -449,6 +453,8 @@ let state = {
   issues: [],
   auditFindings: [],
   pendingEdits: {},
+  typeConfig: {},
+  verificationResults: null,
 };
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -487,7 +493,13 @@ function fmt(n, dec = 2) { return n != null ? Number(n).toLocaleString('es-ES', 
 // ── Boot ──────────────────────────────────────────────────────
 async function init() {
   try {
-    state.projects = await api('/api/miteco-dd/projects');
+    // Load type config and projects in parallel
+    const [projects, typeConfig] = await Promise.all([
+      api('/api/miteco-dd/projects'),
+      api('/api/miteco-dd/type-config').catch(() => ({}))
+    ]);
+    state.projects = projects;
+    state.typeConfig = typeConfig;
     renderProjectList();
     // Auto-select amoedo if present
     const amoedo = state.projects.find(p => p.id === 'amoedo');
@@ -570,15 +582,21 @@ function renderKPIs() {
 // ── Document list ─────────────────────────────────────────────
 function renderDocList() {
   const el = document.getElementById('docList');
-  el.innerHTML = DOC_TYPES.map(dt => {
+  const tipo = state.currentProject?.master?.proyecto?.tipo_proyecto || 'Bosque incendiado';
+  const cfg = state.typeConfig?.[tipo] || {};
+  const reqDocs = cfg.required_docs || DOC_TYPES.filter(d => d.required).map(d => d.type);
+  const optDocs = cfg.optional_docs || [];
+  const allAllowed = [...reqDocs, ...optDocs];
+  el.innerHTML = DOC_TYPES.filter(dt => allAllowed.includes(dt.type)).map(dt => {
     const doc = state.documents[dt.type];
     const status = doc ? doc.status : 'missing';
     const iconClass = status;
     const actionLabel = doc ? 'replace' : 'upload';
+    const isRequired = reqDocs.includes(dt.type);
     return `
       <div class="doc-item" title="${dt.type}">
         <div class="doc-icon ${iconClass}"></div>
-        <span class="doc-label">${dt.label}${dt.required ? ' *' : ''}</span>
+        <span class="doc-label">${dt.label}${isRequired ? ' *' : ''}</span>
         <span class="doc-action" onclick="uploadDoc('${dt.type}')">${actionLabel}</span>
       </div>
     `;
@@ -844,9 +862,15 @@ function renderVerifyResults(data) {
   for (const v of data.verdicts) {
     const label = docLabels[v.doc_type] || v.doc_type;
     const nFields = v.extracted ? Object.keys(v.extracted).length : 0;
+    const realDiscs = (v.discrepancies || []).filter(d => d.field !== 'format' && d.field !== 'claude_api');
     html += `<div class="verify-row">
       <span class="verify-pill ${v.verdict.toLowerCase()}">${v.verdict}</span>
       <strong>${label}</strong> <span style="color:var(--gray-400)">(${nFields} fields)</span>`;
+    if (v.verdict === 'FAIL' && realDiscs.length > 0) {
+      const discB64 = btoa(unescape(encodeURIComponent(JSON.stringify(realDiscs))));
+      html += ` <button onclick="getFixInstructions('${v.doc_type}',JSON.parse(decodeURIComponent(escape(atob('${discB64}')))))"
+        style="font-size:10px;padding:2px 8px;background:#7c3aed;color:white;border:none;border-radius:4px;cursor:pointer;margin-left:4px">Get Fix</button>`;
+    }
     if (v.discrepancies?.length) {
       html += v.discrepancies.map(d =>
         `<div class="verify-disc">${d.severity === 'ERROR' ? '✗' : '!'} ${d.field}: expected ${d.expected}, got ${d.got}</div>`
@@ -1001,6 +1025,88 @@ async function saveDatosProyecto() {
   } catch(e) {
     toast('Save failed: ' + e.message, 'error');
   }
+}
+
+// ── Switch project type ──────────────────────────────────────
+async function switchProjectType() {
+  if (!state.currentProject) return;
+  const newType = document.getElementById('dp_tipo_proyecto').value;
+  if (!newType) return toast('Selecciona un tipo de proyecto', 'error');
+  const oldType = state.currentProject.master?.proyecto?.tipo_proyecto || '';
+  if (newType === oldType) return toast('El tipo ya es ' + newType, 'info');
+  const cfg = state.typeConfig[newType];
+  if (!cfg) return toast('Tipo no configurado: ' + newType, 'error');
+
+  if (!confirm(`Cambiar tipo de proyecto a "${newType}" afectará:\n• Lista de documentos requeridos\n• Contenido de RESPUESTA Punto 4\n• Checks de auditoría\n\n¿Confirmar?`)) return;
+
+  showSpinner('Cambiando tipo de proyecto…');
+  try {
+    const master = collectDatosProyecto();
+    master.proyecto.tipo_proyecto = newType;
+    const result = await api(`/api/miteco-dd/projects/${state.currentProject.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ master_json: master })
+    });
+    state.currentProject.master = master;
+
+    // Reload project to refresh document statuses
+    await selectProject(state.currentProject.id);
+
+    // Show banner
+    const banner = document.createElement('div');
+    banner.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#fef3c7;color:#92400e;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.15)';
+    banner.textContent = `Tipo de proyecto cambiado a ${newType} — revisar todos los documentos marcados como STALE`;
+    document.body.appendChild(banner);
+    setTimeout(() => banner.remove(), 6000);
+
+    // Auto-run audit
+    await runAudit();
+
+    const affected = result.cascade?.affected_documents || 0;
+    toast(`Tipo cambiado a ${newType}. ${affected} documento(s) marcados como STALE.`, 'success');
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+  } finally {
+    hideSpinner();
+  }
+}
+
+// ── Get fix instructions for a failed document ──────────────
+async function getFixInstructions(docType, discrepancies) {
+  if (!state.currentProject) return;
+  showSpinner(`Obteniendo instrucciones de corrección para ${docType}…`);
+  try {
+    const result = await api(`/api/miteco-dd/projects/${state.currentProject.id}/fix-document`, {
+      method: 'POST',
+      body: JSON.stringify({ doc_type: docType, discrepancies })
+    });
+
+    // Show modal with fix instructions
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center';
+    modal.innerHTML = `
+      <div style="background:white;border-radius:12px;padding:24px;max-width:700px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 4px 20px rgba(0,0,0,.3)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="margin:0;font-size:16px">Fix Instructions — ${docType}</h3>
+          <button onclick="this.closest('div[style*=fixed]').remove()" style="background:none;border:none;font-size:20px;cursor:pointer">&times;</button>
+        </div>
+        <pre style="background:#f4f4f5;padding:16px;border-radius:8px;font-size:12px;white-space:pre-wrap;word-wrap:break-word;max-height:50vh;overflow-y:auto">${escapeHtml(result.corrected_text)}</pre>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button onclick="navigator.clipboard.writeText(this.closest('div').querySelector('pre').textContent);this.textContent='Copied!'" style="padding:6px 14px;background:var(--navy);color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px">Copy to Clipboard</button>
+          <button onclick="this.closest('div[style*=fixed]').remove()" style="padding:6px 14px;background:var(--gray-200);border:none;border-radius:6px;cursor:pointer;font-size:12px">Close</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  } catch(e) {
+    toast('Error getting fix instructions: ' + e.message, 'error');
+  } finally {
+    hideSpinner();
+  }
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── Start ─────────────────────────────────────────────────────
