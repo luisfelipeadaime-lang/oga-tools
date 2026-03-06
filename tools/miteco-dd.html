@@ -359,31 +359,95 @@ td.area-cell.mismatch { color: var(--error); font-weight: 600; }
     <input type="file" id="recvFileInput" class="hidden" multiple accept=".pdf,.xlsx,.docx,.zip" onchange="handleRecvFiles(this.files)">
   </div>
 
-  <!-- CENTER: Subparcelas -->
-  <div class="center-panel">
+  <!-- CENTER: Tabbed content -->
+  <div class="center-panel" style="padding-bottom:70px;">
     <div class="center-top">
       <h2 id="projectTitle">Select a project</h2>
+      <div id="centerTabs" style="display:flex;gap:0;border-bottom:2px solid #2a3a4a;margin-bottom:16px;">
+        <button id="tabProyecto" onclick="switchTab('proyecto')" style="padding:10px 24px;background:none;border:none;border-bottom:3px solid #f5c842;color:#fff;font-weight:700;font-size:13px;cursor:pointer;margin-bottom:-2px;">Proyecto</button>
+        <button id="tabVerificacion" onclick="switchTab('verificacion')" style="padding:10px 24px;background:none;border:none;border-bottom:3px solid transparent;color:#8899aa;font-weight:600;font-size:13px;cursor:pointer;margin-bottom:-2px;">Verificación</button>
+      </div>
+    </div>
+    <div id="paneProyecto">
       <div class="kpi-strip" id="kpiStrip">
         <div class="kpi"><div class="val" id="kpiHa">—</div><div class="lbl">Hectares</div></div>
         <div class="kpi gold-kpi"><div class="val" id="kpiCO2">—</div><div class="lbl">tCO₂ total</div></div>
         <div class="kpi"><div class="val" id="kpiBolsa">—</div><div class="lbl">Bolsa garantía</div></div>
         <div class="kpi"><div class="val" id="kpiDisp">—</div><div class="lbl">Disponibles</div></div>
       </div>
+      <div class="table-wrap">
+        <table id="subparcelasTable">
+          <thead>
+            <tr>
+              <th>✓</th><th>#</th><th>Tipo</th><th>Especie</th>
+              <th>Ref. Catastral</th><th>Sub</th><th>Marco</th>
+              <th>D.ini</th><th>D.fin</th><th>N.árb</th><th>Año</th>
+              <th>ha (canon)</th><th>ha (mem)</th><th>ha (GIS)</th>
+            </tr>
+          </thead>
+          <tbody id="subparcelasBody">
+            <tr><td colspan="14" style="text-align:center;padding:40px;color:var(--gray-400)">Select a project to begin</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-    <div class="table-wrap">
-      <table id="subparcelasTable">
-        <thead>
-          <tr>
-            <th>✓</th><th>#</th><th>Tipo</th><th>Especie</th>
-            <th>Ref. Catastral</th><th>Sub</th><th>Marco</th>
-            <th>D.ini</th><th>D.fin</th><th>N.árb</th><th>Año</th>
-            <th>ha (canon)</th><th>ha (mem)</th><th>ha (GIS)</th>
-          </tr>
-        </thead>
-        <tbody id="subparcelasBody">
-          <tr><td colspan="14" style="text-align:center;padding:40px;color:var(--gray-400)">Select a project to begin</td></tr>
-        </tbody>
-      </table>
+    <div id="paneVerificacion" style="display:none;padding:0 8px;">
+
+      <!-- Drop zone -->
+      <div id="verifyDropZone" style="border:2px dashed #2a3a4a;border-radius:10px;padding:32px;text-align:center;margin-bottom:20px;cursor:pointer;transition:border-color 0.2s;"
+        onclick="document.getElementById('verifyZipInput').click()"
+        ondragover="event.preventDefault();this.style.borderColor='#f5c842'"
+        ondragleave="this.style.borderColor='#2a3a4a'"
+        ondrop="handleVerifyDrop(event)">
+        <div style="font-size:32px;margin-bottom:8px;">📦</div>
+        <div style="color:#fff;font-weight:600;margin-bottom:4px;">Arrastra tu paquete ZIP aquí o haz clic</div>
+        <div style="color:#8899aa;font-size:12px;">O usa los documentos ya cargados en el sistema</div>
+        <input type="file" id="verifyZipInput" accept=".zip" style="display:none" onchange="handleVerifyZip(this.files[0])">
+      </div>
+
+      <!-- Verify from R2 button -->
+      <div style="text-align:center;margin-bottom:24px;">
+        <button onclick="runVerifyPackage()" style="background:#f59e0b;color:#000;border:none;padding:12px 32px;border-radius:6px;font-weight:700;font-size:14px;cursor:pointer;">
+          🔍 Verificar desde R2
+        </button>
+        <div style="color:#8899aa;font-size:11px;margin-top:6px;">Analiza todos los documentos ya cargados · ~60 segundos</div>
+      </div>
+
+      <!-- Progress -->
+      <div id="verifyProgress" style="display:none;text-align:center;padding:24px;">
+        <div style="color:#f5c842;font-size:14px;font-weight:600;" id="verifyProgressText">Iniciando análisis…</div>
+        <div style="margin-top:12px;height:4px;background:#2a3a4a;border-radius:2px;overflow:hidden;">
+          <div id="verifyProgressBar" style="height:100%;background:#f5c842;width:0%;transition:width 0.5s;"></div>
+        </div>
+      </div>
+
+      <!-- Results container -->
+      <div id="verifyResultsV2" style="display:none;">
+        <div id="verifyBanner" style="padding:14px 18px;border-radius:8px;margin-bottom:20px;font-weight:700;font-size:14px;"></div>
+        <div style="font-size:11px;color:#8899aa;font-weight:700;letter-spacing:1px;margin-bottom:10px;">DOCUMENTOS</div>
+        <div id="verifyDocCards" style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px;"></div>
+        <div id="verifyCrossSection" style="display:none;margin-bottom:24px;">
+          <div style="font-size:11px;color:#8899aa;font-weight:700;letter-spacing:1px;margin-bottom:10px;">INCONSISTENCIAS CRUZADAS</div>
+          <div id="verifyCrossCards" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+        <div id="verifyPropSection" style="display:none;margin-bottom:24px;">
+          <div style="font-size:11px;color:#8899aa;font-weight:700;letter-spacing:1px;margin-bottom:10px;">EVIDENCIAS DE PROPIEDAD</div>
+          <div id="verifyPropCard" style="background:#1a2332;border-radius:8px;padding:16px;"></div>
+        </div>
+        <div id="verifyInstrSection" style="display:none;margin-bottom:24px;">
+          <div style="font-size:11px;color:#8899aa;font-weight:700;letter-spacing:1px;margin-bottom:10px;">INSTRUCCIONES DE CORRECCIÓN</div>
+          <div id="verifyInstrList" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+        <div id="verifyCartasSection" style="display:none;margin-bottom:24px;">
+          <div style="font-size:11px;color:#8899aa;font-weight:700;letter-spacing:1px;margin-bottom:10px;">CARTAS DE CORRECCIÓN</div>
+          <div id="verifyCartasList" style="display:flex;flex-direction:column;gap:12px;"></div>
+        </div>
+        <div style="margin-bottom:24px;">
+          <button onclick="loadAgentInstructions()" style="background:#1a2332;border:1px solid #2a3a4a;color:#f5c842;padding:10px 20px;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;">
+            🤖 Instrucciones para Agente Local
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -817,6 +881,11 @@ function renderIssues(findings) {
       ${f.action ? `<div class="find-action">→ ${f.action}</div>` : ''}
     </div>
   `).join('');
+  // Update footer status
+  const errCount = findings.filter(f => f.severity === 'ERROR' && !f.pass).length;
+  const warnCount = findings.filter(f => f.severity === 'WARNING' && !f.pass).length;
+  document.getElementById('footerStatus').innerHTML =
+    `<span style="color:${errCount>0?'#ef4444':'#22c55e'}">${errCount} errores</span> · <span style="color:${warnCount>0?'#f59e0b':'#22c55e'}">${warnCount} advertencias</span>`;
 }
 
 // ── Generate package (server-side zip) ───────────────────────
@@ -1354,8 +1423,212 @@ async function handleRecvFiles(fileList) {
   }
 }
 
+// ── Tab system ────────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('paneProyecto').style.display = tab === 'proyecto' ? '' : 'none';
+  document.getElementById('paneVerificacion').style.display = tab === 'verificacion' ? '' : 'none';
+  document.getElementById('tabProyecto').style.borderBottomColor = tab === 'proyecto' ? '#f5c842' : 'transparent';
+  document.getElementById('tabProyecto').style.color = tab === 'proyecto' ? '#fff' : '#8899aa';
+  document.getElementById('tabVerificacion').style.borderBottomColor = tab === 'verificacion' ? '#f5c842' : 'transparent';
+  document.getElementById('tabVerificacion').style.color = tab === 'verificacion' ? '#fff' : '#8899aa';
+}
+
+// ── Verify package (Verificación tab) ─────────────────────────
+async function runVerifyPackage() {
+  if (!state.currentProject) return;
+  switchTab('verificacion');
+  document.getElementById('verifyProgress').style.display = '';
+  document.getElementById('verifyResultsV2').style.display = 'none';
+
+  const steps = ['Extrayendo textos de documentos…','Analizando con Claude…','Generando informe de verificación…'];
+  let step = 0;
+  const interval = setInterval(() => {
+    if (step < steps.length) {
+      document.getElementById('verifyProgressText').textContent = steps[step++];
+      document.getElementById('verifyProgressBar').style.width = (step / steps.length * 85) + '%';
+    }
+  }, 15000);
+
+  try {
+    const res = await fetch(`${API}/api/miteco-dd/projects/${state.currentProject.id}/verify-package`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({use_r2: true})
+    });
+    const data = await res.json();
+    clearInterval(interval);
+    document.getElementById('verifyProgressBar').style.width = '100%';
+    setTimeout(() => {
+      document.getElementById('verifyProgress').style.display = 'none';
+      renderVerifyResultsV2(data);
+    }, 500);
+  } catch(e) {
+    clearInterval(interval);
+    document.getElementById('verifyProgressText').textContent = 'Error: ' + e.message;
+  }
+}
+
+function renderVerifyResultsV2(data) {
+  document.getElementById('verifyResultsV2').style.display = '';
+
+  // Banner
+  const banner = document.getElementById('verifyBanner');
+  const r = data.resumen || {};
+  const ok = r.apto_para_entrega;
+  const warn = r.estado_general === 'ADVERTENCIAS';
+  banner.style.background = ok ? '#14532d' : warn ? '#78350f' : '#7f1d1d';
+  banner.style.color = ok ? '#86efac' : warn ? '#fde68a' : '#fca5a5';
+  banner.innerHTML = `${ok ? '✅' : warn ? '⚠️' : '❌'} ${r.estado_general || 'ERROR'} — ${r.total_documentos || 0} documentos · ${r.errores || 0} errores · ${r.advertencias || 0} advertencias${r.motivo_bloqueo ? ' — ' + escapeHtml(r.motivo_bloqueo) : ''}`;
+
+  // Footer status
+  document.getElementById('footerStatus').innerHTML =
+    `<span style="color:${(r.errores||0)>0?'#ef4444':'#22c55e'}">${r.errores||0} errores</span> · <span style="color:${(r.advertencias||0)>0?'#f59e0b':'#22c55e'}">${r.advertencias||0} advertencias</span>`;
+
+  // Document cards
+  const cards = document.getElementById('verifyDocCards');
+  cards.innerHTML = '';
+  (data.documentos || []).forEach(doc => {
+    const color = doc.estado === 'PASS' ? '#22c55e' : doc.estado === 'WARN' ? '#f59e0b' : doc.estado === 'FAIL' ? '#ef4444' : '#4b5563';
+    const disc = (doc.discrepancias || []).map(d =>
+      `<div style="font-size:12px;color:${d.gravedad==='ERROR'?'#fca5a5':'#fde68a'};margin-top:4px;">
+        ${d.gravedad==='ERROR'?'✗':'!'} ${escapeHtml(d.campo||'')}: ${escapeHtml(d.valor_documento||'')} → ${escapeHtml(d.valor_correcto||'')}
+        ${d.accion_requerida ? '<div style="color:#8899aa;font-size:11px;margin-top:2px;">'+escapeHtml(d.accion_requerida)+'</div>' : ''}
+      </div>`
+    ).join('');
+    cards.innerHTML += `
+      <div style="background:#1a2332;border-radius:8px;padding:14px 16px;border-left:3px solid ${color};">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="color:#fff;font-weight:600;font-size:13px;">${escapeHtml(doc.nombre_archivo || doc.doc_type)}</span>
+          <span style="background:${color}22;color:${color};padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;">${doc.estado}</span>
+        </div>
+        ${disc}
+      </div>`;
+  });
+
+  // Cross inconsistencies
+  if ((data.inconsistencias_cruzadas || []).length > 0) {
+    document.getElementById('verifyCrossSection').style.display = '';
+    document.getElementById('verifyCrossCards').innerHTML = data.inconsistencias_cruzadas.map(i =>
+      `<div style="background:#1a2332;border-radius:8px;padding:14px;border-left:3px solid #ef4444;">
+        <div style="color:#fca5a5;font-weight:600;font-size:13px;">⚡ ${escapeHtml(i.campo||'')}</div>
+        <div style="color:#8899aa;font-size:12px;margin-top:4px;">${(i.documentos_afectados||[]).join(', ')}</div>
+        <div style="color:#fff;font-size:12px;margin-top:4px;">${escapeHtml(i.descripcion||'')}</div>
+        <div style="color:#f5c842;font-size:12px;margin-top:4px;">→ ${escapeHtml(i.accion_requerida||'')}</div>
+      </div>`
+    ).join('');
+  }
+
+  // Property evidence
+  if (data.evidencias_propiedad) {
+    document.getElementById('verifyPropSection').style.display = '';
+    const ep = data.evidencias_propiedad;
+    const epColor = ep.estado === 'ACREDITADA' ? '#22c55e' : ep.estado === 'PARCIAL' ? '#f59e0b' : '#ef4444';
+    document.getElementById('verifyPropCard').innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <span style="color:#fff;font-weight:700;">Acreditación de propiedad</span>
+        <span style="background:${epColor}22;color:${epColor};padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;">${ep.estado}</span>
+      </div>
+      <div style="color:#8899aa;font-size:12px;">${escapeHtml(ep.observaciones||'')}</div>
+      ${ep.faltante ? '<div style="color:#fca5a5;font-size:12px;margin-top:6px;">Faltante: '+escapeHtml(ep.faltante)+'</div>' : ''}
+      <div style="color:#8899aa;font-size:11px;margin-top:8px;">Documentos: ${(ep.documentos_analizados||[]).join(', ')}</div>`;
+  }
+
+  // Correction instructions
+  if ((data.instrucciones_correccion || []).length > 0) {
+    document.getElementById('verifyInstrSection').style.display = '';
+    document.getElementById('verifyInstrList').innerHTML = data.instrucciones_correccion.map((inst,i) =>
+      `<div style="background:#1a2332;border-radius:8px;padding:14px;display:flex;gap:12px;align-items:flex-start;">
+        <span style="background:#f5c842;color:#000;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">${inst.prioridad||i+1}</span>
+        <div style="flex:1;">
+          <div style="color:#f5c842;font-size:12px;font-weight:600;">${escapeHtml(inst.documento||'')}</div>
+          ${inst.ubicacion ? '<div style="color:#8899aa;font-size:11px;">'+escapeHtml(inst.ubicacion)+'</div>' : ''}
+          <div style="color:#fff;font-size:13px;margin-top:4px;">${escapeHtml(inst.correccion||'')}</div>
+          ${inst.valor_incorrecto ? '<div style="color:#fca5a5;font-size:11px;margin-top:4px;">'+escapeHtml(inst.valor_incorrecto)+' → <span style="color:#86efac;">'+escapeHtml(inst.valor_correcto||'')+'</span></div>' : ''}
+        </div>
+        <button onclick="navigator.clipboard.writeText(this.closest('div[style*=background]').innerText);this.textContent='✓';setTimeout(()=>this.textContent='📋',1500)"
+          style="background:none;border:1px solid #2a3a4a;color:#8899aa;padding:4px 8px;border-radius:4px;font-size:11px;cursor:pointer;flex-shrink:0;">📋</button>
+      </div>`
+    ).join('');
+  }
+
+  // Correction letters
+  if ((data.cartas_correccion || []).length > 0) {
+    document.getElementById('verifyCartasSection').style.display = '';
+    document.getElementById('verifyCartasList').innerHTML = data.cartas_correccion.map((carta,idx) => {
+      const cartaId = 'carta_' + idx;
+      const mailSubject = encodeURIComponent('Correcciones documentacion MITECO — ' + (carta.destinatario || ''));
+      const mailBody = encodeURIComponent(carta.carta_texto || '');
+      return `<div style="background:#1a2332;border-radius:8px;padding:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div>
+            <div style="color:#fff;font-weight:700;">${escapeHtml(carta.destinatario||'')}</div>
+            <div style="color:#8899aa;font-size:12px;">${escapeHtml(carta.rol||'')} · ${(carta.documentos_afectados||[]).join(', ')}</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="navigator.clipboard.writeText(document.getElementById('${cartaId}').textContent);this.textContent='✓ Copiado';setTimeout(()=>this.textContent='📋 Copiar',1500)"
+              style="background:#1a2332;border:1px solid #2a3a4a;color:#8899aa;padding:6px 12px;border-radius:4px;font-size:12px;cursor:pointer;">📋 Copiar</button>
+            ${carta.email ? '<a href="mailto:'+carta.email+'?subject='+mailSubject+'&body='+mailBody+'" style="background:#1a2332;border:1px solid #2a3a4a;color:#8899aa;padding:6px 12px;border-radius:4px;font-size:12px;cursor:pointer;text-decoration:none;">✉️ Email</a>' : ''}
+          </div>
+        </div>
+        <div id="${cartaId}" style="background:#0f1923;border-radius:6px;padding:12px;font-size:12px;color:#cbd5e1;white-space:pre-wrap;max-height:200px;overflow-y:auto;font-family:monospace;">${escapeHtml(carta.carta_texto||'')}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
+async function loadAgentInstructions() {
+  if (!state.currentProject) return;
+  showSpinner('Generando instrucciones…');
+  try {
+    const res = await fetch(`${API}/api/miteco-dd/projects/${state.currentProject.id}/generate-instructions`);
+    const data = await res.json();
+    hideSpinner();
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:#000a;z-index:9999;display:flex;align-items:center;justify-content:center;';
+    modal.innerHTML = `
+      <div style="background:#1a2332;border-radius:10px;padding:24px;width:700px;max-width:95vw;max-height:80vh;overflow-y:auto;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div style="color:#f5c842;font-weight:700;font-size:14px;">🤖 Instrucciones para Claude Code</div>
+          <button onclick="this.closest('div[style*=fixed]').remove()" style="background:none;border:none;color:#8899aa;font-size:20px;cursor:pointer;">×</button>
+        </div>
+        <div id="agentInstrText2" style="background:#0f1923;border-radius:6px;padding:16px;font-family:monospace;font-size:12px;color:#e2e8f0;white-space:pre-wrap;max-height:50vh;overflow-y:auto;">${escapeHtml(data.instructions_text||'No hay instrucciones disponibles')}</div>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center;">
+          <button onclick="navigator.clipboard.writeText(document.getElementById('agentInstrText2').textContent);this.textContent='✓ Copiado';setTimeout(()=>this.textContent='📋 Copiar para Claude Code',1500)"
+            style="background:#f5c842;color:#000;border:none;padding:10px 20px;border-radius:6px;font-weight:700;cursor:pointer;">📋 Copiar para Claude Code</button>
+          <span style="color:#8899aa;font-size:12px;">${data.stale_docs_count||0} docs desactualizados · ~${data.estimated_time_minutes||5} min</span>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  } catch(e) {
+    hideSpinner();
+    toast('Error: ' + e.message, 'error');
+  }
+}
+
+function handleVerifyDrop(e) {
+  e.preventDefault();
+  document.getElementById('verifyDropZone').style.borderColor = '#2a3a4a';
+  const file = e.dataTransfer.files[0];
+  if (file) handleVerifyZip(file);
+}
+
+function handleVerifyZip(file) {
+  toast('ZIP upload próximamente. Usa "Verificar desde R2" por ahora.', 'info');
+}
+
 // ── Start ─────────────────────────────────────────────────────
 init();
 </script>
+
+<div id="footerBar" style="position:fixed;bottom:0;left:0;right:0;background:#0a1018;border-top:1px solid #2a3a4a;padding:12px 24px;display:flex;justify-content:space-between;align-items:center;z-index:1000;">
+  <div id="footerStatus" style="color:#8899aa;font-size:13px;">— errores · — advertencias</div>
+  <div style="display:flex;gap:10px;">
+    <button onclick="runAudit()" style="background:none;border:1px solid #2a3a4a;color:#fff;padding:9px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">⚡ Auditoría Rápida</button>
+    <button onclick="runVerifyPackage()" style="background:#f59e0b;color:#000;border:none;padding:9px 18px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;">🔍 Verificar Documentos</button>
+    <button onclick="generatePackage()" style="background:#f5c842;color:#000;border:none;padding:9px 18px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;">📦 Generar Paquete</button>
+  </div>
+</div>
+<div style="height:60px;"></div>
+
 </body>
 </html>
