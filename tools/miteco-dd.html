@@ -820,25 +820,23 @@ async function generatePackage() {
   }
 }
 
-// ── Verify documents via Claude ──────────────────────────────
+// ── Verify documents via Claude (verify-package) ──────────────
 async function verifyDocuments() {
   if (!state.currentProject) return;
-  showSpinner('Verificando documentos con Claude… (15-30 segundos)');
+  showSpinner('Verificando expediente completo con Claude Sonnet… (30-60 segundos)');
   try {
-    const res = await fetch(`${API}/api/miteco-dd/projects/${state.currentProject.id}/verify-all`, {
+    const res = await fetch(`${API}/api/miteco-dd/projects/${state.currentProject.id}/verify-package`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ use_r2: true })
     });
-    if (!res.ok) {
-      const err = await res.text();
-      throw new Error(err);
-    }
+    if (!res.ok) { const err = await res.text(); throw new Error(err); }
     const data = await res.json();
-    state.verificationResults = data.verdicts;
+    state.verificationResults = data;
     renderVerifyResults(data);
     document.getElementById('verifyTimestamp').textContent = 'Last: ' + new Date().toLocaleTimeString('es-ES');
   } catch(e) {
-    toast('Verificación fallida: ' + e.message, 'error');
+    toast('Verificacion fallida: ' + e.message, 'error');
   } finally {
     hideSpinner();
   }
@@ -846,38 +844,93 @@ async function verifyDocuments() {
 
 function renderVerifyResults(data) {
   const el = document.getElementById('verifyResults');
-  const s = data.summary;
-  const allPass = s.failed === 0;
-  let html = `<div class="verify-banner ${allPass ? 'pass' : 'fail'}">${allPass
-    ? 'Documentación verificada — lista para entregar'
-    : `Errores encontrados — corregir antes de generar paquete: ${s.errors.map(e => e.doc_type + '/' + e.field).join(', ')}`
+  if (!data.resumen) { el.innerHTML = '<div class="verify-banner fail">Error: respuesta sin resumen</div>'; return; }
+  const r = data.resumen;
+  const isReady = r.apto_para_entrega;
+
+  let html = `<div class="verify-banner ${isReady ? 'pass' : 'fail'}">${isReady
+    ? 'Expediente verificado — apto para entrega'
+    : `${r.estado_general}: ${r.errores} error(es), ${r.advertencias} advertencia(s)${r.motivo_bloqueo ? ' — ' + r.motivo_bloqueo : ''}`
   }</div>`;
 
-  const docLabels = {
-    memoria: 'Memoria Técnica', certificacion: 'Certificación', plan_gestion: 'Plan Gestión',
-    anexo_i: 'Anexo I', anexo_ii: 'Anexo II', convenio_cesion: 'Convenio Cesión',
-    declaracion_responsable: 'Decl. Permanencia', shapefile: 'Shapefile', calculadora: 'Calculadora'
-  };
-
-  for (const v of data.verdicts) {
-    const label = docLabels[v.doc_type] || v.doc_type;
-    const nFields = v.extracted ? Object.keys(v.extracted).length : 0;
-    const realDiscs = (v.discrepancies || []).filter(d => d.field !== 'format' && d.field !== 'claude_api');
+  // Document verdicts
+  html += '<h4 style="margin:12px 0 6px;font-size:13px">Documentos</h4>';
+  for (const doc of (data.documentos || [])) {
+    const st = doc.estado || 'NO_DISPONIBLE';
+    const pillClass = st === 'PASS' ? 'pass' : st === 'WARN' ? 'warn' : 'fail';
+    const nFields = doc.campos_extraidos ? Object.keys(doc.campos_extraidos).length : 0;
     html += `<div class="verify-row">
-      <span class="verify-pill ${v.verdict.toLowerCase()}">${v.verdict}</span>
-      <strong>${label}</strong> <span style="color:var(--gray-400)">(${nFields} fields)</span>`;
-    if (v.verdict === 'FAIL' && realDiscs.length > 0) {
-      const discB64 = btoa(unescape(encodeURIComponent(JSON.stringify(realDiscs))));
-      html += ` <button onclick="getFixInstructions('${v.doc_type}',JSON.parse(decodeURIComponent(escape(atob('${discB64}')))))"
-        style="font-size:10px;padding:2px 8px;background:#7c3aed;color:white;border:none;border-radius:4px;cursor:pointer;margin-left:4px">Get Fix</button>`;
-    }
-    if (v.discrepancies?.length) {
-      html += v.discrepancies.map(d =>
-        `<div class="verify-disc">${d.severity === 'ERROR' ? '✗' : '!'} ${d.field}: expected ${d.expected}, got ${d.got}</div>`
-      ).join('');
+      <span class="verify-pill ${pillClass}">${st}</span>
+      <strong>${doc.doc_type}</strong> <span style="color:var(--gray-400)">${doc.nombre_archivo || ''} (${nFields} campos)</span>`;
+    if (doc.discrepancias?.length) {
+      for (const d of doc.discrepancias) {
+        const icon = d.gravedad === 'ERROR' ? '<span style="color:#ef4444">&#10007;</span>' : '<span style="color:#f59e0b">!</span>';
+        html += `<div class="verify-disc">${icon} ${d.campo}: ${d.valor_documento} (correcto: ${d.valor_correcto})</div>`;
+      }
     }
     html += '</div>';
   }
+
+  // Cross-document inconsistencies
+  if (data.inconsistencias_cruzadas?.length) {
+    html += '<h4 style="margin:16px 0 6px;font-size:13px">Inconsistencias entre documentos</h4>';
+    for (const inc of data.inconsistencias_cruzadas) {
+      html += `<div style="padding:6px 10px;margin:4px 0;background:#fef3c7;border-radius:6px;font-size:12px">
+        <strong>${inc.campo}</strong>: ${inc.descripcion}<br>
+        <span style="color:var(--gray-500)">Docs: ${(inc.documentos_afectados||[]).join(', ')} — ${inc.accion_requerida}</span>
+      </div>`;
+    }
+  }
+
+  // Property evidence
+  if (data.evidencias_propiedad) {
+    const ep = data.evidencias_propiedad;
+    const epColor = ep.estado === 'ACREDITADA' ? '#10b981' : ep.estado === 'PARCIAL' ? '#f59e0b' : '#ef4444';
+    html += `<h4 style="margin:16px 0 6px;font-size:13px">Evidencias de Propiedad</h4>
+    <div style="padding:10px;background:#f9fafb;border-radius:8px;border-left:3px solid ${epColor}">
+      <span style="background:${epColor};color:white;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">${ep.estado}</span>
+      <div style="margin-top:6px;font-size:12px">
+        ${ep.documentos_analizados?.length ? '<strong>Docs:</strong> ' + ep.documentos_analizados.join(', ') : ''}
+        ${ep.superficie_acreditada_ha ? '<br><strong>Superficie acreditada:</strong> ' + ep.superficie_acreditada_ha + ' ha' : ''}
+        ${ep.observaciones ? '<br>' + ep.observaciones : ''}
+        ${ep.faltante ? '<br><span style="color:#ef4444"><strong>Faltante:</strong> ' + ep.faltante + '</span>' : ''}
+      </div>
+    </div>`;
+  }
+
+  // Correction instructions
+  if (data.instrucciones_correccion?.length) {
+    html += '<h4 style="margin:16px 0 6px;font-size:13px">Instrucciones de Correccion</h4>';
+    for (const inst of data.instrucciones_correccion) {
+      const pColor = inst.prioridad <= 2 ? '#ef4444' : inst.prioridad <= 4 ? '#f59e0b' : '#6b7280';
+      html += `<div style="padding:8px 10px;margin:4px 0;background:white;border:1px solid #e5e7eb;border-radius:6px;font-size:12px">
+        <span style="background:${pColor};color:white;padding:1px 6px;border-radius:3px;font-size:10px;margin-right:6px">P${inst.prioridad}</span>
+        <strong>${inst.documento}</strong> — ${inst.ubicacion || ''}
+        <div style="margin-top:4px">${escapeHtml(inst.correccion)}</div>
+        ${inst.valor_incorrecto ? '<div style="color:#ef4444;margin-top:2px">' + escapeHtml(inst.valor_incorrecto) + ' &rarr; ' + escapeHtml(inst.valor_correcto) + '</div>' : ''}
+        <button onclick="navigator.clipboard.writeText(this.parentElement.innerText);this.textContent='Copiado!';setTimeout(()=>this.textContent='Copiar',1500)" style="margin-top:4px;font-size:10px;padding:1px 6px;background:var(--navy,#1B3A5C);color:white;border:none;border-radius:3px;cursor:pointer">Copiar</button>
+      </div>`;
+    }
+  }
+
+  // Correction letters
+  if (data.cartas_correccion?.length) {
+    html += '<h4 style="margin:16px 0 6px;font-size:13px">Cartas de Correccion</h4>';
+    for (const carta of data.cartas_correccion) {
+      const mailSubject = encodeURIComponent('Correcciones documentacion MITECO — ' + (carta.destinatario || ''));
+      const mailBody = encodeURIComponent(carta.carta_texto || '');
+      html += `<div style="padding:10px;margin:6px 0;background:white;border:1px solid #e5e7eb;border-radius:8px">
+        <div style="font-size:13px;font-weight:600">${escapeHtml(carta.destinatario || '')}</div>
+        <div style="font-size:11px;color:var(--gray-500);margin-bottom:6px">${escapeHtml(carta.rol || '')} — Docs: ${(carta.documentos_afectados||[]).join(', ')}</div>
+        <div style="background:#f4f4f5;padding:10px;border-radius:6px;font-size:11px;max-height:200px;overflow-y:auto;white-space:pre-wrap">${escapeHtml(carta.carta_texto || '')}</div>
+        <div style="margin-top:8px;display:flex;gap:6px">
+          <button onclick="navigator.clipboard.writeText(this.parentElement.previousElementSibling.textContent);this.textContent='Copiado!';setTimeout(()=>this.textContent='Copiar carta',1500)" style="font-size:10px;padding:3px 10px;background:var(--navy,#1B3A5C);color:white;border:none;border-radius:4px;cursor:pointer">Copiar carta</button>
+          ${carta.email ? `<a href="mailto:${carta.email}?subject=${mailSubject}&body=${mailBody}" style="font-size:10px;padding:3px 10px;background:#7c3aed;color:white;border:none;border-radius:4px;cursor:pointer;text-decoration:none">Abrir en email</a>` : ''}
+        </div>
+      </div>`;
+    }
+  }
+
   el.innerHTML = html;
 }
 
