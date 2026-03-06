@@ -614,7 +614,7 @@ async function generatePackage() {
     const respuesta = buildRespuesta(project, subs, totalHa);
     const indice = buildIndice(project);
 
-    // Download files
+    // Download text files
     downloadText(respuesta, `00_RESPUESTA_SUBSANACION_${projectName}.txt`);
     setTimeout(() => downloadText(indice, `01_INDICE_DOCUMENTACION_${projectName}.txt`), 500);
     setTimeout(() => {
@@ -622,7 +622,10 @@ async function generatePackage() {
       downloadText(readme, `FOLDER_STRUCTURE_${projectName}.txt`);
     }, 1000);
 
-    toast('Package files downloaded. See FOLDER_STRUCTURE for how to organize Google Drive.', 'success');
+    // Generate filled calculadora XLSX from template
+    setTimeout(() => generateCalculadora(project, tco2), 1500);
+
+    toast('Package files downloading. See FOLDER_STRUCTURE for how to organize Google Drive.', 'success');
   } catch(e) {
     toast('Generate failed: ' + e.message, 'error');
   } finally {
@@ -896,6 +899,83 @@ async function createProject() {
     toast('Create failed: ' + e.message, 'error');
   } finally {
     hideSpinner();
+  }
+}
+
+// ── Calculadora XLSX generation ───────────────────────────────
+async function generateCalculadora(project, tco2) {
+  try {
+    // Fetch template from R2 via worker
+    const res = await fetch(`${API}/api/miteco-dd/templates/calculadora_absorciones.xlsx`);
+    if (!res.ok) throw new Error('Template fetch failed: ' + res.status);
+    const buf = await res.arrayBuffer();
+
+    // Parse with SheetJS
+    const wb = XLSX.read(buf, { type: 'array' });
+
+    // ── Sheet 2: "Estimación absorción total" — fill CO2 rows ──
+    const ws2Name = wb.SheetNames.find(n => n.includes('Estimaci'));
+    if (ws2Name) {
+      const ws2 = wb.Sheets[ws2Name];
+      const master = project.master || {};
+      const filas = master.calculo_co2?.filas || [];
+
+      // Data rows start at row 13 (0-indexed row 12), cols D=3,E=4,F=5,G=6,H=7
+      filas.forEach((f, i) => {
+        const row = 13 + i;
+        ws2[XLSX.utils.encode_cell({r: row - 1, c: 3})] = { v: f.especie, t: 's' };          // D: Especie
+        ws2[XLSX.utils.encode_cell({r: row - 1, c: 4})] = { v: f.ano_plantacion, t: 'n' };    // E: Año
+        ws2[XLSX.utils.encode_cell({r: row - 1, c: 5})] = { v: f.n_pies_objetivo, t: 'n' };   // F: Nº pies
+        ws2[XLSX.utils.encode_cell({r: row - 1, c: 6})] = { v: f.tco2_por_pie, t: 'n' };      // G: tCO2/pie
+        ws2[XLSX.utils.encode_cell({r: row - 1, c: 7})] = { v: f.tco2_total, t: 'n' };        // H: tCO2
+      });
+
+      // Update total in H29
+      ws2['H29'] = { v: tco2, t: 'n' };
+
+      // Update sheet range to include our data rows
+      const range = XLSX.utils.decode_range(ws2['!ref'] || 'A1');
+      if (range.e.r < 28) range.e.r = 28;
+      if (range.e.c < 7) range.e.c = 7;
+      ws2['!ref'] = XLSX.utils.encode_range(range);
+    }
+
+    // ── Sheet 3: "Absorciones_Disponibles" — fill summary ──
+    const ws3Name = wb.SheetNames.find(n => n.includes('Disponibles'));
+    if (ws3Name) {
+      const ws3 = wb.Sheets[ws3Name];
+      const B = Math.round(tco2 * 0.20);
+      const C = Math.round(B / 11);
+      const disp = B - C;
+      ws3['O10'] = { v: Math.round(tco2), t: 'n' };  // A: total absorciones
+      ws3['O12'] = { v: B, t: 'n' };                   // B: registradas útiles
+      ws3['O14'] = { v: C, t: 'n' };                   // C: bolsa garantía
+      ws3['O16'] = { v: disp, t: 'n' };                // Disponibles
+    }
+
+    // ── Sheet 1: "Datos generales" — fill project metadata ──
+    const ws1Name = wb.SheetNames.find(n => n.includes('Datos generales'));
+    if (ws1Name) {
+      const ws1 = wb.Sheets[ws1Name];
+      const p = project.master?.proyecto || {};
+      // Promotor at F10 (merged cell area), Nombre at F12, Provincia F14, Localidad J14
+      ws1['F10'] = { v: p.promotor || project.promotor || '', t: 's' };
+      ws1['F12'] = { v: p.nombre || project.name || '', t: 's' };
+      ws1['F14'] = { v: p.provincia || project.provincia || '', t: 's' };
+      ws1['J14'] = { v: p.municipio || project.municipio || '', t: 's' };
+    }
+
+    // Write and download
+    const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `calculadora_${project.id}_v2.xlsx`;
+    a.click();
+    toast('Calculadora XLSX generated', 'success');
+  } catch(e) {
+    console.error('Calculadora generation failed:', e);
+    toast('Calculadora generation failed: ' + e.message, 'error');
   }
 }
 
