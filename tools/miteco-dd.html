@@ -449,19 +449,21 @@ function uploadDoc(docType) {
 document.getElementById('fileInputHidden').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   if (!file || !pendingUploadType) return;
-  showSpinner(`Uploading ${file.name}…`);
+  const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+  showSpinner(`Uploading ${file.name} (${sizeMB} MB)…`);
   try {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('doc_type', pendingUploadType);
-    const res = await fetch(`${API}/api/miteco-dd/projects/${state.currentProject.id}/documents`, {
-      method: 'POST', body: formData
+    const projectId = state.currentProject.id;
+    const uploadUrl = `${API}/api/miteco-dd/projects/${projectId}/documents?doc_type=${pendingUploadType}&filename=${encodeURIComponent(file.name)}`;
+    const res = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      body: file
     });
     const text = await res.text();
     let data;
     try { data = JSON.parse(text); } catch { throw new Error(`HTTP ${res.status}: ${text.slice(0, 300)}`); }
     if (!data.ok) throw new Error(data.error || data.stack || JSON.stringify(data));
-    toast(`${file.name} uploaded`, 'success');
+    toast(`${file.name} uploaded (${sizeMB} MB)`, 'success');
     // Auto-extract PDFs
     const dt = DOC_TYPES.find(d => d.type === pendingUploadType);
     if (dt?.engineerDoc && file.name.endsWith('.pdf')) {
