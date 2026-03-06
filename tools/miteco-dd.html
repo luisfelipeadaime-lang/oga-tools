@@ -149,6 +149,23 @@ td.area-cell.mismatch { color: var(--error); font-weight: 600; }
 .verify-disc { color: #991b1b; font-size: 10px; margin-top: 2px; }
 .btn-run-audit:hover { background: var(--navy-light); }
 
+/* Dependency cascade */
+.cascade-wrap { padding: 12px 16px; }
+.cascade-lane { display: flex; align-items: center; gap: 0; margin-bottom: 14px; flex-wrap: wrap; }
+.cascade-node { padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: 600; border: 1.5px solid; cursor: pointer; white-space: nowrap; transition: box-shadow .15s; min-width: 60px; text-align: center; }
+.cascade-node:hover { box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+.cascade-node.current { background: #d1fae5; color: #065f46; border-color: #10b981; }
+.cascade-node.stale { background: #fef3c7; color: #92400e; border-color: #f59e0b; }
+.cascade-node.fail { background: #fee2e2; color: #991b1b; border-color: #ef4444; }
+.cascade-node.missing { background: #f3f4f6; color: #9ca3af; border-color: #d1d5db; }
+.cascade-node.source { background: var(--navy); color: white; border-color: var(--navy); }
+.cascade-arrow { color: var(--gray-400); font-size: 14px; margin: 0 3px; flex-shrink: 0; }
+.cascade-branch { display: flex; flex-direction: column; gap: 4px; margin-left: 8px; }
+
+/* Receive outputs drop zone */
+.recv-zone { border: 1.5px dashed rgba(255,255,255,.15); border-radius: 6px; padding: 8px; margin: 8px 12px; text-align: center; font-size: 10px; color: var(--gray-400); cursor: pointer; transition: all .2s; }
+.recv-zone:hover, .recv-zone.drag-over { border-color: var(--gold); color: var(--gold); background: rgba(200,169,81,.05); }
+
 /* Bottom action bar */
 .action-bar { position: fixed; bottom: 0; left: 260px; right: 300px; background: var(--navy); padding: 12px 20px; display: flex; gap: 12px; align-items: center; z-index: 50; box-shadow: 0 -4px 20px rgba(0,0,0,0.2); }
 .btn-primary { background: var(--gold); color: var(--navy); border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-family: var(--font); font-weight: 700; font-size: 14px; transition: background 0.15s; }
@@ -314,6 +331,10 @@ td.area-cell.mismatch { color: var(--error); font-weight: 600; }
     <div class="datos-actions">
       <button class="btn-save-datos" onclick="saveDatosProyecto()">Guardar datos</button>
     </div>
+
+    <!-- Dependency cascade visualization -->
+    <div class="datos-col-head" style="margin-top:12px">Cadena de dependencias</div>
+    <div class="full-width" id="cascadeViz" style="grid-column:1/-1;padding:8px 0"></div>
   </div>
 </div>
 
@@ -326,6 +347,14 @@ td.area-cell.mismatch { color: var(--error); font-weight: 600; }
     <button class="btn-new-project" onclick="openNewProjectModal()">+ New Project</button>
     <div class="section-head" id="docsHead" style="display:none">Documents</div>
     <div id="docList"></div>
+    <div class="recv-zone" id="recvZone" style="display:none"
+         ondragover="event.preventDefault();this.classList.add('drag-over')"
+         ondragleave="this.classList.remove('drag-over')"
+         ondrop="handleRecvDrop(event)"
+         onclick="document.getElementById('recvFileInput').click()">
+      Recibir outputs del agente
+    </div>
+    <input type="file" id="recvFileInput" class="hidden" multiple accept=".pdf,.xlsx,.docx,.zip" onchange="handleRecvFiles(this.files)">
   </div>
 
   <!-- CENTER: Subparcelas -->
@@ -369,8 +398,9 @@ td.area-cell.mismatch { color: var(--error); font-weight: 600; }
     </div>
     <div id="auditFindings"><div class="audit-loading">Run audit to check consistency</div></div>
     <div style="border-top:1px solid var(--gray-200);margin-top:8px;padding-top:8px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
         <button onclick="verifyDocuments()" style="background:#b45309;color:white;border:none;padding:6px 14px;font-size:12px;border-radius:6px;cursor:pointer;font-weight:600">Verify Documents</button>
+        <button onclick="generateAgentInstructions()" style="background:var(--navy);color:var(--gold);border:1px solid var(--gold);padding:5px 10px;font-size:11px;border-radius:6px;cursor:pointer;font-weight:600">Instrucciones Agente Local</button>
         <span id="verifyTimestamp" style="font-size:10px;color:var(--gray-400)"></span>
       </div>
       <div id="verifyResults"></div>
@@ -549,6 +579,9 @@ async function selectProject(id) {
     const datosEl = document.getElementById('datosSection');
     datosEl.style.display = '';
     renderDatosProyecto();
+    renderCascadeViz();
+    // Show receive-outputs zone
+    document.getElementById('recvZone').style.display = '';
     // Open by default if no subparcelas, otherwise collapse
     if (state.subparcelas.length === 0) {
       datosEl.classList.remove('collapsed');
@@ -1177,6 +1210,146 @@ function copyFixInstructions() {
 
 function escapeHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Dependency cascade visualization ──────────────────────────
+async function renderCascadeViz() {
+  const el = document.getElementById('cascadeViz');
+  if (!el || !state.currentProject) { if (el) el.innerHTML = ''; return; }
+
+  try {
+    const data = await api(`/api/miteco-dd/projects/${state.currentProject.id}/dependency-graph`);
+    const graph = data.graph || [];
+    const statuses = data.doc_statuses || {};
+
+    const getClass = (docType) => {
+      if (docType === 'subparcelas_db' || docType === 'legal_framework') return 'source';
+      const st = statuses[docType];
+      if (!st) return 'missing';
+      if (st === 'stale') return 'stale';
+      if (st === 'uploaded' || st === 'extracted') return 'current';
+      return 'missing';
+    };
+
+    let html = '';
+    for (const node of graph) {
+      html += '<div class="cascade-lane">';
+      html += `<div class="cascade-node source" title="${node.source_label}">${node.source_label.split(' ')[0]}</div>`;
+      html += '<span class="cascade-arrow">&#10132;</span>';
+      html += '<div class="cascade-branch">';
+      for (const a of node.affects) {
+        const cls = getClass(a.doc);
+        const onClick = cls === 'stale' ? `onclick="uploadDoc('${a.doc}')"` : '';
+        html += `<div class="cascade-node ${cls}" ${onClick} title="${a.label} (${a.owner})">${a.label.split(' ')[0]}${a.label.includes('—') ? '' : ''}</div>`;
+      }
+      html += '</div></div>';
+    }
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<span style="font-size:11px;color:var(--gray-400)">No se pudo cargar grafo de dependencias</span>';
+  }
+}
+
+// ── Generate instructions for local ForestEngineer agent ──────
+async function generateAgentInstructions() {
+  if (!state.currentProject) return;
+  showSpinner('Generando instrucciones para agente local…');
+  try {
+    const res = await fetch(`${API}/api/miteco-dd/projects/${state.currentProject.id}/generate-instructions`);
+    if (!res.ok) { const err = await res.text(); throw new Error(err); }
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Unknown error');
+
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center';
+
+    const staleDocs = (data.stale_docs || []).map(d => `<div style="font-size:11px;margin:2px 0"><span style="background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:3px">${escapeHtml(d.doc_type)}</span> ${escapeHtml(d.reason || '')}</div>`).join('');
+
+    modal.innerHTML = `
+      <div style="background:white;border-radius:12px;max-width:800px;width:95%;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,.3);overflow:hidden">
+        <div style="background:var(--navy,#1B3A5C);color:white;padding:16px 20px;flex-shrink:0">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <h3 style="margin:0 0 4px;font-size:15px;color:var(--gold,#C8A951)">Instrucciones para Agente Local</h3>
+              <div style="font-size:11px;opacity:.8">${data.stale_docs_count || 0} documento(s) desactualizados &middot; ~${data.estimated_time_minutes || 5} min estimado</div>
+            </div>
+            <button onclick="this.closest('div[style*=fixed]').remove()" style="background:none;border:none;color:white;font-size:22px;cursor:pointer;line-height:1;padding:0 0 0 12px">&times;</button>
+          </div>
+        </div>
+        ${staleDocs ? '<div style="padding:8px 20px;background:#fffbeb;border-bottom:1px solid #fef3c7"><div style="font-size:11px;font-weight:600;color:#92400e;margin-bottom:4px">Documentos pendientes:</div>' + staleDocs + '</div>' : ''}
+        <div style="padding:16px 20px;overflow-y:auto;flex:1;max-height:55vh">
+          <pre id="agentInstructionsText" style="background:#1a1a2e;color:#e0e0e0;padding:16px;border-radius:8px;font-size:12px;white-space:pre-wrap;word-wrap:break-word;margin:0;font-family:'Cascadia Code','Fira Code','Consolas',monospace;line-height:1.5">${escapeHtml(data.instructions_text || 'No instructions generated')}</pre>
+        </div>
+        <div style="padding:12px 20px;border-top:1px solid #e5e7eb;display:flex;gap:8px;flex-shrink:0">
+          <button id="copyAgentBtn" onclick="copyAgentInstructions()" style="padding:8px 16px;background:var(--gold,#C8A951);color:var(--navy,#1B3A5C);border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:700">Copiar para Claude Code</button>
+          <button onclick="this.closest('div[style*=fixed]').remove()" style="padding:8px 16px;background:#e5e7eb;border:none;border-radius:6px;cursor:pointer;font-size:12px">Cerrar</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  } catch(e) {
+    toast('Error generando instrucciones: ' + e.message, 'error');
+  } finally {
+    hideSpinner();
+  }
+}
+
+function copyAgentInstructions() {
+  const el = document.getElementById('agentInstructionsText');
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    const btn = document.getElementById('copyAgentBtn');
+    if (btn) { btn.textContent = 'Copiado!'; setTimeout(() => { btn.textContent = 'Copiar para Claude Code'; }, 2000); }
+  }).catch(() => toast('No se pudo copiar', 'error'));
+}
+
+// ── Receive outputs from local agent ──────────────────────────
+function handleRecvDrop(ev) {
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('drag-over');
+  handleRecvFiles(ev.dataTransfer.files);
+}
+
+async function handleRecvFiles(fileList) {
+  if (!fileList?.length || !state.currentProject) return;
+  showSpinner(`Recibiendo ${fileList.length} archivo(s)…`);
+  try {
+    const formData = new FormData();
+    for (const f of fileList) {
+      formData.append('files[]', f);
+      // Guess doc_type from filename
+      const fn = f.name.toLowerCase();
+      let docType = 'otro';
+      if (fn.includes('memoria') && !fn.includes('breve')) docType = 'memoria';
+      else if (fn.includes('certificaci')) docType = 'certificacion';
+      else if (fn.includes('plan_gestion') || fn.includes('plan de gestion') || fn.includes('cronograma')) docType = 'plan_gestion';
+      else if (fn.includes('calculadora')) docType = 'calculadora';
+      else if (fn.includes('shapefile') || fn.endsWith('.shp') || (fn.endsWith('.zip') && fn.includes('shapefile'))) docType = 'shapefile';
+      else if (fn.includes('anexo_i') && !fn.includes('ii')) docType = 'anexo_i';
+      else if (fn.includes('anexo_ii')) docType = 'anexo_ii';
+      else if (fn.includes('convenio')) docType = 'convenio_cesion';
+      else if (fn.includes('declaracion') && fn.includes('responsable')) docType = 'declaracion_responsable';
+      else if (fn.includes('declaracion') && fn.includes('derechos')) docType = 'declaracion_derechos';
+      else if (fn.includes('nota_simple') || fn.includes('nota simple')) docType = 'nota_simple';
+      else if (fn.includes('plano')) docType = 'planos';
+      else if (fn.includes('formulario')) docType = 'formulario_pa';
+      formData.append('doc_types[]', docType);
+    }
+    formData.append('execution_summary', JSON.stringify({ source: 'manual_upload', timestamp: new Date().toISOString() }));
+
+    const res = await fetch(`${API}/api/miteco-dd/projects/${state.currentProject.id}/receive-outputs`, {
+      method: 'POST',
+      body: formData
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    toast(`${data.received} archivo(s) recibidos, ${data.stale_cleared} stale limpiados`, 'success');
+    await selectProject(state.currentProject.id);
+  } catch(e) {
+    toast('Error recibiendo outputs: ' + e.message, 'error');
+  } finally {
+    hideSpinner();
+  }
 }
 
 // ── Start ─────────────────────────────────────────────────────
