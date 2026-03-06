@@ -245,7 +245,10 @@ td.area-cell.mismatch { color: var(--error); font-weight: 600; }
 
 <!-- Action bar -->
 <div class="action-bar" id="actionBar" style="display:none">
-  <button class="btn-secondary" onclick="runExtract()">📤 Extract from PDFs</button>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button class="btn-secondary" onclick="runExtract()">📤 Extract from PDFs</button>
+    <span style="font-size:11px;color:#b45309;background:#fef3c7;padding:2px 8px;border-radius:4px">Read-only — will NOT overwrite existing data</span>
+  </div>
   <div class="spacer"></div>
   <span class="status-text" id="actionStatus"></span>
   <button class="btn-primary" id="btnGenerate" onclick="generatePackage()">⬇ Generate Submission Package</button>
@@ -466,11 +469,6 @@ document.getElementById('fileInputHidden').addEventListener('change', async (e) 
     try { data = JSON.parse(text); } catch { throw new Error(`HTTP ${res.status}: ${text.slice(0, 300)}`); }
     if (!data.ok) throw new Error(data.error || data.stack || JSON.stringify(data));
     toast(`${file.name} uploaded (${sizeMB} MB)`, 'success');
-    // Auto-extract PDFs
-    const dt = DOC_TYPES.find(d => d.type === pendingUploadType);
-    if (dt?.engineerDoc && file.name.endsWith('.pdf')) {
-      await extractDoc(data.r2_key, pendingUploadType);
-    }
     await selectProject(state.currentProject.id);
   } catch(e) {
     toast('Upload failed: ' + e.message, 'error');
@@ -494,7 +492,28 @@ async function extractDoc(r2Key, docType) {
 }
 
 async function runExtract() {
-  toast('Upload documents first — then extraction runs automatically on engineer PDFs', 'info');
+  if (!state.currentProject) return;
+  const docs = state.currentProject.documents || [];
+  const engineerDocs = docs.filter(d => {
+    const dt = DOC_TYPES.find(t => t.type === d.doc_type);
+    return dt?.engineerDoc && d.r2_key && d.filename?.endsWith('.pdf');
+  });
+  if (!engineerDocs.length) return toast('No engineer PDFs uploaded to extract from', 'info');
+  if (!confirm('Extract data from ' + engineerDocs.length + ' PDF(s) via Claude AI?\n\nThis is READ-ONLY — results are staged for review.\nYour existing subparcelas and CO2 data will NOT be overwritten.')) return;
+  for (const doc of engineerDocs) {
+    showSpinner(`Extracting ${doc.doc_type}…`);
+    try {
+      const result = await api(`/api/miteco-dd/projects/${state.currentProject.id}/extract`, {
+        method: 'POST',
+        body: JSON.stringify({ doc_type: doc.doc_type, r2_key: doc.r2_key })
+      });
+      toast(`${doc.doc_type}: extraction staged (review in document details)`, 'success');
+    } catch(e) {
+      toast(`${doc.doc_type} extraction failed: ${e.message}`, 'error');
+    }
+  }
+  hideSpinner();
+  await selectProject(state.currentProject.id);
 }
 
 // ── Subparcelas table ─────────────────────────────────────────
