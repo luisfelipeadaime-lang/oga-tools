@@ -1266,53 +1266,93 @@ async function downloadPPTX(){
   }
 }
 
-// ═══════════ PPTX MERGE — prepend base slides into new PPTX ═══════════
-// Direction: base slides go to the FRONT of the new PPTX (which has correct pptxgenjs layouts)
+// ═══════════ PPTX MERGE — import layout+master, append new slides into base ═══════════
+// Direction: copy new slides INTO base PPTX, but first import pptxgenjs layout/master/theme
 async function mergeNewSlidesIntoBase(basePptxArrayBuffer, newPptxArrayBuffer) {
   var baseZip = await JSZip.loadAsync(basePptxArrayBuffer);
   var newZip  = await JSZip.loadAsync(newPptxArrayBuffer);
 
-  // Count slides in each
-  var baseSlides = Object.keys(baseZip.files)
-    .filter(function(f) { return /^ppt\/slides\/slide\d+\.xml$/.test(f); })
-    .sort(function(a,b) {
-      return parseInt(a.match(/\d+/)[0]) - parseInt(b.match(/\d+/)[0]);
-    });
-
-  var newSlides = Object.keys(newZip.files)
-    .filter(function(f) { return /^ppt\/slides\/slide\d+\.xml$/.test(f); })
-    .sort(function(a,b) {
-      return parseInt(a.match(/\d+/)[0]) - parseInt(b.match(/\d+/)[0]);
-    });
-
+  // ── Count slides ──────────────────────────────────────────────
+  function getSlides(zip) {
+    return Object.keys(zip.files)
+      .filter(function(f) { return /^ppt\/slides\/slide\d+\.xml$/.test(f); })
+      .sort(function(a,b) {
+        return parseInt(a.match(/\d+/)[0]) - parseInt(b.match(/\d+/)[0]);
+      });
+  }
+  var baseSlides = getSlides(baseZip);
+  var newSlides  = getSlides(newZip);
   var B = baseSlides.length;
   var N = newSlides.length;
-  console.log('Base slides:', B, '| New slides:', N, '| Total:', B + N);
+  console.log('Base:', B, 'New:', N, 'Total:', B+N);
 
-  // Step 1: Renumber existing new slides upward (make room for base slides at front)
-  // New slide1 → slide(B+1), new slide2 → slide(B+2), etc.
-  // Process in reverse to avoid filename collisions
-  for (var i = N - 1; i >= 0; i--) {
-    var oldNum = i + 1;
-    var newNum = B + i + 1;
+  // ── Step 1: Import slideLayout, slideMaster, theme from new PPTX ──
+  // Copy as layout2, master2, theme2 to avoid collisions with base
+  var layoutXml = await newZip.files['ppt/slideLayouts/slideLayout1.xml'].async('string');
+  baseZip.file('ppt/slideLayouts/slideLayout2.xml', layoutXml);
 
-    var slideXml = await newZip.files['ppt/slides/slide' + oldNum + '.xml'].async('string');
-    newZip.file('ppt/slides/slide' + newNum + '.xml', slideXml);
-    newZip.remove('ppt/slides/slide' + oldNum + '.xml');
+  var masterXml = await newZip.files['ppt/slideMasters/slideMaster1.xml'].async('string');
+  // Fix master's reference to its own layout
+  masterXml = masterXml.split('slideLayouts/slideLayout1.xml').join('slideLayouts/slideLayout2.xml');
+  baseZip.file('ppt/slideMasters/slideMaster2.xml', masterXml);
 
-    var oldRelsPath = 'ppt/slides/_rels/slide' + oldNum + '.xml.rels';
-    var newRelsPath = 'ppt/slides/_rels/slide' + newNum + '.xml.rels';
-    if (newZip.files[oldRelsPath]) {
-      var relsXml = await newZip.files[oldRelsPath].async('string');
-      newZip.file(newRelsPath, relsXml);
-      newZip.remove(oldRelsPath);
-    }
+  var themeXml = await newZip.files['ppt/theme/theme1.xml'].async('string');
+  baseZip.file('ppt/theme/theme2.xml', themeXml);
+
+  // Copy layout rels if exists
+  var layoutRelsPath = 'ppt/slideLayouts/_rels/slideLayout1.xml.rels';
+  if (newZip.files[layoutRelsPath]) {
+    var layoutRels = await newZip.files[layoutRelsPath].async('string');
+    layoutRels = layoutRels.split('slideMaster1.xml').join('slideMaster2.xml');
+    baseZip.file('ppt/slideLayouts/_rels/slideLayout2.xml.rels', layoutRels);
+  } else {
+    baseZip.file('ppt/slideLayouts/_rels/slideLayout2.xml.rels',
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" Target="../slideMasters/slideMaster2.xml"/>' +
+      '</Relationships>');
   }
 
-  // Step 2: Get existing slide IDs and rIds from new PPTX presentation.xml
-  var presXml = await newZip.files['ppt/presentation.xml'].async('string');
-  var presRelsXml = await newZip.files['ppt/_rels/presentation.xml.rels'].async('string');
+  // Copy master rels if exists
+  var masterRelsPath = 'ppt/slideMasters/_rels/slideMaster1.xml.rels';
+  if (newZip.files[masterRelsPath]) {
+    var masterRels = await newZip.files[masterRelsPath].async('string');
+    masterRels = masterRels.split('slideLayout1.xml').join('slideLayout2.xml');
+    masterRels = masterRels.split('theme1.xml').join('theme2.xml');
+    baseZip.file('ppt/slideMasters/_rels/slideMaster2.xml.rels', masterRels);
+  } else {
+    baseZip.file('ppt/slideMasters/_rels/slideMaster2.xml.rels',
+      '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout2.xml"/>' +
+      '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="../theme/theme2.xml"/>' +
+      '</Relationships>');
+  }
 
+  // ── Step 2: Copy media from new PPTX into base with renumbered names ──
+  var existingMedia = Object.keys(baseZip.files)
+    .filter(function(f) { return f.startsWith('ppt/media/'); });
+  var baseMediaCount = existingMedia.length;
+  var newMediaFiles = Object.keys(newZip.files)
+    .filter(function(f) { return f.startsWith('ppt/media/'); });
+  var mediaRemap = {};
+
+  for (var i = 0; i < newMediaFiles.length; i++) {
+    var oldPath = newMediaFiles[i];
+    var oldFilename = oldPath.split('/').pop();
+    var ext = oldFilename.includes('.') ? oldFilename.split('.').pop() : 'bin';
+    var newFilename = 'image' + (baseMediaCount + i + 1) + '.' + ext;
+    var mediaData = await newZip.files[oldPath].async('arraybuffer');
+    baseZip.file('ppt/media/' + newFilename, mediaData);
+    mediaRemap[oldFilename] = newFilename;
+  }
+
+  // ── Step 3: Copy new slide XMLs into base, appended after existing slides ──
+  var presRelsXml = await baseZip.files['ppt/_rels/presentation.xml.rels'].async('string');
+  var presXml     = await baseZip.files['ppt/presentation.xml'].async('string');
+  var ctXml       = await baseZip.files['[Content_Types].xml'].async('string');
+
+  // Find max sldId in base
   var idMatches = presXml.match(/id="(\d+)"/g) || [];
   var maxId = 255;
   idMatches.forEach(function(m) {
@@ -1320,6 +1360,7 @@ async function mergeNewSlidesIntoBase(basePptxArrayBuffer, newPptxArrayBuffer) {
     if (n > maxId && n < 9000) maxId = n;
   });
 
+  // Find max rId in base rels
   var ridMatches = presRelsXml.match(/Id="rId(\d+)"/g) || [];
   var maxRid = 1;
   ridMatches.forEach(function(m) {
@@ -1327,99 +1368,90 @@ async function mergeNewSlidesIntoBase(basePptxArrayBuffer, newPptxArrayBuffer) {
     if (n > maxRid) maxRid = n;
   });
 
-  // Step 3: Update rels targets from slideN.xml to slide(B+N).xml
-  for (var i = 0; i < N; i++) {
-    var oldTarget = 'slides/slide' + (i+1) + '.xml';
-    var newTarget = 'slides/slide' + (B+i+1) + '.xml';
-    presRelsXml = presRelsXml.split(oldTarget).join(newTarget);
-  }
-
-  // Step 4: Copy base slides INTO new PPTX as slide1..slideB
-  var newMediaFiles = Object.keys(newZip.files)
-    .filter(function(f) { return f.startsWith('ppt/media/'); });
-  var newMediaCount = newMediaFiles.length;
-  var mediaRemap = {};
-
-  var baseMediaFiles = Object.keys(baseZip.files)
-    .filter(function(f) { return f.startsWith('ppt/media/'); });
-
-  for (var i = 0; i < baseMediaFiles.length; i++) {
-    var oldPath = baseMediaFiles[i];
-    var oldFilename = oldPath.split('/').pop();
-    var ext = oldFilename.includes('.') ? oldFilename.split('.').pop() : 'bin';
-    var newFilename = 'image' + (newMediaCount + i + 1) + '.' + ext;
-    var mediaData = await baseZip.files[oldPath].async('arraybuffer');
-    newZip.file('ppt/media/' + newFilename, mediaData);
-    mediaRemap[oldFilename] = newFilename;
-  }
-
   var newSldIdEntries = '';
-  var newRelsEntries = '';
-  var newCtEntries = '';
+  var newRelsEntries  = '';
+  var newCtEntries    = '';
 
-  for (var i = 0; i < B; i++) {
-    var baseSlideNum = i + 1;
-    var targetSlideNum = i + 1;
+  // Register new layout + master in Content_Types
+  newCtEntries +=
+    '<Override PartName="/ppt/slideLayouts/slideLayout2.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideLayout+xml"/>\n' +
+    '<Override PartName="/ppt/slideMasters/slideMaster2.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slideMaster+xml"/>\n' +
+    '<Override PartName="/ppt/theme/theme2.xml" ContentType="application/vnd.openxmlformats-officedocument.drawingml.theme+xml"/>\n';
 
-    var slideXml = await baseZip.files['ppt/slides/slide' + baseSlideNum + '.xml'].async('string');
+  // Register new master in presentation.xml.rels
+  var masterRid = 'rId' + (maxRid + 1);
+  newRelsEntries += '<Relationship Id="' + masterRid + '" ' +
+    'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideMaster" ' +
+    'Target="slideMasters/slideMaster2.xml"/>\n';
+  maxRid++;
+
+  // Register new master in presentation.xml sldMasterIdLst
+  presXml = presXml.replace(
+    '</p:sldMasterIdLst>',
+    '<p:sldMasterId id="' + (maxId + 1) + '" r:id="' + masterRid + '"/></p:sldMasterIdLst>'
+  );
+  maxId++;
+
+  for (var i = 0; i < N; i++) {
+    var srcSlidePath = 'ppt/slides/slide' + (i+1) + '.xml';
+    var dstSlideNum  = B + i + 1;
+    var dstSlidePath = 'ppt/slides/slide' + dstSlideNum + '.xml';
+
+    // Copy slide XML + remap media
+    var slideXml = await newZip.files[srcSlidePath].async('string');
     for (var oldFn in mediaRemap) {
       slideXml = slideXml.split(oldFn).join(mediaRemap[oldFn]);
     }
-    newZip.file('ppt/slides/slide' + targetSlideNum + '.xml', slideXml);
+    baseZip.file(dstSlidePath, slideXml);
 
-    var baseRelsPath = 'ppt/slides/_rels/slide' + baseSlideNum + '.xml.rels';
-    var slideRelsXml;
-    if (baseZip.files[baseRelsPath]) {
-      slideRelsXml = await baseZip.files[baseRelsPath].async('string');
+    // Copy/create rels — point to layout2 instead of layout1
+    var srcRelsPath = 'ppt/slides/_rels/slide' + (i+1) + '.xml.rels';
+    var dstRelsPath = 'ppt/slides/_rels/slide' + dstSlideNum + '.xml.rels';
+    var relsXml;
+    if (newZip.files[srcRelsPath]) {
+      relsXml = await newZip.files[srcRelsPath].async('string');
+      // Remap media
       for (var oldFn in mediaRemap) {
-        slideRelsXml = slideRelsXml.split(oldFn).join(mediaRemap[oldFn]);
+        relsXml = relsXml.split(oldFn).join(mediaRemap[oldFn]);
       }
-      slideRelsXml = slideRelsXml.replace(
-        /Target="\.\.\/slideLayouts\/[^"]+"/,
-        'Target="../slideLayouts/slideLayout1.xml"'
-      );
+      // Point to layout2
+      relsXml = relsXml.split('slideLayout1.xml').join('slideLayout2.xml');
     } else {
-      slideRelsXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      relsXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
         '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
-        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>' +
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout2.xml"/>' +
         '</Relationships>';
     }
-    newZip.file('ppt/slides/_rels/slide' + targetSlideNum + '.xml.rels', slideRelsXml);
+    baseZip.file(dstRelsPath, relsXml);
 
+    // Registry entries
     var rId = 'rId' + (maxRid + i + 1);
     var sldId = maxId + i + 1;
-
     newRelsEntries += '<Relationship Id="' + rId + '" ' +
       'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" ' +
-      'Target="slides/slide' + targetSlideNum + '.xml"/>\n';
-
+      'Target="slides/slide' + dstSlideNum + '.xml"/>\n';
     newSldIdEntries += '<p:sldId id="' + sldId + '" r:id="' + rId + '"/>\n';
-
-    newCtEntries += '<Override PartName="/ppt/slides/slide' + targetSlideNum + '.xml" ' +
+    newCtEntries += '<Override PartName="/ppt/slides/slide' + dstSlideNum + '.xml" ' +
       'ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>\n';
   }
 
-  // Step 5: Update presentation.xml — prepend base sldId entries
-  presXml = presXml.replace('<p:sldIdLst>', '<p:sldIdLst>\n' + newSldIdEntries);
-  newZip.file('ppt/presentation.xml', presXml);
-
-  // Step 6: Update presentation.xml.rels — add base slide relationships
+  // ── Step 4: Write updated XML files ──────────────────────────
+  presXml     = presXml.replace('</p:sldIdLst>', newSldIdEntries + '</p:sldIdLst>');
   presRelsXml = presRelsXml.replace('</Relationships>', newRelsEntries + '</Relationships>');
-  newZip.file('ppt/_rels/presentation.xml.rels', presRelsXml);
+  ctXml       = ctXml.replace('</Types>', newCtEntries + '</Types>');
 
-  // Step 7: Update [Content_Types].xml
-  var ctXml = await newZip.files['[Content_Types].xml'].async('string');
-  ctXml = ctXml.replace('</Types>', newCtEntries + '</Types>');
-  newZip.file('[Content_Types].xml', ctXml);
+  baseZip.file('ppt/presentation.xml', presXml);
+  baseZip.file('ppt/_rels/presentation.xml.rels', presRelsXml);
+  baseZip.file('[Content_Types].xml', ctXml);
 
-  // Step 8: Generate merged PPTX
-  var mergedBuffer = await newZip.generateAsync({
+  // ── Step 5: Generate ─────────────────────────────────────────
+  var mergedBuffer = await baseZip.generateAsync({
     type: 'arraybuffer',
     compression: 'DEFLATE',
     compressionOptions: { level: 6 }
   });
 
-  console.log('Merge complete. Size:', Math.round(mergedBuffer.byteLength / 1024) + 'KB');
+  console.log('Merge done. Size:', Math.round(mergedBuffer.byteLength/1024)+'KB');
   return mergedBuffer;
 }
 
