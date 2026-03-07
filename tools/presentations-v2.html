@@ -1266,119 +1266,160 @@ async function downloadPPTX(){
   }
 }
 
-// ═══════════ PPTX MERGE — append new slides into base deck ═══════════
-async function mergeNewSlidesIntoBase(baseBuf,newBuf){
-  var baseZip=await JSZip.loadAsync(baseBuf);
-  var newZip=await JSZip.loadAsync(newBuf);
+// ═══════════ PPTX MERGE — prepend base slides into new PPTX ═══════════
+// Direction: base slides go to the FRONT of the new PPTX (which has correct pptxgenjs layouts)
+async function mergeNewSlidesIntoBase(basePptxArrayBuffer, newPptxArrayBuffer) {
+  var baseZip = await JSZip.loadAsync(basePptxArrayBuffer);
+  var newZip  = await JSZip.loadAsync(newPptxArrayBuffer);
 
-  // 1. Count existing slides in base
-  var existingSlides=Object.keys(baseZip.files)
-    .filter(function(f){return/^ppt\/slides\/slide\d+\.xml$/.test(f)});
-  var baseSlideCount=existingSlides.length;
+  // Count slides in each
+  var baseSlides = Object.keys(baseZip.files)
+    .filter(function(f) { return /^ppt\/slides\/slide\d+\.xml$/.test(f); })
+    .sort(function(a,b) {
+      return parseInt(a.match(/\d+/)[0]) - parseInt(b.match(/\d+/)[0]);
+    });
 
-  // 2. Collect new slide files sorted
-  var newSlides=Object.keys(newZip.files)
-    .filter(function(f){return/^ppt\/slides\/slide\d+\.xml$/.test(f)})
-    .sort(function(a,b){return parseInt(a.match(/\d+/)[0])-parseInt(b.match(/\d+/)[0])});
+  var newSlides = Object.keys(newZip.files)
+    .filter(function(f) { return /^ppt\/slides\/slide\d+\.xml$/.test(f); })
+    .sort(function(a,b) {
+      return parseInt(a.match(/\d+/)[0]) - parseInt(b.match(/\d+/)[0]);
+    });
 
-  console.log('Base slides:',baseSlideCount,'| New slides:',newSlides.length);
+  var B = baseSlides.length;
+  var N = newSlides.length;
+  console.log('Base slides:', B, '| New slides:', N, '| Total:', B + N);
 
-  // 3. Count existing media in base
-  var baseMediaCount=Object.keys(baseZip.files)
-    .filter(function(f){return f.startsWith('ppt/media/')}).length;
+  // Step 1: Renumber existing new slides upward (make room for base slides at front)
+  // New slide1 → slide(B+1), new slide2 → slide(B+2), etc.
+  // Process in reverse to avoid filename collisions
+  for (var i = N - 1; i >= 0; i--) {
+    var oldNum = i + 1;
+    var newNum = B + i + 1;
 
-  // 4. Copy media files from new PPTX with renumbered names
-  var mediaRemap={};
-  var newMediaFiles=Object.keys(newZip.files)
-    .filter(function(f){return f.startsWith('ppt/media/')});
+    var slideXml = await newZip.files['ppt/slides/slide' + oldNum + '.xml'].async('string');
+    newZip.file('ppt/slides/slide' + newNum + '.xml', slideXml);
+    newZip.remove('ppt/slides/slide' + oldNum + '.xml');
 
-  for(var m=0;m<newMediaFiles.length;m++){
-    var oldPath=newMediaFiles[m];
-    var oldFn=oldPath.split('/').pop();
-    var ext=oldFn.includes('.')?oldFn.split('.').pop():'bin';
-    var newFn='image'+(baseMediaCount+m+1)+'.'+ext;
-    var newPath='ppt/media/'+newFn;
-    var mediaData=await newZip.files[oldPath].async('arraybuffer');
-    baseZip.file(newPath,mediaData);
-    mediaRemap[oldFn]=newFn;
-    console.log('Media:',oldFn,'->',newFn);
+    var oldRelsPath = 'ppt/slides/_rels/slide' + oldNum + '.xml.rels';
+    var newRelsPath = 'ppt/slides/_rels/slide' + newNum + '.xml.rels';
+    if (newZip.files[oldRelsPath]) {
+      var relsXml = await newZip.files[oldRelsPath].async('string');
+      newZip.file(newRelsPath, relsXml);
+      newZip.remove(oldRelsPath);
+    }
   }
 
-  // 5. Copy slide XML files with renumbered names + fix media refs
-  var addedSlideRids=[];
-  // Find max existing rId in presentation.xml.rels
-  var presRelsXml=await baseZip.files['ppt/_rels/presentation.xml.rels'].async('string');
-  var ridNums=presRelsXml.match(/Id="rId(\d+)"/g)||[];
-  var maxRid=0;
-  ridNums.forEach(function(r){var n=parseInt(r.match(/\d+/)[0]);if(n>maxRid)maxRid=n});
+  // Step 2: Get existing slide IDs and rIds from new PPTX presentation.xml
+  var presXml = await newZip.files['ppt/presentation.xml'].async('string');
+  var presRelsXml = await newZip.files['ppt/_rels/presentation.xml.rels'].async('string');
 
-  for(var s=0;s<newSlides.length;s++){
-    var oldSlidePath=newSlides[s];
-    var newSlideNum=baseSlideCount+s+1;
-    var newSlidePath='ppt/slides/slide'+newSlideNum+'.xml';
+  var idMatches = presXml.match(/id="(\d+)"/g) || [];
+  var maxId = 255;
+  idMatches.forEach(function(m) {
+    var n = parseInt(m.replace(/[^0-9]/g,''));
+    if (n > maxId && n < 9000) maxId = n;
+  });
 
-    var slideXml=await newZip.files[oldSlidePath].async('string');
-    for(var oldMedia in mediaRemap){
-      slideXml=slideXml.split(oldMedia).join(mediaRemap[oldMedia]);
+  var ridMatches = presRelsXml.match(/Id="rId(\d+)"/g) || [];
+  var maxRid = 1;
+  ridMatches.forEach(function(m) {
+    var n = parseInt(m.replace(/[^0-9]/g,''));
+    if (n > maxRid) maxRid = n;
+  });
+
+  // Step 3: Update rels targets from slideN.xml to slide(B+N).xml
+  for (var i = 0; i < N; i++) {
+    var oldTarget = 'slides/slide' + (i+1) + '.xml';
+    var newTarget = 'slides/slide' + (B+i+1) + '.xml';
+    presRelsXml = presRelsXml.split(oldTarget).join(newTarget);
+  }
+
+  // Step 4: Copy base slides INTO new PPTX as slide1..slideB
+  var newMediaFiles = Object.keys(newZip.files)
+    .filter(function(f) { return f.startsWith('ppt/media/'); });
+  var newMediaCount = newMediaFiles.length;
+  var mediaRemap = {};
+
+  var baseMediaFiles = Object.keys(baseZip.files)
+    .filter(function(f) { return f.startsWith('ppt/media/'); });
+
+  for (var i = 0; i < baseMediaFiles.length; i++) {
+    var oldPath = baseMediaFiles[i];
+    var oldFilename = oldPath.split('/').pop();
+    var ext = oldFilename.includes('.') ? oldFilename.split('.').pop() : 'bin';
+    var newFilename = 'image' + (newMediaCount + i + 1) + '.' + ext;
+    var mediaData = await baseZip.files[oldPath].async('arraybuffer');
+    newZip.file('ppt/media/' + newFilename, mediaData);
+    mediaRemap[oldFilename] = newFilename;
+  }
+
+  var newSldIdEntries = '';
+  var newRelsEntries = '';
+  var newCtEntries = '';
+
+  for (var i = 0; i < B; i++) {
+    var baseSlideNum = i + 1;
+    var targetSlideNum = i + 1;
+
+    var slideXml = await baseZip.files['ppt/slides/slide' + baseSlideNum + '.xml'].async('string');
+    for (var oldFn in mediaRemap) {
+      slideXml = slideXml.split(oldFn).join(mediaRemap[oldFn]);
     }
-    baseZip.file(newSlidePath,slideXml);
+    newZip.file('ppt/slides/slide' + targetSlideNum + '.xml', slideXml);
 
-    // 6. Create rels file for new slide
-    var slideRelsPath='ppt/slides/_rels/slide'+newSlideNum+'.xml.rels';
-    var oldRelsPath=oldSlidePath.replace('ppt/slides/','ppt/slides/_rels/')+'.rels';
+    var baseRelsPath = 'ppt/slides/_rels/slide' + baseSlideNum + '.xml.rels';
     var slideRelsXml;
-
-    if(newZip.files[oldRelsPath]){
-      slideRelsXml=await newZip.files[oldRelsPath].async('string');
-      for(var oldMedia2 in mediaRemap){
-        slideRelsXml=slideRelsXml.split(oldMedia2).join(mediaRemap[oldMedia2]);
+    if (baseZip.files[baseRelsPath]) {
+      slideRelsXml = await baseZip.files[baseRelsPath].async('string');
+      for (var oldFn in mediaRemap) {
+        slideRelsXml = slideRelsXml.split(oldFn).join(mediaRemap[oldFn]);
       }
-      if(!slideRelsXml.includes('slideLayout')){
-        slideRelsXml=slideRelsXml.replace('</Relationships>',
-          '<Relationship Id="rId999" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/></Relationships>');
-      }
-    }else{
-      slideRelsXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-        +'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-        +'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>'
-        +'</Relationships>';
+      slideRelsXml = slideRelsXml.replace(
+        /Target="\.\.\/slideLayouts\/[^"]+"/,
+        'Target="../slideLayouts/slideLayout1.xml"'
+      );
+    } else {
+      slideRelsXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>' +
+        '</Relationships>';
     }
-    baseZip.file(slideRelsPath,slideRelsXml);
+    newZip.file('ppt/slides/_rels/slide' + targetSlideNum + '.xml.rels', slideRelsXml);
 
-    var presRid='rId'+(maxRid+s+1);
-    addedSlideRids.push({rId:presRid,slideNum:newSlideNum});
+    var rId = 'rId' + (maxRid + i + 1);
+    var sldId = maxId + i + 1;
+
+    newRelsEntries += '<Relationship Id="' + rId + '" ' +
+      'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" ' +
+      'Target="slides/slide' + targetSlideNum + '.xml"/>\n';
+
+    newSldIdEntries += '<p:sldId id="' + sldId + '" r:id="' + rId + '"/>\n';
+
+    newCtEntries += '<Override PartName="/ppt/slides/slide' + targetSlideNum + '.xml" ' +
+      'ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>\n';
   }
 
-  // 7. Update ppt/_rels/presentation.xml.rels
-  var newRelsEntries=addedSlideRids.map(function(item){
-    return'<Relationship Id="'+item.rId+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide'+item.slideNum+'.xml"/>';
-  }).join('');
-  presRelsXml=presRelsXml.replace('</Relationships>',newRelsEntries+'</Relationships>');
-  baseZip.file('ppt/_rels/presentation.xml.rels',presRelsXml);
+  // Step 5: Update presentation.xml — prepend base sldId entries
+  presXml = presXml.replace('<p:sldIdLst>', '<p:sldIdLst>\n' + newSldIdEntries);
+  newZip.file('ppt/presentation.xml', presXml);
 
-  // 8. Update ppt/presentation.xml sldIdLst
-  var presXml=await baseZip.files['ppt/presentation.xml'].async('string');
-  var idMatches=presXml.match(/id="(\d+)"/g)||[];
-  var maxId=255;
-  idMatches.forEach(function(m){var n=parseInt(m.replace(/[^0-9]/g,''));if(n>maxId&&n<9000)maxId=n});
+  // Step 6: Update presentation.xml.rels — add base slide relationships
+  presRelsXml = presRelsXml.replace('</Relationships>', newRelsEntries + '</Relationships>');
+  newZip.file('ppt/_rels/presentation.xml.rels', presRelsXml);
 
-  var newSldIdEntries=addedSlideRids.map(function(item,i){
-    return'<p:sldId id="'+(maxId+i+1)+'" r:id="'+item.rId+'"/>';
-  }).join('');
-  presXml=presXml.replace('</p:sldIdLst>',newSldIdEntries+'</p:sldIdLst>');
-  baseZip.file('ppt/presentation.xml',presXml);
+  // Step 7: Update [Content_Types].xml
+  var ctXml = await newZip.files['[Content_Types].xml'].async('string');
+  ctXml = ctXml.replace('</Types>', newCtEntries + '</Types>');
+  newZip.file('[Content_Types].xml', ctXml);
 
-  // 9. Update [Content_Types].xml
-  var ctXml=await baseZip.files['[Content_Types].xml'].async('string');
-  var newCtEntries=addedSlideRids.map(function(item){
-    return'<Override PartName="/ppt/slides/slide'+item.slideNum+'.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>';
-  }).join('');
-  ctXml=ctXml.replace('</Types>',newCtEntries+'</Types>');
-  baseZip.file('[Content_Types].xml',ctXml);
+  // Step 8: Generate merged PPTX
+  var mergedBuffer = await newZip.generateAsync({
+    type: 'arraybuffer',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 6 }
+  });
 
-  // 10. Generate merged PPTX
-  var mergedBuffer=await baseZip.generateAsync({type:'arraybuffer',compression:'DEFLATE',compressionOptions:{level:6}});
-  console.log('Merge complete. Final size:',Math.round(mergedBuffer.byteLength/1024)+'KB');
+  console.log('Merge complete. Size:', Math.round(mergedBuffer.byteLength / 1024) + 'KB');
   return mergedBuffer;
 }
 
