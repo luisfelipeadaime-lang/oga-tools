@@ -1164,12 +1164,11 @@ async function buildNewPptx(brief){
         path:'https://tools.oga.earth/assets/photos/Regenerate_biochar.jpg',
         x:0,y:0,w:10,h:5.625
       });
-      // Dark navy overlay (35% transparent = 65% opaque)
+      // Navy overlay — solid pre-darkened color, no transparency property
       cover.addShape('rect',{
         x:0,y:0,w:10,h:5.625,
-        fill:{type:'solid',color:C.navy},
-        line:{type:'none'},
-        transparency:35
+        fill:{color:'091527'},
+        line:{type:'none'}
       });
       addChrome(cover,true);
 
