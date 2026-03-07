@@ -1,4 +1,4 @@
-<!-- v4-final 2026-03-07 -->
+<!-- v5-intake-wired 2026-03-07 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -264,6 +264,7 @@ main {
 .view { display:none; padding:32px 28px; animation: viewIn 0.2s ease; }
 .view.active { display:block; }
 @keyframes viewIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
 
 /* ─── PIPELINE VIEW ─── */
 .pipeline-header {
@@ -1377,135 +1378,38 @@ main {
     </div>
   </div>
 
-  <!-- ZIP mode panel -->
+  <!-- ZIP / multi-file mode panel -->
   <div class="intake-panel" id="mode-zip">
-    <div class="section-label" style="margin-bottom:6px;">ZIP mode — AI analyzes, categorizes, and proposes canonical data</div>
+    <div class="section-label" style="margin-bottom:6px;">Upload mode — AI analyzes, categorizes, and proposes canonical data</div>
 
-    <div class="drop-zone" onclick="simulateIntake()">
-      <span class="drop-icon">📦</span>
-      <div class="drop-title">Drop your dataroom ZIP here</div>
-      <div class="drop-sub">Or click to select. All formats accepted including scanned signed PDFs (OCR).</div>
+    <input type="file" id="intakeFileInput" multiple accept="*/*" style="display:none" onchange="handleIntakeFiles(this.files)">
+    <div class="drop-zone" id="intakeDropZone" onclick="document.getElementById('intakeFileInput').click()">
+      <span class="drop-icon">📂</span>
+      <div class="drop-title">Drop any project files here</div>
+      <div class="drop-sub">PDF, DOCX, XLSX, SHP, ZIP — or click to select. Scanned PDFs get OCR automatically.</div>
       <div class="format-pills">
         <span class="format-pill">PDF</span>
         <span class="format-pill">Signed PDF</span>
         <span class="format-pill">DOCX</span>
         <span class="format-pill">SHP+companion</span>
         <span class="format-pill">XLSX</span>
-        <span class="format-pill">KMZ/KML</span>
-        <span class="format-pill">Scanned JPEG/TIFF</span>
         <span class="format-pill">ZIP</span>
       </div>
     </div>
 
-    <!-- Intake results — shown after upload -->
-    <div class="intake-results visible" id="intake-results">
-      <div class="sh-row">
-        <div class="section-label">AI found and categorized 14 documents</div>
-        <span class="tag tag-proposed">Awaiting your validation</span>
+    <!-- Progress bar -->
+    <div id="intakeProgress" style="display:none;margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div style="width:10px;height:10px;border-radius:50%;background:var(--forest);animation:pulse 1s infinite;"></div>
+        <span id="intakeProgressText" style="font-size:12px;color:var(--ink2);">Uploading...</span>
       </div>
-
-      <div class="categorized-grid">
-        <div class="cat-group">
-          <div class="cat-group-name">01 Technical</div>
-          <div class="cat-file"><span class="cat-file-status">⚠</span> Memoria v1.pdf</div>
-          <div class="cat-file"><span class="cat-file-status">⚠</span> Certificación.pdf</div>
-          <div class="cat-file"><span class="cat-file-status">✓</span> Plan Gestión.pdf</div>
-          <div class="cat-file"><span class="cat-file-status">✓</span> Planos A3.pdf</div>
-        </div>
-        <div class="cat-group">
-          <div class="cat-group-name">02 GIS</div>
-          <div class="cat-file"><span class="cat-file-status">✓</span> Amoedo.shp</div>
-          <div class="cat-file"><span class="cat-file-status">✓</span> Amoedo.dbf</div>
-          <div class="cat-file"><span class="cat-file-status">✓</span> Amoedo.prj</div>
-          <div class="cat-file"><span class="cat-file-status">✓</span> calculadora.xlsx</div>
-        </div>
-        <div class="cat-group">
-          <div class="cat-group-name">03 Ownership</div>
-          <div class="cat-file"><span class="cat-file-status">✓</span> Nota Simple 6105.pdf</div>
-          <div class="cat-file"><span class="cat-file-status">✓</span> Ficha Monte.pdf</div>
-          <div class="cat-file"><span class="cat-file-status">✓</span> Cert. Secretario.pdf</div>
-          <div class="cat-file"><span class="cat-file-status">✓</span> CCDG Parcela 1.pdf</div>
-        </div>
-        <div class="cat-group">
-          <div class="cat-group-name">04 Legal</div>
-          <div class="cat-file"><span class="cat-file-status">✓</span> Anexo I firmado.pdf</div>
-          <div class="cat-file"><span class="cat-file-status">✓</span> Anexo II Brian.pdf</div>
-          <div class="cat-file"><span class="cat-file-status">✓</span> Convenio cesión.pdf</div>
-          <div class="empty-doc" onclick="toast('Upload Declaración de Permanencia')">+ Declaración Perm.</div>
-        </div>
-        <div class="cat-group">
-          <div class="cat-group-name">05 Supporting</div>
-          <div class="cat-file"><span class="cat-file-status">✓</span> Anexo FCC.pdf</div>
-          <div class="cat-file"><span class="cat-file-status">✓</span> Memoria Breve.pdf</div>
-          <div class="empty-doc" onclick="toast('Upload Formulario PA')">+ Formulario PA</div>
-          <div class="empty-doc" onclick="toast('Upload management order')">+ Proyecto Ordenación</div>
-        </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <div class="section-label">Canonical data proposed by AI — confirm or edit before proceeding</div>
-      <div style="background:var(--amber-bg);border:1px solid #d4a85044;border-radius:6px;padding:10px 14px;font-size:11px;color:var(--amber);margin-bottom:14px;">
-        Gold fields were extracted automatically. Review before confirming — these become the source of truth for all generated documents.
-      </div>
-      <div class="canon-grid">
-        <div class="field-group">
-          <div class="field-label">Official project name</div>
-          <input class="field-input proposed" value="PROYECTO DE ABSORCIÓN DE CO2 MEDIANTE FORESTACIÓN Y MANTENIMIENTO... AMOEDO">
-          <div class="field-note">⚡ Extracted from Memoria Técnica p.1</div>
-        </div>
-        <div class="field-group">
-          <div class="field-label">Tipo de proyecto</div>
-          <select class="field-input proposed">
-            <option>Bosque incendiado (Tipo B)</option>
-            <option>Cambio de uso de suelo (Tipo A)</option>
-            <option>Forestación (Tipo A)</option>
-          </select>
-          <div class="field-note">⚡ Classified from Memoria + FCC analysis</div>
-        </div>
-        <div class="field-group">
-          <div class="field-label">Municipality / Province</div>
-          <input class="field-input proposed" value="Pazos de Borbón, Pontevedra">
-          <div class="field-note">⚡ Extracted from shapefile PRJ + Catastro</div>
-        </div>
-        <div class="field-group">
-          <div class="field-label">Active surface area (ha)</div>
-          <input class="field-input proposed" value="22.2725" style="font-family:var(--mono)">
-          <div class="field-note">⚡ Shapefile · 21 active subparcelas</div>
-        </div>
-        <div class="field-group">
-          <div class="field-label">Total absorptions (tCO₂)</div>
-          <input class="field-input proposed" value="18507.41" style="font-family:var(--mono)">
-          <div class="field-note">⚡ MITECO Calculator v2</div>
-        </div>
-        <div class="field-group">
-          <div class="field-label">Permanence period</div>
-          <input class="field-input proposed" value="2018 – 2068 (50 years)" style="font-family:var(--mono)">
-          <div class="field-note">⚡ Extracted from Management Plan</div>
-        </div>
-        <div class="field-group">
-          <div class="field-label">Promotor</div>
-          <input class="field-input" value="ClearSky Carbono S.L.">
-        </div>
-        <div class="field-group">
-          <div class="field-label">Land owner</div>
-          <input class="field-input proposed" value="CMVMC de Amoedo">
-          <div class="field-note">⚡ Extracted from Convenio de Cesión</div>
-        </div>
-        <div class="field-group">
-          <div class="field-label">Technical author (engineer)</div>
-          <input class="field-input proposed" value="Amancio Serrapio — COETFOGA nº 568">
-          <div class="field-note">⚡ Extracted from Memoria/Certif. signature</div>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:10px;margin-top:4px;">
-        <button class="btn btn-forest" onclick="toast('✅ Canonical data confirmed. Project created.');showView('review')">
-          Confirm data and open in Review →
-        </button>
-        <button class="btn btn-outline" onclick="toast('Saving draft...')">Save draft</button>
+      <div style="background:var(--border);border-radius:4px;height:6px;overflow:hidden;">
+        <div id="intakeProgressBar" style="width:0%;height:100%;background:var(--forest);border-radius:4px;transition:width 0.3s;"></div>
       </div>
     </div>
+
+    <!-- Intake results — populated dynamically -->
+    <div id="intakeResults" style="display:none;"></div>
   </div>
 
   <!-- DOCS mode panel -->
@@ -2561,9 +2465,210 @@ function switchMode(btn, id) {
   });
 }
 
-function simulateIntake() {
-  toast('📦 Processing ZIP — extracting and categorizing 14 documents...');
-  setTimeout(() => toast('✅ Categorization complete. Canonical data proposed — review and confirm.'), 2500);
+const API_BASE = 'https://api-tools.oga.earth';
+let currentProjectId = 'amoedo';
+
+// ─── Drop zone events ───
+document.addEventListener('DOMContentLoaded', () => {
+  const dz = document.getElementById('intakeDropZone');
+  if (!dz) return;
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragging'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('dragging'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('dragging');
+    if (e.dataTransfer.files.length) handleIntakeFiles(e.dataTransfer.files);
+  });
+});
+
+async function handleIntakeFiles(files) {
+  if (!files || files.length === 0) return;
+  const projectId = currentProjectId || 'amoedo';
+
+  document.getElementById('intakeProgress').style.display = '';
+  document.getElementById('intakeResults').style.display = 'none';
+
+  const total = files.length;
+  let uploaded = 0;
+
+  for (const file of files) {
+    document.getElementById('intakeProgressText').textContent =
+      `Uploading ${file.name} (${uploaded+1}/${total})...`;
+    document.getElementById('intakeProgressBar').style.width =
+      ((uploaded / total) * 60) + '%';
+
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('project_id', projectId);
+
+    try {
+      const res = await fetch(`${API_BASE}/api/miteco-dd/intake/upload-chunk`, {
+        method: 'POST', body: fd
+      });
+      if (!res.ok) console.warn('Upload failed:', file.name);
+    } catch(e) {
+      console.warn('Upload error:', file.name, e);
+    }
+    uploaded++;
+  }
+
+  document.getElementById('intakeProgressText').textContent =
+    'Processing documents with AI (OCR, categorization, extraction)...';
+  document.getElementById('intakeProgressBar').style.width = '70%';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/miteco-dd/intake/from-r2`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        project_id: projectId,
+        r2_prefix: `uploads/${projectId}/intake/`
+      })
+    });
+    const data = await res.json();
+    document.getElementById('intakeProgressBar').style.width = '100%';
+    setTimeout(() => {
+      document.getElementById('intakeProgress').style.display = 'none';
+      renderIntakeResults(data);
+    }, 400);
+  } catch(e) {
+    document.getElementById('intakeProgressText').textContent = 'Error: ' + e.message;
+    document.getElementById('intakeProgressBar').style.width = '100%';
+    document.getElementById('intakeProgressBar').style.background = 'var(--red)';
+  }
+}
+
+function renderIntakeResults(data) {
+  const el = document.getElementById('intakeResults');
+  if (!el) return;
+  el.style.display = 'block';
+
+  if (data.error) {
+    el.innerHTML = `<div style="background:var(--red-bg);border:1px solid #b83a3a33;border-radius:8px;padding:16px;color:var(--red);font-size:13px;">Error: ${data.error}</div>`;
+    return;
+  }
+
+  const canon = data.canonical_proposal || {};
+  const docs = data.documents || [];
+  const missing = data.missing_categories || [];
+
+  // Group documents by folder/category
+  const folders = {};
+  const folderNames = {
+    memoria_tecnica:'01 Technical', certificacion_trabajos:'01 Technical', plan_gestion:'01 Technical', memoria_breve:'01 Technical',
+    calculadora:'02 GIS/Calculator', shapefile:'02 GIS/Calculator', planos:'02 GIS/Calculator',
+    nota_simple:'03 Ownership', ficha_monte:'03 Ownership', certificado_catastral:'03 Ownership', certificado_secretario:'03 Ownership',
+    escritura_publica:'03 Ownership', evidencia_propiedad_otro:'03 Ownership', proyecto_ordenacion:'03 Ownership',
+    anexo_i:'04 Legal', anexo_ii:'04 Legal', anexo_fcc:'04 Legal', convenio_cesion:'04 Legal',
+    declaracion_responsable:'04 Legal', declaracion_derechos:'04 Legal',
+    formulario_pa:'05 Supporting', correspondencia_oecc:'05 Supporting', otro:'05 Supporting'
+  };
+  docs.forEach(d => {
+    const folder = folderNames[d.category] || '05 Supporting';
+    if (!folders[folder]) folders[folder] = [];
+    folders[folder].push(d);
+  });
+
+  // Confidence badge
+  const confBadge = c => {
+    const colors = { ALTA:'var(--green)', MEDIA:'var(--amber)', BAJA:'var(--red)' };
+    return `<span style="font-size:9px;font-family:var(--mono);color:${colors[c]||'var(--ink3)'};font-weight:600;">${c||'?'}</span>`;
+  };
+  const oeccBadge = p => p ? `<span style="font-size:9px;font-family:var(--mono);background:var(--blue-bg);color:var(--blue);padding:1px 5px;border-radius:3px;">OECC ${p}</span>` : '';
+
+  // Build HTML
+  let html = '';
+
+  // Summary bar
+  html += `<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:16px;">
+    <div class="section-label" style="margin:0;">AI processed ${data.files_processed} documents</div>
+    <span style="font-size:10px;font-family:var(--mono);background:var(--blue-bg);color:var(--blue);padding:3px 8px;border-radius:4px;">${data.files_ocr||0} OCR</span>
+    <span style="font-size:10px;font-family:var(--mono);background:${data.ready_for_verification?'var(--green-bg)':'var(--red-bg)'};color:${data.ready_for_verification?'var(--green)':'var(--red)'};padding:3px 8px;border-radius:4px;">${data.ready_for_verification?'Ready for verification':'Missing documents'}</span>
+    ${data.batches_processed?`<span style="font-size:10px;font-family:var(--mono);color:var(--ink3);">${data.batches_processed} batch${data.batches_processed>1?'es':''}</span>`:''}
+  </div>`;
+
+  // Missing categories
+  if (missing.length) {
+    const oeccNames = {1:'Formulario PA',2:'Calculadora',3:'Memoria',4:'Certificacion',5:'Plan Gestion',6:'Shapefile',7:'Propiedad',8:'Declaracion',9:'Convenio'};
+    html += `<div style="background:var(--red-bg);border:1px solid #b83a3a22;border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:11px;">
+      <span style="font-weight:600;color:var(--red);">Missing OECC categories:</span>
+      ${missing.map(m => `<span style="display:inline-block;background:#b83a3a18;color:var(--red);padding:2px 7px;border-radius:3px;margin:2px 3px;font-family:var(--mono);font-size:10px;">${m} ${oeccNames[m]||''}</span>`).join('')}
+    </div>`;
+  }
+
+  // OCR manual needed
+  const manualOcr = docs.filter(d => d.needs_ocr_manual);
+  if (manualOcr.length) {
+    html += `<div style="background:var(--amber-bg);border:1px solid #9a6c1a22;border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:11px;">
+      <span style="font-weight:600;color:var(--amber);">OCR skipped (manual review needed):</span>
+      ${manualOcr.map(d => `<span style="display:inline-block;background:#9a6c1a18;color:var(--amber);padding:2px 7px;border-radius:3px;margin:2px 3px;font-size:10px;">${d.filename}</span>`).join('')}
+    </div>`;
+  }
+
+  // Categorized documents grid
+  html += `<div class="categorized-grid">`;
+  for (const [folder, fdocs] of Object.entries(folders).sort()) {
+    html += `<div class="cat-group"><div class="cat-group-name">${folder}</div>`;
+    fdocs.forEach(d => {
+      const icon = d.confidence === 'ALTA' ? '✓' : d.confidence === 'MEDIA' ? '⚠' : '✗';
+      html += `<div class="cat-file"><span class="cat-file-status">${icon}</span> ${d.filename} ${confBadge(d.confidence)} ${oeccBadge(d.oecc_point)}</div>`;
+    });
+    html += `</div>`;
+  }
+  html += `</div><div class="divider"></div>`;
+
+  // Canonical data
+  html += `<div class="section-label">Canonical data proposed by AI — confirm or edit before proceeding</div>
+  <div style="background:var(--amber-bg);border:1px solid #d4a85044;border-radius:6px;padding:10px 14px;font-size:11px;color:var(--amber);margin-bottom:14px;">
+    Gold fields were extracted automatically. Review before confirming — these become the source of truth for all generated documents.
+  </div>`;
+
+  const canonFields = [
+    {key:'nombre_oficial', label:'Official project name'},
+    {key:'tipo_proyecto', label:'Tipo de proyecto'},
+    {key:'municipio', label:'Municipality', extra: canon.provincia ? `, ${canon.provincia}` : ''},
+    {key:'total_ha', label:'Active surface area (ha)', mono:true},
+    {key:'total_tco2', label:'Total absorptions (tCO2)', mono:true},
+    {key:'permanencia_anos', label:'Permanence (years)', mono:true},
+    {key:'promotor', label:'Promotor'},
+    {key:'propietario', label:'Land owner'},
+    {key:'ingeniero_nombre', label:'Technical author (engineer)'},
+    {key:'codigo_oecc', label:'OECC code', mono:true},
+  ];
+
+  html += `<div class="canon-grid">`;
+  canonFields.forEach(f => {
+    let val = canon[f.key] != null ? canon[f.key] : '';
+    if (f.extra && val) val += f.extra;
+    const proposed = val ? ' proposed' : '';
+    const monoStyle = f.mono ? ' style="font-family:var(--mono)"' : '';
+    html += `<div class="field-group">
+      <div class="field-label">${f.label}</div>
+      <input class="field-input${proposed}" id="canon_${f.key}" value="${String(val).replace(/"/g,'&quot;')}"${monoStyle}>
+      ${val ? '<div class="field-note">⚡ AI extracted</div>' : ''}
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Confidence notes
+  if (canon.confidence_notes) {
+    html += `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:11px;color:var(--ink2);margin:14px 0;line-height:1.6;">
+      <span style="font-weight:600;">AI notes:</span> ${canon.confidence_notes}
+    </div>`;
+  }
+
+  // Action buttons
+  html += `<div style="display:flex;gap:10px;margin-top:4px;">
+    <button class="btn btn-forest" onclick="confirmIntake()">Confirm data and verify →</button>
+    <button class="btn btn-outline" onclick="toast('Saving draft...')">Save draft</button>
+  </div>`;
+
+  el.innerHTML = html;
+}
+
+async function confirmIntake() {
+  toast('Canonical data confirmed. Opening verification...');
+  showView('review');
 }
 
 let currentProject = 'amoedo';
