@@ -868,19 +868,21 @@ function buildMetricsSlide(pptx,s,slideIndex){
     s.stats.forEach(function(stat,idx){
       var bx=0.5+idx*(bw+0.15);
       slide.addShape('rect',{x:bx,y:by,w:bw,h:bh,fill:{color:C.navy},rectRadius:0.05});
-      slide.addText(stat.value||'',{
-        x:bx+0.05,y:by+0.08,w:bw-0.1,h:0.52,
-        fontSize:32,color:idx%2===0?C.gold:C.lightBlue,fontFace:F.bold,align:'center',shrinkText:true
+      var valStr=stat.value||'';
+      var valSize=valStr.length>6?24:(valStr.length>4?28:32);
+      slide.addText(valStr,{
+        x:bx+0.05,y:by+0.08,w:bw-0.1,h:0.45,
+        fontSize:valSize,color:idx%2===0?C.gold:C.lightBlue,fontFace:F.bold,align:'center',shrinkText:true
       });
       if(stat.unit){
-        slide.addText(stat.unit,{
-          x:bx+0.05,y:by+0.60,w:bw-0.1,h:0.2,
-          fontSize:8,color:C.lightBlue,fontFace:F.light,align:'center',shrinkText:true
+        slide.addText(truncUnit(stat.unit),{
+          x:bx+0.05,y:by+0.53,w:bw-0.1,h:0.18,
+          fontSize:7,color:C.lightBlue,fontFace:F.light,align:'center',shrinkText:true
         });
       }
       slide.addText(stat.label||'',{
-        x:bx+0.05,y:by+0.82,w:bw-0.1,h:0.22,
-        fontSize:8,color:C.white,fontFace:F.light,align:'center',shrinkText:true
+        x:bx+0.05,y:by+0.72,w:bw-0.1,h:0.18,
+        fontSize:7.5,color:C.white,fontFace:F.light,align:'center',shrinkText:true
       });
     });
   }
@@ -953,18 +955,20 @@ function buildProjectSlide(pptx,s,slideIndex){
     s.stats.forEach(function(stat,idx){
       var bx=0.35+idx*(bw+0.12);
       slide.addShape('rect',{x:bx,y:1.7,w:bw,h:0.9,fill:{color:C.navy},rectRadius:0.05});
-      slide.addText(stat.value||'',{
-        x:bx+0.05,y:1.75,w:bw-0.1,h:0.42,
-        fontSize:22,color:idx%2===0?C.gold:C.lightBlue,fontFace:F.bold,align:'center',shrinkText:true
+      var valStr=stat.value||'';
+      var valSize=valStr.length>6?16:(valStr.length>4?20:22);
+      slide.addText(valStr,{
+        x:bx+0.05,y:1.75,w:bw-0.1,h:0.38,
+        fontSize:valSize,color:idx%2===0?C.gold:C.lightBlue,fontFace:F.bold,align:'center',shrinkText:true
       });
       if(stat.unit){
-        slide.addText(stat.unit,{
-          x:bx+0.05,y:2.17,w:bw-0.1,h:0.16,
+        slide.addText(truncUnit(stat.unit),{
+          x:bx+0.05,y:2.13,w:bw-0.1,h:0.16,
           fontSize:7,color:C.lightBlue,fontFace:F.light,align:'center',shrinkText:true
         });
       }
       slide.addText(stat.label||'',{
-        x:bx+0.05,y:2.33,w:bw-0.1,h:0.22,
+        x:bx+0.05,y:2.29,w:bw-0.1,h:0.22,
         fontSize:7.5,color:C.white,fontFace:F.light,align:'center',shrinkText:true
       });
     });
@@ -997,9 +1001,11 @@ function buildComparisonSlide(pptx,s,slideIndex){
   if(s.stats&&s.stats.length){
     var panelY=1.2;
     s.stats.forEach(function(stat,idx){
-      slide.addText((stat.value||'')+(stat.unit?'  '+stat.unit:''),{
+      var cmpVal=(stat.value||'')+(stat.unit?'  '+truncUnit(stat.unit):'');
+      var cmpSize=cmpVal.length>16?14:(cmpVal.length>10?16:20);
+      slide.addText(cmpVal,{
         x:5.75,y:panelY,w:4.0,h:0.4,
-        fontSize:20,color:idx%2===0?C.gold:C.lightBlue,fontFace:F.bold,shrinkText:true
+        fontSize:cmpSize,color:idx%2===0?C.gold:C.lightBlue,fontFace:F.bold,shrinkText:true
       });
       slide.addText(stat.label||'',{
         x:5.75,y:panelY+0.38,w:4.0,h:0.22,fontSize:9,color:C.white,fontFace:F.light
@@ -1057,18 +1063,20 @@ function buildDefaultSlide(pptx,s,slideIndex){
         x:bx,y:contentY,w:bw,h:bh,fill:{color:C.navy},rectRadius:0.05
       });
       var statColor=idx%2===0?C.gold:C.lightBlue;
-      slide.addText(stat.value||'',{
-        x:bx+0.05,y:contentY+0.04,w:bw-0.1,h:0.38,
-        fontSize:24,color:statColor,fontFace:F.bold,align:'center',shrinkText:true
+      var valStr=stat.value||'';
+      var valSize=valStr.length>6?20:(valStr.length>4?24:28);
+      slide.addText(valStr,{
+        x:bx+0.05,y:contentY+0.04,w:bw-0.1,h:0.45,
+        fontSize:valSize,color:statColor,fontFace:F.bold,align:'center',shrinkText:true
       });
       if(stat.unit){
-        slide.addText(stat.unit,{
-          x:bx+0.05,y:contentY+0.42,w:bw-0.1,h:0.18,
+        slide.addText(truncUnit(stat.unit),{
+          x:bx+0.05,y:contentY+0.53,w:bw-0.1,h:0.18,
           fontSize:7,color:C.lightBlue,fontFace:F.light,align:'center',shrinkText:true
         });
       }
       slide.addText(stat.label||'',{
-        x:bx+0.05,y:contentY+0.60,w:bw-0.1,h:0.20,
+        x:bx+0.05,y:contentY+0.72,w:bw-0.1,h:0.18,
         fontSize:7.5,color:C.white,fontFace:F.light,align:'center',shrinkText:true
       });
     });
@@ -1139,6 +1147,9 @@ async function buildNewPptx(brief){
     if(pptxTheme.colors.accent1)C.gold=pptxTheme.colors.accent1.replace('#','');
   }
 
+  // Truncate long unit strings to prevent overflow
+  function truncUnit(u){if(!u)return'';return u.length>22?u.substring(0,20)+'\u2026':u}
+
   var slides=brief.slides||[];
 
   for(var i=0;i<slides.length;i++){
@@ -1148,6 +1159,18 @@ async function buildNewPptx(brief){
       // ═══ COVER SLIDE ═══
       var cover=pptx.addSlide();
       cover.background={color:C.navy};
+      // Full-bleed photo behind everything
+      cover.addImage({
+        path:'https://tools.oga.earth/assets/photos/biochar-cover.png',
+        x:0,y:0,w:10,h:5.625
+      });
+      // Dark navy overlay (35% transparent = 65% opaque)
+      cover.addShape('rect',{
+        x:0,y:0,w:10,h:5.625,
+        fill:{type:'solid',color:C.navy},
+        line:{type:'none'},
+        transparency:35
+      });
       addChrome(cover,true);
 
       // Gold left accent bar
@@ -1194,23 +1217,25 @@ async function buildNewPptx(brief){
             x:bx,y:blockY,w:blockW,h:0.95,
             fill:{color:C.midNavy},rectRadius:0.05
           });
-          // Value — number only
-          cover.addText(stat.value||'',{
-            x:bx+0.05,y:blockY+0.04,w:blockW-0.1,h:0.38,
-            fontSize:24,color:idx===0?C.gold:C.lightBlue,
+          // Value — adaptive size
+          var valStr=stat.value||'';
+          var valSize=valStr.length>6?18:(valStr.length>4?22:24);
+          cover.addText(valStr,{
+            x:bx+0.05,y:blockY+0.04,w:blockW-0.1,h:0.45,
+            fontSize:valSize,color:idx===0?C.gold:C.lightBlue,
             fontFace:F.bold,align:'center',shrinkText:true
           });
-          // Unit — smaller, below value
+          // Unit — truncated
           if(stat.unit){
-            cover.addText(stat.unit,{
-              x:bx+0.05,y:blockY+0.42,w:blockW-0.1,h:0.18,
+            cover.addText(truncUnit(stat.unit),{
+              x:bx+0.05,y:blockY+0.53,w:blockW-0.1,h:0.18,
               fontSize:7,color:C.lightBlue,fontFace:F.light,
               align:'center',shrinkText:true
             });
           }
           // Label — bottom of block
           cover.addText(stat.label||'',{
-            x:bx+0.05,y:blockY+0.60,w:blockW-0.1,h:0.20,
+            x:bx+0.05,y:blockY+0.72,w:blockW-0.1,h:0.18,
             fontSize:7.5,color:C.white,fontFace:F.light,
             align:'center',shrinkText:true
           });
