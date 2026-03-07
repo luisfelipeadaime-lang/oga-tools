@@ -1483,197 +1483,34 @@ main {
 <div id="view-corrections" class="view">
   <div class="corrections-layout">
 
+    <!-- SECTION 1 — Correction queue (dynamic) -->
     <div>
       <div class="sh-row">
-        <div class="section-label">Active corrections</div>
-        <button class="btn btn-outline" onclick="toast('Downloading all instructions as PDF...')">↓ Download all</button>
+        <div class="section-label">Correction queue</div>
+        <button class="btn btn-outline" onclick="runVerifyPackage();showView('review');toast('Re-running verification...')">Refresh from verify</button>
       </div>
+      <div id="correctionQueue"></div>
 
-      <!-- Correction items -->
-      <div class="correction-item">
-        <div class="correction-header">
-          <div class="corr-num E">1</div>
-          <div style="flex:1;">
-            <div class="corr-doc">MEMORIA TÉCNICA · p. 6, subparcelas table</div>
-            <div class="corr-desc">Total area: 24.16 ha → 22.27 ha · remove excluded subparcela</div>
-            <div class="corr-detail">36037A03100078-e · 0,0184 ha · FCC&lt;20%</div>
-          </div>
-          <div class="corr-actions">
-            <button class="btn btn-outline" style="font-size:11px;padding:5px 10px;" onclick="toast('Opening ForestEngineer: remove_subparcela.py...')">🤖 Agente</button>
-            <button class="btn btn-forest" style="font-size:11px;padding:5px 10px;" onclick="toast('Generating redlined DOCX for Amancio...')">📝 Redline DOCX</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="correction-item">
-        <div class="correction-header">
-          <div class="corr-num E">2</div>
-          <div style="flex:1;">
-            <div class="corr-doc">MEMORIA TÉCNICA · p. 8, absorptions</div>
-            <div class="corr-desc">Total tCO₂: 18.409,05 → 18.507,41 tCO₂</div>
-            <div class="corr-detail">MITECO Calculator v2 · valor canónico actualizado</div>
-          </div>
-          <div class="corr-actions">
-            <button class="btn btn-forest" style="font-size:11px;padding:5px 10px;" onclick="toast('Preparing redline...')">📝 Redline DOCX</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="correction-item">
-        <div class="correction-header">
-          <div class="corr-num E">3</div>
-          <div style="flex:1;">
-            <div class="corr-doc">CERTIFICACIÓN · p. 2 + p. 5</div>
-            <div class="corr-desc">Area: 22,29 → 22,2725 ha · subparcelas: 22 → 21</div>
-            <div class="corr-detail">Same root cause as correction #1</div>
-          </div>
-          <div class="corr-actions">
-            <button class="btn btn-outline" style="font-size:11px;padding:5px 10px;" onclick="toast('Agente: fill_legal_template.py --doc certificacion')">🤖 Agente</button>
-            <button class="btn btn-forest" style="font-size:11px;padding:5px 10px;" onclick="toast('Generating Certificación redline...')">📝 Redline DOCX</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="correction-item">
-        <div class="correction-header">
-          <div class="corr-num W">4</div>
-          <div style="flex:1;">
-            <div class="corr-doc">DECLARACIÓN DE PERMANENCIA · stale data</div>
-            <div class="corr-desc">Regenerate with canonical data and request signatures from participants</div>
-            <div class="corr-detail">Promoter + CMVMC owner · period 2018–2068</div>
-          </div>
-          <div class="corr-actions">
-            <button class="btn btn-forest" style="font-size:11px;padding:5px 10px;" onclick="toast('Generating updated Declaración with MITECO template...')">⚡ Regenerate</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="correction-item">
-        <div class="correction-header">
-          <div class="corr-num W">5</div>
-          <div style="flex:1;">
-            <div class="corr-doc">MANAGEMENT ORDER · missing from dossier</div>
-            <div class="corr-desc">Referenced in Management Plan — OECC will request it</div>
-            <div class="corr-detail">PO-00160145L · adjuntar o confirmar que está en expediente</div>
-          </div>
-          <div class="corr-actions">
-            <button class="btn btn-outline" style="font-size:11px;padding:5px 10px;" onclick="toast('Upload Proyecto Ordenación...')">⊕ Attach</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="divider"></div>
+      <div class="divider" style="margin:20px 0;"></div>
 
       <div class="sh-row">
         <div class="section-label">Correction letters</div>
       </div>
-
-      <!-- Amancio letter preview inline -->
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:10px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div>
-            <div style="font-size:13px;font-weight:600;">Amancio Serrapio Soárez</div>
-            <div style="font-size:11px;color:var(--ink3);">Forest Engineer COETFOGA nº 568 · Memoria · Certificación · Planos</div>
-          </div>
-          <div style="display:flex;gap:6px;">
-            <button class="btn btn-outline" style="font-size:11px;padding:5px 10px;" onclick="copyAmancio()">📋 Copy</button>
-            <button class="btn btn-gold" style="font-size:11px;padding:5px 10px;" onclick="toast('Opening in email client...')">✉ Email</button>
-            <button class="btn btn-forest" style="font-size:11px;padding:5px 10px;" onclick="toast('Downloading redlined DOCX for Amancio...')">📝 DOCX redline</button>
-          </div>
-        </div>
-        <div class="letter-body" id="carta-amancio">Estimado Amancio,
-
-Tras la revisión técnica del expediente de subsanación del proyecto BOSQUE CLEAR SKY AMOEDO (en trámite, Registro PA - OECC), se han detectado las siguientes correcciones necesarias en los documentos de tu responsabilidad:
-
-MEMORIA TÉCNICA (260305_Memoria_Amoedo_v1.pdf):
-1. Pág. 6, tabla de subparcelas: Area total indicada: 24,1623 ha con 27 subparcelas. Corregir a 22,2725 ha con 21 subparcelas activas, eliminando la subparcela ref. 36037A03100078 sub. e (0,0184 ha, excluida por FCC < 20%).
-2. Pág. 8, cálculo de absorciones: Total indicado: 18.409,05 tCO₂. Actualizar a 18.507,41 tCO₂ según MITECO Calculator v2.
-
-CERTIFICACIÓN DE TRABAJOS:
-1. Pág. 2, resumen: Area 22,29 ha → corregir a 22,2725 ha.
-2. Tabla subparcelas pág. 5: Constan 22 subparcelas → eliminar ref. 36037A03100078-e.
-
-Adjunto documento Word con los cambios marcados en control de cambios para tu revisión. Solo necesitas aceptar los cambios, añadir tu firma y número de colegiado, y devolver en PDF.
-
-Tiempo estimado de revisión: 10-15 minutos.
-
-Un saludo,
-Luis Adaime — ClearSky</div>
-      </div>
-
-      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div>
-            <div style="font-size:13px;font-weight:600;">Domingo</div>
-            <div style="font-size:11px;color:var(--ink3);">GIS · Shapefile · Cartography</div>
-          </div>
-          <div style="display:flex;gap:6px;">
-            <button class="btn btn-outline" style="font-size:11px;padding:5px 10px;" onclick="toast('Copied to clipboard')">📋 Copy</button>
-            <button class="btn btn-gold" style="font-size:11px;padding:5px 10px;" onclick="toast('Email to Domingo...')">✉ Email</button>
-          </div>
-        </div>
-        <div class="letter-body">Estimado Domingo,
-
-El shapefile del proyecto AMOEDO requiere las siguientes correcciones:
-
-SHAPEFILE (Amoedo_parcelas_v2.shp):
-1. Eliminar el polígono con ref. catastral 36037A03100078, subparcela e. FCC < 20%, excluida del proyecto.
-2. Recalcular campo "Sup" para todos los polígonos restantes (4 decimales, ha).
-3. Verificar que campo PERIMETRO está presente y actualizado.
-4. Exportar en 2D (sin Z), CRS EPSG:25829 o 25830.
-
-Area esperada tras corrección: 22,2725 ha · 21 polígonos.
-
-Tiempo estimado en QGIS: 5-10 minutos.
-
-Un saludo, Luis</div>
-      </div>
-
+      <div id="correctionLetters"></div>
     </div>
 
-    <!-- Agent panel -->
+    <!-- SECTION 2 — ForestEngineer tasks -->
     <div class="agent-panel">
       <div class="agent-panel-header">
         <div class="agent-panel-title">
           <div class="agent-pulse" style="background:#60c890;"></div>
-          ForestEngineer
+          ForestEngineer Tasks
         </div>
-        <div class="agent-panel-sub">Active · awaiting jobs · Option A</div>
+        <div class="agent-panel-sub" id="feSubtitle">Awaiting verification data</div>
       </div>
-
-      <div class="agent-job-queue">
-        <div class="section-label" style="margin-bottom:8px;">Job queue</div>
-
-        <div class="agent-job">
-          <div class="job-name">remove_subparcela.py</div>
-          <div class="job-status pending">○ Queued · awaiting dispatch</div>
-          <div style="font-size:9px;color:var(--ink3);font-family:var(--mono);margin-top:3px;">ref: 36037A03100078-e · cascade ON</div>
-        </div>
-        <div class="agent-job">
-          <div class="job-name">fill_calculator.py</div>
-          <div class="job-status pending">○ Queued · depends on #1</div>
-        </div>
-        <div class="agent-job">
-          <div class="job-name">generate_dd_report.py</div>
-          <div class="job-status pending">○ Queued · depends on #2</div>
-          <div style="font-size:9px;color:var(--ink3);font-family:var(--mono);margin-top:3px;">Memoria + Certif. draft</div>
-        </div>
-        <div class="agent-job">
-          <div class="job-name">fill_legal_template.py</div>
-          <div class="job-status pending">○ Queued · --all-legal</div>
-          <div style="font-size:9px;color:var(--ink3);font-family:var(--mono);margin-top:3px;">Decl. Permanencia + Convenio</div>
-        </div>
-        <div class="agent-job">
-          <div class="job-name">push_to_r2.py</div>
-          <div class="job-status pending">○ En cola · --all → R2</div>
-        </div>
-
-        <button class="agent-dispatch-btn" onclick="simulateAgentRun()">
-          🚀 Run all jobs (est. 8 min)
-        </button>
-
-        <div style="font-size:9px;color:var(--ink3);font-family:var(--mono);margin-top:8px;text-align:center;">
-          Results will be pushed to R2 automatically. You will be notified here.
+      <div class="agent-job-queue" id="feJobQueue">
+        <div style="padding:16px;font-size:11px;color:var(--ink3);text-align:center;">
+          Run verification first to populate tasks.
         </div>
       </div>
     </div>
@@ -2181,6 +2018,7 @@ function showView(id) {
     document.getElementById('topbarSub').textContent = v.sub;
   }
   window.scrollTo(0, 0);
+  if (id === 'corrections' && typeof renderCorrections === 'function') renderCorrections();
 }
 
 function switchMode(btn, id) {
@@ -2253,6 +2091,7 @@ async function handleIntakeFiles(files) {
       })
     });
     const data = await res.json();
+    if (data.canonical_proposal) window.lastCanonical = data.canonical_proposal;
     document.getElementById('intakeProgressBar').style.width = '100%';
     setTimeout(() => {
       document.getElementById('intakeProgress').style.display = 'none';
@@ -2454,9 +2293,12 @@ async function runVerifyPackage() {
       ai_verification_error: ai.ai_verification_error || null
     };
 
+    window.lastVerifyResult = merged;
+
     setTimeout(() => {
       progress.style.display = 'none';
       renderVerifyResults(merged);
+      renderCorrections();
     }, 400);
 
   } catch(e) {
@@ -2608,6 +2450,191 @@ function renderVerifyResults(data) {
 }
 
 function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+
+// ─── Corrections view ───
+
+const FE_DOC_TYPES = ['memoria','memoria_tecnica','certificacion','certificacion_trabajos','plan_gestion','calculadora','formulario_pa'];
+
+function renderCorrections() {
+  const vr = window.lastVerifyResult;
+  const queueEl = document.getElementById('correctionQueue');
+  const lettersEl = document.getElementById('correctionLetters');
+  const feEl = document.getElementById('feJobQueue');
+  const feSub = document.getElementById('feSubtitle');
+
+  if (!vr) {
+    queueEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--ink3);font-size:11px;">No verification data yet. Run verification from the Review tab first.</div>';
+    lettersEl.innerHTML = '';
+    return;
+  }
+
+  // SECTION 1 — Correction queue
+  const fixes = vr.instrucciones_correccion || [];
+  if (fixes.length === 0) {
+    queueEl.innerHTML = '<div style="padding:20px;text-align:center;color:var(--green);font-size:12px;font-weight:500;">No corrections needed</div>';
+  } else {
+    let html = '';
+    fixes.forEach((f, idx) => {
+      const prio = f.prioridad || 3;
+      const prioClass = prio === 1 ? 'E' : prio === 2 ? 'W' : 'W';
+      const prioLabel = prio === 1 ? 'HIGH' : prio === 2 ? 'MED' : 'LOW';
+      const prioColor = prio === 1 ? 'var(--red)' : prio === 2 ? 'var(--amber)' : 'var(--ink3)';
+      const prioBg = prio === 1 ? 'var(--red-bg)' : prio === 2 ? '#fef3c7' : 'var(--bg)';
+      html += `<div class="correction-item correction-card" data-idx="${idx}">
+        <div class="correction-header">
+          <div class="corr-num" style="background:${prioBg};color:${prioColor};">${prioLabel}</div>
+          <div style="flex:1;">
+            <div class="corr-doc">${esc(f.documento || 'Document')}</div>
+            <div class="corr-desc">${esc(f.correccion || '')}</div>
+            ${f.valor_incorrecto ? `<div class="corr-detail"><span style="color:var(--red);">${esc(f.valor_incorrecto)}</span> → <span style="color:var(--green);">${esc(f.valor_correcto || '?')}</span></div>` : ''}
+          </div>
+          <div class="corr-actions">
+            <span class="status-badge" style="font-size:9px;padding:2px 6px;border-radius:3px;background:var(--bg);color:var(--ink3);font-family:var(--mono);">pending</span>
+            <button class="btn btn-forest" style="font-size:11px;padding:5px 10px;" onclick="generateCorrectionDoc(${idx})">Generate DOCX</button>
+          </div>
+        </div>
+      </div>`;
+    });
+    queueEl.innerHTML = html;
+  }
+
+  // Correction letters
+  const letters = vr.cartas_correccion || [];
+  if (letters.length === 0) {
+    lettersEl.innerHTML = '<div style="padding:12px;color:var(--ink3);font-size:11px;">No correction letters generated.</div>';
+  } else {
+    let lhtml = '';
+    letters.forEach((l, idx) => {
+      lhtml += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div>
+            <div style="font-size:13px;font-weight:600;">${esc(l.destinatario || 'Unknown')}</div>
+            <div style="font-size:11px;color:var(--ink3);">${esc(l.rol || '')}</div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-outline" style="font-size:11px;padding:5px 10px;" onclick="navigator.clipboard.writeText(document.getElementById('carta-${idx}').textContent);toast('Letter copied')">Copy</button>
+          </div>
+        </div>
+        <div class="letter-body" id="carta-${idx}">${esc(l.carta_texto || '')}</div>
+      </div>`;
+    });
+    lettersEl.innerHTML = lhtml;
+  }
+
+  // SECTION 2 — ForestEngineer tasks
+  const feTasks = fixes.filter(f => {
+    const doc = (f.documento || '').toLowerCase().replace(/\s+/g, '_');
+    return FE_DOC_TYPES.some(t => doc.includes(t));
+  });
+
+  if (feTasks.length === 0) {
+    feSub.textContent = 'No agent tasks needed';
+    feEl.innerHTML = '<div style="padding:16px;font-size:11px;color:var(--ink3);text-align:center;">All corrections are external (letters/manual).</div>';
+  } else {
+    feSub.textContent = `${feTasks.length} tasks ready`;
+    let fhtml = '<div class="section-label" style="margin-bottom:8px;">Job queue</div>';
+    feTasks.forEach((f, idx) => {
+      fhtml += `<div class="agent-job">
+        <div class="job-name">${esc(f.documento || 'Unknown doc')}</div>
+        <div style="font-size:11px;color:var(--ink2);margin:3px 0;">${esc(f.correccion || '')}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+          <span class="job-status pending" id="fe-status-${idx}">queued</span>
+          <button class="btn btn-outline" style="font-size:10px;padding:3px 8px;" onclick="createForestEngineerInstructions(${idx})">Create Instructions</button>
+        </div>
+      </div>`;
+    });
+    fhtml += `<button class="agent-dispatch-btn" onclick="runAllForestEngineer()">Run all ForestEngineer tasks</button>`;
+    feEl.innerHTML = fhtml;
+  }
+}
+
+async function generateCorrectionDoc(idx) {
+  const vr = window.lastVerifyResult;
+  if (!vr) return toast('No verification data');
+  const correction = vr.instrucciones_correccion[idx];
+  if (!correction) return toast('Correction not found');
+
+  const card = document.querySelectorAll('.correction-card')[idx];
+  const badge = card?.querySelector('.status-badge');
+  if (badge) { badge.textContent = 'generating...'; badge.style.background = '#fef3c7'; badge.style.color = 'var(--amber)'; }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/miteco-dd/projects/${currentProjectId}/generate-correction-doc`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        correction,
+        canonical: window.lastCanonical || {},
+        project_id: currentProjectId
+      })
+    });
+    const data = await res.json();
+    if (data.docx_url) {
+      if (badge) { badge.textContent = 'ready'; badge.style.background = 'var(--green-bg)'; badge.style.color = 'var(--green)'; }
+      const a = document.createElement('a');
+      a.href = data.docx_url;
+      a.download = data.filename || 'correction.docx';
+      a.click();
+    } else {
+      if (badge) { badge.textContent = 'error'; badge.style.background = 'var(--red-bg)'; badge.style.color = 'var(--red)'; }
+      toast('Error: ' + (data.error || 'No document URL returned'));
+    }
+  } catch(e) {
+    if (badge) { badge.textContent = 'error'; badge.style.background = 'var(--red-bg)'; badge.style.color = 'var(--red)'; }
+    toast('Error: ' + e.message);
+  }
+}
+
+async function createForestEngineerInstructions(idx) {
+  const statusEl = document.getElementById('fe-status-' + idx);
+  if (statusEl) { statusEl.textContent = 'loading...'; statusEl.className = 'job-status running'; }
+  try {
+    const res = await fetch(`${API_BASE}/api/miteco-dd/projects/${currentProjectId}/generate-instructions`);
+    const data = await res.json();
+    if (statusEl) { statusEl.textContent = 'sent'; statusEl.className = 'job-status done'; }
+    showModal('ForestEngineer Instructions', data.instructions_text || data.instructions || JSON.stringify(data, null, 2));
+  } catch(e) {
+    if (statusEl) { statusEl.textContent = 'error'; }
+    toast('Error: ' + e.message);
+  }
+}
+
+async function runAllForestEngineer() {
+  toast('Dispatching all ForestEngineer tasks...');
+  try {
+    const res = await fetch(`${API_BASE}/api/miteco-dd/projects/${currentProjectId}/generate-instructions`);
+    const data = await res.json();
+    showModal('ForestEngineer — All Tasks', data.instructions_text || data.instructions || JSON.stringify(data, null, 2));
+  } catch(e) {
+    toast('Error: ' + e.message);
+  }
+}
+
+function showModal(title, content) {
+  const existing = document.getElementById('modalOverlay');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'modalOverlay';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;display:flex;align-items:center;justify-content:center;';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  modal.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:700px;width:90%;max-height:80vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="color:var(--ink);margin:0;font-size:14px;">${esc(title)}</h3>
+        <button onclick="document.getElementById('modalOverlay').remove()" style="background:none;border:none;color:var(--ink3);cursor:pointer;font-size:18px;">&#10005;</button>
+      </div>
+      <pre style="color:var(--ink2);white-space:pre-wrap;font-size:12px;line-height:1.6;font-family:var(--mono);">${esc(content)}</pre>
+      <div style="margin-top:16px;text-align:right;">
+        <button class="btn btn-outline" style="font-size:11px;" onclick="navigator.clipboard.writeText(document.querySelector('#modalOverlay pre').textContent);toast('Copied')">Copy to clipboard</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function closeModal() {
+  const m = document.getElementById('modalOverlay');
+  if (m) m.remove();
+}
 
 let currentProject = 'amoedo';
 
