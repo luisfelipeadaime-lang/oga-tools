@@ -784,18 +784,37 @@ function addSuggestedSlide(el,text){
 }
 
 function saveBrief(){
-  localStorage.setItem('cs_pres_brief',JSON.stringify(briefData));
-  toast('Brief saved to browser','ok');
+  if(!briefData){toast('No brief to save — generate first','err');return}
+  try{
+    var json=JSON.stringify(briefData,null,2);
+    var blob=new Blob([json],{type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;
+    a.download='clearsky-brief-'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url)},1000);
+    toast('Brief saved','ok');
+  }catch(e){
+    console.error('Save brief failed:',e);
+    toast('Save failed: '+e.message,'err');
+  }
 }
 
 // ═══════════ PPTX GENERATION ═══════════
-function downloadPPTX(){
-  if(!briefData||!briefData.slides||!briefData.slides.length){toast('No slides to generate','err');return}
-
-  if(briefData.base_pptx_base64){
-    appendSlidesToExistingPptx(briefData);
-  }else{
-    buildNewPptx(briefData);
+async function downloadPPTX(){
+  try{
+    if(!briefData||!briefData.slides||!briefData.slides.length){toast('No brief generated yet — click Generate first','err');return}
+    if(briefData.base_pptx_base64){
+      await appendSlidesToExistingPptx(briefData);
+    }else{
+      buildNewPptx(briefData);
+    }
+  }catch(e){
+    console.error('Download failed:',e);
+    toast('Download failed: '+e.message,'err');
   }
 }
 
@@ -954,7 +973,7 @@ function escXml(str){
 function buildCover(slide,s,navy,gold,white,fontHead,fontBody){
   slide.background={fill:navy};
   // Gold accent bar left edge
-  slide.addShape(pptx.ShapeType.rect,{x:0,y:0,w:0.15,h:7.5,fill:{color:gold.replace('#','')}});
+  slide.addShape('rect',{x:0,y:0,w:0.15,h:7.5,fill:{color:gold.replace('#','')}});
   slide.addText(s.title||'',{x:1,y:2,w:10,h:2,fontSize:36,fontFace:fontHead,color:white.replace('#',''),shrinkText:true});
   slide.addText(s.subtitle||'',{x:1,y:4,w:10,h:1,fontSize:20,fontFace:fontBody,color:gold.replace('#',''),shrinkText:true});
   var cp=document.getElementById('inp-counterparty').value.trim();
@@ -966,7 +985,7 @@ function buildExecSummary(slide,s,navy,gold,white,offWhite,fontHead,fontBody){
   slide.background={fill:white};
   slide.addText(s.title||'',{x:.6,y:.4,w:12,h:.8,fontSize:22,fontFace:fontHead,color:navy.replace('#',''),bold:true,shrinkText:true});
   // Gold underline
-  slide.addShape(pptx.ShapeType.rect,{x:.6,y:1.2,w:2,h:.04,fill:{color:gold.replace('#','')}});
+  slide.addShape('rect',{x:.6,y:1.2,w:2,h:.04,fill:{color:gold.replace('#','')}});
 
   if(s.body){
     var bw=s.stats&&s.stats.length?6.5:11.5;
@@ -977,7 +996,7 @@ function buildExecSummary(slide,s,navy,gold,white,offWhite,fontHead,fontBody){
     var sx=7.5;
     s.stats.forEach(function(st,i){
       var sy=1.6+i*1.3;
-      slide.addShape(pptx.ShapeType.rect,{x:sx,y:sy,w:5,h:1.1,fill:{color:offWhite.replace('#','')},rectRadius:.08});
+      slide.addShape('rect',{x:sx,y:sy,w:5,h:1.1,fill:{color:offWhite.replace('#','')},rectRadius:.08});
       slide.addText(st.value||'',{x:sx+.3,y:sy+.1,w:2,h:.6,fontSize:28,fontFace:fontHead,color:gold.replace('#',''),bold:true,shrinkText:true});
       slide.addText((st.label||'')+(st.unit?' '+st.unit:''),{x:sx+2.5,y:sy+.15,w:2.2,h:.5,fontSize:11,fontFace:fontBody,color:navy.replace('#',''),shrinkText:true});
     });
@@ -987,7 +1006,7 @@ function buildExecSummary(slide,s,navy,gold,white,offWhite,fontHead,fontBody){
 function buildMetrics(slide,s,navy,gold,white,offWhite,fontHead,fontBody){
   slide.background={fill:white};
   slide.addText(s.title||'',{x:.6,y:.4,w:12,h:.8,fontSize:22,fontFace:fontHead,color:navy.replace('#',''),bold:true,shrinkText:true});
-  slide.addShape(pptx.ShapeType.rect,{x:.6,y:1.2,w:2,h:.04,fill:{color:gold.replace('#','')}});
+  slide.addShape('rect',{x:.6,y:1.2,w:2,h:.04,fill:{color:gold.replace('#','')}});
 
   var stats=s.stats||[];
   var cols=stats.length<=2?2:2;
@@ -996,7 +1015,7 @@ function buildMetrics(slide,s,navy,gold,white,offWhite,fontHead,fontBody){
   stats.forEach(function(st,i){
     var col=i%cols,row=Math.floor(i/cols);
     var sx=1.5+col*(bw+.5),sy=2+row*(bh+.3);
-    slide.addShape(pptx.ShapeType.rect,{x:sx,y:sy,w:bw,h:bh,fill:{color:offWhite.replace('#','')},rectRadius:.1});
+    slide.addShape('rect',{x:sx,y:sy,w:bw,h:bh,fill:{color:offWhite.replace('#','')},rectRadius:.1});
     slide.addText(st.value||'',{x:sx,y:sy+.3,w:bw,h:1,fontSize:42,fontFace:fontHead,color:gold.replace('#',''),bold:true,align:'center',shrinkText:true});
     slide.addText((st.label||'')+(st.unit?' '+st.unit:''),{x:sx,y:sy+1.4,w:bw,h:.5,fontSize:13,fontFace:fontBody,color:navy.replace('#',''),align:'center',shrinkText:true});
   });
@@ -1005,7 +1024,7 @@ function buildMetrics(slide,s,navy,gold,white,offWhite,fontHead,fontBody){
 function buildProject(slide,s,navy,gold,white,lightBlue,offWhite,fontHead,fontBody){
   slide.background={fill:white};
   slide.addText(s.title||'',{x:.6,y:.4,w:12,h:.8,fontSize:20,fontFace:fontHead,color:navy.replace('#',''),bold:true,shrinkText:true});
-  slide.addShape(pptx.ShapeType.rect,{x:.6,y:1.15,w:2,h:.04,fill:{color:gold.replace('#','')}});
+  slide.addShape('rect',{x:.6,y:1.15,w:2,h:.04,fill:{color:gold.replace('#','')}});
 
   // Left column: metadata
   var meta=[];
@@ -1024,7 +1043,7 @@ function buildProject(slide,s,navy,gold,white,lightBlue,offWhite,fontHead,fontBo
 function buildComparison(slide,s,navy,gold,white,offWhite,fontHead,fontBody){
   slide.background={fill:white};
   slide.addText(s.title||'',{x:.6,y:.4,w:12,h:.8,fontSize:20,fontFace:fontHead,color:navy.replace('#',''),bold:true,shrinkText:true});
-  slide.addShape(pptx.ShapeType.rect,{x:.6,y:1.15,w:2,h:.04,fill:{color:gold.replace('#','')}});
+  slide.addShape('rect',{x:.6,y:1.15,w:2,h:.04,fill:{color:gold.replace('#','')}});
 
   if(s.table&&s.table.headers&&s.table.rows){
     var tableData=[s.table.headers.map(function(h){return{text:h,options:{bold:true,fill:{color:navy.replace('#','')},color:'FFFFFF',fontSize:11,fontFace:fontBody}}})];
@@ -1041,7 +1060,7 @@ function buildComparison(slide,s,navy,gold,white,offWhite,fontHead,fontBody){
 
 function buildContact(slide,s,navy,gold,white,fontHead,fontBody){
   slide.background={fill:navy};
-  slide.addShape(pptx.ShapeType.rect,{x:0,y:3.5,w:13.333,h:.04,fill:{color:gold.replace('#','')}});
+  slide.addShape('rect',{x:0,y:3.5,w:13.333,h:.04,fill:{color:gold.replace('#','')}});
   slide.addText('ClearSky Limited',{x:0,y:2,w:13.333,h:1,fontSize:32,fontFace:fontHead,color:white.replace('#',''),align:'center',shrinkText:true});
   slide.addText(s.subtitle||s.body||'trading@clearskyltd.com',{x:0,y:4,w:13.333,h:1,fontSize:16,fontFace:fontBody,color:gold.replace('#',''),align:'center',shrinkText:true});
   slide.addText(s.title||'',{x:0,y:5.2,w:13.333,h:.6,fontSize:13,fontFace:fontBody,color:'AAAAAA',align:'center',shrinkText:true});
