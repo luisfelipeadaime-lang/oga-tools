@@ -816,6 +816,9 @@ var F={
   medium:'Roboto Medium',light:'Roboto Light'
 };
 
+// Truncate long unit strings to prevent stat block overflow
+function truncUnit(u){if(!u)return'';return u.length>22?u.substring(0,20)+'\u2026':u}
+
 function addChrome(slide,isDark){
   // Logo replaced with text — URL-based addImage corrupts PPTX in browser
   slide.addText('ClearSky',{
@@ -1145,9 +1148,6 @@ async function buildNewPptx(brief){
     if(pptxTheme.colors.dk1)C.navy=pptxTheme.colors.dk1.replace('#','');
     if(pptxTheme.colors.accent1)C.gold=pptxTheme.colors.accent1.replace('#','');
   }
-
-  // Truncate long unit strings to prevent overflow
-  function truncUnit(u){if(!u)return'';return u.length>22?u.substring(0,20)+'\u2026':u}
 
   var slides=brief.slides||[];
 
