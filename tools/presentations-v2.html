@@ -817,12 +817,10 @@ var F={
 };
 
 function addChrome(slide,isDark){
-  // Logo — top left
-  slide.addImage({
-    path:isDark
-      ?'https://tools.oga.earth/assets/logos/clearsky-logo-white.png'
-      :'https://tools.oga.earth/assets/logos/clearsky-logo-darkblue.png',
-    x:0.35,y:0.12,w:1.6,h:0.37
+  // Logo replaced with text — URL-based addImage corrupts PPTX in browser
+  slide.addText('ClearSky',{
+    x:0.35,y:0.12,w:1.6,h:0.37,fontSize:14,
+    color:isDark?C.white:C.navy,fontFace:F.medium,bold:true
   });
   // CONFIDENTIAL — top right
   slide.addText('CONFIDENTIAL',{
@@ -1128,6 +1126,7 @@ async function downloadPPTX(){
     toast('PPTX downloaded','ok');
   }catch(e){
     console.error('Download PPTX error:',e);
+    console.error('Stack:',e.stack);
     toast('Download failed: '+e.message,'err');
   }
 }
@@ -1289,28 +1288,16 @@ async function buildNewPptx(brief){
       fill:{color:C.midNavy},rectRadius:0.08,
       line:{color:'2A3A5A',width:1}
     });
-    // Headshot image (circular pre-cropped PNGs)
-    var headshots={
-      'LA':'https://tools.oga.earth/assets/team/luis-adaime.png',
-      'AA':'https://tools.oga.earth/assets/team/ana-avramovic.png',
-      'CM':'https://tools.oga.earth/assets/team/carolina-martinez.png'
-    };
-    if(headshots[contact.initials]){
-      contactSlide.addImage({
-        path:headshots[contact.initials],
-        x:cx+(cardW-0.85)/2,y:cy+0.18,w:0.85,h:0.85,
-      });
-    }else{
-      // Fallback to initials avatar
-      contactSlide.addShape('ellipse',{
-        x:cx+(cardW-0.8)/2,y:cy+0.2,w:0.8,h:0.8,
-        fill:{color:C.navy},line:{color:C.gold,width:1.5}
-      });
-      contactSlide.addText(contact.initials,{
-        x:cx+(cardW-0.8)/2,y:cy+0.2,w:0.8,h:0.8,
-        fontSize:16,color:C.white,fontFace:F.bold,align:'center',valign:'middle'
-      });
-    }
+    // Headshots disabled — URL-based addImage corrupts PPTX. Will restore with base64 in Step 4.
+    // Initials avatar (always used until base64 headshots are embedded)
+    contactSlide.addShape('ellipse',{
+      x:cx+(cardW-0.8)/2,y:cy+0.2,w:0.8,h:0.8,
+      fill:{color:C.navy},line:{color:C.gold,width:1.5}
+    });
+    contactSlide.addText(contact.initials,{
+      x:cx+(cardW-0.8)/2,y:cy+0.2,w:0.8,h:0.8,
+      fontSize:16,color:C.white,fontFace:F.bold,align:'center',valign:'middle'
+    });
     // Name
     contactSlide.addText(contact.name,{
       x:cx+0.1,y:cy+1.1,w:cardW-0.2,h:0.35,
