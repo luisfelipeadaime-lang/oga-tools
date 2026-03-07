@@ -804,6 +804,42 @@ function saveBrief(){
 }
 
 // ═══════════ PPTX GENERATION ═══════════
+
+// ClearSky Brand System v10 — pptxgenjs (NO # prefix)
+var C={
+  navy:'0D1B3E',midNavy:'1B2A4A',lightBlue:'5B9BD5',gold:'D4A843',
+  white:'FFFFFF',offWhite:'F5F7FA',darkText:'0D1B3E',midGray:'8A8F9A',
+  borderGray:'D0D7DE',green:'1A8A6E',red:'C0392B'
+};
+var F={
+  title:'Roboto Light',body:'Roboto',bold:'Roboto Bold',
+  medium:'Roboto Medium',light:'Roboto Light'
+};
+
+function addChrome(slide,isDark){
+  // Logo — top left (TODO: deploy logo to tools.oga.earth/assets/logos/ then uncomment)
+  // slide.addImage({
+  //   path:'https://tools.oga.earth/assets/logos/clearsky-logo-nav.png',
+  //   x:0.35,y:0.12,w:1.6,h:0.37
+  // });
+  slide.addText('CLEARSKY',{
+    x:0.35,y:0.12,w:1.6,h:0.37,fontSize:12,color:isDark?C.gold:C.navy,
+    fontFace:F.bold,charSpacing:3
+  });
+  // CONFIDENTIAL — top right
+  slide.addText('CONFIDENTIAL',{
+    x:7.8,y:0.18,w:1.5,h:0.18,fontSize:7,color:C.red,
+    fontFace:F.medium,charSpacing:2,align:'right'
+  });
+  // Footer rule
+  slide.addShape('rect',{x:0,y:5.15,w:10,h:0.01,fill:{color:C.borderGray}});
+  // Footer text
+  slide.addText('ClearSky Limited  \u00b7  103 Cannon Street, London, EC4N 5AG',{
+    x:0.35,y:5.2,w:6,h:0.2,fontSize:7,
+    color:isDark?C.white:C.midGray,fontFace:F.light
+  });
+}
+
 async function downloadPPTX(){
   try{
     if(!briefData||!briefData.slides||!briefData.slides.length){toast('No brief generated yet — click Generate first','err');return}
@@ -821,140 +857,276 @@ async function downloadPPTX(){
 
 async function buildNewPptx(brief){
   var pptx=new PptxGenJS();
+  pptx.defineLayout({name:'CS_16x9',width:10,height:5.625});
+  pptx.layout='CS_16x9';
 
-  // Brand colors — NO # prefix for pptxgenjs
-  var NAVY='0D1B3E';
-  var GOLD='D4A843';
-  var WHITE='FFFFFF';
-  var OFFWH='F5F7FA';
-  var DKTXT='2C3E50';
-  var LTGRY='E8ECF1';
-  var MIDGY='6B7B8D';
-
-  // Apply extracted theme if available
+  // Apply extracted theme overrides
   if(brief.theme_applied&&brief.theme_applied.colors){
-    if(brief.theme_applied.colors.dk1)NAVY=brief.theme_applied.colors.dk1.replace('#','');
-    if(brief.theme_applied.colors.accent1)GOLD=brief.theme_applied.colors.accent1.replace('#','');
+    if(brief.theme_applied.colors.dk1)C.navy=brief.theme_applied.colors.dk1.replace('#','');
+    if(brief.theme_applied.colors.accent1)C.gold=brief.theme_applied.colors.accent1.replace('#','');
   }
   if(pptxTheme&&pptxTheme.colors){
-    if(pptxTheme.colors.dk1)NAVY=pptxTheme.colors.dk1.replace('#','');
-    if(pptxTheme.colors.accent1)GOLD=pptxTheme.colors.accent1.replace('#','');
+    if(pptxTheme.colors.dk1)C.navy=pptxTheme.colors.dk1.replace('#','');
+    if(pptxTheme.colors.accent1)C.gold=pptxTheme.colors.accent1.replace('#','');
   }
-
-  pptx.layout='LAYOUT_WIDE'; // 13.33 x 7.5
 
   var slides=brief.slides||[];
 
   for(var i=0;i<slides.length;i++){
     var s=slides[i];
-    var slide=pptx.addSlide();
 
     if(s.slide_type==='cover'){
-      slide.background={color:NAVY};
-      slide.addShape('rect',{x:0,y:0,w:0.15,h:7.5,fill:{color:GOLD}});
-      slide.addText(brief.counterparty||'ClearSky',{
-        x:0.4,y:0.4,w:12,h:0.5,fontSize:13,color:GOLD,fontFace:'Calibri'
+      // ═══ COVER SLIDE ═══
+      var cover=pptx.addSlide();
+      cover.background={color:C.navy};
+      addChrome(cover,true);
+
+      // Gold left accent bar
+      cover.addShape('rect',{x:0,y:0,w:0.12,h:5.625,fill:{color:C.gold}});
+
+      // Counterparty label
+      if(brief.counterparty){
+        cover.addText(brief.counterparty.toUpperCase(),{
+          x:0.35,y:0.65,w:9.3,h:0.3,fontSize:9,color:C.gold,
+          fontFace:F.medium,charSpacing:3
+        });
+      }
+
+      // Main title
+      cover.addText(s.title||'ClearSky',{
+        x:0.35,y:1.0,w:9.3,h:1.6,fontSize:34,color:C.white,
+        fontFace:F.title,shrinkText:true
       });
-      slide.addText(s.title||'',{
-        x:0.4,y:1.0,w:12,h:2.0,fontSize:34,color:WHITE,fontFace:'Georgia',bold:true,shrinkText:true
-      });
-      if(s.subtitle)slide.addText(s.subtitle,{
-        x:0.4,y:3.1,w:12,h:0.7,fontSize:16,color:GOLD,fontFace:'Calibri',shrinkText:true
-      });
-      if(s.body)slide.addText(s.body,{
-        x:0.4,y:3.9,w:9,h:1.2,fontSize:13,color:WHITE,fontFace:'Calibri',shrinkText:true
-      });
+
+      // Subtitle — Light Blue
+      if(s.subtitle){
+        cover.addText(s.subtitle,{
+          x:0.35,y:2.65,w:9.3,h:0.5,fontSize:14,color:C.lightBlue,
+          fontFace:F.light,shrinkText:true
+        });
+      }
+
+      // Body
+      if(s.body){
+        cover.addText(s.body,{
+          x:0.35,y:3.25,w:7.5,h:0.8,fontSize:12,color:C.white,
+          fontFace:F.body,shrinkText:true
+        });
+      }
+
+      // Stat blocks row at bottom
       if(s.stats&&s.stats.length){
-        var sw=12.5/s.stats.length;
+        var count=s.stats.length;
+        var blockW=(9.0-(count-1)*0.15)/count;
+        var blockY=4.1;
         s.stats.forEach(function(stat,idx){
-          var sx=0.4+idx*sw;
-          slide.addShape('rect',{x:sx,y:5.4,w:sw-0.15,h:1.6,fill:{color:'1a2d4a'},line:{color:GOLD,width:1}});
-          slide.addText(stat.value+(stat.unit?' '+stat.unit:''),{
-            x:sx+0.1,y:5.5,w:sw-0.3,h:0.7,fontSize:22,color:GOLD,fontFace:'Georgia',bold:true,align:'center',shrinkText:true
+          var bx=0.5+idx*(blockW+0.15);
+          cover.addShape('rect',{
+            x:bx,y:blockY,w:blockW,h:0.85,
+            fill:{color:C.midNavy},rectRadius:0.05
           });
-          slide.addText(stat.label||'',{
-            x:sx+0.1,y:6.2,w:sw-0.3,h:0.5,fontSize:10,color:WHITE,fontFace:'Calibri',align:'center',shrinkText:true
+          cover.addText((stat.value||'')+(stat.unit?' '+stat.unit:''),{
+            x:bx+0.05,y:blockY+0.05,w:blockW-0.1,h:0.45,
+            fontSize:22,color:idx===0?C.gold:C.lightBlue,
+            fontFace:F.bold,align:'center',shrinkText:true
+          });
+          cover.addText(stat.label||'',{
+            x:bx+0.05,y:blockY+0.52,w:blockW-0.1,h:0.25,
+            fontSize:8,color:C.white,fontFace:F.light,
+            align:'center',shrinkText:true
           });
         });
       }
+
+      // Date pill — bottom right
+      var dateStr=new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'}).toUpperCase();
+      cover.addShape('rect',{
+        x:7.3,y:5.22,w:2.3,h:0.25,
+        fill:{type:'none'},line:{color:C.white,width:0.75},rectRadius:0.12
+      });
+      cover.addText(dateStr,{
+        x:7.3,y:5.22,w:2.3,h:0.25,fontSize:8,color:C.white,
+        fontFace:F.light,align:'center',charSpacing:2
+      });
+
     }else{
-      // Content slide
-      slide.background={color:WHITE};
-      slide.addShape('rect',{x:0,y:0,w:13.33,h:0.07,fill:{color:GOLD}});
-      slide.addShape('rect',{x:0,y:0.07,w:0.07,h:7.43,fill:{color:NAVY}});
+      // ═══ CONTENT SLIDE ═══
+      var slide=pptx.addSlide();
+      slide.background={color:C.white};
+      addChrome(slide,false);
+
+      // Slide number
+      slide.addText('Page '+String(i+1).padStart(2,'0'),{
+        x:8.8,y:5.2,w:0.8,h:0.2,fontSize:7,color:C.midGray,
+        fontFace:F.light,align:'right'
+      });
+
+      // Gold accent bar below logo zone
+      slide.addShape('rect',{x:0.35,y:0.55,w:0.5,h:0.025,fill:{color:C.gold}});
+
+      // Title
       slide.addText(s.title||'',{
-        x:0.3,y:0.15,w:12.8,h:1.0,fontSize:22,color:NAVY,fontFace:'Georgia',bold:true,shrinkText:true
-      });
-      if(s.subtitle)slide.addText(s.subtitle,{
-        x:0.3,y:1.1,w:12.8,h:0.45,fontSize:13,color:MIDGY,fontFace:'Calibri',italic:true,shrinkText:true
+        x:0.35,y:0.62,w:9.0,h:0.85,fontSize:22,color:C.navy,
+        fontFace:F.title,bold:false,shrinkText:true
       });
 
-      var contentY=s.subtitle?1.65:1.25;
-
-      if(s.stats&&s.stats.length){
-        var sw2=12.5/s.stats.length;
-        s.stats.forEach(function(stat,idx){
-          var sx2=0.3+idx*sw2;
-          slide.addShape('rect',{x:sx2,y:contentY,w:sw2-0.15,h:1.4,fill:{color:OFFWH},line:{color:LTGRY,width:1}});
-          slide.addText(stat.value+(stat.unit?' '+stat.unit:''),{
-            x:sx2+0.1,y:contentY+0.1,w:sw2-0.3,h:0.7,fontSize:26,color:GOLD,fontFace:'Georgia',bold:true,align:'center',shrinkText:true
-          });
-          slide.addText(stat.label||'',{
-            x:sx2+0.1,y:contentY+0.82,w:sw2-0.3,h:0.45,fontSize:10,color:NAVY,fontFace:'Calibri',align:'center',shrinkText:true
-          });
+      // Subtitle — Light Blue
+      if(s.subtitle){
+        slide.addText(s.subtitle,{
+          x:0.35,y:1.48,w:9.0,h:0.35,fontSize:11,color:C.lightBlue,
+          fontFace:F.light,italic:true,shrinkText:true
         });
-        contentY+=1.55;
       }
 
+      var contentY=s.subtitle?1.9:1.6;
+
+      // STAT BLOCKS — Dark Navy rectangles
+      if(s.stats&&s.stats.length){
+        var sc=s.stats.length;
+        var bw=(9.0-(sc-1)*0.15)/sc;
+        var bh=0.85;
+        s.stats.forEach(function(stat,idx){
+          var bx=0.5+idx*(bw+0.15);
+          slide.addShape('rect',{
+            x:bx,y:contentY,w:bw,h:bh,
+            fill:{color:C.navy},rectRadius:0.05
+          });
+          var statColor=idx%2===0?C.gold:C.lightBlue;
+          slide.addText((stat.value||'')+(stat.unit?' '+stat.unit:''),{
+            x:bx+0.05,y:contentY+0.05,w:bw-0.1,h:0.52,
+            fontSize:26,color:statColor,fontFace:F.bold,
+            align:'center',shrinkText:true
+          });
+          slide.addText(stat.label||'',{
+            x:bx+0.05,y:contentY+0.58,w:bw-0.1,h:0.22,
+            fontSize:8,color:C.white,fontFace:F.light,
+            align:'center',shrinkText:true
+          });
+        });
+        contentY+=bh+0.2;
+      }
+
+      // TABLE — Navy header, Light Blue header text, alternating rows
       if(s.table&&s.table.headers&&s.table.rows&&s.table.rows.length){
-        var tableRows=[];
-        tableRows.push(s.table.headers.map(function(h){
-          return{text:String(h),options:{bold:true,color:WHITE,fill:NAVY,fontSize:11,fontFace:'Calibri'}};
+        var trows=[];
+        trows.push(s.table.headers.map(function(h){
+          return{text:String(h),options:{bold:true,color:C.lightBlue,fill:C.navy,fontSize:9,fontFace:F.medium}};
         }));
         s.table.rows.forEach(function(row,ri){
-          tableRows.push(row.map(function(cell){
-            return{text:String(cell||''),options:{color:DKTXT,fill:ri%2===0?OFFWH:WHITE,fontSize:11,fontFace:'Calibri'}};
+          trows.push(row.map(function(cell){
+            return{text:String(cell||''),options:{color:C.darkText,fill:ri%2===0?C.offWhite:C.white,fontSize:9,fontFace:F.body}};
           }));
         });
-        slide.addTable(tableRows,{
-          x:0.3,y:contentY,w:12.5,border:{type:'solid',color:LTGRY,pt:1},autoPage:false
+        slide.addTable(trows,{
+          x:0.35,y:contentY,w:9.3,
+          border:{type:'solid',color:C.borderGray,pt:0.5},
+          autoPage:false,rowH:0.32,margin:[0.06,0.08,0.06,0.08]
         });
-        contentY+=tableRows.length*0.45+0.2;
+        contentY+=(trows.length*0.32)+0.25;
       }
 
-      if(s.body)slide.addText(s.body,{
-        x:0.3,y:contentY,w:12.5,h:Math.max(0.5,6.8-contentY),
-        fontSize:13,color:DKTXT,fontFace:'Calibri',valign:'top',shrinkText:true
-      });
-
-      if(s.notes&&s.notes.length&&s.mckinsey_score!=='green'){
-        slide.addText(s.notes,{
-          x:0.3,y:7.1,w:12.5,h:0.3,fontSize:8,color:'D97706',fontFace:'Calibri',italic:true,shrinkText:true
+      // BODY TEXT
+      if(s.body){
+        var bodyH=Math.max(0.4,5.0-contentY);
+        slide.addText(s.body,{
+          x:0.35,y:contentY,w:9.3,h:bodyH,
+          fontSize:13,color:C.darkText,fontFace:F.body,
+          valign:'top',shrinkText:true
         });
       }
 
-      slide.addText(String(i+1),{
-        x:12.8,y:7.2,w:0.4,h:0.25,fontSize:8,color:MIDGY,fontFace:'Calibri',align:'right'
-      });
+      // McKinsey flag
+      if(s.mckinsey_score&&s.mckinsey_score!=='green'&&s.notes){
+        slide.addText('\u26a0  '+s.notes,{
+          x:0.35,y:5.05,w:8.0,h:0.2,fontSize:7,color:'D97706',
+          fontFace:F.light,italic:true,shrinkText:true
+        });
+      }
     }
   }
 
-  // Contact slide
-  var last=pptx.addSlide();
-  last.background={color:NAVY};
-  last.addShape('rect',{x:0,y:0,w:13.33,h:0.07,fill:{color:GOLD}});
-  last.addText('ClearSky Limited',{
-    x:0.5,y:2.8,w:12.3,h:1.0,fontSize:32,color:WHITE,fontFace:'Georgia',bold:true,align:'center'
-  });
-  last.addText('trading@clearskyltd.com',{
-    x:0.5,y:3.9,w:12.3,h:0.6,fontSize:18,color:GOLD,fontFace:'Calibri',align:'center'
-  });
-  last.addText('Luis Adaime  |  www.clearskyltd.com',{
-    x:0.5,y:4.6,w:12.3,h:0.5,fontSize:14,color:WHITE,fontFace:'Calibri',align:'center'
+  // ═══ CONTACT SLIDE ═══
+  var contactSlide=pptx.addSlide();
+  contactSlide.background={color:C.navy};
+  addChrome(contactSlide,true);
+
+  // Gold top bar
+  contactSlide.addShape('rect',{x:0,y:0.55,w:10,h:0.04,fill:{color:C.gold}});
+
+  // Intro text
+  contactSlide.addText(
+    "If you're interested in purchasing carbon credits, exploring climate catalytic investment opportunities, or procuring physical biochar for your operations",
+    {x:0.5,y:0.7,w:9.0,h:0.7,fontSize:12,color:C.white,fontFace:F.light,align:'center',shrinkText:true}
+  );
+
+  // Contact cards — 3 people
+  var contacts=[
+    {name:'Luis Felipe Adaime',title:'CCO \u2013 Chief Commercial Officer',email:'luis.adaime@clearskyltd.com',phone:'+34 659 70 02 80',initials:'LA'},
+    {name:'Ana Avramovic',title:'Head of Sales and Trading',email:'ana.avramovic@clearskyltd.com',phone:'+1 403 999 5757',initials:'AA'},
+    {name:'Carolina Martinez',title:'Sales and Trading Associate',email:'Carolina.Martinez@clearskyltd.com',phone:'+1 631 494 5327',initials:'CM'}
+  ];
+
+  var cardW=2.6,cardH=2.4,cardGap=0.3;
+  var totalW=contacts.length*cardW+(contacts.length-1)*cardGap;
+  var startX=(10-totalW)/2;
+
+  contacts.forEach(function(contact,idx){
+    var cx=startX+idx*(cardW+cardGap);
+    var cy=1.55;
+
+    // Card background
+    contactSlide.addShape('rect',{
+      x:cx,y:cy,w:cardW,h:cardH,
+      fill:{color:C.midNavy},rectRadius:0.08,
+      line:{color:'2A3A5A',width:1}
+    });
+    // Avatar circle
+    contactSlide.addShape('ellipse',{
+      x:cx+(cardW-0.8)/2,y:cy+0.2,w:0.8,h:0.8,
+      fill:{color:C.navy},line:{color:C.gold,width:1.5}
+    });
+    // Initials
+    contactSlide.addText(contact.initials,{
+      x:cx+(cardW-0.8)/2,y:cy+0.2,w:0.8,h:0.8,
+      fontSize:16,color:C.white,fontFace:F.bold,align:'center',valign:'middle'
+    });
+    // Name
+    contactSlide.addText(contact.name,{
+      x:cx+0.1,y:cy+1.1,w:cardW-0.2,h:0.35,
+      fontSize:11,color:C.white,fontFace:F.medium,align:'center',shrinkText:true
+    });
+    // Title
+    contactSlide.addText(contact.title,{
+      x:cx+0.1,y:cy+1.45,w:cardW-0.2,h:0.3,
+      fontSize:8,color:C.midGray,fontFace:F.body,align:'center',shrinkText:true
+    });
+    // Email
+    contactSlide.addText(contact.email,{
+      x:cx+0.1,y:cy+1.8,w:cardW-0.2,h:0.25,
+      fontSize:8,color:C.lightBlue,fontFace:F.body,align:'center',shrinkText:true
+    });
+    // Phone
+    contactSlide.addText(contact.phone,{
+      x:cx+0.1,y:cy+2.05,w:cardW-0.2,h:0.22,
+      fontSize:8,color:C.midGray,fontFace:F.body,align:'center',shrinkText:true
+    });
   });
 
-  var fname=((brief.counterparty||'ClearSky').replace(/[^a-zA-Z0-9]/g,'_'))
-    +'_'+new Date().toISOString().slice(0,10)+'.pptx';
+  // Website
+  contactSlide.addText('www.clearskyltd.com',{
+    x:0.5,y:4.1,w:9.0,h:0.35,fontSize:14,color:C.gold,fontFace:F.light,align:'center'
+  });
+  // Tagline
+  contactSlide.addText('Scaling Durable, High-Integrity Climate Solutions',{
+    x:0.5,y:4.5,w:9.0,h:0.3,fontSize:10,color:C.midGray,fontFace:F.light,align:'center',italic:true
+  });
+
+  // Download
+  var fname=[
+    (brief.counterparty||'ClearSky').replace(/[^a-zA-Z0-9]/g,'_'),
+    (outputType||'deck').charAt(0).toUpperCase()+(outputType||'deck').slice(1),
+    new Date().toISOString().slice(0,10)
+  ].join('_')+'.pptx';
   await pptx.writeFile({fileName:fname});
 }
 
