@@ -884,7 +884,7 @@ function addChrome(slide,isDark){
   // Logo - base64 embedded
   var logoB64=isDark?LOGO_WHITE_B64:LOGO_DARKBLUE_B64;
   if(logoB64){
-    slide.addImage({data:'image/png;base64,'+logoB64,x:0.35,y:0.12,w:1.6,h:0.37});
+    slide.addImage({data:logoB64,extension:'png',x:0.35,y:0.12,w:1.6,h:0.37});
   }else{
     slide.addText('ClearSky',{
       x:0.35,y:0.12,w:1.6,h:0.37,fontSize:18,
@@ -1226,7 +1226,7 @@ async function buildNewPptx(brief){
       cover.background={color:C.navy};
       // Cover photo from upload (base64)
       if(coverPhotoBase64){
-        cover.addImage({data:'image/'+(coverPhotoExt==='png'?'png':'jpeg')+';base64,'+coverPhotoBase64,x:0,y:0,w:10,h:5.625});
+        cover.addImage({data:coverPhotoBase64,extension:coverPhotoExt||'jpeg',x:0,y:0,w:10,h:5.625});
       }
       addChrome(cover,true);
 
@@ -1361,7 +1361,7 @@ async function buildNewPptx(brief){
     var hsB64=headshotMap[contact.initials];
     if(hsB64){
       contactSlide.addImage({
-        data:'image/png;base64,'+hsB64,
+        data:hsB64,extension:'png',
         x:cx+(cardW-0.85)/2,y:cy+0.18,w:0.85,h:0.85
       });
     }else{
