@@ -817,14 +817,12 @@ var F={
 };
 
 function addChrome(slide,isDark){
-  // Logo — top left (TODO: deploy logo to tools.oga.earth/assets/logos/ then uncomment)
-  // slide.addImage({
-  //   path:'https://tools.oga.earth/assets/logos/clearsky-logo-nav.png',
-  //   x:0.35,y:0.12,w:1.6,h:0.37
-  // });
-  slide.addText('CLEARSKY',{
-    x:0.35,y:0.12,w:1.6,h:0.37,fontSize:12,color:isDark?C.gold:C.navy,
-    fontFace:F.bold,charSpacing:3
+  // Logo — top left
+  slide.addImage({
+    path:isDark
+      ?'https://tools.oga.earth/assets/logos/clearsky-logo-white.png'
+      :'https://tools.oga.earth/assets/logos/clearsky-logo-darkblue.png',
+    x:0.35,y:0.12,w:1.6,h:0.37
   });
   // CONFIDENTIAL — top right
   slide.addText('CONFIDENTIAL',{
