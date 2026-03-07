@@ -2485,7 +2485,7 @@ function renderVerifyResults(data) {
     <div style="font-size:22px;color:${barColor};">${icon}</div>
     <div style="flex:1;">
       <div style="font-size:13px;font-weight:600;color:${barColor};">${estado}</div>
-      <div style="font-size:11px;color:var(--ink3);font-family:var(--mono);margin-top:2px;">${r.errores || 0} errors &middot; ${r.advertencias || 0} warnings &middot; ${r.total_documentos || 0} documents</div>
+      <div style="font-size:11px;color:var(--ink3);font-family:var(--mono);margin-top:2px;">${data.structural?.errors || 0} structural &middot; ${(data.inconsistencias_cruzadas || []).length} cross-doc &middot; ${r.advertencias || 0} warnings &middot; ${r.total_documentos || 0} documents</div>
     </div>
     <div style="display:flex;gap:8px;">
       <button class="btn btn-outline" style="font-size:11px;padding:5px 10px;" onclick="runVerifyPackage()">Re-run</button>
