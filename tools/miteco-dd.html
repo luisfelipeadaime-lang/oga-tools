@@ -1455,299 +1455,26 @@ main {
      VIEW: REVIEW
 ════════════════════════════════════════════════ -->
 <div id="view-review" class="view">
-  <div class="review-layout">
 
-    <!-- Document list -->
-    <div class="doc-list-panel">
-      <div class="doc-list-header">
-        16 documents
-        <span class="doc-list-upload" onclick="toast('Subir documento individual')">⊕</span>
-      </div>
+  <!-- Verify action bar -->
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+    <button class="btn btn-forest" onclick="runVerifyPackage()" id="btnRunVerify">Verify documents</button>
+    <span id="verifyTimestamp" style="font-size:10px;color:var(--ink3);font-family:var(--mono);"></span>
+  </div>
 
-      <div class="doc-row active">
-        <div class="doc-row-indicator ind-fail"></div>
-        <div class="doc-row-name active">Memoria Técnica</div>
-        <span class="doc-row-type">PDF</span>
-      </div>
-      <div class="doc-row">
-        <div class="doc-row-indicator ind-fail"></div>
-        <div class="doc-row-name">Certificación</div>
-        <span class="doc-row-type">PDF</span>
-      </div>
-      <div class="doc-row">
-        <div class="doc-row-indicator ind-pass"></div>
-        <div class="doc-row-name">Plan de Gestión</div>
-        <span class="doc-row-type">PDF</span>
-      </div>
-      <div class="doc-row">
-        <div class="doc-row-indicator ind-warn"></div>
-        <div class="doc-row-name">Calculadora MITECO</div>
-        <span class="doc-row-type">XLSX</span>
-      </div>
-      <div class="doc-row">
-        <div class="doc-row-indicator ind-pass"></div>
-        <div class="doc-row-name">Shapefile</div>
-        <span class="doc-row-type">SHP</span>
-      </div>
-      <div class="doc-row">
-        <div class="doc-row-indicator ind-pass"></div>
-        <div class="doc-row-name">Planos cartográficos</div>
-        <span class="doc-row-type">PDF</span>
-      </div>
-      <div class="doc-row">
-        <div class="doc-row-indicator ind-pass"></div>
-        <div class="doc-row-name">Anexo I firmado</div>
-        <span class="doc-row-type">PDF</span>
-      </div>
-      <div class="doc-row">
-        <div class="doc-row-indicator ind-pass"></div>
-        <div class="doc-row-name">Anexo II firmado</div>
-        <span class="doc-row-type">PDF</span>
-      </div>
-      <div class="doc-row">
-        <div class="doc-row-indicator ind-stale"></div>
-        <div class="doc-row-name">Declaración Permanencia</div>
-        <span class="doc-row-type">PDF</span>
-      </div>
-      <div class="doc-row">
-        <div class="doc-row-indicator ind-pass"></div>
-        <div class="doc-row-name">Convenio de Cesión</div>
-        <span class="doc-row-type">PDF</span>
-      </div>
-      <div class="doc-row">
-        <div class="doc-row-indicator ind-pass"></div>
-        <div class="doc-row-name">Nota Simple 6105</div>
-        <span class="doc-row-type">PDF</span>
-      </div>
-      <div class="doc-row">
-        <div class="doc-row-indicator ind-pass"></div>
-        <div class="doc-row-name">Ficha Monte Vecinal</div>
-        <span class="doc-row-type">PDF</span>
-      </div>
-      <div class="doc-row">
-        <div class="doc-row-indicator ind-pass"></div>
-        <div class="doc-row-name">Certificado Secretario</div>
-        <span class="doc-row-type">PDF</span>
-      </div>
-      <div class="doc-row">
-        <div class="doc-row-indicator ind-pass"></div>
-        <div class="doc-row-name">CCDG Parcela 1</div>
-        <span class="doc-row-type">PDF</span>
-      </div>
-      <div class="doc-row">
-        <div class="doc-row-indicator ind-pass"></div>
-        <div class="doc-row-name">Anexo FCC</div>
-        <span class="doc-row-type">PDF</span>
-      </div>
-      <div class="doc-row">
-        <div class="doc-row-indicator ind-miss"></div>
-        <div class="doc-row-name">Formulario PA</div>
-        <span class="doc-row-type">—</span>
-      </div>
+  <!-- Progress bar -->
+  <div id="verifyProgress" style="display:none;margin-bottom:20px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <div class="pulse" style="width:8px;height:8px;border-radius:50%;background:var(--forest);"></div>
+      <span id="verifyProgressText" style="font-size:11px;color:var(--ink2);font-family:var(--mono);">Starting verification...</span>
     </div>
-
-    <!-- Main review content -->
-    <div class="review-main">
-
-      <!-- OECC Reviewer simulation -->
-      <div class="oecc-panel">
-        <div class="oecc-header">
-          <div class="oecc-title">
-            🔍 OECC Reviewer Simulation
-            <span style="font-size:10px;color:var(--ink3);font-weight:400;font-family:var(--mono);">Based on Feb 2026 rejection letter + heuristics</span>
-          </div>
-          <span class="oecc-score score-fail">4 of 11 checks failing</span>
-        </div>
-        <div class="oecc-checks">
-
-          <div class="oecc-check" onclick="toast('Species check: pistachios excluded correctly in this version')">
-            <div class="check-icon">✅</div>
-            <div class="check-label">
-              <div class="check-name">Species admissibility</div>
-              <div class="check-detail">No pistachios · no cedars · eucalyptus: maintenance only (May 2026 rule)</div>
-            </div>
-          </div>
-
-          <div class="oecc-check" onclick="toast('Calculadora presente, no verificable por IA — revisar manualmente')">
-            <div class="check-icon">⚠️</div>
-            <div class="check-label">
-              <div class="check-name">MITECO Calculator present</div>
-              <div class="check-detail">Present but not auto-verifiable (Excel format) — confirm manually</div>
-            </div>
-          </div>
-
-          <div class="oecc-check" onclick="toast('Shapefile: 6 companion files present ✓')">
-            <div class="check-icon">✅</div>
-            <div class="check-label">
-              <div class="check-name">Shapefile complete (shp+shx+prj+dbf+cpj+xml)</div>
-              <div class="check-detail">22,2725 ha · EPSG:25829 · 21 polígonos · todos companion files presentes</div>
-            </div>
-          </div>
-
-          <div class="oecc-check" onclick="toast('Critical inconsistency: Memoria says 24.16 ha, shapefile says 22.27 ha')">
-            <div class="check-icon">❌</div>
-            <div class="check-label">
-              <div class="check-name">Consistent surface area (form = shapefile = calculator)</div>
-              <div class="check-detail">Memoria (24.16 ha) ≠ Shapefile (22.27 ha) ≠ Calculator — LIKELY REJECTION REASON</div>
-            </div>
-            <button class="check-action" onclick="event.stopPropagation();showView('corrections')">Fix →</button>
-          </div>
-
-          <div class="oecc-check" onclick="toast('FCC: Sentinel-2 analysis present. Subparcela e correctly excluded.')">
-            <div class="check-icon">✅</div>
-            <div class="check-label">
-              <div class="check-name">FCC evidence for Tipo B (pre-fire forest)</div>
-              <div class="check-detail">Análisis Sentinel-2 · subparcela FCC&lt;20% excluida · 21 parcelas elegibles</div>
-            </div>
-          </div>
-
-          <div class="oecc-check" onclick="toast('Management plan: present but review action schedule')">
-            <div class="check-icon">⚠️</div>
-            <div class="check-label">
-              <div class="check-name">Management plan complete (thinnings, schedule, final density)</div>
-              <div class="check-detail">Present · check: annual/age-based action schedule? Final density per species?</div>
-            </div>
-            <button class="check-action" onclick="event.stopPropagation();toast('Opening Management Plan analysis...')">Revisar</button>
-          </div>
-
-          <div class="oecc-check" onclick="toast('Anexo I signed by 3 participants. Verify all owners are included.')">
-            <div class="check-icon">✅</div>
-            <div class="check-label">
-              <div class="check-name">Anexo I signed by all participants</div>
-              <div class="check-detail">3 signatories detected: promoter + manager + CMVMC owner</div>
-            </div>
-          </div>
-
-          <div class="oecc-check" onclick="toast('Propiedad acreditada: Nota Simple + Ficha Monte + CCDG')">
-            <div class="check-icon">✅</div>
-            <div class="check-label">
-              <div class="check-name">Ownership justification (notarial / registral / CCDG)</div>
-              <div class="check-detail">Nota Simple Finca 6105 + Ficha Monte Vecinal + CCDG · 22,27 ha acreditadas</div>
-            </div>
-          </div>
-
-          <div class="oecc-check" onclick="toast('Assignment agreement present and signed')">
-            <div class="check-icon">✅</div>
-            <div class="check-label">
-              <div class="check-name">Assignment agreement (promoter ≠ land owner)</div>
-              <div class="check-detail">Presente · firmado por CMVMC + ClearSky · período: 2018–2068</div>
-            </div>
-          </div>
-
-          <div class="oecc-check" onclick="toast('Management order: referenced in Management Plan — verify it is attached')">
-            <div class="check-icon">❌</div>
-            <div class="check-label">
-              <div class="check-name">Management order (if referenced in Management Plan)</div>
-              <div class="check-detail">Management plan references PO-00160145L — attached in dossier?</div>
-            </div>
-            <button class="check-action" onclick="event.stopPropagation();toast('Upload management order or confirm it is attached')">Attach</button>
-          </div>
-
-          <div class="oecc-check" onclick="toast('Permanence declaration: stale — regenerate and request signature')">
-            <div class="check-icon">❌</div>
-            <div class="check-label">
-              <div class="check-name">Permanence declaration signed</div>
-              <div class="check-detail">Present but stale · data outdated · new signature required</div>
-            </div>
-            <button class="check-action" onclick="event.stopPropagation();toast('Regenerating Declaración de Permanencia...')">Regenerar</button>
-          </div>
-
-          <div class="oecc-check" onclick="toast('Memoria breve presente ✓')">
-            <div class="check-icon">✅</div>
-            <div class="check-label">
-              <div class="check-name">Short descriptive memo (Memoria breve descriptiva (&lt;1 página)lt;1 page)</div>
-              <div class="check-detail">Presente · 0,8 páginas · incluye promotor, zona y descripción actuaciones</div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Document detail cards -->
-      <div class="sh-row" style="margin-top:20px;">
-        <div class="section-label">Documents — errors and warnings</div>
-        <button class="btn btn-forest btn" style="padding:6px 12px;font-size:11px;" onclick="showView('corrections')">View corrections →</button>
-      </div>
-
-      <div class="doc-detail">
-        <div class="doc-detail-header">
-          <span class="verdict verdict-fail">FAIL</span>
-          <span class="doc-detail-name">Memoria Técnica — 260305_Memoria_Amoedo_v1.pdf</span>
-          <div class="doc-detail-actions">
-            <button class="btn btn-outline" style="font-size:11px;padding:5px 10px;" onclick="toast('Instructions for Amancio copied')">📋 Amancio instructions</button>
-            <button class="btn btn-forest" style="font-size:11px;padding:5px 10px;" onclick="showView('corrections')">✎ Fix →</button>
-          </div>
-        </div>
-        <table class="disc-table">
-          <tr>
-            <td class="disc-sev E">ERROR</td>
-            <td class="disc-field">total_ha</td>
-            <td>
-              <div class="disc-vals">
-                <span class="val-got">24,1623 ha</span>
-                <span class="val-arrow">→</span>
-                <span class="val-expected">22,2725 ha</span>
-              </div>
-              <div class="disc-where">Tabla subparcelas pág. 6 · Resumen pág. 2</div>
-              <div class="disc-fix">Eliminar sub. 36037A03100078-e (FCC&lt;20%) y recalcular totales</div>
-            </td>
-          </tr>
-          <tr>
-            <td class="disc-sev E">ERROR</td>
-            <td class="disc-field">n_subparcelas</td>
-            <td>
-              <div class="disc-vals">
-                <span class="val-got">27 sub.</span>
-                <span class="val-arrow">→</span>
-                <span class="val-expected">21 sub.</span>
-              </div>
-              <div class="disc-where">Tabla principal pág. 5–6</div>
-            </td>
-          </tr>
-          <tr>
-            <td class="disc-sev E">ERROR</td>
-            <td class="disc-field">total_tco2</td>
-            <td>
-              <div class="disc-vals">
-                <span class="val-got">18.409,05 tCO₂</span>
-                <span class="val-arrow">→</span>
-                <span class="val-expected">18.507,41 tCO₂</span>
-              </div>
-              <div class="disc-where">Sección absorciones pág. 8</div>
-            </td>
-          </tr>
-        </table>
-      </div>
-
-      <div class="doc-detail">
-        <div class="doc-detail-header">
-          <span class="verdict verdict-fail">FAIL</span>
-          <span class="doc-detail-name">Certificación — 260305_Certificacion_Amoedo.pdf</span>
-          <div class="doc-detail-actions">
-            <button class="btn btn-forest" style="font-size:11px;padding:5px 10px;" onclick="showView('corrections')">✎ Fix →</button>
-          </div>
-        </div>
-        <table class="disc-table">
-          <tr>
-            <td class="disc-sev E">ERROR</td>
-            <td class="disc-field">total_ha</td>
-            <td>
-              <div class="disc-vals"><span class="val-got">22,29 ha</span><span class="val-arrow">→</span><span class="val-expected">22,2725 ha</span></div>
-              <div class="disc-where">Resumen pág. 2 · Tabla pág. 5</div>
-            </td>
-          </tr>
-          <tr>
-            <td class="disc-sev E">ERROR</td>
-            <td class="disc-field">n_subparcelas</td>
-            <td>
-              <div class="disc-vals"><span class="val-got">22 sub.</span><span class="val-arrow">→</span><span class="val-expected">21 sub.</span></div>
-            </td>
-          </tr>
-        </table>
-      </div>
-
+    <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;">
+      <div id="verifyProgressBar" style="height:100%;background:var(--forest);width:0%;transition:width 0.4s ease;border-radius:2px;"></div>
     </div>
   </div>
+
+  <!-- Results container (populated dynamically) -->
+  <div id="verifyResults"></div>
 </div>
 
 <!-- ═══════════════════════════════════════════════
@@ -2667,9 +2394,220 @@ function renderIntakeResults(data) {
 }
 
 async function confirmIntake() {
-  toast('Canonical data confirmed. Opening verification...');
+  toast('Canonical data confirmed. Running verification...');
   showView('review');
+  setTimeout(() => runVerifyPackage(), 300);
 }
+
+async function runVerifyPackage() {
+  if (!currentProjectId) return;
+  showView('review');
+
+  const progress = document.getElementById('verifyProgress');
+  const results = document.getElementById('verifyResults');
+  const bar = document.getElementById('verifyProgressBar');
+  const text = document.getElementById('verifyProgressText');
+  const btn = document.getElementById('btnRunVerify');
+
+  progress.style.display = '';
+  results.innerHTML = '';
+  bar.style.width = '10%';
+  bar.style.background = 'var(--forest)';
+  text.textContent = 'Running structural checks...';
+  btn.disabled = true;
+  btn.textContent = 'Verifying...';
+
+  try {
+    // PASS 1 — structural (fast)
+    bar.style.width = '20%';
+    const s = await fetch(`${API_BASE}/api/miteco-dd/projects/${currentProjectId}/verify-structure`, {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}'
+    });
+    const structural = await s.json();
+
+    bar.style.width = '50%';
+    text.textContent = 'Running AI cross-document analysis...';
+
+    // PASS 2 — AI (slower)
+    const a = await fetch(`${API_BASE}/api/miteco-dd/projects/${currentProjectId}/verify-ai`, {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}'
+    });
+    const ai = await a.json();
+
+    bar.style.width = '100%';
+    text.textContent = 'Complete';
+
+    // Merge results
+    const merged = {
+      resumen: {
+        estado_general: (structural.structural?.errors > 0 || (ai.inconsistencias_cruzadas || []).length > 0) ? 'ERRORES' : (structural.structural?.warnings > 0 ? 'ADVERTENCIAS' : 'LISTO'),
+        errores: (structural.structural?.errors || 0) + (ai.inconsistencias_cruzadas || []).length,
+        advertencias: structural.structural?.warnings || 0,
+        total_documentos: structural.resumen?.total_documentos || 0
+      },
+      structural: structural.structural,
+      inconsistencias_cruzadas: ai.inconsistencias_cruzadas || [],
+      evidencias_propiedad: ai.evidencias_propiedad || {},
+      instrucciones_correccion: ai.instrucciones_correccion || [],
+      cartas_correccion: ai.cartas_correccion || [],
+      ai_verification: ai.ai_verification,
+      ai_verification_error: ai.ai_verification_error || null
+    };
+
+    setTimeout(() => {
+      progress.style.display = 'none';
+      renderVerifyResults(merged);
+    }, 400);
+
+  } catch(e) {
+    text.textContent = 'Error: ' + e.message;
+    bar.style.background = '#ef4444';
+    bar.style.width = '100%';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Verify documents';
+  }
+}
+
+function renderVerifyResults(data) {
+  const el = document.getElementById('verifyResults');
+  const r = data.resumen || {};
+  const estado = r.estado_general || 'UNKNOWN';
+  const isOk = estado === 'LISTO';
+  const barColor = isOk ? 'var(--green)' : estado === 'ADVERTENCIAS' ? 'var(--amber)' : 'var(--red)';
+  const barBg = isOk ? 'var(--green-bg)' : estado === 'ADVERTENCIAS' ? '#fef3c7' : 'var(--red-bg)';
+  const icon = isOk ? '&#10003;' : estado === 'ADVERTENCIAS' ? '&#9888;' : '&#10005;';
+
+  let html = '';
+
+  // ── Summary bar ──
+  html += `<div style="background:${barBg};border:1px solid ${barColor};border-radius:8px;padding:14px 18px;display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+    <div style="font-size:22px;color:${barColor};">${icon}</div>
+    <div style="flex:1;">
+      <div style="font-size:13px;font-weight:600;color:${barColor};">${estado}</div>
+      <div style="font-size:11px;color:var(--ink3);font-family:var(--mono);margin-top:2px;">${r.errores || 0} errors &middot; ${r.advertencias || 0} warnings &middot; ${r.total_documentos || 0} documents</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-outline" style="font-size:11px;padding:5px 10px;" onclick="runVerifyPackage()">Re-run</button>
+      ${!isOk ? '<button class="btn btn-forest" style="font-size:11px;padding:5px 10px;" onclick="showView(\'corrections\')">View corrections &rarr;</button>' : '<button class="btn btn-forest" style="font-size:11px;padding:5px 10px;" onclick="showView(\'package\')">Build package &rarr;</button>'}
+    </div>
+  </div>`;
+
+  // ── Structural checks (FAIL + WARN only) ──
+  const checks = data.structural?.checks || [];
+  const issues = checks.filter(c => c.status === 'FAIL' || c.status === 'WARN');
+  const passCount = checks.filter(c => c.status === 'PASS').length;
+
+  html += `<div class="oecc-panel">
+    <div class="oecc-header">
+      <div class="oecc-title">Structural checks</div>
+      <span class="oecc-score ${issues.length > 0 ? 'score-fail' : 'score-pass'}">${passCount} pass &middot; ${issues.length} issues</span>
+    </div>
+    <div class="oecc-checks">`;
+
+  if (issues.length === 0) {
+    html += `<div class="oecc-check"><div class="check-icon" style="color:var(--green);">&#10003;</div><div class="check-label"><div class="check-name">All ${passCount} structural checks passed</div></div></div>`;
+  }
+  for (const c of issues) {
+    const icon = c.status === 'FAIL' ? '<span style="color:var(--red);">&#10005;</span>' : '<span style="color:var(--amber);">&#9888;</span>';
+    html += `<div class="oecc-check">
+      <div class="check-icon">${icon}</div>
+      <div class="check-label">
+        <div class="check-name">${esc(c.check)}</div>
+        <div class="check-detail">${esc(c.detail || '')}</div>
+      </div>
+    </div>`;
+  }
+  html += `</div></div>`;
+
+  // ── AI cross-document analysis ──
+  html += `<div class="oecc-panel" style="margin-top:16px;">
+    <div class="oecc-header">
+      <div class="oecc-title">AI cross-document analysis</div>
+      <span class="oecc-score" style="background:${data.ai_verification === 'completed' ? 'var(--green-bg)' : 'var(--red-bg)'}; color:${data.ai_verification === 'completed' ? 'var(--green)' : 'var(--red)'};">${data.ai_verification || 'unknown'}</span>
+    </div>
+    <div class="oecc-checks">`;
+
+  if (data.ai_verification_error) {
+    html += `<div class="oecc-check"><div class="check-icon"><span style="color:var(--red);">&#10005;</span></div><div class="check-label"><div class="check-name">AI error</div><div class="check-detail" style="color:var(--red);">${esc(data.ai_verification_error)}</div></div></div>`;
+  }
+
+  // Inconsistencies
+  const incons = data.inconsistencias_cruzadas || [];
+  if (incons.length === 0 && data.ai_verification === 'completed') {
+    html += `<div class="oecc-check"><div class="check-icon" style="color:var(--green);">&#10003;</div><div class="check-label"><div class="check-name">No cross-document inconsistencies found</div></div></div>`;
+  }
+  for (const i of incons) {
+    html += `<div class="oecc-check">
+      <div class="check-icon"><span style="color:var(--red);">&#9889;</span></div>
+      <div class="check-label">
+        <div class="check-name">${esc(i.campo || 'Unknown field')}</div>
+        <div class="check-detail">${esc(i.descripcion || '')}</div>
+        ${i.accion_requerida ? `<div class="check-detail" style="color:var(--forest);margin-top:2px;">${esc(i.accion_requerida)}</div>` : ''}
+      </div>
+    </div>`;
+  }
+  html += `</div></div>`;
+
+  // ── Property evidence ──
+  const ev = data.evidencias_propiedad || {};
+  if (ev.estado) {
+    const evColor = ev.estado === 'ACREDITADA' ? 'var(--green)' : ev.estado === 'PARCIAL' ? 'var(--amber)' : 'var(--red)';
+    html += `<div class="oecc-panel" style="margin-top:16px;">
+      <div class="oecc-header">
+        <div class="oecc-title">Property evidence</div>
+        <span class="oecc-score" style="background:color-mix(in srgb, ${evColor} 15%, transparent);color:${evColor};">${esc(ev.estado)}</span>
+      </div>
+      <div style="padding:12px 16px;font-size:11px;color:var(--ink2);">
+        ${ev.observaciones ? `<div>${esc(ev.observaciones)}</div>` : ''}
+        ${ev.faltante ? `<div style="color:var(--red);margin-top:4px;">Missing: ${esc(ev.faltante)}</div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  // ── Correction instructions ──
+  const fixes = data.instrucciones_correccion || [];
+  if (fixes.length > 0) {
+    html += `<div style="margin-top:20px;"><div class="section-label" style="margin-bottom:8px;">Correction instructions (${fixes.length})</div>`;
+    for (const f of fixes) {
+      html += `<div class="doc-detail" style="margin-bottom:8px;">
+        <div class="doc-detail-header">
+          <span class="verdict ${f.prioridad === 1 ? 'verdict-fail' : 'verdict-warn'}">${f.prioridad === 1 ? 'HIGH' : f.prioridad === 2 ? 'MED' : 'LOW'}</span>
+          <span class="doc-detail-name">${esc(f.documento || '')}</span>
+        </div>
+        <div style="padding:8px 14px;font-size:11px;color:var(--ink2);">
+          ${esc(f.correccion || '')}
+          ${f.valor_incorrecto ? `<div style="margin-top:4px;font-family:var(--mono);font-size:10px;"><span style="color:var(--red);">${esc(f.valor_incorrecto)}</span> &rarr; <span style="color:var(--green);">${esc(f.valor_correcto || '?')}</span></div>` : ''}
+        </div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  // ── Correction letters ──
+  const letters = data.cartas_correccion || [];
+  if (letters.length > 0) {
+    html += `<div style="margin-top:20px;"><div class="section-label" style="margin-bottom:8px;">Correction letters (${letters.length})</div>`;
+    for (const l of letters) {
+      html += `<div class="doc-detail" style="margin-bottom:8px;">
+        <div class="doc-detail-header">
+          <span class="verdict verdict-warn">LETTER</span>
+          <span class="doc-detail-name">${esc(l.destinatario || '')} — ${esc(l.rol || '')}</span>
+          <div class="doc-detail-actions">
+            <button class="btn btn-outline" style="font-size:10px;padding:4px 8px;" onclick="navigator.clipboard.writeText(this.closest('.doc-detail').querySelector('.carta-text').textContent);toast('Letter copied')">Copy</button>
+          </div>
+        </div>
+        <div class="carta-text" style="padding:10px 14px;font-size:11px;color:var(--ink2);white-space:pre-wrap;max-height:200px;overflow-y:auto;">${esc(l.carta_texto || '')}</div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  document.getElementById('verifyTimestamp').textContent = 'Last run: ' + new Date().toLocaleTimeString();
+  el.innerHTML = html;
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
 
 let currentProject = 'amoedo';
 
