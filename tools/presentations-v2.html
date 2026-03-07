@@ -1159,11 +1159,8 @@ async function buildNewPptx(brief){
       // ═══ COVER SLIDE ═══
       var cover=pptx.addSlide();
       cover.background={color:C.navy};
-      // Full-bleed photo behind everything
-      cover.addImage({
-        path:'https://tools.oga.earth/assets/photos/Regenerate_biochar.jpg',
-        x:0,y:0,w:10,h:5.625
-      });
+      // Cover photo disabled — URL fetch corrupts pptx, will solve via base64
+      // cover.addImage({path:'https://tools.oga.earth/assets/photos/Regenerate_biochar.jpg',x:0,y:0,w:10,h:5.625});
       addChrome(cover,true);
 
       // Gold left accent bar
