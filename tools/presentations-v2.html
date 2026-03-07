@@ -205,6 +205,7 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--dt);min-heigh
           <p>We'll extract its color scheme and fonts</p>
           <input type="file" id="pptx-file" hidden accept=".pptx" onchange="extractPptxTheme(this.files[0])">
         </div>
+        <div style="font-size:11px;color:var(--mg);margin-top:6px">If uploaded, new slides will be appended to this deck instead of creating a standalone file.</div>
         <div id="theme-preview" style="margin-top:12px">
           <div class="section-label">Active Palette</div>
           <div class="palette" id="palette-swatches">
@@ -350,6 +351,7 @@ var allProjects=[];
 var selectedIds=[];
 var pptxTheme=null;
 var basePptxKey=null;
+var basePptxArrayBuffer=null;
 var outputType='tearsheet';
 var briefData=null;
 var activeSlideIdx=0;
@@ -638,23 +640,20 @@ async function extractPptxTheme(file){
     pptxTheme={colors:colors,fonts:fonts};
     renderPalette();
 
-    // Upload base PPTX to R2 for slide append
-    try{
-      var pptxFd=new FormData();
-      pptxFd.append('file',file);
-      var uploadRes=await apiCall('/api/presentations/v2/upload-base-pptx',{method:'POST',body:pptxFd});
-      basePptxKey=uploadRes.r2_key;
-      document.getElementById('font-info').textContent+=' | Presentation model saved — design will be preserved';
-    }catch(ue){
-      console.error('Base PPTX upload error:',ue);
-      basePptxKey=null;
-    }
+    // Store raw ArrayBuffer for client-side slide merge
+    var abReader=new FileReader();
+    abReader.onload=function(ev){
+      basePptxArrayBuffer=ev.target.result;
+      console.log('Base PPTX stored:',file.name,Math.round(ev.target.result.byteLength/1024)+'KB');
+      document.getElementById('font-info').textContent+=' | Base deck loaded — new slides will be appended';
+    };
+    abReader.readAsArrayBuffer(file);
     toast('Design extracted from PPTX','ok');
   }catch(e){
     console.error('PPTX parse error:',e);
     toast('Could not read PPTX theme. Using ClearSky defaults.','err');
     pptxTheme=null;
-    basePptxKey=null;
+    basePptxArrayBuffer=null;
     renderPalette();
   }
 }
@@ -1227,16 +1226,39 @@ async function downloadPPTX(){
   console.log('Assets at download time:',
     'logoWhite:',LOGO_WHITE_B64?LOGO_WHITE_B64.length:'NULL',
     'logoDark:',LOGO_DARKBLUE_B64?LOGO_DARKBLUE_B64.length:'NULL',
-    'luis:',HEADSHOT_LA_B64?'OK':'NULL'
+    'luis:',HEADSHOT_LA_B64?'OK':'NULL',
+    'basePptx:',basePptxArrayBuffer?Math.round(basePptxArrayBuffer.byteLength/1024)+'KB':'NULL'
   );
   try{
     if(!briefData||!briefData.slides||!briefData.slides.length){toast('No brief generated yet — click Generate first','err');return}
-    if(briefData.base_pptx_base64){
-      await appendSlidesToExistingPptx(briefData);
+
+    var fname=[
+      (briefData.counterparty||'ClearSky').replace(/[^a-zA-Z0-9]/g,'_'),
+      (outputType||'deck').charAt(0).toUpperCase()+(outputType||'deck').slice(1),
+      new Date().toISOString().slice(0,10)
+    ].join('_')+'.pptx';
+
+    if(basePptxArrayBuffer){
+      // MERGE MODE: generate new slides then merge into base PPTX
+      console.log('Merge mode: generating new slides as buffer...');
+      var newBuffer=await buildNewPptxAsBuffer(briefData);
+      console.log('New slides buffer:',Math.round(newBuffer.byteLength/1024)+'KB');
+
+      console.log('Merging into base PPTX...');
+      var mergedBuffer=await mergeNewSlidesIntoBase(basePptxArrayBuffer,newBuffer);
+
+      var blob=new Blob([mergedBuffer],{type:'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement('a');
+      a.href=url;a.download=fname;
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast('PPTX downloaded (slides appended to base deck)','ok');
     }else{
+      // STANDALONE MODE
       await buildNewPptx(briefData);
+      toast('PPTX downloaded','ok');
     }
-    toast('PPTX downloaded','ok');
   }catch(e){
     console.error('Download PPTX error:',e);
     console.error('Stack:',e.stack);
@@ -1244,7 +1266,123 @@ async function downloadPPTX(){
   }
 }
 
-async function buildNewPptx(brief){
+// ═══════════ PPTX MERGE — append new slides into base deck ═══════════
+async function mergeNewSlidesIntoBase(baseBuf,newBuf){
+  var baseZip=await JSZip.loadAsync(baseBuf);
+  var newZip=await JSZip.loadAsync(newBuf);
+
+  // 1. Count existing slides in base
+  var existingSlides=Object.keys(baseZip.files)
+    .filter(function(f){return/^ppt\/slides\/slide\d+\.xml$/.test(f)});
+  var baseSlideCount=existingSlides.length;
+
+  // 2. Collect new slide files sorted
+  var newSlides=Object.keys(newZip.files)
+    .filter(function(f){return/^ppt\/slides\/slide\d+\.xml$/.test(f)})
+    .sort(function(a,b){return parseInt(a.match(/\d+/)[0])-parseInt(b.match(/\d+/)[0])});
+
+  console.log('Base slides:',baseSlideCount,'| New slides:',newSlides.length);
+
+  // 3. Count existing media in base
+  var baseMediaCount=Object.keys(baseZip.files)
+    .filter(function(f){return f.startsWith('ppt/media/')}).length;
+
+  // 4. Copy media files from new PPTX with renumbered names
+  var mediaRemap={};
+  var newMediaFiles=Object.keys(newZip.files)
+    .filter(function(f){return f.startsWith('ppt/media/')});
+
+  for(var m=0;m<newMediaFiles.length;m++){
+    var oldPath=newMediaFiles[m];
+    var oldFn=oldPath.split('/').pop();
+    var ext=oldFn.includes('.')?oldFn.split('.').pop():'bin';
+    var newFn='image'+(baseMediaCount+m+1)+'.'+ext;
+    var newPath='ppt/media/'+newFn;
+    var mediaData=await newZip.files[oldPath].async('arraybuffer');
+    baseZip.file(newPath,mediaData);
+    mediaRemap[oldFn]=newFn;
+    console.log('Media:',oldFn,'->',newFn);
+  }
+
+  // 5. Copy slide XML files with renumbered names + fix media refs
+  var addedSlideRids=[];
+  // Find max existing rId in presentation.xml.rels
+  var presRelsXml=await baseZip.files['ppt/_rels/presentation.xml.rels'].async('string');
+  var ridNums=presRelsXml.match(/Id="rId(\d+)"/g)||[];
+  var maxRid=0;
+  ridNums.forEach(function(r){var n=parseInt(r.match(/\d+/)[0]);if(n>maxRid)maxRid=n});
+
+  for(var s=0;s<newSlides.length;s++){
+    var oldSlidePath=newSlides[s];
+    var newSlideNum=baseSlideCount+s+1;
+    var newSlidePath='ppt/slides/slide'+newSlideNum+'.xml';
+
+    var slideXml=await newZip.files[oldSlidePath].async('string');
+    for(var oldMedia in mediaRemap){
+      slideXml=slideXml.split(oldMedia).join(mediaRemap[oldMedia]);
+    }
+    baseZip.file(newSlidePath,slideXml);
+
+    // 6. Create rels file for new slide
+    var slideRelsPath='ppt/slides/_rels/slide'+newSlideNum+'.xml.rels';
+    var oldRelsPath=oldSlidePath.replace('ppt/slides/','ppt/slides/_rels/')+'.rels';
+    var slideRelsXml;
+
+    if(newZip.files[oldRelsPath]){
+      slideRelsXml=await newZip.files[oldRelsPath].async('string');
+      for(var oldMedia2 in mediaRemap){
+        slideRelsXml=slideRelsXml.split(oldMedia2).join(mediaRemap[oldMedia2]);
+      }
+      if(!slideRelsXml.includes('slideLayout')){
+        slideRelsXml=slideRelsXml.replace('</Relationships>',
+          '<Relationship Id="rId999" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/></Relationships>');
+      }
+    }else{
+      slideRelsXml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        +'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        +'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slideLayout" Target="../slideLayouts/slideLayout1.xml"/>'
+        +'</Relationships>';
+    }
+    baseZip.file(slideRelsPath,slideRelsXml);
+
+    var presRid='rId'+(maxRid+s+1);
+    addedSlideRids.push({rId:presRid,slideNum:newSlideNum});
+  }
+
+  // 7. Update ppt/_rels/presentation.xml.rels
+  var newRelsEntries=addedSlideRids.map(function(item){
+    return'<Relationship Id="'+item.rId+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide" Target="slides/slide'+item.slideNum+'.xml"/>';
+  }).join('');
+  presRelsXml=presRelsXml.replace('</Relationships>',newRelsEntries+'</Relationships>');
+  baseZip.file('ppt/_rels/presentation.xml.rels',presRelsXml);
+
+  // 8. Update ppt/presentation.xml sldIdLst
+  var presXml=await baseZip.files['ppt/presentation.xml'].async('string');
+  var idMatches=presXml.match(/id="(\d+)"/g)||[];
+  var maxId=255;
+  idMatches.forEach(function(m){var n=parseInt(m.replace(/[^0-9]/g,''));if(n>maxId&&n<9000)maxId=n});
+
+  var newSldIdEntries=addedSlideRids.map(function(item,i){
+    return'<p:sldId id="'+(maxId+i+1)+'" r:id="'+item.rId+'"/>';
+  }).join('');
+  presXml=presXml.replace('</p:sldIdLst>',newSldIdEntries+'</p:sldIdLst>');
+  baseZip.file('ppt/presentation.xml',presXml);
+
+  // 9. Update [Content_Types].xml
+  var ctXml=await baseZip.files['[Content_Types].xml'].async('string');
+  var newCtEntries=addedSlideRids.map(function(item){
+    return'<Override PartName="/ppt/slides/slide'+item.slideNum+'.xml" ContentType="application/vnd.openxmlformats-officedocument.presentationml.slide+xml"/>';
+  }).join('');
+  ctXml=ctXml.replace('</Types>',newCtEntries+'</Types>');
+  baseZip.file('[Content_Types].xml',ctXml);
+
+  // 10. Generate merged PPTX
+  var mergedBuffer=await baseZip.generateAsync({type:'arraybuffer',compression:'DEFLATE',compressionOptions:{level:6}});
+  console.log('Merge complete. Final size:',Math.round(mergedBuffer.byteLength/1024)+'KB');
+  return mergedBuffer;
+}
+
+function assemblePptx(brief){
   var pptx=new PptxGenJS();
   pptx.defineLayout({name:'CS_16x9',width:10,height:5.625});
   pptx.layout='CS_16x9';
@@ -1450,13 +1588,22 @@ async function buildNewPptx(brief){
     x:0.5,y:4.5,w:9.0,h:0.3,fontSize:10,color:C.midGray,fontFace:F.light,align:'center',italic:true
   });
 
-  // Download
+  return pptx;
+}
+
+async function buildNewPptx(brief){
+  var pptx=assemblePptx(brief);
   var fname=[
     (brief.counterparty||'ClearSky').replace(/[^a-zA-Z0-9]/g,'_'),
     (outputType||'deck').charAt(0).toUpperCase()+(outputType||'deck').slice(1),
     new Date().toISOString().slice(0,10)
   ].join('_')+'.pptx';
   await pptx.writeFile({fileName:fname});
+}
+
+async function buildNewPptxAsBuffer(brief){
+  var pptx=assemblePptx(brief);
+  return await pptx.write({outputType:'arraybuffer'});
 }
 
 async function appendSlidesToExistingPptx(brief){
