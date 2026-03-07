@@ -927,7 +927,7 @@ async function buildNewPptx(brief){
           cover.addText(stat.value||'',{
             x:bx+0.05,y:blockY+0.04,w:blockW-0.1,h:0.38,
             fontSize:24,color:idx===0?C.gold:C.lightBlue,
-            fontFace:F.bold,align:'center',shrinkText:true,autoFit:true
+            fontFace:F.bold,align:'center',shrinkText:true
           });
           // Unit — smaller, below value
           if(stat.unit){
@@ -1004,7 +1004,7 @@ async function buildNewPptx(brief){
           slide.addText(stat.value||'',{
             x:bx+0.05,y:contentY+0.04,w:bw-0.1,h:0.38,
             fontSize:24,color:statColor,fontFace:F.bold,
-            align:'center',shrinkText:true,autoFit:true
+            align:'center',shrinkText:true
           });
           // Unit — smaller, below value
           if(stat.unit){
@@ -1108,7 +1108,6 @@ async function buildNewPptx(brief){
       contactSlide.addImage({
         path:headshots[contact.initials],
         x:cx+(cardW-0.85)/2,y:cy+0.18,w:0.85,h:0.85,
-        rounding:true
       });
     }else{
       // Fallback to initials avatar
