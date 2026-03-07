@@ -838,6 +838,277 @@ function addChrome(slide,isDark){
   });
 }
 
+// ═══ LAYOUT A — metrics slide (full-width stat blocks) ═══
+function buildMetricsSlide(pptx,s,slideIndex){
+  var slide=pptx.addSlide();
+  slide.background={color:'F5F7FA'};
+  addChrome(slide,false);
+
+  slide.addText('Page '+String(slideIndex+1).padStart(2,'0'),{
+    x:8.8,y:5.2,w:0.8,h:0.2,fontSize:7,color:C.midGray,fontFace:F.light,align:'right'
+  });
+
+  slide.addShape('rect',{x:0.35,y:0.55,w:0.5,h:0.025,fill:{color:C.gold}});
+
+  slide.addText(s.title||'',{
+    x:0.35,y:0.62,w:9.3,h:0.85,fontSize:20,color:C.navy,fontFace:F.title,shrinkText:true
+  });
+
+  if(s.subtitle){
+    slide.addText(s.subtitle,{
+      x:0.35,y:1.48,w:9.3,h:0.3,fontSize:10,color:C.lightBlue,fontFace:F.light,italic:true,shrinkText:true
+    });
+  }
+
+  if(s.stats&&s.stats.length){
+    var sc=s.stats.length;
+    var bw=(9.0-(sc-1)*0.15)/sc;
+    var bh=1.1;
+    var by=1.9;
+    s.stats.forEach(function(stat,idx){
+      var bx=0.5+idx*(bw+0.15);
+      slide.addShape('rect',{x:bx,y:by,w:bw,h:bh,fill:{color:C.navy},rectRadius:0.05});
+      slide.addText(stat.value||'',{
+        x:bx+0.05,y:by+0.08,w:bw-0.1,h:0.52,
+        fontSize:32,color:idx%2===0?C.gold:C.lightBlue,fontFace:F.bold,align:'center',shrinkText:true
+      });
+      if(stat.unit){
+        slide.addText(stat.unit,{
+          x:bx+0.05,y:by+0.60,w:bw-0.1,h:0.2,
+          fontSize:8,color:C.lightBlue,fontFace:F.light,align:'center',shrinkText:true
+        });
+      }
+      slide.addText(stat.label||'',{
+        x:bx+0.05,y:by+0.82,w:bw-0.1,h:0.22,
+        fontSize:8,color:C.white,fontFace:F.light,align:'center',shrinkText:true
+      });
+    });
+  }
+
+  if(s.body){
+    slide.addText(s.body,{
+      x:0.35,y:3.2,w:9.3,h:1.7,fontSize:12,color:C.navy,fontFace:F.body,valign:'top',shrinkText:true
+    });
+  }
+}
+
+// ═══ LAYOUT B — project slide (55/45 split with dark panel) ═══
+function buildProjectSlide(pptx,s,slideIndex){
+  var slide=pptx.addSlide();
+  slide.background={color:C.white};
+  addChrome(slide,false);
+
+  slide.addText('Page '+String(slideIndex+1).padStart(2,'0'),{
+    x:8.8,y:5.2,w:0.8,h:0.2,fontSize:7,color:C.midGray,fontFace:F.light,align:'right'
+  });
+
+  slide.addShape('rect',{x:0.35,y:0.55,w:0.5,h:0.025,fill:{color:C.gold}});
+
+  slide.addText(s.title||'',{
+    x:0.35,y:0.62,w:4.9,h:0.85,fontSize:18,color:C.navy,fontFace:F.title,shrinkText:true
+  });
+
+  // Right dark panel
+  slide.addShape('rect',{x:5.5,y:0.55,w:4.5,h:4.55,fill:{color:C.midNavy}});
+
+  slide.addText('Project Details',{
+    x:5.75,y:0.75,w:4.0,h:0.35,fontSize:14,color:C.gold,fontFace:F.medium
+  });
+
+  var panelContent=[];
+  if(s.subtitle){
+    panelContent.push({text:s.subtitle+'\n',options:{fontSize:10,color:C.lightBlue,bold:false}});
+  }
+  if(s.body){
+    var sentences=s.body.replace(/\. /g,'.\n').split('\n').filter(function(t){return t.trim()});
+    sentences.forEach(function(sentence){
+      panelContent.push({text:'\u2022 '+sentence.trim()+'\n',options:{fontSize:10,color:C.white,bold:false}});
+    });
+  }
+  if(panelContent.length){
+    slide.addText(panelContent,{
+      x:5.75,y:1.2,w:4.0,h:3.7,fontFace:F.body,valign:'top',shrinkText:true
+    });
+  }
+
+  // Left zone — table or stats
+  if(s.table&&s.table.headers&&s.table.rows){
+    var trows=[];
+    trows.push(s.table.headers.map(function(h){
+      return{text:String(h),options:{bold:true,color:C.lightBlue,fill:C.navy,fontSize:9,fontFace:F.medium}};
+    }));
+    s.table.rows.forEach(function(row,ri){
+      trows.push(row.map(function(cell){
+        return{text:String(cell||''),options:{color:C.navy,fill:ri%2===0?C.offWhite:C.white,fontSize:9,fontFace:F.body}};
+      }));
+    });
+    slide.addTable(trows,{
+      x:0.35,y:1.6,w:4.95,
+      border:{type:'solid',color:C.borderGray,pt:0.5},
+      rowH:0.36,margin:[0.06,0.08,0.06,0.08]
+    });
+  }else if(s.stats&&s.stats.length){
+    var sc=s.stats.length;
+    var bw=(4.7-(sc-1)*0.12)/sc;
+    s.stats.forEach(function(stat,idx){
+      var bx=0.35+idx*(bw+0.12);
+      slide.addShape('rect',{x:bx,y:1.7,w:bw,h:0.9,fill:{color:C.navy},rectRadius:0.05});
+      slide.addText(stat.value||'',{
+        x:bx+0.05,y:1.75,w:bw-0.1,h:0.42,
+        fontSize:22,color:idx%2===0?C.gold:C.lightBlue,fontFace:F.bold,align:'center',shrinkText:true
+      });
+      if(stat.unit){
+        slide.addText(stat.unit,{
+          x:bx+0.05,y:2.17,w:bw-0.1,h:0.16,
+          fontSize:7,color:C.lightBlue,fontFace:F.light,align:'center',shrinkText:true
+        });
+      }
+      slide.addText(stat.label||'',{
+        x:bx+0.05,y:2.33,w:bw-0.1,h:0.22,
+        fontSize:7.5,color:C.white,fontFace:F.light,align:'center',shrinkText:true
+      });
+    });
+  }
+}
+
+// ═══ LAYOUT C — comparison slide (55/45 split, body-heavy) ═══
+function buildComparisonSlide(pptx,s,slideIndex){
+  var slide=pptx.addSlide();
+  slide.background={color:C.white};
+  addChrome(slide,false);
+
+  slide.addText('Page '+String(slideIndex+1).padStart(2,'0'),{
+    x:8.8,y:5.2,w:0.8,h:0.2,fontSize:7,color:C.midGray,fontFace:F.light,align:'right'
+  });
+
+  slide.addShape('rect',{x:0.35,y:0.55,w:0.5,h:0.025,fill:{color:C.gold}});
+
+  slide.addText(s.title||'',{
+    x:0.35,y:0.62,w:4.9,h:0.85,fontSize:18,color:C.navy,fontFace:F.title,shrinkText:true
+  });
+
+  // Right dark panel
+  slide.addShape('rect',{x:5.5,y:0.55,w:4.5,h:4.55,fill:{color:C.midNavy}});
+
+  slide.addText('Key Highlights',{
+    x:5.75,y:0.75,w:4.0,h:0.35,fontSize:14,color:C.gold,fontFace:F.medium
+  });
+
+  if(s.stats&&s.stats.length){
+    var panelY=1.2;
+    s.stats.forEach(function(stat,idx){
+      slide.addText((stat.value||'')+(stat.unit?'  '+stat.unit:''),{
+        x:5.75,y:panelY,w:4.0,h:0.4,
+        fontSize:20,color:idx%2===0?C.gold:C.lightBlue,fontFace:F.bold,shrinkText:true
+      });
+      slide.addText(stat.label||'',{
+        x:5.75,y:panelY+0.38,w:4.0,h:0.22,fontSize:9,color:C.white,fontFace:F.light
+      });
+      slide.addShape('rect',{x:5.75,y:panelY+0.62,w:3.8,h:0.008,fill:{color:'2A3A5A'}});
+      panelY+=0.75;
+    });
+  }
+
+  if(s.subtitle){
+    slide.addText(s.subtitle,{
+      x:0.35,y:1.55,w:4.9,h:0.35,fontSize:11,color:C.lightBlue,fontFace:F.light,italic:true,shrinkText:true
+    });
+  }
+  if(s.body){
+    slide.addText(s.body,{
+      x:0.35,y:2.0,w:4.9,h:2.9,fontSize:13,color:C.navy,fontFace:F.body,valign:'top',shrinkText:true
+    });
+  }
+}
+
+// ═══ DEFAULT LAYOUT — white slide with stats + table + body ═══
+function buildDefaultSlide(pptx,s,slideIndex){
+  var slide=pptx.addSlide();
+  slide.background={color:C.white};
+  addChrome(slide,false);
+
+  slide.addText('Page '+String(slideIndex+1).padStart(2,'0'),{
+    x:8.8,y:5.2,w:0.8,h:0.2,fontSize:7,color:C.midGray,fontFace:F.light,align:'right'
+  });
+
+  slide.addShape('rect',{x:0.35,y:0.55,w:0.5,h:0.025,fill:{color:C.gold}});
+
+  slide.addText(s.title||'',{
+    x:0.35,y:0.62,w:9.0,h:0.85,fontSize:22,color:C.navy,
+    fontFace:F.title,bold:false,shrinkText:true
+  });
+
+  if(s.subtitle){
+    slide.addText(s.subtitle,{
+      x:0.35,y:1.48,w:9.0,h:0.35,fontSize:11,color:C.lightBlue,
+      fontFace:F.light,italic:true,shrinkText:true
+    });
+  }
+
+  var contentY=s.subtitle?1.9:1.6;
+
+  if(s.stats&&s.stats.length){
+    var sc=s.stats.length;
+    var bw=(9.0-(sc-1)*0.15)/sc;
+    var bh=0.95;
+    s.stats.forEach(function(stat,idx){
+      var bx=0.5+idx*(bw+0.15);
+      slide.addShape('rect',{
+        x:bx,y:contentY,w:bw,h:bh,fill:{color:C.navy},rectRadius:0.05
+      });
+      var statColor=idx%2===0?C.gold:C.lightBlue;
+      slide.addText(stat.value||'',{
+        x:bx+0.05,y:contentY+0.04,w:bw-0.1,h:0.38,
+        fontSize:24,color:statColor,fontFace:F.bold,align:'center',shrinkText:true
+      });
+      if(stat.unit){
+        slide.addText(stat.unit,{
+          x:bx+0.05,y:contentY+0.42,w:bw-0.1,h:0.18,
+          fontSize:7,color:C.lightBlue,fontFace:F.light,align:'center',shrinkText:true
+        });
+      }
+      slide.addText(stat.label||'',{
+        x:bx+0.05,y:contentY+0.60,w:bw-0.1,h:0.20,
+        fontSize:7.5,color:C.white,fontFace:F.light,align:'center',shrinkText:true
+      });
+    });
+    contentY+=bh+0.2;
+  }
+
+  if(s.table&&s.table.headers&&s.table.rows&&s.table.rows.length){
+    var trows=[];
+    trows.push(s.table.headers.map(function(h){
+      return{text:String(h),options:{bold:true,color:C.lightBlue,fill:C.navy,fontSize:9,fontFace:F.medium}};
+    }));
+    s.table.rows.forEach(function(row,ri){
+      trows.push(row.map(function(cell){
+        return{text:String(cell||''),options:{color:C.darkText,fill:ri%2===0?C.offWhite:C.white,fontSize:9,fontFace:F.body}};
+      }));
+    });
+    slide.addTable(trows,{
+      x:0.35,y:contentY,w:9.3,
+      border:{type:'solid',color:C.borderGray,pt:0.5},
+      autoPage:false,rowH:0.32,margin:[0.06,0.08,0.06,0.08]
+    });
+    contentY+=(trows.length*0.32)+0.25;
+  }
+
+  if(s.body){
+    var bodyH=Math.max(0.4,5.0-contentY);
+    slide.addText(s.body,{
+      x:0.35,y:contentY,w:9.3,h:bodyH,
+      fontSize:13,color:C.darkText,fontFace:F.body,valign:'top',shrinkText:true
+    });
+  }
+
+  if(s.mckinsey_score&&s.mckinsey_score!=='green'&&s.notes){
+    slide.addText('\u26a0  '+s.notes,{
+      x:0.35,y:5.05,w:8.0,h:0.2,fontSize:7,color:'D97706',
+      fontFace:F.light,italic:true,shrinkText:true
+    });
+  }
+}
+
 async function downloadPPTX(){
   try{
     if(!briefData||!briefData.slides||!briefData.slides.length){toast('No brief generated yet — click Generate first','err');return}
@@ -958,107 +1229,12 @@ async function buildNewPptx(brief){
       });
 
     }else{
-      // ═══ CONTENT SLIDE ═══
-      var slide=pptx.addSlide();
-      slide.background={color:C.white};
-      addChrome(slide,false);
-
-      // Slide number
-      slide.addText('Page '+String(i+1).padStart(2,'0'),{
-        x:8.8,y:5.2,w:0.8,h:0.2,fontSize:7,color:C.midGray,
-        fontFace:F.light,align:'right'
-      });
-
-      // Gold accent bar below logo zone
-      slide.addShape('rect',{x:0.35,y:0.55,w:0.5,h:0.025,fill:{color:C.gold}});
-
-      // Title
-      slide.addText(s.title||'',{
-        x:0.35,y:0.62,w:9.0,h:0.85,fontSize:22,color:C.navy,
-        fontFace:F.title,bold:false,shrinkText:true
-      });
-
-      // Subtitle — Light Blue
-      if(s.subtitle){
-        slide.addText(s.subtitle,{
-          x:0.35,y:1.48,w:9.0,h:0.35,fontSize:11,color:C.lightBlue,
-          fontFace:F.light,italic:true,shrinkText:true
-        });
-      }
-
-      var contentY=s.subtitle?1.9:1.6;
-
-      // STAT BLOCKS — Dark Navy rectangles
-      if(s.stats&&s.stats.length){
-        var sc=s.stats.length;
-        var bw=(9.0-(sc-1)*0.15)/sc;
-        var bh=0.95;
-        s.stats.forEach(function(stat,idx){
-          var bx=0.5+idx*(bw+0.15);
-          slide.addShape('rect',{
-            x:bx,y:contentY,w:bw,h:bh,
-            fill:{color:C.navy},rectRadius:0.05
-          });
-          var statColor=idx%2===0?C.gold:C.lightBlue;
-          // Value — number only
-          slide.addText(stat.value||'',{
-            x:bx+0.05,y:contentY+0.04,w:bw-0.1,h:0.38,
-            fontSize:24,color:statColor,fontFace:F.bold,
-            align:'center',shrinkText:true
-          });
-          // Unit — smaller, below value
-          if(stat.unit){
-            slide.addText(stat.unit,{
-              x:bx+0.05,y:contentY+0.42,w:bw-0.1,h:0.18,
-              fontSize:7,color:C.lightBlue,fontFace:F.light,
-              align:'center',shrinkText:true
-            });
-          }
-          // Label — bottom of block
-          slide.addText(stat.label||'',{
-            x:bx+0.05,y:contentY+0.60,w:bw-0.1,h:0.20,
-            fontSize:7.5,color:C.white,fontFace:F.light,
-            align:'center',shrinkText:true
-          });
-        });
-        contentY+=bh+0.2;
-      }
-
-      // TABLE — Navy header, Light Blue header text, alternating rows
-      if(s.table&&s.table.headers&&s.table.rows&&s.table.rows.length){
-        var trows=[];
-        trows.push(s.table.headers.map(function(h){
-          return{text:String(h),options:{bold:true,color:C.lightBlue,fill:C.navy,fontSize:9,fontFace:F.medium}};
-        }));
-        s.table.rows.forEach(function(row,ri){
-          trows.push(row.map(function(cell){
-            return{text:String(cell||''),options:{color:C.darkText,fill:ri%2===0?C.offWhite:C.white,fontSize:9,fontFace:F.body}};
-          }));
-        });
-        slide.addTable(trows,{
-          x:0.35,y:contentY,w:9.3,
-          border:{type:'solid',color:C.borderGray,pt:0.5},
-          autoPage:false,rowH:0.32,margin:[0.06,0.08,0.06,0.08]
-        });
-        contentY+=(trows.length*0.32)+0.25;
-      }
-
-      // BODY TEXT
-      if(s.body){
-        var bodyH=Math.max(0.4,5.0-contentY);
-        slide.addText(s.body,{
-          x:0.35,y:contentY,w:9.3,h:bodyH,
-          fontSize:13,color:C.darkText,fontFace:F.body,
-          valign:'top',shrinkText:true
-        });
-      }
-
-      // McKinsey flag
-      if(s.mckinsey_score&&s.mckinsey_score!=='green'&&s.notes){
-        slide.addText('\u26a0  '+s.notes,{
-          x:0.35,y:5.05,w:8.0,h:0.2,fontSize:7,color:'D97706',
-          fontFace:F.light,italic:true,shrinkText:true
-        });
+      // ═══ CONTENT SLIDE — route by slide_type ═══
+      switch(s.slide_type){
+        case 'metrics':buildMetricsSlide(pptx,s,i);break;
+        case 'project':buildProjectSlide(pptx,s,i);break;
+        case 'comparison':buildComparisonSlide(pptx,s,i);break;
+        default:buildDefaultSlide(pptx,s,i);break;
       }
     }
   }
