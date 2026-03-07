@@ -920,17 +920,27 @@ async function buildNewPptx(brief){
         s.stats.forEach(function(stat,idx){
           var bx=0.5+idx*(blockW+0.15);
           cover.addShape('rect',{
-            x:bx,y:blockY,w:blockW,h:0.85,
+            x:bx,y:blockY,w:blockW,h:0.95,
             fill:{color:C.midNavy},rectRadius:0.05
           });
-          cover.addText((stat.value||'')+(stat.unit?' '+stat.unit:''),{
-            x:bx+0.05,y:blockY+0.05,w:blockW-0.1,h:0.45,
-            fontSize:22,color:idx===0?C.gold:C.lightBlue,
-            fontFace:F.bold,align:'center',shrinkText:true
+          // Value — number only
+          cover.addText(stat.value||'',{
+            x:bx+0.05,y:blockY+0.04,w:blockW-0.1,h:0.38,
+            fontSize:24,color:idx===0?C.gold:C.lightBlue,
+            fontFace:F.bold,align:'center',shrinkText:true,autoFit:true
           });
+          // Unit — smaller, below value
+          if(stat.unit){
+            cover.addText(stat.unit,{
+              x:bx+0.05,y:blockY+0.42,w:blockW-0.1,h:0.18,
+              fontSize:7,color:C.lightBlue,fontFace:F.light,
+              align:'center',shrinkText:true
+            });
+          }
+          // Label — bottom of block
           cover.addText(stat.label||'',{
-            x:bx+0.05,y:blockY+0.52,w:blockW-0.1,h:0.25,
-            fontSize:8,color:C.white,fontFace:F.light,
+            x:bx+0.05,y:blockY+0.60,w:blockW-0.1,h:0.20,
+            fontSize:7.5,color:C.white,fontFace:F.light,
             align:'center',shrinkText:true
           });
         });
@@ -982,7 +992,7 @@ async function buildNewPptx(brief){
       if(s.stats&&s.stats.length){
         var sc=s.stats.length;
         var bw=(9.0-(sc-1)*0.15)/sc;
-        var bh=0.85;
+        var bh=0.95;
         s.stats.forEach(function(stat,idx){
           var bx=0.5+idx*(bw+0.15);
           slide.addShape('rect',{
@@ -990,14 +1000,24 @@ async function buildNewPptx(brief){
             fill:{color:C.navy},rectRadius:0.05
           });
           var statColor=idx%2===0?C.gold:C.lightBlue;
-          slide.addText((stat.value||'')+(stat.unit?' '+stat.unit:''),{
-            x:bx+0.05,y:contentY+0.05,w:bw-0.1,h:0.52,
-            fontSize:26,color:statColor,fontFace:F.bold,
-            align:'center',shrinkText:true
+          // Value — number only
+          slide.addText(stat.value||'',{
+            x:bx+0.05,y:contentY+0.04,w:bw-0.1,h:0.38,
+            fontSize:24,color:statColor,fontFace:F.bold,
+            align:'center',shrinkText:true,autoFit:true
           });
+          // Unit — smaller, below value
+          if(stat.unit){
+            slide.addText(stat.unit,{
+              x:bx+0.05,y:contentY+0.42,w:bw-0.1,h:0.18,
+              fontSize:7,color:C.lightBlue,fontFace:F.light,
+              align:'center',shrinkText:true
+            });
+          }
+          // Label — bottom of block
           slide.addText(stat.label||'',{
-            x:bx+0.05,y:contentY+0.58,w:bw-0.1,h:0.22,
-            fontSize:8,color:C.white,fontFace:F.light,
+            x:bx+0.05,y:contentY+0.60,w:bw-0.1,h:0.20,
+            fontSize:7.5,color:C.white,fontFace:F.light,
             align:'center',shrinkText:true
           });
         });
@@ -1078,16 +1098,29 @@ async function buildNewPptx(brief){
       fill:{color:C.midNavy},rectRadius:0.08,
       line:{color:'2A3A5A',width:1}
     });
-    // Avatar circle
-    contactSlide.addShape('ellipse',{
-      x:cx+(cardW-0.8)/2,y:cy+0.2,w:0.8,h:0.8,
-      fill:{color:C.navy},line:{color:C.gold,width:1.5}
-    });
-    // Initials
-    contactSlide.addText(contact.initials,{
-      x:cx+(cardW-0.8)/2,y:cy+0.2,w:0.8,h:0.8,
-      fontSize:16,color:C.white,fontFace:F.bold,align:'center',valign:'middle'
-    });
+    // Headshot image (circular pre-cropped PNGs)
+    var headshots={
+      'LA':'https://tools.oga.earth/assets/team/luis-adaime.png',
+      'AA':'https://tools.oga.earth/assets/team/ana-avramovic.png',
+      'CM':'https://tools.oga.earth/assets/team/carolina-martinez.png'
+    };
+    if(headshots[contact.initials]){
+      contactSlide.addImage({
+        path:headshots[contact.initials],
+        x:cx+(cardW-0.85)/2,y:cy+0.18,w:0.85,h:0.85,
+        rounding:true
+      });
+    }else{
+      // Fallback to initials avatar
+      contactSlide.addShape('ellipse',{
+        x:cx+(cardW-0.8)/2,y:cy+0.2,w:0.8,h:0.8,
+        fill:{color:C.navy},line:{color:C.gold,width:1.5}
+      });
+      contactSlide.addText(contact.initials,{
+        x:cx+(cardW-0.8)/2,y:cy+0.2,w:0.8,h:0.8,
+        fontSize:16,color:C.white,fontFace:F.bold,align:'center',valign:'middle'
+      });
+    }
     // Name
     contactSlide.addText(contact.name,{
       x:cx+0.1,y:cy+1.1,w:cardW-0.2,h:0.35,
