@@ -1193,6 +1193,23 @@ main {
   text-decoration: none;
 }
 .log-dl:hover { text-decoration: underline; }
+
+/* Docs table */
+.docs-tbl { width:100%; border-collapse:collapse; font-size:11px; }
+.docs-tbl th { text-align:left; padding:8px 10px; font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--ink3); font-family:var(--mono); border-bottom:2px solid var(--border); background:var(--bg); position:sticky; top:0; }
+.docs-tbl td { padding:7px 10px; border-bottom:1px solid var(--border2); vertical-align:middle; }
+.docs-tbl tr:hover { background:var(--bg); }
+.docs-tbl tr.doc-row-expanded { background:color-mix(in srgb, var(--forest) 5%, transparent); }
+.doc-expand-panel { padding:10px 14px; background:var(--bg); border-bottom:2px solid var(--border); font-size:11px; }
+.doc-expand-panel .label { font-size:9px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; color:var(--ink3); font-family:var(--mono); margin-top:8px; }
+.doc-expand-panel .val { color:var(--ink2); margin-top:2px; word-break:break-all; }
+.text-badge { display:inline-block; font-size:9px; font-family:var(--mono); padding:1px 6px; border-radius:3px; }
+.text-badge.ok { background:var(--green-bg); color:var(--green); }
+.text-badge.ocr { background:#fef3c7; color:var(--amber); }
+.text-badge.none { background:var(--red-bg); color:var(--red); }
+.oecc-chip { display:inline-block; font-size:9px; font-family:var(--mono); padding:1px 5px; border-radius:3px; margin:0 2px; }
+.oecc-chip.present { background:var(--green-bg); color:var(--green); }
+.oecc-chip.missing { background:var(--red-bg); color:var(--red); }
 </style>
 </head>
 <body>
@@ -1220,6 +1237,9 @@ main {
     </a></li>
     <li><a class="nav-item active" onclick="showView('intake')">
       <span class="nav-icon">⊕</span> Intake
+    </a></li>
+    <li><a class="nav-item" onclick="showView('docs')">
+      <span class="nav-icon">▤</span> Documentos
     </a></li>
     <li><a class="nav-item" onclick="showView('review')">
       <span class="nav-icon">◉</span> Review
@@ -1448,6 +1468,24 @@ main {
     <button class="btn btn-forest" onclick="toast('🤖 ForestEngineer: analyzing cadastrals, generating shapefile and FCC analysis...')">
       🤖 Send to ForestEngineer for GIS analysis
     </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     VIEW: DOCUMENTOS
+════════════════════════════════════════════════ -->
+<div id="view-docs" class="view">
+  <div id="docsLoading" style="text-align:center;padding:40px;color:var(--ink3);font-size:12px;">
+    <div class="pulse" style="width:10px;height:10px;border-radius:50%;background:var(--forest);display:inline-block;margin-right:8px;"></div>
+    Loading documents...
+  </div>
+  <div id="docsContent" style="display:none;">
+    <div id="docsSummary" style="margin-bottom:12px;"></div>
+    <div style="margin-bottom:12px;">
+      <input type="text" id="docsFilter" placeholder="Filter by filename or category..." oninput="filterDocsTable()"
+        style="width:100%;padding:8px 12px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--ink);font-family:var(--mono);box-sizing:border-box;">
+    </div>
+    <div id="docsTable"></div>
   </div>
 </div>
 
@@ -1999,12 +2037,13 @@ main {
 const VIEWS = {
   pipeline:    { title: 'Project Pipeline',                   sub: 'All active projects · 7 total' },
   intake:      { title: 'Intake — New project',               sub: 'Upload documents, define canonical data' },
+  docs:        { title: 'Documentos',                         sub: 'File inventory · OECC coverage · extraction status' },
   review:      { title: 'Review — Bosque CS Amoedo',          sub: '5 errors · 3 warnings · 11 OECC checks' },
   corrections: { title: 'Corrections — Bosque CS Amoedo',     sub: 'Redlines, letters, ForestEngineer agent' },
   package:     { title: 'Package — Bosque CS Amoedo',         sub: 'Build and download the submission ZIP' },
   agent:       { title: 'ForestEngineer Agent',               sub: 'Script library · job queue · output log' },
 };
-const NAV_ORDER = ['pipeline','intake','review','corrections','package','agent'];
+const NAV_ORDER = ['pipeline','intake','docs','review','corrections','package','agent'];
 
 function showView(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -2019,6 +2058,7 @@ function showView(id) {
   }
   window.scrollTo(0, 0);
   if (id === 'corrections' && typeof renderCorrections === 'function') renderCorrections();
+  if (id === 'docs' && typeof loadDocsTab === 'function') loadDocsTab();
 }
 
 function switchMode(btn, id) {
@@ -2634,6 +2674,143 @@ function showModal(title, content) {
 function closeModal() {
   const m = document.getElementById('modalOverlay');
   if (m) m.remove();
+}
+
+// ─── Documentos tab ───
+
+const CATEGORY_LABELS = {
+  memoria_tecnica: 'Memoria Tecnica', certificacion_trabajos: 'Certificacion de Trabajos',
+  calculadora_absorciones: 'Calculadora Absorciones', plan_gestion: 'Plan de Gestion',
+  shapefile: 'Shapefile / Geodata', formulario_pa: 'Formulario PA',
+  anexo_i: 'Anexo I', anexo_ii: 'Anexo II', nota_simple: 'Nota Simple',
+  certificado_catastral: 'Certificado Catastral', evidencia_propiedad_otro: 'Evidencia Propiedad (otro)',
+  declaracion_derechos: 'Declaracion de Derechos', declaracion_responsable: 'Declaracion Responsable',
+  convenio_cesion: 'Convenio de Cesion', proyecto_ordenacion: 'Proyecto de Ordenacion',
+  planos: 'Planos / Mapas', carta_correccion: 'Carta de Correccion', otro: 'Otro'
+};
+
+let docsData = [];
+let docsExpandedRow = -1;
+
+async function loadDocsTab() {
+  const loading = document.getElementById('docsLoading');
+  const content = document.getElementById('docsContent');
+  loading.style.display = '';
+  content.style.display = 'none';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/miteco-dd/projects/${currentProjectId}/documents`);
+    const data = await res.json();
+    docsData = data.documents || [];
+    loading.style.display = 'none';
+    content.style.display = '';
+    renderDocsSummary();
+    renderDocsTable();
+  } catch(e) {
+    loading.innerHTML = `<span style="color:var(--red);">Error loading documents: ${esc(e.message)}</span>`;
+  }
+}
+
+function renderDocsSummary() {
+  const el = document.getElementById('docsSummary');
+  const cats = new Set(docsData.map(d => d.category).filter(Boolean));
+  let withText = 0, needsOcr = 0;
+  docsData.forEach(d => {
+    const ej = d.extracted_json ? (typeof d.extracted_json === 'string' ? JSON.parse(d.extracted_json) : d.extracted_json) : null;
+    if (ej && ej.text && ej.text.length > 10) withText++;
+    if (ej && (ej.needs_ocr || ej.needs_ocr_manual)) needsOcr++;
+  });
+  const oeccPresent = new Set(docsData.filter(d => d.oecc_point).map(d => d.oecc_point));
+  const allOecc = [1,2,3,4,5,6,7,8,9];
+  const oeccChips = allOecc.map(p =>
+    `<span class="oecc-chip ${oeccPresent.has(p) ? 'present' : 'missing'}">${p}${oeccPresent.has(p) ? '&#10003;' : '&#10005;'}</span>`
+  ).join('');
+
+  el.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;gap:16px;font-size:11px;font-family:var(--mono);color:var(--ink2);">
+    <span><strong>${docsData.length}</strong> files</span>
+    <span><strong>${cats.size}</strong> categories</span>
+    <span style="color:var(--green);"><strong>${withText}</strong> with text</span>
+    ${needsOcr > 0 ? `<span style="color:var(--amber);"><strong>${needsOcr}</strong> OCR needed</span>` : ''}
+    <span>OECC: ${oeccChips}</span>
+  </div>`;
+}
+
+function renderDocsTable() {
+  const el = document.getElementById('docsTable');
+  const filter = (document.getElementById('docsFilter')?.value || '').toLowerCase();
+  const filtered = docsData.filter(d => {
+    if (!filter) return true;
+    const cat = CATEGORY_LABELS[d.category] || d.category || '';
+    return (d.filename || '').toLowerCase().includes(filter) || cat.toLowerCase().includes(filter);
+  });
+
+  let html = `<table class="docs-tbl"><thead><tr>
+    <th>#</th><th>Nombre original</th><th>Categoria</th><th>Punto OECC</th><th>Texto</th><th>Estado</th>
+  </tr></thead><tbody>`;
+
+  filtered.forEach((d, idx) => {
+    const ej = d.extracted_json ? (typeof d.extracted_json === 'string' ? JSON.parse(d.extracted_json) : d.extracted_json) : null;
+    const hasText = ej && ej.text && ej.text.length > 10;
+    const isOcr = ej && (ej.needs_ocr || ej.needs_ocr_manual);
+    const textBadge = hasText ? '<span class="text-badge ok">&#10003;</span>'
+      : isOcr ? '<span class="text-badge ocr">OCR</span>'
+      : '<span class="text-badge none">&mdash;</span>';
+    const cat = CATEGORY_LABELS[d.category] || d.category || d.doc_type || '—';
+    const oecc = d.oecc_point != null ? d.oecc_point : '—';
+    const status = d.status || '—';
+    const statusColor = status === 'extracted' ? 'var(--green)' : status === 'stale' ? 'var(--amber)' : 'var(--ink3)';
+    const expanded = docsExpandedRow === idx;
+
+    html += `<tr class="${expanded ? 'doc-row-expanded' : ''}" style="cursor:pointer;" onclick="toggleDocRow(${idx})">
+      <td style="color:var(--ink3);font-family:var(--mono);font-size:10px;">${idx + 1}</td>
+      <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(d.filename || '')}">${esc(d.filename || '—')}</td>
+      <td>${esc(cat)}</td>
+      <td style="text-align:center;font-family:var(--mono);">${oecc}</td>
+      <td style="text-align:center;">${textBadge}</td>
+      <td><span style="color:${statusColor};font-family:var(--mono);font-size:10px;">${esc(status)}</span></td>
+    </tr>`;
+
+    if (expanded) {
+      const textPreview = hasText ? ej.text.substring(0, 300) + (ej.text.length > 300 ? '...' : '') : 'No text extracted';
+      // Check for verification issues linked to this doc
+      let issues = '';
+      if (window.lastVerifyResult) {
+        const incons = (window.lastVerifyResult.inconsistencias_cruzadas || []).filter(i =>
+          (i.documentos_afectados || []).some(da => da.toLowerCase().includes((d.category || '').toLowerCase()) || da.toLowerCase().includes((d.filename || '').toLowerCase()))
+        );
+        const fixes = (window.lastVerifyResult.instrucciones_correccion || []).filter(f =>
+          (f.documento || '').toLowerCase().includes((d.category || '').toLowerCase()) || (f.documento || '').toLowerCase().includes((d.filename || '').toLowerCase())
+        );
+        if (incons.length > 0 || fixes.length > 0) {
+          issues = '<div class="label" style="margin-top:10px;">Verification issues</div>';
+          incons.forEach(i => { issues += `<div style="color:var(--red);margin-top:2px;">&#9889; ${esc(i.campo || '')}: ${esc(i.descripcion || '')}</div>`; });
+          fixes.forEach(f => { issues += `<div style="color:var(--amber);margin-top:2px;">&#9998; ${esc(f.correccion || '')}</div>`; });
+        }
+      }
+      html += `<tr><td colspan="6" style="padding:0;"><div class="doc-expand-panel">
+        <div class="label">Filename</div><div class="val">${esc(d.filename || '')}</div>
+        <div class="label">R2 key</div><div class="val">${esc(d.r2_key || '—')}</div>
+        <div class="label">Extracted text preview</div><div class="val" style="max-height:120px;overflow-y:auto;white-space:pre-wrap;font-size:10px;font-family:var(--mono);color:var(--ink3);">${esc(textPreview)}</div>
+        ${issues}
+      </div></td></tr>`;
+    }
+  });
+
+  html += '</tbody></table>';
+  if (filtered.length === 0) {
+    html = '<div style="padding:20px;text-align:center;color:var(--ink3);font-size:12px;">No documents match the filter.</div>';
+  }
+  el.innerHTML = html;
+}
+
+function toggleDocRow(idx) {
+  docsExpandedRow = docsExpandedRow === idx ? -1 : idx;
+  renderDocsTable();
+}
+
+function filterDocsTable() {
+  docsExpandedRow = -1;
+  renderDocsTable();
 }
 
 let currentProject = 'amoedo';
