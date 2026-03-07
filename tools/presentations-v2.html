@@ -878,13 +878,13 @@ var F={
 };
 
 // Truncate long unit strings to prevent stat block overflow
-function truncUnit(u){if(!u)return'';return u.length>22?u.substring(0,20)+'\u2026':u}
+function truncUnit(u){if(!u)return'';return u.length>18?u.substring(0,16)+'\u2026':u}
 
 function addChrome(slide,isDark){
   // Logo - base64 embedded
   var logoB64=isDark?LOGO_WHITE_B64:LOGO_DARKBLUE_B64;
   if(logoB64){
-    slide.addImage({data:'data:image/png;base64,'+logoB64,x:0.35,y:0.12,w:1.6,h:0.37});
+    slide.addImage({data:'image/png;base64,'+logoB64,x:0.35,y:0.12,w:1.6,h:0.37});
   }else{
     slide.addText('ClearSky',{
       x:0.35,y:0.12,w:1.6,h:0.37,fontSize:18,
@@ -936,10 +936,10 @@ function buildMetricsSlide(pptx,s,slideIndex){
       var bx=0.5+idx*(bw+0.15);
       slide.addShape('rect',{x:bx,y:by,w:bw,h:bh,fill:{color:C.navy},rectRadius:0.05});
       var valStr=stat.value||'';
-      var valSize=valStr.length>6?24:(valStr.length>4?28:32);
+      var valSize=valStr.length>8?14:valStr.length>6?16:valStr.length>4?18:20;
       slide.addText(valStr,{
         x:bx+0.05,y:by+0.08,w:bw-0.1,h:0.45,
-        fontSize:valSize,color:idx%2===0?C.gold:C.lightBlue,fontFace:F.bold,align:'center',shrinkText:true
+        fontSize:valSize,color:idx%2===0?C.gold:C.lightBlue,fontFace:F.bold,align:'center',shrinkText:true,wrap:false
       });
       if(stat.unit){
         slide.addText(truncUnit(stat.unit),{
@@ -1023,10 +1023,10 @@ function buildProjectSlide(pptx,s,slideIndex){
       var bx=0.35+idx*(bw+0.12);
       slide.addShape('rect',{x:bx,y:1.7,w:bw,h:0.9,fill:{color:C.navy},rectRadius:0.05});
       var valStr=stat.value||'';
-      var valSize=valStr.length>6?16:(valStr.length>4?20:22);
+      var valSize=valStr.length>8?12:valStr.length>6?14:valStr.length>4?16:18;
       slide.addText(valStr,{
         x:bx+0.05,y:1.75,w:bw-0.1,h:0.38,
-        fontSize:valSize,color:idx%2===0?C.gold:C.lightBlue,fontFace:F.bold,align:'center',shrinkText:true
+        fontSize:valSize,color:idx%2===0?C.gold:C.lightBlue,fontFace:F.bold,align:'center',shrinkText:true,wrap:false
       });
       if(stat.unit){
         slide.addText(truncUnit(stat.unit),{
@@ -1131,10 +1131,10 @@ function buildDefaultSlide(pptx,s,slideIndex){
       });
       var statColor=idx%2===0?C.gold:C.lightBlue;
       var valStr=stat.value||'';
-      var valSize=valStr.length>6?20:(valStr.length>4?24:28);
+      var valSize=valStr.length>8?14:valStr.length>6?16:valStr.length>4?18:20;
       slide.addText(valStr,{
         x:bx+0.05,y:contentY+0.04,w:bw-0.1,h:0.45,
-        fontSize:valSize,color:statColor,fontFace:F.bold,align:'center',shrinkText:true
+        fontSize:valSize,color:statColor,fontFace:F.bold,align:'center',shrinkText:true,wrap:false
       });
       if(stat.unit){
         slide.addText(truncUnit(stat.unit),{
@@ -1226,7 +1226,7 @@ async function buildNewPptx(brief){
       cover.background={color:C.navy};
       // Cover photo from upload (base64)
       if(coverPhotoBase64){
-        cover.addImage({data:'data:image/'+(coverPhotoExt==='png'?'png':'jpeg')+';base64,'+coverPhotoBase64,x:0,y:0,w:10,h:5.625});
+        cover.addImage({data:'image/'+(coverPhotoExt==='png'?'png':'jpeg')+';base64,'+coverPhotoBase64,x:0,y:0,w:10,h:5.625});
       }
       addChrome(cover,true);
 
@@ -1276,11 +1276,11 @@ async function buildNewPptx(brief){
           });
           // Value — adaptive size
           var valStr=stat.value||'';
-          var valSize=valStr.length>6?18:(valStr.length>4?22:24);
+          var valSize=valStr.length>8?14:valStr.length>6?16:valStr.length>4?18:20;
           cover.addText(valStr,{
             x:bx+0.05,y:blockY+0.04,w:blockW-0.1,h:0.45,
             fontSize:valSize,color:idx===0?C.gold:C.lightBlue,
-            fontFace:F.bold,align:'center',shrinkText:true
+            fontFace:F.bold,align:'center',shrinkText:true,wrap:false
           });
           // Unit — truncated
           if(stat.unit){
@@ -1361,7 +1361,7 @@ async function buildNewPptx(brief){
     var hsB64=headshotMap[contact.initials];
     if(hsB64){
       contactSlide.addImage({
-        data:'data:image/png;base64,'+hsB64,
+        data:'image/png;base64,'+hsB64,
         x:cx+(cardW-0.85)/2,y:cy+0.18,w:0.85,h:0.85
       });
     }else{
