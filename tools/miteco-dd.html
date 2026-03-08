@@ -2857,7 +2857,7 @@ function renderDocsTable() {
     <th style="cursor:pointer;" onclick="docsSortBy('texto')">Texto${docsSortArrow('texto')}</th>
     <th style="cursor:pointer;" onclick="docsSortBy('estado')">Estado${docsSortArrow('estado')}</th>
     <th style="width:80px;"></th>
-  </tr></thead><tbody>`;
+  </tr></thead><tbody id="docsTableBody">`;
 
   filtered.forEach((d, idx) => {
     const ej = docEj(d);
@@ -2887,8 +2887,8 @@ function renderDocsTable() {
         ${isProc
           ? '<span class="text-badge ocr" style="font-size:9px;">&#9881;...</span>'
           : showConfirm
-            ? `<span class="doc-confirm-bar">\u00bfEliminar? <button class="btn-yes" onclick="docsDeleteOne('${d.id}')">S\u00ed</button> <button class="btn-no" onclick="docsCancelDelete()">No</button></span>`
-            : `${needsProc ? `<button class="btn-doc-del" style="border-color:var(--forest);color:var(--forest);margin-right:2px;" onclick="docsProcessOne('${d.id}')" title="Procesar">\u2699</button>` : ''}<button class="btn-doc-del" onclick="docsAskDelete('${d.id}')" title="Eliminar">&#128465;</button>`
+            ? `<span class="doc-confirm-bar">\u00bfEliminar? <button class="btn-yes" data-confirm-delete="${esc(d.id)}">S\u00ed</button> <button class="btn-no" data-cancel-delete="1">No</button></span>`
+            : `${needsProc ? `<button class="btn-doc-del btn-process-doc" style="border-color:var(--forest);color:var(--forest);margin-right:2px;" data-doc-id="${esc(d.id)}" title="Procesar">\u2699</button>` : ''}<button class="btn-doc-del btn-delete-doc" data-doc-id="${esc(d.id)}" data-filename="${esc(d.filename || '')}" title="Eliminar">&#128465;</button>`
         }
       </td>
     </tr>`;
@@ -2929,7 +2929,7 @@ function renderDocsTable() {
           <input type="text" id="docEditNotes_${d.id}" value="${esc(d.notes || '')}" placeholder="Notas..." style="width:160px;">
           <button class="btn-save" onclick="docsSaveEdit('${d.id}')">Guardar cambios</button>
         </div>
-        <div style="margin-top:6px;"><a href="#" style="color:var(--forest);font-size:10px;font-family:var(--mono);" onclick="event.preventDefault();docsProcessOne('${d.id}')">&#8634; Re-procesar</a></div>
+        <div style="margin-top:6px;"><a href="#" class="btn-reprocess-doc" data-doc-id="${esc(d.id)}" style="color:var(--forest);font-size:10px;font-family:var(--mono);">&#8634; Re-procesar</a></div>
       </div>`;
       html += `<tr><td colspan="8" style="padding:0;"><div class="doc-expand-panel">
         <div class="label">Filename</div><div class="val">${esc(d.filename || '')}</div>
@@ -2948,6 +2948,34 @@ function renderDocsTable() {
   }
   el.innerHTML = html;
 }
+
+// ── Event delegation for docs table buttons ──
+(function initDocsTableDelegation() {
+  document.addEventListener('click', function(e) {
+    const el = e.target.closest('#docsTable');
+    if (!el) return;
+
+    // Process button (⚙)
+    const procBtn = e.target.closest('.btn-process-doc');
+    if (procBtn) { e.preventDefault(); e.stopPropagation(); docsProcessOne(procBtn.dataset.docId); return; }
+
+    // Delete button (🗑)
+    const delBtn = e.target.closest('.btn-delete-doc');
+    if (delBtn) { e.preventDefault(); e.stopPropagation(); docsAskDelete(delBtn.dataset.docId); return; }
+
+    // Confirm delete (Sí)
+    const confirmBtn = e.target.closest('[data-confirm-delete]');
+    if (confirmBtn) { e.preventDefault(); e.stopPropagation(); docsDeleteOne(confirmBtn.dataset.confirmDelete); return; }
+
+    // Cancel delete (No)
+    const cancelBtn = e.target.closest('[data-cancel-delete]');
+    if (cancelBtn) { e.preventDefault(); e.stopPropagation(); docsCancelDelete(); return; }
+
+    // Re-process link in expanded panel
+    const reprocessLink = e.target.closest('.btn-reprocess-doc');
+    if (reprocessLink) { e.preventDefault(); e.stopPropagation(); docsProcessOne(reprocessLink.dataset.docId); return; }
+  });
+})();
 
 function toggleDocRow(idx) {
   docsExpandedRow = docsExpandedRow === idx ? -1 : idx;
