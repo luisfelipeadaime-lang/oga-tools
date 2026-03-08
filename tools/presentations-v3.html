@@ -35,7 +35,8 @@ body{font-family:var(--font);background:var(--offWhite);color:var(--navy);min-he
 .snum{width:20px;height:20px;border-radius:50%;background:var(--midGray);color:var(--white);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .prog-step.active .snum{background:var(--gold);color:var(--navy);}
 .slabel{font-size:11px;color:var(--white);white-space:nowrap;}
-.sarr{color:var(--midGray);font-size:10px;margin:0 6px;}
+.sarr{flex:1;height:2px;background:var(--borderGray);margin:0 6px;min-width:12px;max-width:36px;transition:background .3s;}
+.sarr.done{background:var(--green);}
 
 /* MAIN */
 .main{flex:1;display:flex;flex-direction:column;align-items:center;padding:36px 20px 72px;overflow-y:auto;}
@@ -64,7 +65,7 @@ body{font-family:var(--font);background:var(--offWhite);color:var(--navy);min-he
 /* PROJECT CARDS */
 .pcard{background:var(--white);border:2px solid var(--borderGray);border-radius:9px;padding:14px 18px;margin-bottom:9px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:all .18s;}
 .pcard:hover{border-color:var(--lightBlue);background:#F8FBFF;}
-.pcard.sel{border-color:var(--lightBlue);background:#EFF6FF;}
+.pcard.sel{border-color:var(--navy);background:#EFF6FF;}
 .pcheck{width:20px;height:20px;border-radius:50%;border:2px solid var(--borderGray);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;transition:all .18s;}
 .pcard.sel .pcheck{background:var(--lightBlue);border-color:var(--lightBlue);color:#fff;}
 .pinfo{flex:1;}
@@ -227,13 +228,13 @@ body{font-family:var(--font);background:var(--offWhite);color:var(--navy);min-he
 <!-- PROGRESS -->
 <div class="progress-bar" id="pbar" style="display:none;">
   <div class="prog-step" id="p1"><div class="snum">1</div><div class="slabel">Project</div></div>
-  <div class="sarr">›</div>
+  <div class="sarr"></div>
   <div class="prog-step" id="p2"><div class="snum">2</div><div class="slabel">Details</div></div>
-  <div class="sarr">›</div>
+  <div class="sarr"></div>
   <div class="prog-step" id="p3"><div class="snum">3</div><div class="slabel">Photo</div></div>
-  <div class="sarr">›</div>
+  <div class="sarr"></div>
   <div class="prog-step" id="p4"><div class="snum">4</div><div class="slabel">Confirm</div></div>
-  <div class="sarr">›</div>
+  <div class="sarr"></div>
   <div class="prog-step" id="p5"><div class="snum">5</div><div class="slabel">Download</div></div>
 </div>
 
@@ -272,6 +273,15 @@ body{font-family:var(--font);background:var(--offWhite);color:var(--navy);min-he
   <div class="errbox" id="e-proj">Please select at least one project before continuing.</div>
   <div class="sel-count" id="selcount" style="display:none;"><span id="scnum">0</span> project(s) selected</div>
 
+  <div class="dz" onclick="goTo('s1b')" style="margin-bottom:4px;">
+    <div class="dz-icon">📄</div>
+    <div class="dz-text">Upload a new project PDF</div>
+    <div class="dz-sub">Click here to add a project that isn't in the list below</div>
+  </div>
+  <div style="text-align:center;margin:12px 0 16px;">
+    <span style="color:var(--midGray);font-size:12px;">— or choose from previously uploaded projects —</span>
+  </div>
+
   <div id="proj-list">
     <div class="pcard sel">
       <div class="pcheck">✓</div>
@@ -296,11 +306,9 @@ body{font-family:var(--font);background:var(--offWhite);color:var(--navy);min-he
     </div>
   </div>
 
-  <button class="add-proj-btn" onclick="goTo('s1b')">＋ My project isn't listed — add it now</button>
-
   <div class="bnav">
     <button class="btn btn-ghost" onclick="goTo('s0')">← Back</button>
-    <button class="btn btn-primary" onclick="validateProj()">Continue →</button>
+    <button class="btn btn-primary" id="s1-next" onclick="validateProj()" disabled>Continue →</button>
   </div>
 </div>
 
@@ -368,7 +376,7 @@ body{font-family:var(--font);background:var(--offWhite);color:var(--navy);min-he
 
   <div class="field">
     <label for="cp-input">Who is receiving this presentation? <span style="color:var(--red)">*</span></label>
-    <input type="text" id="cp-input" placeholder="Company or person name — e.g. TotalEnergies, Microsoft, Crédit Agricole" maxlength="100">
+    <input type="text" id="cp-input" placeholder="Company or person name — e.g. TotalEnergies, Microsoft, Crédit Agricole" maxlength="100" oninput="var b=document.getElementById('s2-next');if(b)b.disabled=!this.value.trim();">
     <div class="field-hint">This is the buyer, investor, or counterparty you're sending the deck to.</div>
   </div>
 
@@ -406,7 +414,7 @@ body{font-family:var(--font);background:var(--offWhite);color:var(--navy);min-he
 
   <div class="bnav">
     <button class="btn btn-ghost" onclick="goTo('s1')">← Back</button>
-    <button class="btn btn-primary" onclick="validateDetails()">Continue →</button>
+    <button class="btn btn-primary" id="s2-next" onclick="validateDetails()" disabled>Continue →</button>
   </div>
 </div>
 
@@ -433,10 +441,7 @@ body{font-family:var(--font);background:var(--offWhite);color:var(--navy);min-he
 
   <div class="bnav">
     <button class="btn btn-ghost" onclick="goTo('s2')">← Back</button>
-    <div class="bnav-r">
-      <button class="btn btn-ghost" onclick="skipPhoto()">Skip — use branded cover</button>
-      <button class="btn btn-primary" onclick="goTo('s4')">Continue →</button>
-    </div>
+    <button class="btn btn-primary" id="s3-next" onclick="goTo('s4')">Skip →</button>
   </div>
 </div>
 
@@ -488,6 +493,8 @@ body{font-family:var(--font);background:var(--offWhite);color:var(--navy);min-he
   <div class="stitle">Here's your <strong>slide outline</strong></div>
   <div class="ssub">The AI has built this outline from your project documents. Review it below.<br><span style="color:var(--green);font-weight:500;">Strong</span> = good data. <span style="color:#856404;font-weight:500;">Review</span> = limited data, may need editing in PowerPoint afterwards.</div>
 
+  <div id="brief-meta" style="background:var(--white);border:1.5px solid var(--borderGray);border-radius:9px;padding:14px 18px;margin-bottom:16px;font-size:13px;color:var(--navy);line-height:1.6;"></div>
+  <div class="errbox" id="e-build"></div>
   <div id="brief-list"></div>
 
   <div class="callout callout-a" id="brief-warn" style="display:none;">
@@ -556,8 +563,9 @@ body{font-family:var(--font);background:var(--offWhite);color:var(--navy);min-he
     </div>
   </div>
 
-  <div style="text-align:center;margin-top:28px;padding-top:20px;border-top:1px solid var(--borderGray);">
-    <button class="btn btn-ghost" onclick="resetAll()">← Build another presentation</button>
+  <div style="text-align:center;margin-top:28px;padding-top:20px;border-top:1px solid var(--borderGray);display:flex;justify-content:center;gap:12px;">
+    <button class="btn btn-ghost" onclick="goTo('s6')">← Back to outline</button>
+    <button class="btn btn-ghost" onclick="resetAll()">↺ Start over</button>
   </div>
 </div>
 
@@ -600,6 +608,8 @@ function goTo(id) {
   save();
   updatePB(PM[id]||0);
   if(id==='s4') fillSummary();
+  if(id==='s2'){var b=document.getElementById('s2-next');if(b)b.disabled=!document.getElementById('cp-input').value.trim();}
+  if(id==='s3'){var b=document.getElementById('s3-next');if(b)b.textContent=state.photo64?'Continue →':'Skip →';}
 }
 function updatePB(step) {
   var pb=document.getElementById('pbar');
@@ -612,6 +622,7 @@ function updatePB(step) {
     if(i<step)el.classList.add('done');
     else if(i===step)el.classList.add('active');
   });
+  pb.querySelectorAll('.sarr').forEach(function(a,i){a.classList.toggle('done',i+1<step);});
 }
 
 // ── S0 ──
@@ -681,6 +692,8 @@ function updateSelCount(){
   var el=document.getElementById('selcount'),n=state.projects.length;
   if(n>0){el.style.display='block';document.getElementById('scnum').textContent=n;}
   else el.style.display='none';
+  var s1btn=document.getElementById('s1-next');
+  if(s1btn) s1btn.disabled=!n;
 }
 
 function validateProj(){
@@ -749,11 +762,12 @@ function handlePhoto(file){
     var pv=document.getElementById('photo-prev');pv.src=ev.target.result;pv.style.display='block';
     var dz=document.getElementById('dz-photo');dz.classList.add('ok');
     dz.querySelector('.dz-text').textContent='✓ '+file.name;
+    var sb=document.getElementById('s3-next');if(sb)sb.textContent='Continue →';
     save();
   };
   rd.readAsDataURL(file);
 }
-function skipPhoto(){state.photo64=null;save();goTo('s4');}
+function skipPhoto(){state.photo64=null;var sb=document.getElementById('s3-next');if(sb)sb.textContent='Skip →';save();goTo('s4');}
 
 document.addEventListener('paste',function(e){
   var items=e.clipboardData&&e.clipboardData.items;
@@ -797,6 +811,8 @@ function animateLoad(){
 // ── S6 ──
 function renderBrief(){
   var b=state.brief;if(!b||!b.slides)return;
+  var meta=document.getElementById('brief-meta');
+  if(meta) meta.innerHTML='<strong>'+esc(state.cp||'—')+'</strong> &mdash; '+b.slides.length+' slides &nbsp;&middot;&nbsp; Cover photo: '+(state.photo64?'<span style="color:var(--green);">&#10003; Loaded</span>':'<span style="color:var(--midGray);">&#10007; None (solid navy cover)</span>');
   var list=document.getElementById('brief-list');list.innerHTML='';
   var yc=0;
   b.slides.forEach(function(s){
@@ -813,6 +829,7 @@ function renderBrief(){
 
 // ── S7 ──
 async function doBuild(){
+  var eb=document.getElementById('e-build');if(eb)eb.style.display='none';
   var btn=document.getElementById('build-btn');
   btn.disabled=true;btn.innerHTML='<span class="isp"></span> Building...';
   goTo('s7');
@@ -826,7 +843,8 @@ async function doBuild(){
   }catch(ex){
     console.error('doBuild error:', ex);
     var msg = ex && ex.message ? ex.message : String(ex);
-    alert('Build failed: ' + msg);
+    var eb=document.getElementById('e-build');
+    if(eb){eb.textContent='Build failed: '+msg;eb.style.display='block';}
     goTo('s6');
     btn.disabled=false;
     btn.innerHTML='🏗 Build my deck';
