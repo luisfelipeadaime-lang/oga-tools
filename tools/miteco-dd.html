@@ -1210,6 +1210,21 @@ main {
 .oecc-chip { display:inline-block; font-size:9px; font-family:var(--mono); padding:1px 5px; border-radius:3px; margin:0 2px; }
 .oecc-chip.present { background:var(--green-bg); color:var(--green); }
 .oecc-chip.missing { background:var(--red-bg); color:var(--red); }
+.docs-toolbar { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+.docs-toolbar .btn-upload { padding:5px 12px; font-size:11px; background:var(--forest); color:#fff; border:none; border-radius:5px; cursor:pointer; font-family:var(--mono); }
+.docs-toolbar .btn-upload:hover { opacity:0.85; }
+.docs-bulk-bar { display:flex; align-items:center; gap:10px; padding:6px 12px; background:#fef3c7; border:1px solid var(--amber); border-radius:6px; font-size:11px; font-family:var(--mono); color:var(--ink); }
+.docs-bulk-bar .btn-bulk-del { padding:3px 10px; font-size:10px; background:var(--red); color:#fff; border:none; border-radius:4px; cursor:pointer; }
+.btn-doc-del { padding:2px 6px; font-size:10px; background:none; border:1px solid var(--red); color:var(--red); border-radius:4px; cursor:pointer; opacity:0.7; }
+.btn-doc-del:hover { opacity:1; background:var(--red-bg); }
+.doc-confirm-bar { display:inline-flex; align-items:center; gap:6px; font-size:10px; font-family:var(--mono); }
+.doc-confirm-bar .btn-yes { padding:2px 8px; background:var(--red); color:#fff; border:none; border-radius:3px; cursor:pointer; font-size:10px; }
+.doc-confirm-bar .btn-no { padding:2px 8px; background:var(--surface); color:var(--ink2); border:1px solid var(--border); border-radius:3px; cursor:pointer; font-size:10px; }
+.doc-edit-panel { margin-top:10px; padding:10px; background:var(--surface); border:1px solid var(--border); border-radius:6px; }
+.doc-edit-panel select, .doc-edit-panel input { padding:4px 8px; font-size:11px; font-family:var(--mono); border:1px solid var(--border); border-radius:4px; background:var(--bg); color:var(--ink); }
+.doc-edit-panel .btn-save { padding:4px 12px; font-size:10px; background:var(--forest); color:#fff; border:none; border-radius:4px; cursor:pointer; margin-top:6px; }
+@keyframes docFadeOut { from { opacity:1; max-height:60px; } to { opacity:0; max-height:0; overflow:hidden; } }
+.doc-row-removing { animation: docFadeOut 0.3s ease forwards; }
 </style>
 </head>
 <body>
@@ -1481,10 +1496,14 @@ main {
   </div>
   <div id="docsContent" style="display:none;">
     <div id="docsSummary" style="margin-bottom:12px;"></div>
-    <div style="margin-bottom:12px;">
+    <div class="docs-toolbar">
+      <button class="btn-upload" onclick="docsUploadClick()">&#8593; Subir documento</button>
+      <input type="file" id="docsFileInput" multiple style="display:none;" onchange="docsUploadFiles(this.files)">
       <input type="text" id="docsFilter" placeholder="Filter by filename or category..." oninput="filterDocsTable()"
-        style="width:100%;padding:8px 12px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--ink);font-family:var(--mono);box-sizing:border-box;">
+        style="flex:1;min-width:200px;padding:8px 12px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--ink);font-family:var(--mono);box-sizing:border-box;">
     </div>
+    <div id="docsBulkBar" style="display:none;margin-bottom:8px;"></div>
+    <div id="docsUploadProgress" style="display:none;margin-bottom:8px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:var(--mono);color:var(--ink2);"></div>
     <div id="docsTable"></div>
   </div>
 </div>
@@ -2686,17 +2705,23 @@ const CATEGORY_LABELS = {
   certificado_catastral: 'Certificado Catastral', evidencia_propiedad_otro: 'Evidencia Propiedad (otro)',
   declaracion_derechos: 'Declaracion de Derechos', declaracion_responsable: 'Declaracion Responsable',
   convenio_cesion: 'Convenio de Cesion', proyecto_ordenacion: 'Proyecto de Ordenacion',
-  planos: 'Planos / Mapas', carta_correccion: 'Carta de Correccion', otro: 'Otro'
+  planos: 'Planos / Mapas', carta_correccion: 'Carta de Correccion',
+  certificado_secretario: 'Certificado Secretario', otro: 'Otro'
 };
+const CATEGORY_KEYS = Object.keys(CATEGORY_LABELS);
 
 let docsData = [];
 let docsExpandedRow = -1;
+let docsSelected = new Set();
+let docsConfirmDelete = null; // doc id currently showing confirm
 
 async function loadDocsTab() {
   const loading = document.getElementById('docsLoading');
   const content = document.getElementById('docsContent');
   loading.style.display = '';
   content.style.display = 'none';
+  docsSelected.clear();
+  docsConfirmDelete = null;
 
   try {
     const res = await fetch(`${API_BASE}/api/miteco-dd/projects/${currentProjectId}/documents`);
@@ -2706,6 +2731,7 @@ async function loadDocsTab() {
     content.style.display = '';
     renderDocsSummary();
     renderDocsTable();
+    updateDocsBulkBar();
   } catch(e) {
     loading.innerHTML = `<span style="color:var(--red);">Error loading documents: ${esc(e.message)}</span>`;
   }
@@ -2735,6 +2761,16 @@ function renderDocsSummary() {
   </div>`;
 }
 
+function isBinaryText(text) {
+  if (!text || typeof text !== 'string') return false;
+  let badChars = 0;
+  for (let i = 0; i < Math.min(text.length, 500); i++) {
+    const cc = text.charCodeAt(i);
+    if ((cc > 127 && cc < 160) || cc === 0xFFFD) badChars++;
+  }
+  return badChars > 5;
+}
+
 function renderDocsTable() {
   const el = document.getElementById('docsTable');
   const filter = (document.getElementById('docsFilter')?.value || '').toLowerCase();
@@ -2744,35 +2780,55 @@ function renderDocsTable() {
     return (d.filename || '').toLowerCase().includes(filter) || cat.toLowerCase().includes(filter);
   });
 
+  const allChecked = filtered.length > 0 && filtered.every(d => docsSelected.has(d.id));
   let html = `<table class="docs-tbl"><thead><tr>
-    <th>#</th><th>Nombre original</th><th>Categoria</th><th>Punto OECC</th><th>Texto</th><th>Estado</th>
+    <th style="width:28px;"><input type="checkbox" ${allChecked ? 'checked' : ''} onchange="docsToggleAll(this.checked)" title="Seleccionar todo"></th>
+    <th>#</th><th>Nombre original</th><th>Categoria</th><th>Punto OECC</th><th>Texto</th><th>Estado</th><th style="width:40px;"></th>
   </tr></thead><tbody>`;
 
   filtered.forEach((d, idx) => {
     const ej = d.extracted_json ? (typeof d.extracted_json === 'string' ? JSON.parse(d.extracted_json) : d.extracted_json) : null;
-    const hasText = ej && ej.text && ej.text.length > 10;
+    const hasText = ej && ej.text && ej.text.length > 10 && !isBinaryText(ej.text);
     const isOcr = ej && (ej.needs_ocr || ej.needs_ocr_manual);
     const textBadge = hasText ? '<span class="text-badge ok">&#10003;</span>'
       : isOcr ? '<span class="text-badge ocr">OCR</span>'
       : '<span class="text-badge none">&mdash;</span>';
-    const cat = CATEGORY_LABELS[d.category] || d.category || d.doc_type || '—';
-    const oecc = d.oecc_point != null ? d.oecc_point : '—';
-    const status = d.status || '—';
+    const cat = CATEGORY_LABELS[d.category] || d.category || d.doc_type || '\u2014';
+    const oecc = d.oecc_point != null ? d.oecc_point : '\u2014';
+    const status = d.status || '\u2014';
     const statusColor = status === 'extracted' ? 'var(--green)' : status === 'stale' ? 'var(--amber)' : 'var(--ink3)';
     const expanded = docsExpandedRow === idx;
+    const checked = docsSelected.has(d.id);
+    const showConfirm = docsConfirmDelete === d.id;
 
-    html += `<tr class="${expanded ? 'doc-row-expanded' : ''}" style="cursor:pointer;" onclick="toggleDocRow(${idx})">
-      <td style="color:var(--ink3);font-family:var(--mono);font-size:10px;">${idx + 1}</td>
-      <td style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(d.filename || '')}">${esc(d.filename || '—')}</td>
-      <td>${esc(cat)}</td>
-      <td style="text-align:center;font-family:var(--mono);">${oecc}</td>
-      <td style="text-align:center;">${textBadge}</td>
-      <td><span style="color:${statusColor};font-family:var(--mono);font-size:10px;">${esc(status)}</span></td>
+    html += `<tr class="${expanded ? 'doc-row-expanded' : ''}" style="cursor:pointer;">
+      <td onclick="event.stopPropagation()"><input type="checkbox" ${checked ? 'checked' : ''} onchange="docsToggleOne('${d.id}', this.checked)"></td>
+      <td onclick="toggleDocRow(${idx})" style="color:var(--ink3);font-family:var(--mono);font-size:10px;">${idx + 1}</td>
+      <td onclick="toggleDocRow(${idx})" style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(d.filename || '')}">${esc(d.filename || '\u2014')}</td>
+      <td onclick="toggleDocRow(${idx})">${esc(cat)}</td>
+      <td onclick="toggleDocRow(${idx})" style="text-align:center;font-family:var(--mono);">${oecc}</td>
+      <td onclick="toggleDocRow(${idx})" style="text-align:center;">${textBadge}</td>
+      <td onclick="toggleDocRow(${idx})"><span style="color:${statusColor};font-family:var(--mono);font-size:10px;">${esc(status)}</span></td>
+      <td onclick="event.stopPropagation()" style="text-align:right;">
+        ${showConfirm
+          ? `<span class="doc-confirm-bar">\u00bfEliminar? <button class="btn-yes" onclick="docsDeleteOne('${d.id}')">S\u00ed</button> <button class="btn-no" onclick="docsCancelDelete()">No</button></span>`
+          : `<button class="btn-doc-del" onclick="docsAskDelete('${d.id}')" title="Eliminar">&#128465;</button>`
+        }
+      </td>
     </tr>`;
 
     if (expanded) {
-      const textPreview = hasText ? ej.text.substring(0, 300) + (ej.text.length > 300 ? '...' : '') : 'No text extracted';
-      // Check for verification issues linked to this doc
+      const rawText = ej && ej.text ? ej.text : '';
+      const binary = isBinaryText(rawText);
+      let textPreview;
+      if (binary) {
+        textPreview = '\u26a0 Texto no disponible \u2014 PDF escaneado o comprimido. Re-procesar OCR para extraer texto.';
+      } else if (rawText.length > 10) {
+        textPreview = rawText.substring(0, 300) + (rawText.length > 300 ? '...' : '');
+      } else {
+        textPreview = 'No text extracted';
+      }
+      // Verification issues
       let issues = '';
       if (window.lastVerifyResult) {
         const incons = (window.lastVerifyResult.inconsistencias_cruzadas || []).filter(i =>
@@ -2787,11 +2843,23 @@ function renderDocsTable() {
           fixes.forEach(f => { issues += `<div style="color:var(--amber);margin-top:2px;">&#9998; ${esc(f.correccion || '')}</div>`; });
         }
       }
-      html += `<tr><td colspan="6" style="padding:0;"><div class="doc-expand-panel">
+      // Category edit panel
+      const catOptions = CATEGORY_KEYS.map(k => `<option value="${k}" ${d.category === k ? 'selected' : ''}>${CATEGORY_LABELS[k]}</option>`).join('');
+      const editPanel = `<div class="doc-edit-panel">
+        <div class="label">Reclasificar</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:4px;">
+          <select id="docEditCat_${d.id}">${catOptions}</select>
+          <input type="number" id="docEditOecc_${d.id}" min="1" max="11" value="${d.oecc_point || ''}" placeholder="OECC" style="width:60px;">
+          <input type="text" id="docEditNotes_${d.id}" value="${esc(d.notes || '')}" placeholder="Notas..." style="width:160px;">
+          <button class="btn-save" onclick="docsSaveEdit('${d.id}')">Guardar cambios</button>
+        </div>
+      </div>`;
+      html += `<tr><td colspan="8" style="padding:0;"><div class="doc-expand-panel">
         <div class="label">Filename</div><div class="val">${esc(d.filename || '')}</div>
-        <div class="label">R2 key</div><div class="val">${esc(d.r2_key || '—')}</div>
-        <div class="label">Extracted text preview</div><div class="val" style="max-height:120px;overflow-y:auto;white-space:pre-wrap;font-size:10px;font-family:var(--mono);color:var(--ink3);">${esc(textPreview)}</div>
+        <div class="label">R2 key</div><div class="val">${esc(d.r2_key || '\u2014')}</div>
+        <div class="label">Extracted text preview</div><div class="val" style="max-height:120px;overflow-y:auto;white-space:pre-wrap;font-size:10px;font-family:var(--mono);color:${binary ? 'var(--amber)' : 'var(--ink3)'};">${esc(textPreview)}</div>
         ${issues}
+        ${editPanel}
       </div></td></tr>`;
     }
   });
@@ -2811,6 +2879,122 @@ function toggleDocRow(idx) {
 function filterDocsTable() {
   docsExpandedRow = -1;
   renderDocsTable();
+}
+
+// ── Bulk selection ──
+function docsToggleAll(checked) {
+  const filter = (document.getElementById('docsFilter')?.value || '').toLowerCase();
+  docsData.forEach(d => {
+    if (!filter || (d.filename || '').toLowerCase().includes(filter) || (CATEGORY_LABELS[d.category] || '').toLowerCase().includes(filter)) {
+      if (checked) docsSelected.add(d.id); else docsSelected.delete(d.id);
+    }
+  });
+  renderDocsTable();
+  updateDocsBulkBar();
+}
+
+function docsToggleOne(id, checked) {
+  if (checked) docsSelected.add(id); else docsSelected.delete(id);
+  updateDocsBulkBar();
+}
+
+function updateDocsBulkBar() {
+  const bar = document.getElementById('docsBulkBar');
+  if (docsSelected.size === 0) { bar.style.display = 'none'; return; }
+  bar.style.display = '';
+  bar.innerHTML = `<div class="docs-bulk-bar">
+    <span><strong>${docsSelected.size}</strong> seleccionados</span>
+    <button class="btn-bulk-del" onclick="docsBulkDelete()">Eliminar selecci\u00f3n</button>
+  </div>`;
+}
+
+// ── Single delete ──
+function docsAskDelete(id) {
+  docsConfirmDelete = id;
+  renderDocsTable();
+}
+
+function docsCancelDelete() {
+  docsConfirmDelete = null;
+  renderDocsTable();
+}
+
+async function docsDeleteOne(id) {
+  try {
+    const res = await fetch(`${API_BASE}/api/miteco-dd/projects/${currentProjectId}/documents/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.ok) {
+      docsData = docsData.filter(d => d.id !== id);
+      docsSelected.delete(id);
+      docsConfirmDelete = null;
+      renderDocsSummary();
+      renderDocsTable();
+      updateDocsBulkBar();
+    }
+  } catch(e) { alert('Error deleting: ' + e.message); }
+}
+
+// ── Bulk delete ──
+async function docsBulkDelete() {
+  if (!confirm(`\u00bfEliminar ${docsSelected.size} documentos seleccionados?`)) return;
+  const ids = [...docsSelected];
+  for (const id of ids) {
+    try {
+      await fetch(`${API_BASE}/api/miteco-dd/projects/${currentProjectId}/documents/${id}`, { method: 'DELETE' });
+    } catch(e) { /* continue */ }
+  }
+  docsSelected.clear();
+  docsConfirmDelete = null;
+  await loadDocsTab();
+}
+
+// ── Category edit ──
+async function docsSaveEdit(id) {
+  const cat = document.getElementById('docEditCat_' + id)?.value || null;
+  const oeccVal = document.getElementById('docEditOecc_' + id)?.value;
+  const oecc = oeccVal ? parseInt(oeccVal) : null;
+  const notes = document.getElementById('docEditNotes_' + id)?.value || null;
+  try {
+    const res = await fetch(`${API_BASE}/api/miteco-dd/projects/${currentProjectId}/documents/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ category: cat, oecc_point: oecc, notes: notes })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      const doc = docsData.find(d => d.id === id);
+      if (doc) {
+        if (cat) doc.category = cat;
+        if (oecc != null) doc.oecc_point = oecc;
+        if (notes != null) doc.notes = notes;
+      }
+      renderDocsSummary();
+      renderDocsTable();
+    }
+  } catch(e) { alert('Error saving: ' + e.message); }
+}
+
+// ── Upload ──
+function docsUploadClick() {
+  document.getElementById('docsFileInput').click();
+}
+
+async function docsUploadFiles(fileList) {
+  if (!fileList || fileList.length === 0) return;
+  const prog = document.getElementById('docsUploadProgress');
+  prog.style.display = '';
+  for (let i = 0; i < fileList.length; i++) {
+    prog.textContent = `Subiendo archivo ${i + 1} de ${fileList.length}: ${fileList[i].name}...`;
+    const fd = new FormData();
+    fd.append('file', fileList[i]);
+    try {
+      await fetch(`${API_BASE}/api/miteco-dd/projects/${currentProjectId}/documents/upload`, { method: 'POST', body: fd });
+    } catch(e) { /* continue */ }
+  }
+  prog.textContent = 'Upload complete. Refreshing...';
+  document.getElementById('docsFileInput').value = '';
+  await loadDocsTab();
+  prog.style.display = 'none';
 }
 
 let currentProject = 'amoedo';
