@@ -1498,6 +1498,7 @@ main {
     <div id="docsSummary" style="margin-bottom:12px;"></div>
     <div class="docs-toolbar">
       <button class="btn-upload" onclick="docsUploadClick()">&#8593; Subir documento</button>
+      <button class="btn-upload" style="background:var(--ink2);" onclick="docsProcessPending()">&#9881; Procesar pendientes</button>
       <input type="file" id="docsFileInput" multiple style="display:none;" onchange="docsUploadFiles(this.files)">
       <input type="text" id="docsFilter" placeholder="Filter by filename or category..." oninput="filterDocsTable()"
         style="flex:1;min-width:200px;padding:8px 12px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--ink);font-family:var(--mono);box-sizing:border-box;">
@@ -2713,7 +2714,9 @@ const CATEGORY_KEYS = Object.keys(CATEGORY_LABELS);
 let docsData = [];
 let docsExpandedRow = -1;
 let docsSelected = new Set();
-let docsConfirmDelete = null; // doc id currently showing confirm
+let docsConfirmDelete = null;
+let docsSort = { column: 'punto_oecc', direction: 'asc' };
+let docsProcessing = new Set(); // doc ids currently being processed
 
 async function loadDocsTab() {
   const loading = document.getElementById('docsLoading');
@@ -2740,11 +2743,12 @@ async function loadDocsTab() {
 function renderDocsSummary() {
   const el = document.getElementById('docsSummary');
   const cats = new Set(docsData.map(d => d.category).filter(Boolean));
-  let withText = 0, needsOcr = 0;
+  let withText = 0, needsOcr = 0, pendingCount = 0;
   docsData.forEach(d => {
-    const ej = d.extracted_json ? (typeof d.extracted_json === 'string' ? JSON.parse(d.extracted_json) : d.extracted_json) : null;
-    if (ej && ej.text && ej.text.length > 10) withText++;
+    const ej = docEj(d);
+    if (ej && ej.text && ej.text.length > 10 && !isBinaryText(ej.text)) withText++;
     if (ej && (ej.needs_ocr || ej.needs_ocr_manual)) needsOcr++;
+    if (!d.category || !ej || !ej.text || d.status === 'uploaded') pendingCount++;
   });
   const oeccPresent = new Set(docsData.filter(d => d.oecc_point).map(d => d.oecc_point));
   const allOecc = [1,2,3,4,5,6,7,8,9];
@@ -2757,8 +2761,14 @@ function renderDocsSummary() {
     <span><strong>${cats.size}</strong> categories</span>
     <span style="color:var(--green);"><strong>${withText}</strong> with text</span>
     ${needsOcr > 0 ? `<span style="color:var(--amber);"><strong>${needsOcr}</strong> OCR needed</span>` : ''}
+    ${pendingCount > 0 ? `<span style="color:var(--ink3);"><strong>${pendingCount}</strong> pending</span>` : ''}
     <span>OECC: ${oeccChips}</span>
   </div>`;
+}
+
+function docEj(d) {
+  if (!d.extracted_json) return null;
+  return typeof d.extracted_json === 'string' ? JSON.parse(d.extracted_json) : d.extracted_json;
 }
 
 function isBinaryText(text) {
@@ -2771,23 +2781,86 @@ function isBinaryText(text) {
   return badChars > 5;
 }
 
-function renderDocsTable() {
-  const el = document.getElementById('docsTable');
+function docStatus(d) {
+  const ej = docEj(d);
+  const hasText = ej && ej.text && ej.text.length > 10 && !isBinaryText(ej.text);
+  const isOcrManual = ej && ej.needs_ocr_manual;
+  if (!d.category && !hasText) return { label: 'Sin procesar', color: 'var(--ink3)', cls: 'none' };
+  if (isOcrManual) return { label: 'OCR manual', color: 'var(--amber)', cls: 'ocr' };
+  if (d.category && !hasText) return { label: 'Sin texto', color: 'var(--amber)', cls: 'ocr' };
+  if (d.category && hasText) return { label: 'Procesado', color: 'var(--green)', cls: 'ok' };
+  return { label: d.status || '\u2014', color: 'var(--ink3)', cls: 'none' };
+}
+
+function docNeedsProcess(d) {
+  const ej = docEj(d);
+  const hasText = ej && ej.text && ej.text.length > 10 && !isBinaryText(ej.text);
+  return !d.category || !hasText || d.status === 'uploaded';
+}
+
+// ── Sorting ──
+function docsSortBy(column) {
+  if (docsSort.column === column) {
+    docsSort.direction = docsSort.direction === 'asc' ? 'desc' : 'asc';
+  } else {
+    docsSort.column = column;
+    docsSort.direction = 'asc';
+  }
+  docsExpandedRow = -1;
+  renderDocsTable();
+}
+
+function docsSortArrow(column) {
+  if (docsSort.column !== column) return '';
+  return docsSort.direction === 'asc' ? ' \u2191' : ' \u2193';
+}
+
+function docsSortedFiltered() {
   const filter = (document.getElementById('docsFilter')?.value || '').toLowerCase();
-  const filtered = docsData.filter(d => {
+  let filtered = docsData.filter(d => {
     if (!filter) return true;
     const cat = CATEGORY_LABELS[d.category] || d.category || '';
     return (d.filename || '').toLowerCase().includes(filter) || cat.toLowerCase().includes(filter);
   });
+  const dir = docsSort.direction === 'asc' ? 1 : -1;
+  const col = docsSort.column;
+  filtered.sort((a, b) => {
+    if (col === 'nombre_original') return dir * (a.filename || '').localeCompare(b.filename || '');
+    if (col === 'categoria') return dir * (CATEGORY_LABELS[a.category] || a.category || 'zzz').localeCompare(CATEGORY_LABELS[b.category] || b.category || 'zzz');
+    if (col === 'punto_oecc') {
+      const av = a.oecc_point != null ? a.oecc_point : 999;
+      const bv = b.oecc_point != null ? b.oecc_point : 999;
+      return dir * (av - bv);
+    }
+    if (col === 'texto') {
+      const at = docEj(a)?.text?.length || 0;
+      const bt = docEj(b)?.text?.length || 0;
+      return dir * (bt - at); // has text first in asc
+    }
+    if (col === 'estado') return dir * (docStatus(a).label).localeCompare(docStatus(b).label);
+    return 0;
+  });
+  return filtered;
+}
+
+function renderDocsTable() {
+  const el = document.getElementById('docsTable');
+  const filtered = docsSortedFiltered();
 
   const allChecked = filtered.length > 0 && filtered.every(d => docsSelected.has(d.id));
   let html = `<table class="docs-tbl"><thead><tr>
     <th style="width:28px;"><input type="checkbox" ${allChecked ? 'checked' : ''} onchange="docsToggleAll(this.checked)" title="Seleccionar todo"></th>
-    <th>#</th><th>Nombre original</th><th>Categoria</th><th>Punto OECC</th><th>Texto</th><th>Estado</th><th style="width:40px;"></th>
+    <th>#</th>
+    <th style="cursor:pointer;" onclick="docsSortBy('nombre_original')">Nombre original${docsSortArrow('nombre_original')}</th>
+    <th style="cursor:pointer;" onclick="docsSortBy('categoria')">Categoria${docsSortArrow('categoria')}</th>
+    <th style="cursor:pointer;" onclick="docsSortBy('punto_oecc')">Punto OECC${docsSortArrow('punto_oecc')}</th>
+    <th style="cursor:pointer;" onclick="docsSortBy('texto')">Texto${docsSortArrow('texto')}</th>
+    <th style="cursor:pointer;" onclick="docsSortBy('estado')">Estado${docsSortArrow('estado')}</th>
+    <th style="width:80px;"></th>
   </tr></thead><tbody>`;
 
   filtered.forEach((d, idx) => {
-    const ej = d.extracted_json ? (typeof d.extracted_json === 'string' ? JSON.parse(d.extracted_json) : d.extracted_json) : null;
+    const ej = docEj(d);
     const hasText = ej && ej.text && ej.text.length > 10 && !isBinaryText(ej.text);
     const isOcr = ej && (ej.needs_ocr || ej.needs_ocr_manual);
     const textBadge = hasText ? '<span class="text-badge ok">&#10003;</span>'
@@ -2795,24 +2868,27 @@ function renderDocsTable() {
       : '<span class="text-badge none">&mdash;</span>';
     const cat = CATEGORY_LABELS[d.category] || d.category || d.doc_type || '\u2014';
     const oecc = d.oecc_point != null ? d.oecc_point : '\u2014';
-    const status = d.status || '\u2014';
-    const statusColor = status === 'extracted' ? 'var(--green)' : status === 'stale' ? 'var(--amber)' : 'var(--ink3)';
+    const st = docStatus(d);
     const expanded = docsExpandedRow === idx;
     const checked = docsSelected.has(d.id);
     const showConfirm = docsConfirmDelete === d.id;
+    const isProc = docsProcessing.has(d.id);
+    const needsProc = docNeedsProcess(d);
 
     html += `<tr class="${expanded ? 'doc-row-expanded' : ''}" style="cursor:pointer;">
       <td onclick="event.stopPropagation()"><input type="checkbox" ${checked ? 'checked' : ''} onchange="docsToggleOne('${d.id}', this.checked)"></td>
       <td onclick="toggleDocRow(${idx})" style="color:var(--ink3);font-family:var(--mono);font-size:10px;">${idx + 1}</td>
-      <td onclick="toggleDocRow(${idx})" style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(d.filename || '')}">${esc(d.filename || '\u2014')}</td>
+      <td onclick="toggleDocRow(${idx})" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(d.filename || '')}">${esc(d.filename || '\u2014')}</td>
       <td onclick="toggleDocRow(${idx})">${esc(cat)}</td>
       <td onclick="toggleDocRow(${idx})" style="text-align:center;font-family:var(--mono);">${oecc}</td>
       <td onclick="toggleDocRow(${idx})" style="text-align:center;">${textBadge}</td>
-      <td onclick="toggleDocRow(${idx})"><span style="color:${statusColor};font-family:var(--mono);font-size:10px;">${esc(status)}</span></td>
-      <td onclick="event.stopPropagation()" style="text-align:right;">
-        ${showConfirm
-          ? `<span class="doc-confirm-bar">\u00bfEliminar? <button class="btn-yes" onclick="docsDeleteOne('${d.id}')">S\u00ed</button> <button class="btn-no" onclick="docsCancelDelete()">No</button></span>`
-          : `<button class="btn-doc-del" onclick="docsAskDelete('${d.id}')" title="Eliminar">&#128465;</button>`
+      <td onclick="toggleDocRow(${idx})"><span class="text-badge ${st.cls}">${esc(st.label)}</span></td>
+      <td onclick="event.stopPropagation()" style="text-align:right;white-space:nowrap;">
+        ${isProc
+          ? '<span class="text-badge ocr" style="font-size:9px;">&#9881;...</span>'
+          : showConfirm
+            ? `<span class="doc-confirm-bar">\u00bfEliminar? <button class="btn-yes" onclick="docsDeleteOne('${d.id}')">S\u00ed</button> <button class="btn-no" onclick="docsCancelDelete()">No</button></span>`
+            : `${needsProc ? `<button class="btn-doc-del" style="border-color:var(--forest);color:var(--forest);margin-right:2px;" onclick="docsProcessOne('${d.id}')" title="Procesar">\u2699</button>` : ''}<button class="btn-doc-del" onclick="docsAskDelete('${d.id}')" title="Eliminar">&#128465;</button>`
         }
       </td>
     </tr>`;
@@ -2828,7 +2904,6 @@ function renderDocsTable() {
       } else {
         textPreview = 'No text extracted';
       }
-      // Verification issues
       let issues = '';
       if (window.lastVerifyResult) {
         const incons = (window.lastVerifyResult.inconsistencias_cruzadas || []).filter(i =>
@@ -2843,7 +2918,6 @@ function renderDocsTable() {
           fixes.forEach(f => { issues += `<div style="color:var(--amber);margin-top:2px;">&#9998; ${esc(f.correccion || '')}</div>`; });
         }
       }
-      // Category edit panel
       const catOptions = CATEGORY_KEYS.map(k => `<option value="${k}" ${d.category === k ? 'selected' : ''}>${CATEGORY_LABELS[k]}</option>`).join('');
       const editPanel = `<div class="doc-edit-panel">
         <div class="label">Reclasificar</div>
@@ -2853,6 +2927,7 @@ function renderDocsTable() {
           <input type="text" id="docEditNotes_${d.id}" value="${esc(d.notes || '')}" placeholder="Notas..." style="width:160px;">
           <button class="btn-save" onclick="docsSaveEdit('${d.id}')">Guardar cambios</button>
         </div>
+        <div style="margin-top:6px;"><a href="#" style="color:var(--forest);font-size:10px;font-family:var(--mono);" onclick="event.preventDefault();docsProcessOne('${d.id}')">&#8634; Re-procesar</a></div>
       </div>`;
       html += `<tr><td colspan="8" style="padding:0;"><div class="doc-expand-panel">
         <div class="label">Filename</div><div class="val">${esc(d.filename || '')}</div>
@@ -2995,6 +3070,73 @@ async function docsUploadFiles(fileList) {
   document.getElementById('docsFileInput').value = '';
   await loadDocsTab();
   prog.style.display = 'none';
+}
+
+// ── Per-row process ──
+async function docsProcessOne(id) {
+  docsProcessing.add(id);
+  renderDocsTable();
+  try {
+    const res = await fetch(`${API_BASE}/api/miteco-dd/projects/${currentProjectId}/documents/${id}/process`, { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      const doc = docsData.find(d => d.id === id);
+      if (doc) {
+        doc.category = data.category;
+        doc.oecc_point = data.oecc_point;
+        doc.status = 'processed';
+        doc.extracted_json = { text: data.text_length > 0 ? '(text extracted)' : null, ocr_used: data.ocr_used };
+      }
+      // Reload full data for accurate text preview
+      try {
+        const r2 = await fetch(`${API_BASE}/api/miteco-dd/projects/${currentProjectId}/documents`);
+        const d2 = await r2.json();
+        docsData = d2.documents || [];
+      } catch(e) {}
+      toast(`Procesado: ${data.filename} \u2192 ${CATEGORY_LABELS[data.category] || data.category}`);
+    } else {
+      toast('Error: ' + (data.error || 'unknown'), 'red');
+    }
+  } catch(e) {
+    toast('Error: ' + e.message, 'red');
+  }
+  docsProcessing.delete(id);
+  renderDocsSummary();
+  renderDocsTable();
+}
+
+// ── Process pending ──
+async function docsProcessPending() {
+  const pending = docsData.filter(d => docNeedsProcess(d));
+  if (pending.length === 0) { toast('No hay documentos pendientes'); return; }
+  if (!confirm(`${pending.length} documentos sin procesar. \u00bfProcesar ahora? (max 10 por llamada)`)) return;
+
+  const prog = document.getElementById('docsUploadProgress');
+  prog.style.display = '';
+  prog.textContent = `Procesando ${Math.min(pending.length, 10)} documentos...`;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/miteco-dd/projects/${currentProjectId}/documents/process-pending`, { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      toast(`${data.processed} documentos procesados${data.failed > 0 ? `, ${data.failed} fallidos` : ''}`);
+      await loadDocsTab();
+    } else {
+      toast('Error: ' + (data.error || 'unknown'), 'red');
+    }
+  } catch(e) {
+    toast('Error: ' + e.message, 'red');
+  }
+  prog.style.display = 'none';
+}
+
+function toast(msg, color) {
+  const el = document.createElement('div');
+  el.style.cssText = `position:fixed;bottom:20px;right:20px;padding:10px 18px;background:${color === 'red' ? 'var(--red)' : 'var(--forest)'};color:#fff;border-radius:8px;font-size:12px;font-family:var(--mono);z-index:9999;opacity:0;transition:opacity 0.3s;`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => { el.style.opacity = '1'; });
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
 }
 
 let currentProject = 'amoedo';
