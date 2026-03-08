@@ -2968,21 +2968,21 @@ function initDocsTableListeners() {
     const deleteBtn = e.target.closest('.btn-delete-doc');
     if (deleteBtn) {
       e.stopPropagation();
-      docsAskDelete(deleteBtn.dataset.docId, deleteBtn.dataset.filename);
+      docsAskDelete(deleteBtn.dataset.docId);
       return;
     }
     // Confirm delete
     const confirmBtn = e.target.closest('[data-confirm-delete]');
     if (confirmBtn) {
       e.stopPropagation();
-      docsDeleteConfirmed(confirmBtn.dataset.confirmDelete);
+      docsDeleteOne(confirmBtn.dataset.confirmDelete);
       return;
     }
     // Cancel delete
     const cancelBtn = e.target.closest('[data-cancel-delete]');
     if (cancelBtn) {
       e.stopPropagation();
-      docsCancelDelete(cancelBtn.dataset.cancelDelete);
+      docsCancelDelete();
       return;
     }
     // Reprocess button
@@ -2992,12 +2992,9 @@ function initDocsTableListeners() {
       docsProcessOne(reprocessBtn.dataset.docId);
       return;
     }
-    // Row expand (only if no button was clicked)
-    const row = e.target.closest('tr.doc-row');
-    if (row) {
-      docsToggleExpand(row.dataset.docId);
-    }
   });
+  console.log('initDocsTableListeners: attached to', freshTable?.id,
+    'buttons found:', freshTable?.querySelectorAll('.btn-process-doc').length);
 }
 
 function toggleDocRow(idx) {
