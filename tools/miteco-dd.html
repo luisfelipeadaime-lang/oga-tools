@@ -1215,6 +1215,8 @@ main {
 .docs-toolbar .btn-upload:hover { opacity:0.85; }
 .docs-bulk-bar { display:flex; align-items:center; gap:10px; padding:6px 12px; background:#fef3c7; border:1px solid var(--amber); border-radius:6px; font-size:11px; font-family:var(--mono); color:var(--ink); }
 .docs-bulk-bar .btn-bulk-del { padding:3px 10px; font-size:10px; background:var(--red); color:#fff; border:none; border-radius:4px; cursor:pointer; }
+.btn-doc-icon { padding:2px 5px; font-size:12px; background:none; border:1px solid var(--border); color:var(--ink2); border-radius:4px; cursor:pointer; opacity:0.6; margin-right:2px; }
+.btn-doc-icon:hover { opacity:1; background:var(--surface); border-color:var(--ink3); }
 .btn-doc-del { padding:2px 6px; font-size:10px; background:none; border:1px solid var(--red); color:var(--red); border-radius:4px; cursor:pointer; opacity:0.7; }
 .btn-doc-del:hover { opacity:1; background:var(--red-bg); }
 .doc-confirm-bar { display:inline-flex; align-items:center; gap:6px; font-size:10px; font-family:var(--mono); }
@@ -2856,7 +2858,7 @@ function renderDocsTable() {
     <th style="cursor:pointer;" onclick="docsSortBy('punto_oecc')">Punto OECC${docsSortArrow('punto_oecc')}</th>
     <th style="cursor:pointer;" onclick="docsSortBy('texto')">Texto${docsSortArrow('texto')}</th>
     <th style="cursor:pointer;" onclick="docsSortBy('estado')">Estado${docsSortArrow('estado')}</th>
-    <th style="width:80px;"></th>
+    <th style="width:120px;"></th>
   </tr></thead><tbody>`;
 
   filtered.forEach((d, idx) => {
@@ -2888,7 +2890,7 @@ function renderDocsTable() {
           ? '<span class="text-badge ocr" style="font-size:9px;">&#9881;...</span>'
           : showConfirm
             ? `<span class="doc-confirm-bar">\u00bfEliminar? <button class="btn-yes" onclick="event.stopPropagation();docsDeleteOne(this.dataset.xid)" data-xid="${d.id}">S\u00ed</button> <button class="btn-no" onclick="event.stopPropagation();docsCancelDelete()">No</button></span>`
-            : `${needsProc ? `<button class="btn-doc-del" style="border-color:var(--forest);color:var(--forest);margin-right:2px;" onclick="event.stopPropagation();docsProcessOne(this.dataset.xid)" data-xid="${d.id}" title="Procesar">\u2699</button>` : ''}<button class="btn-doc-del" onclick="event.stopPropagation();docsAskDelete(this.dataset.xid)" data-xid="${d.id}" title="Eliminar">&#128465;</button>`
+            : `<button class="btn-doc-icon" onclick="event.stopPropagation();docsDownloadOriginal(this.dataset.xid)" data-xid="${d.id}" title="Descargar original">&#8615;</button>${hasText ? `<button class="btn-doc-icon" style="color:var(--forest);" onclick="event.stopPropagation();docsDownloadText(this.dataset.xid)" data-xid="${d.id}" title="Descargar texto (.txt)">&#128196;</button>` : ''}${needsProc ? `<button class="btn-doc-del" style="border-color:var(--forest);color:var(--forest);margin-right:2px;" onclick="event.stopPropagation();docsProcessOne(this.dataset.xid)" data-xid="${d.id}" title="Procesar">\u2699</button>` : ''}<button class="btn-doc-del" onclick="event.stopPropagation();docsAskDelete(this.dataset.xid)" data-xid="${d.id}" title="Eliminar">&#128465;</button>`
         }
       </td>
     </tr>`;
@@ -3123,6 +3125,44 @@ function docsShowFullText(id) {
     el.style.maxHeight = 'none';
     el.textContent = fullText;
   }
+}
+
+// ── Download original file from R2 ──
+async function docsDownloadOriginal(id) {
+  const doc = docsData.find(d => d.id === id);
+  if (!doc) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/miteco-dd/projects/${currentProjectId}/documents/${id}/download-file`);
+    if (!res.ok) { toast('Error downloading: ' + res.status, 'red'); return; }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = doc.filename || 'document';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch(e) { toast('Error: ' + e.message, 'red'); }
+}
+
+// ── Download extracted text as .txt ──
+function docsDownloadText(id) {
+  const doc = docsData.find(d => d.id === id);
+  if (!doc) return;
+  const ej = docEj(doc);
+  const text = ej && ej.text ? ej.text : '';
+  if (!text) { toast('No text available', 'red'); return; }
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const baseName = (doc.filename || 'document').replace(/\.[^.]+$/, '');
+  a.download = baseName + '_extracted.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // ── Process pending ──
