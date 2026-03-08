@@ -206,6 +206,8 @@ body{font-family:var(--font);background:var(--offWhite);color:var(--navy);min-he
   .progress-bar{display:none;}
 }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 </head>
 <body>
 
@@ -819,7 +821,14 @@ async function doBuild(){
     if(state.mode==='add'){ds.textContent='Download the file below, then follow the steps below to add it to your existing deck in PowerPoint.';rg.style.display='block';}
     else{ds.textContent='Your branded PowerPoint file is ready. Click Download and open it in PowerPoint.';rg.style.display='none';}
     goTo('s8');
-  }catch(ex){alert('Build failed: '+ex.message);goTo('s6');btn.disabled=false;btn.innerHTML='🏗 Build my deck';}
+  }catch(ex){
+    console.error('doBuild error:', ex);
+    var msg = ex && ex.message ? ex.message : String(ex);
+    alert('Build failed: ' + msg);
+    goTo('s6');
+    btn.disabled=false;
+    btn.innerHTML='🏗 Build my deck';
+  }
 }
 
 function doDownload(){
@@ -876,6 +885,9 @@ function statBlocks(sl,stats,y,mw){
 }
 
 async function assemblePPTX(brief,p64,pext){
+  if(typeof PptxGenJS === 'undefined'){
+    throw new Error('PptxGenJS library not loaded. Please refresh the page and try again.');
+  }
   var pptx=new PptxGenJS();
   pptx.defineLayout({name:'CS_16x9',width:10,height:5.625});
   pptx.layout='CS_16x9';
@@ -1028,6 +1040,5 @@ window.addEventListener('DOMContentLoaded',function(){
   updateSelCount();
 });
 </script>
-<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 </body>
 </html>
