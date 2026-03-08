@@ -584,6 +584,7 @@ var state = {
 function save() {
   var s = Object.assign({},state);
   s.officialFiles=[];s.supportFiles=[];s.pptxBuf=null;
+  s.photo64=null; // too large for sessionStorage; kept in-memory only (SPA, no page reload)
   try{sessionStorage.setItem('cs3',JSON.stringify(s));}catch(e){}
 }
 function restore() {
@@ -816,6 +817,7 @@ async function doBuild(){
   btn.disabled=true;btn.innerHTML='<span class="isp"></span> Building...';
   goTo('s7');
   try{
+    console.log('buildBuf: photo64 length =', state.photo64 ? state.photo64.length : 'null', 'ext =', state.photoExt);
     state.pptxBuf=await buildBuf(state.brief,state.photo64,state.photoExt);
     var ds=document.getElementById('done-sub'),rg=document.getElementById('rguide');
     if(state.mode==='add'){ds.textContent='Download the file below, then follow the steps below to add it to your existing deck in PowerPoint.';rg.style.display='block';}
