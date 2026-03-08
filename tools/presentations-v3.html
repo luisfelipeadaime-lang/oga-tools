@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClearSky · Presentation Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:#0D1B3E; --midNavy:#1B2A4A; --lightBlue:#5B9BD5;
+  --gold:#D4A843; --white:#FFFFFF; --offWhite:#F5F7FA;
+  --midGray:#8A8F9A; --borderGray:#D0D7DE; --green:#1A8A6E; --red:#C0392B;
+  --font:'DM Sans',sans-serif; --mono:'DM Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--offWhite);color:var(--navy);min-height:100vh;display:flex;flex-direction:column;}
+
+/* NAV */
+.topnav{background:var(--navy);padding:0 28px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;flex-shrink:0;}
+.topnav-brand{display:flex;align-items:center;gap:10px;}
+.topnav-logo-text{font-size:16px;font-weight:600;color:var(--white);letter-spacing:-0.3px;}
+.topnav-logo-dot{color:var(--gold);}
+.topnav-sep{color:rgba(255,255,255,0.2);margin:0 6px;}
+.topnav-subtitle{font-size:12px;color:var(--midGray);font-weight:400;}
+.topnav-links{display:flex;gap:20px;}
+.topnav-links a{color:var(--midGray);text-decoration:none;font-size:12px;transition:color .15s;}
+.topnav-links a:hover{color:var(--white);}
+
+/* PROGRESS */
+.progress-bar{background:var(--midNavy);padding:0 28px;height:40px;display:flex;align-items:center;gap:0;flex-shrink:0;}
+.prog-step{display:flex;align-items:center;gap:7px;opacity:.35;transition:opacity .3s;}
+.prog-step.active{opacity:1;}
+.prog-step.done{opacity:.65;}
+.prog-step.done .snum{background:var(--green);}
+.snum{width:20px;height:20px;border-radius:50%;background:var(--midGray);color:var(--white);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.prog-step.active .snum{background:var(--gold);color:var(--navy);}
+.slabel{font-size:11px;color:var(--white);white-space:nowrap;}
+.sarr{color:var(--midGray);font-size:10px;margin:0 6px;}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;align-items:center;padding:36px 20px 72px;overflow-y:auto;}
+.screen{display:none;width:100%;max-width:680px;}
+.screen.active{display:block;animation:fadein .22s ease;}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* HEADERS */
+.eyebrow{font-size:10px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--lightBlue);margin-bottom:6px;}
+.stitle{font-size:26px;font-weight:300;color:var(--navy);margin-bottom:7px;line-height:1.2;}
+.stitle strong{font-weight:600;}
+.ssub{font-size:14px;color:var(--midGray);margin-bottom:28px;line-height:1.55;}
+
+/* MODE CARDS */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;}
+.mcard{background:var(--white);border:2px solid var(--borderGray);border-radius:14px;padding:28px 20px;cursor:pointer;transition:all .18s;text-align:center;}
+.mcard:hover{border-color:var(--lightBlue);box-shadow:0 6px 20px rgba(13,27,62,.1);transform:translateY(-2px);}
+.mcard-icon{font-size:36px;margin-bottom:14px;display:block;}
+.mcard h3{font-size:16px;font-weight:600;color:var(--navy);margin-bottom:6px;}
+.mcard p{font-size:12px;color:var(--midGray);line-height:1.5;margin-bottom:12px;}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:.3px;}
+.badge-g{background:#E6F7F3;color:var(--green);}
+.badge-b{background:#EEF4FC;color:var(--lightBlue);}
+.mode-hint{font-size:12px;color:var(--midGray);text-align:center;line-height:1.5;}
+
+/* PROJECT CARDS */
+.pcard{background:var(--white);border:2px solid var(--borderGray);border-radius:9px;padding:14px 18px;margin-bottom:9px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:all .18s;}
+.pcard:hover{border-color:var(--lightBlue);background:#F8FBFF;}
+.pcard.sel{border-color:var(--lightBlue);background:#EFF6FF;}
+.pcheck{width:20px;height:20px;border-radius:50%;border:2px solid var(--borderGray);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px;transition:all .18s;}
+.pcard.sel .pcheck{background:var(--lightBlue);border-color:var(--lightBlue);color:#fff;}
+.pinfo{flex:1;}
+.pname{font-size:14px;font-weight:500;color:var(--navy);margin-bottom:3px;}
+.pmeta{display:flex;gap:7px;align-items:center;}
+.rbadge{font-size:9px;font-weight:700;letter-spacing:.5px;padding:2px 7px;border-radius:3px;background:var(--navy);color:var(--white);text-transform:uppercase;}
+.sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.sdot.r{background:var(--green);}
+.sdot.p{background:var(--gold);}
+.sdot.e{background:var(--red);}
+.slbl{font-size:11px;color:var(--midGray);}
+.sel-count{font-size:11px;color:var(--midGray);text-align:center;padding:6px;margin-bottom:10px;}
+.sel-count span{color:var(--lightBlue);font-weight:600;}
+
+/* UPLOAD */
+.usec{margin-bottom:18px;}
+.ulabel{font-size:12px;font-weight:600;color:var(--navy);margin-bottom:5px;display:flex;align-items:center;gap:7px;}
+.tag{font-size:9px;padding:2px 7px;border-radius:3px;font-weight:600;}
+.tag-r{background:#FFF3CD;color:#856404;}
+.tag-o{background:#E2E8F0;color:#64748B;}
+.uhint{font-size:11px;color:var(--midGray);margin-bottom:8px;line-height:1.4;}
+.dz{border:2px dashed var(--borderGray);border-radius:9px;padding:24px;text-align:center;cursor:pointer;transition:all .18s;background:var(--offWhite);}
+.dz:hover{border-color:var(--lightBlue);background:#F0F7FF;}
+.dz.ok{border-color:var(--green);background:#F0FBF7;border-style:solid;}
+.dz.warn{border-color:var(--gold);}
+.dz input{display:none;}
+.dz-icon{font-size:24px;margin-bottom:6px;}
+.dz-text{font-size:13px;color:var(--navy);font-weight:500;margin-bottom:3px;}
+.dz-sub{font-size:11px;color:var(--midGray);}
+.dz-files{margin-top:8px;text-align:left;}
+.dz-file{font-size:11px;color:var(--navy);padding:3px 7px;background:var(--white);border-radius:3px;margin-bottom:3px;display:flex;align-items:center;gap:5px;}
+
+/* CALLOUTS */
+.callout{border-radius:7px;padding:12px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start;font-size:12px;line-height:1.5;}
+.callout-g{background:#E6F7F3;border-left:3px solid var(--green);color:#0D4D39;}
+.callout-a{background:#FFF8E6;border-left:3px solid var(--gold);color:#5C3D00;}
+.callout-b{background:#EEF4FC;border-left:3px solid var(--lightBlue);color:#1A3F6F;}
+.ci{font-size:15px;flex-shrink:0;margin-top:1px;}
+
+/* FIELDS */
+.field{margin-bottom:20px;}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--navy);margin-bottom:5px;}
+.field input{width:100%;padding:11px 14px;font-size:15px;font-family:var(--font);border:2px solid var(--borderGray);border-radius:7px;outline:none;transition:border-color .15s;color:var(--navy);}
+.field input:focus{border-color:var(--lightBlue);}
+.field input::placeholder{color:var(--midGray);}
+.field-hint{font-size:11px;color:var(--midGray);margin-top:4px;}
+
+/* OUTPUT TYPE */
+.otype-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+.otype{border:2px solid var(--borderGray);border-radius:9px;padding:14px;cursor:pointer;transition:all .18s;text-align:center;}
+.otype:hover{border-color:var(--lightBlue);}
+.otype.sel{border-color:var(--lightBlue);background:#EFF6FF;}
+.otype input{display:none;}
+.otype-icon{font-size:22px;margin-bottom:6px;}
+.otype-name{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:3px;}
+.otype-desc{font-size:10px;color:var(--midGray);line-height:1.4;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 24px;border-radius:7px;font-family:var(--font);font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .18s;text-decoration:none;white-space:nowrap;}
+.btn-primary{background:var(--navy);color:var(--white);}
+.btn-primary:hover{background:var(--midNavy);transform:translateY(-1px);box-shadow:0 4px 10px rgba(13,27,62,.25);}
+.btn-primary:disabled{background:var(--midGray);cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-gold{background:var(--gold);color:var(--navy);font-weight:600;}
+.btn-gold:hover{background:#C49835;transform:translateY(-1px);box-shadow:0 4px 10px rgba(212,168,67,.35);}
+.btn-ghost{background:transparent;color:var(--navy);border:1.5px solid var(--borderGray);}
+.btn-ghost:hover{border-color:var(--navy);background:var(--offWhite);}
+.btn-full{width:100%;}
+.btn-lg{padding:14px 32px;font-size:16px;border-radius:9px;}
+.isp{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* BOTTOM NAV */
+.bnav{display:flex;align-items:center;justify-content:space-between;margin-top:28px;padding-top:20px;border-top:1px solid var(--borderGray);}
+.bnav-r{display:flex;gap:9px;align-items:center;}
+
+/* SUMMARY */
+.sumcard{background:var(--navy);border-radius:11px;padding:20px;color:var(--white);margin-bottom:20px;}
+.sumrow{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:13px;}
+.sumrow:last-child{border-bottom:none;padding-bottom:0;}
+.sumkey{color:rgba(255,255,255,.55);font-weight:400;}
+.sumval{color:var(--white);font-weight:500;text-align:right;}
+.sumval.gold{color:var(--gold);}
+
+/* LOADING */
+.lscreen{text-align:center;padding:56px 20px;}
+.spinner{width:48px;height:48px;border:3px solid var(--borderGray);border-top-color:var(--lightBlue);border-radius:50%;animation:spin .9s linear infinite;margin:0 auto 24px;}
+.ltitle{font-size:20px;font-weight:300;color:var(--navy);margin-bottom:6px;}
+.lstep{font-size:13px;color:var(--midGray);margin-top:7px;min-height:18px;}
+.lbar-wrap{margin-top:28px;max-width:360px;margin-left:auto;margin-right:auto;height:3px;background:var(--borderGray);border-radius:2px;overflow:hidden;}
+.lbar{height:100%;background:var(--lightBlue);width:0%;transition:width .5s ease;border-radius:2px;}
+
+/* BRIEF */
+.bcard{background:var(--white);border:1.5px solid var(--borderGray);border-radius:9px;padding:16px 18px;margin-bottom:10px;display:flex;gap:14px;align-items:flex-start;}
+.bnum{width:30px;height:30px;border-radius:5px;background:var(--navy);color:var(--white);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--mono);}
+.bcont{flex:1;}
+.btype{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--lightBlue);font-weight:600;margin-bottom:3px;}
+.btitle{font-size:13px;font-weight:500;color:var(--navy);margin-bottom:3px;line-height:1.3;}
+.bsub{font-size:11px;color:var(--midGray);line-height:1.4;}
+.mkbadge{font-size:9px;padding:2px 7px;border-radius:9px;font-weight:600;flex-shrink:0;margin-top:3px;}
+.mkg{background:#E6F7F3;color:var(--green);}
+.mka{background:#FFF8E6;color:#856404;}
+.mkr{background:#FEE9E8;color:var(--red);}
+
+/* DONE */
+.done-wrap{text-align:center;padding:0 0 32px;}
+.done-icon{width:64px;height:64px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 20px;}
+.done-title{font-size:24px;font-weight:300;margin-bottom:6px;}
+.done-sub{font-size:14px;color:var(--midGray);margin-bottom:28px;line-height:1.5;}
+
+/* REUSE GUIDE */
+.rguide{background:var(--white);border:1.5px solid var(--borderGray);border-radius:11px;padding:22px;margin-top:20px;}
+.rguide h3{font-size:15px;font-weight:600;color:var(--navy);margin-bottom:3px;display:flex;align-items:center;gap:7px;}
+.rguide-sub{font-size:12px;color:var(--midGray);margin-bottom:18px;}
+.rstep{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start;}
+.rstep-num{width:26px;height:26px;border-radius:50%;background:var(--navy);color:var(--white);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.rstep-text{font-size:13px;color:var(--navy);line-height:1.5;padding-top:2px;}
+.rstep-text strong{font-weight:600;}
+.rstep-text code{background:var(--offWhite);padding:1px 5px;border-radius:3px;font-family:var(--mono);font-size:12px;border:1px solid var(--borderGray);}
+.rstep-note{font-size:11px;color:var(--midGray);margin-top:2px;display:block;}
+
+/* ERRORS */
+.errbox{background:#FEE9E8;border:1.5px solid var(--red);border-radius:7px;padding:12px 14px;font-size:12px;color:var(--red);margin-bottom:14px;display:none;}
+
+/* DIVIDER */
+.div{height:1px;background:var(--borderGray);margin:20px 0;}
+
+/* PHOTO */
+.photo-prev{width:100%;height:140px;object-fit:cover;border-radius:7px;margin-top:10px;display:none;}
+
+/* ADD PROJ BUTTON */
+.add-proj-btn{width:100%;padding:14px;border:2px dashed var(--borderGray);border-radius:9px;background:transparent;color:var(--midGray);font-family:var(--font);font-size:13px;cursor:pointer;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px;}
+.add-proj-btn:hover{border-color:var(--lightBlue);color:var(--lightBlue);background:#F8FBFF;}
+
+@media(max-width:560px){
+  .mode-grid{grid-template-columns:1fr;}
+  .otype-grid{grid-template-columns:1fr;}
+  .topnav{padding:0 14px;}
+  .main{padding:20px 14px 60px;}
+  .progress-bar{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="topnav">
+  <div class="topnav-brand">
+    <div class="topnav-logo-text">Clear<span class="topnav-logo-dot">Sky</span></div>
+    <span class="topnav-sep">|</span>
+    <span class="topnav-subtitle">Presentation Builder</span>
+  </div>
+  <div class="topnav-links">
+    <a href="presentations-v2.html">Advanced Mode</a>
+    <a href="/tools/clearsky-tools-index.html">← Tools Home</a>
+  </div>
+</nav>
+
+<!-- PROGRESS -->
+<div class="progress-bar" id="pbar" style="display:none;">
+  <div class="prog-step" id="p1"><div class="snum">1</div><div class="slabel">Project</div></div>
+  <div class="sarr">›</div>
+  <div class="prog-step" id="p2"><div class="snum">2</div><div class="slabel">Details</div></div>
+  <div class="sarr">›</div>
+  <div class="prog-step" id="p3"><div class="snum">3</div><div class="slabel">Photo</div></div>
+  <div class="sarr">›</div>
+  <div class="prog-step" id="p4"><div class="snum">4</div><div class="slabel">Confirm</div></div>
+  <div class="sarr">›</div>
+  <div class="prog-step" id="p5"><div class="snum">5</div><div class="slabel">Download</div></div>
+</div>
+
+<main class="main">
+
+<!-- ── S0: MODE ── -->
+<div class="screen active" id="s0">
+  <div style="text-align:center;margin-bottom:36px;">
+    <div class="eyebrow" style="text-align:center;">ClearSky Presentation Builder</div>
+    <div class="stitle" style="text-align:center;">What are we <strong>building today?</strong></div>
+    <div class="ssub" style="text-align:center;margin-bottom:0;">Choose one option below. Not sure? Read the descriptions — they'll help.</div>
+  </div>
+  <div class="mode-grid">
+    <div class="mcard" onclick="selectMode('new')">
+      <span class="mcard-icon">✨</span>
+      <h3>New presentation</h3>
+      <p>Create a fresh, fully branded ClearSky deck for one specific project and counterparty. You'll get a ready-to-send PowerPoint file.</p>
+      <span class="badge badge-g">Start from scratch</span>
+    </div>
+    <div class="mcard" onclick="selectMode('add')">
+      <span class="mcard-icon">📎</span>
+      <h3>Add slides to an existing deck</h3>
+      <p>Generate slides for a new project and add them to a ClearSky deck you already have open in PowerPoint. Takes about 30 seconds.</p>
+      <span class="badge badge-b">Extend your deck</span>
+    </div>
+  </div>
+  <p class="mode-hint">Not sure which to pick? <strong>If you're starting a new pitch — choose option 1.</strong><br>If you already have a ClearSky deck open and just need to add a project to it — choose option 2.</p>
+</div>
+
+<!-- ── S1: PICK PROJECT ── -->
+<div class="screen" id="s1">
+  <div class="eyebrow">Step 1 of 5 · Choose Project</div>
+  <div class="stitle">Which <strong>project</strong> are we presenting?</div>
+  <div class="ssub">Click to select a project. You can pick up to 3 at once.<br>The green dot means the AI has enough data to build strong slides. Yellow means it might need some help.</div>
+
+  <div class="errbox" id="e-proj">Please select at least one project before continuing.</div>
+  <div class="sel-count" id="selcount" style="display:none;"><span id="scnum">0</span> project(s) selected</div>
+
+  <div id="proj-list">
+    <div class="pcard sel">
+      <div class="pcheck">✓</div>
+      <div class="pinfo">
+        <div class="pname">ReGenerate Livermore Falls Biochar</div>
+        <div class="pmeta"><span class="rbadge">Puro.earth</span><div class="sdot r"></div><span class="slbl">Ready</span></div>
+      </div>
+    </div>
+    <div class="pcard">
+      <div class="pcheck"></div>
+      <div class="pinfo">
+        <div class="pname">Natural Carbon Sequestration Puno</div>
+        <div class="pmeta"><span class="rbadge">Verra</span><div class="sdot r"></div><span class="slbl">Ready</span></div>
+      </div>
+    </div>
+    <div class="pcard">
+      <div class="pcheck"></div>
+      <div class="pinfo">
+        <div class="pname">CCB VCS Puno NBS</div>
+        <div class="pmeta"><span class="rbadge">Verra</span><div class="sdot p"></div><span class="slbl">Limited data</span></div>
+      </div>
+    </div>
+  </div>
+
+  <button class="add-proj-btn" onclick="goTo('s1b')">＋ My project isn't listed — add it now</button>
+
+  <div class="bnav">
+    <button class="btn btn-ghost" onclick="goTo('s0')">← Back</button>
+    <button class="btn btn-primary" onclick="validateProj()">Continue →</button>
+  </div>
+</div>
+
+<!-- ── S1B: ADD PROJECT ── -->
+<div class="screen" id="s1b">
+  <div class="eyebrow">Add New Project</div>
+  <div class="stitle">Upload the <strong>project documents</strong></div>
+  <div class="ssub">We'll read these to understand the project and build accurate slides. Please read the instructions carefully before uploading.</div>
+
+  <div class="callout callout-g">
+    <span class="ci">✅</span>
+    <div>
+      <strong>What to upload here — official documents only:</strong><br>
+      Project Description (PD), Design Document (DD), Validation Report, Monitoring Report, any official registry documentation from Verra, Puro.earth, Gold Standard, or MITECO.<br><br>
+      <strong>These are the ONLY documents the AI will use to generate your slides.</strong> If you upload a developer pitch deck here by mistake, the AI may include inaccurate or biased information.
+    </div>
+  </div>
+
+  <div class="usec">
+    <div class="ulabel">Official Project Documents <span class="tag tag-r">Required</span></div>
+    <div class="uhint">The PD and registry files only. PDF format. These feed directly into the AI.</div>
+    <div class="dz" id="dz-official" onclick="document.getElementById('fi-official').click()">
+      <input type="file" id="fi-official" multiple accept=".pdf" onchange="handleOfficial(this.files)">
+      <div class="dz-icon">📄</div>
+      <div class="dz-text">Click to upload official documents</div>
+      <div class="dz-sub">PD · DD · Validation Reports · Registry docs · PDF only</div>
+      <div class="dz-files" id="fl-official"></div>
+    </div>
+  </div>
+
+  <div class="div"></div>
+
+  <div class="callout callout-a">
+    <span class="ci">⚠️</span>
+    <div>
+      <strong>Supporting materials are kept separate.</strong> Developer pitch decks, commercial presentations, and marketing materials uploaded below will <strong>NOT be used by the AI</strong>. They're stored in the library for your reference only — the AI never sees them.
+    </div>
+  </div>
+
+  <div class="usec">
+    <div class="ulabel">Supporting Materials <span class="tag tag-o">Optional · AI does NOT use these</span></div>
+    <div class="uhint">Developer commercial decks, website screenshots, marketing docs. Stored for reference only.</div>
+    <div class="dz warn" id="dz-support" onclick="document.getElementById('fi-support').click()">
+      <input type="file" id="fi-support" multiple accept=".pdf,.pptx,.docx" onchange="handleSupport(this.files)">
+      <div class="dz-icon">📁</div>
+      <div class="dz-text">Click to upload supporting materials (optional)</div>
+      <div class="dz-sub">Developer decks · Commercial docs · PDF, PPTX, DOCX</div>
+      <div class="dz-files" id="fl-support"></div>
+    </div>
+  </div>
+
+  <div class="errbox" id="e-upload">Please upload at least one official document before continuing.</div>
+
+  <div class="bnav">
+    <button class="btn btn-ghost" onclick="goTo('s1')">← Back</button>
+    <button class="btn btn-primary" id="upload-btn" onclick="doUpload()">Upload and continue →</button>
+  </div>
+</div>
+
+<!-- ── S2: DETAILS ── -->
+<div class="screen" id="s2">
+  <div class="eyebrow">Step 2 of 5 · Presentation Details</div>
+  <div class="stitle">Who is this <strong>presentation for?</strong></div>
+  <div class="ssub">Two quick questions. This helps the AI write the right tone and focus for your audience.</div>
+
+  <div class="field">
+    <label for="cp-input">Who is receiving this presentation? <span style="color:var(--red)">*</span></label>
+    <input type="text" id="cp-input" placeholder="Company or person name — e.g. TotalEnergies, Microsoft, Crédit Agricole" maxlength="100">
+    <div class="field-hint">This is the buyer, investor, or counterparty you're sending the deck to.</div>
+  </div>
+
+  <div class="field">
+    <label>What type of document do you need? <span style="color:var(--red)">*</span></label>
+    <div class="otype-grid">
+      <div class="otype sel" onclick="selOutputType('tearsheet',this)">
+        <input type="radio" name="ot" value="tearsheet" checked>
+        <div class="otype-icon">📋</div>
+        <div class="otype-name">Tearsheet</div>
+        <div class="otype-desc">Short first-contact summary. 4–6 slides. For initial outreach.</div>
+      </div>
+      <div class="otype" onclick="selOutputType('investor_brief',this)">
+        <input type="radio" name="ot" value="investor_brief">
+        <div class="otype-icon">💼</div>
+        <div class="otype-name">Investor Brief</div>
+        <div class="otype-desc">Detailed overview for serious buyers. 6–8 slides. More data.</div>
+      </div>
+      <div class="otype" onclick="selOutputType('project_summary',this)">
+        <input type="radio" name="ot" value="project_summary">
+        <div class="otype-icon">📊</div>
+        <div class="otype-name">Project Summary</div>
+        <div class="otype-desc">Internal reference document. All data, no sales angle.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="field">
+    <label for="intent-input">Any specific angle or message to emphasise? <span style="color:var(--midGray);font-weight:400;">(optional)</span></label>
+    <input type="text" id="intent-input" placeholder="e.g. Highlight co-benefits and SDG alignment, or focus on price competitiveness" maxlength="200">
+    <div class="field-hint">Leave blank for a balanced overview — the AI will decide what's most important.</div>
+  </div>
+
+  <div class="errbox" id="e-details">Please enter the counterparty name before continuing.</div>
+
+  <div class="bnav">
+    <button class="btn btn-ghost" onclick="goTo('s1')">← Back</button>
+    <button class="btn btn-primary" onclick="validateDetails()">Continue →</button>
+  </div>
+</div>
+
+<!-- ── S3: COVER PHOTO ── -->
+<div class="screen" id="s3">
+  <div class="eyebrow">Step 3 of 5 · Cover Photo</div>
+  <div class="stitle">Add a <strong>cover photo</strong></div>
+  <div class="ssub">Optional but highly recommended — a good photo makes the deck look much more professional. If you skip this, we'll use a clean branded navy background.</div>
+
+  <div class="callout callout-b">
+    <span class="ci">💡</span>
+    <div>
+      <strong>What works well:</strong> An aerial or ground-level photo of the project site, a photo showing the technology in action (e.g. biochar kiln, reforestation work, solar installation), or a strong landscape nature photo. <strong>Landscape orientation works best.</strong>
+    </div>
+  </div>
+
+  <div class="dz" id="dz-photo" onclick="document.getElementById('fi-photo').click()">
+    <input type="file" id="fi-photo" accept="image/jpeg,image/png,image/webp" onchange="handlePhoto(this.files[0])">
+    <div class="dz-icon">📷</div>
+    <div class="dz-text">Click to upload a photo</div>
+    <div class="dz-sub">JPG · PNG · WEBP · Or paste from clipboard with Ctrl+V</div>
+  </div>
+  <img id="photo-prev" class="photo-prev" alt="Cover preview">
+
+  <div class="bnav">
+    <button class="btn btn-ghost" onclick="goTo('s2')">← Back</button>
+    <div class="bnav-r">
+      <button class="btn btn-ghost" onclick="skipPhoto()">Skip — use branded cover</button>
+      <button class="btn btn-primary" onclick="goTo('s4')">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── S4: CONFIRM ── -->
+<div class="screen" id="s4">
+  <div class="eyebrow">Step 4 of 5 · Confirm & Generate</div>
+  <div class="stitle">Everything <strong>looks good!</strong></div>
+  <div class="ssub">Check the summary below. When you're ready, click Generate — the AI will build your slide outline in about 20–30 seconds.</div>
+
+  <div class="sumcard">
+    <div class="sumrow"><span class="sumkey">Project(s)</span><span class="sumval gold" id="sum-proj">—</span></div>
+    <div class="sumrow"><span class="sumkey">Counterparty</span><span class="sumval" id="sum-cp">—</span></div>
+    <div class="sumrow"><span class="sumkey">Document type</span><span class="sumval" id="sum-type">—</span></div>
+    <div class="sumrow"><span class="sumkey">Cover photo</span><span class="sumval" id="sum-photo">—</span></div>
+    <div class="sumrow"><span class="sumkey">Mode</span><span class="sumval" id="sum-mode">—</span></div>
+  </div>
+
+  <div class="callout callout-b">
+    <span class="ci">⏱</span>
+    <div><strong>What happens when you click Generate:</strong><br>
+    1. The AI reads your project documents.<br>
+    2. It builds a complete slide outline (titles, content, key stats).<br>
+    3. You review the outline and confirm.<br>
+    4. We build the PowerPoint file and you download it.</div>
+  </div>
+
+  <div class="errbox" id="e-gen"></div>
+
+  <div class="bnav">
+    <button class="btn btn-ghost" onclick="goTo('s3')">← Back</button>
+    <button class="btn btn-gold btn-lg" onclick="startGen()" id="gen-btn">✨ Generate my presentation</button>
+  </div>
+</div>
+
+<!-- ── S5: GENERATING ── -->
+<div class="screen" id="s5">
+  <div class="lscreen">
+    <div class="spinner"></div>
+    <div class="ltitle">Building your presentation...</div>
+    <div class="lstep" id="lstep">Reading project documents...</div>
+    <div class="lbar-wrap"><div class="lbar" id="lbar"></div></div>
+    <div style="margin-top:20px;font-size:12px;color:var(--midGray);">This takes about 20–30 seconds. Please don't close the window.</div>
+  </div>
+</div>
+
+<!-- ── S6: BRIEF REVIEW ── -->
+<div class="screen" id="s6">
+  <div class="eyebrow">Step 5 of 5 · Review Your Slides</div>
+  <div class="stitle">Here's your <strong>slide outline</strong></div>
+  <div class="ssub">The AI has built this outline from your project documents. Review it below.<br><span style="color:var(--green);font-weight:500;">Strong</span> = good data. <span style="color:#856404;font-weight:500;">Review</span> = limited data, may need editing in PowerPoint afterwards.</div>
+
+  <div id="brief-list"></div>
+
+  <div class="callout callout-a" id="brief-warn" style="display:none;">
+    <span class="ci">⚠️</span>
+    <div id="brief-warn-text"></div>
+  </div>
+
+  <div class="bnav">
+    <button class="btn btn-ghost" onclick="goTo('s4')">← Regenerate</button>
+    <button class="btn btn-gold btn-lg" onclick="doBuild()" id="build-btn">🏗 Build my deck</button>
+  </div>
+</div>
+
+<!-- ── S7: BUILDING ── -->
+<div class="screen" id="s7">
+  <div class="lscreen">
+    <div class="spinner"></div>
+    <div class="ltitle">Building your PowerPoint file...</div>
+    <div class="lstep">Applying ClearSky brand, logos, and layout...</div>
+    <div style="margin-top:20px;font-size:12px;color:var(--midGray);">Almost done. Your file will download automatically.</div>
+  </div>
+</div>
+
+<!-- ── S8: DONE ── -->
+<div class="screen" id="s8">
+  <div class="done-wrap">
+    <div class="done-icon">✓</div>
+    <div class="done-title">Your presentation is <strong>ready!</strong></div>
+    <div class="done-sub" id="done-sub">Your branded PowerPoint file has been built successfully.</div>
+    <button class="btn btn-gold btn-lg" onclick="doDownload()" id="dl-btn">⬇ Download PowerPoint</button>
+  </div>
+
+  <!-- REUSE SLIDES — add mode only -->
+  <div class="rguide" id="rguide" style="display:none;">
+    <h3>📎 Next step — add these slides to your existing deck</h3>
+    <div class="rguide-sub">Follow these 5 steps in PowerPoint. It takes about 30 seconds.</div>
+    <div class="rstep">
+      <div class="rstep-num">1</div>
+      <div class="rstep-text"><strong>Open your existing ClearSky deck</strong> in PowerPoint on your computer.</div>
+    </div>
+    <div class="rstep">
+      <div class="rstep-num">2</div>
+      <div class="rstep-text">Click <strong>Insert</strong> in the top menu bar (between Home and Draw).</div>
+    </div>
+    <div class="rstep">
+      <div class="rstep-num">3</div>
+      <div class="rstep-text">
+        Scroll to the bottom of the Insert menu and click <strong>Reuse Slides</strong>.<br>
+        <span class="rstep-note">On Mac: Insert → Slide from → Reuse Slides</span>
+      </div>
+    </div>
+    <div class="rstep">
+      <div class="rstep-num">4</div>
+      <div class="rstep-text">A panel will open on the right. Click <strong>Browse</strong> and select the PowerPoint file you just downloaded.</div>
+    </div>
+    <div class="rstep">
+      <div class="rstep-num">5</div>
+      <div class="rstep-text">
+        You'll see thumbnails of the new slides. <strong>Right-click any thumbnail</strong> and select <code>Insert All Slides</code>.<br>
+        <span class="rstep-note">The new project slides will appear at the end of your existing deck. Done!</span>
+      </div>
+    </div>
+    <div class="callout callout-b" style="margin-top:14px;margin-bottom:0;">
+      <span class="ci">💡</span>
+      <div>PowerPoint handles the formatting automatically when you use Reuse Slides — your existing deck's design stays intact.</div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:28px;padding-top:20px;border-top:1px solid var(--borderGray);">
+    <button class="btn btn-ghost" onclick="resetAll()">← Build another presentation</button>
+  </div>
+</div>
+
+</main>
+
+<script>
+var API = 'https://api-tools.oga.earth';
+
+var state = {
+  mode: null,
+  projects: [],      // selected {id,title,registry}
+  officialFiles: [],
+  supportFiles: [],
+  cp: '',
+  outputType: 'tearsheet',
+  intent: '',
+  photo64: null,
+  photoExt: 'jpeg',
+  brief: null,
+  pptxBuf: null
+};
+
+// ── PERSIST ──
+function save() {
+  var s = Object.assign({},state);
+  s.officialFiles=[];s.supportFiles=[];s.pptxBuf=null;
+  try{sessionStorage.setItem('cs3',JSON.stringify(s));}catch(e){}
+}
+function restore() {
+  try{var r=sessionStorage.getItem('cs3');if(r)Object.assign(state,JSON.parse(r));}catch(e){}
+}
+
+// ── NAVIGATION ──
+var PM={'s1':1,'s1b':1,'s2':2,'s3':3,'s4':4,'s5':4,'s6':5,'s7':5,'s8':5};
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  save();
+  updatePB(PM[id]||0);
+  if(id==='s4') fillSummary();
+}
+function updatePB(step) {
+  var pb=document.getElementById('pbar');
+  if(!step){pb.style.display='none';return;}
+  pb.style.display='flex';
+  [1,2,3,4,5].forEach(function(i){
+    var el=document.getElementById('p'+i);
+    if(!el)return;
+    el.classList.remove('active','done');
+    if(i<step)el.classList.add('done');
+    else if(i===step)el.classList.add('active');
+  });
+}
+
+// ── S0 ──
+function selectMode(m) {
+  state.mode=m; save();
+  loadProjects();
+  goTo('s1');
+}
+
+// ── S1 ──
+var MOCK_PROJECTS=[
+  {id:'439ebb62',title:'ReGenerate Livermore Falls Biochar',registry:'Puro.earth',word_count:2108},
+  {id:'bad062bd',title:'Natural Carbon Sequestration Puno',registry:'Verra',word_count:2102},
+  {id:'a7f4b69c',title:'CCB VCS Puno NBS',registry:'Verra',word_count:308},
+];
+
+async function loadProjects() {
+  var list=document.getElementById('proj-list');
+  list.innerHTML='<div style="text-align:center;padding:32px;color:var(--midGray);"><div class="spinner" style="width:28px;height:28px;margin:0 auto 10px;"></div>Loading...</div>';
+  var docs=MOCK_PROJECTS; // fallback
+  try {
+    var r=await fetch(API+'/api/wiki/docs?type=project_dossier&owner=clearsky001');
+    if(r.ok){var d=await r.json();if(Array.isArray(d.docs)&&d.docs.length)docs=d.docs;}
+  } catch(e){}
+  renderProjects(docs);
+}
+
+function renderProjects(docs) {
+  var list=document.getElementById('proj-list');
+  list.innerHTML='';
+  docs.forEach(function(doc){
+    var sel=state.projects.some(function(p){return p.id===doc.id;});
+    var w=doc.word_count||0;
+    var sc=w>500?'r':w>50?'p':'e';
+    var sl=w>500?'Ready':w>50?'Limited data':'Extraction failed';
+    var reg=doc.registry||guessReg(doc.title||'');
+    var c=document.createElement('div');
+    c.className='pcard'+(sel?' sel':'');
+    c.innerHTML='<div class="pcheck">'+(sel?'✓':'')+'</div><div class="pinfo"><div class="pname">'+esc(doc.title||'Untitled')+'</div><div class="pmeta"><span class="rbadge">'+esc(reg)+'</span><div class="sdot '+sc+'"></div><span class="slbl">'+sl+'</span></div></div>';
+    c.onclick=function(){toggleProj(doc,c);};
+    list.appendChild(c);
+  });
+  updateSelCount();
+}
+
+function guessReg(t){
+  t=t.toLowerCase();
+  if(t.includes('verra')||t.includes('vcs')||t.includes('redd'))return'Verra';
+  if(t.includes('puro')||t.includes('biochar'))return'Puro.earth';
+  if(t.includes('gold standard'))return'Gold Standard';
+  if(t.includes('miteco'))return'MITECO';
+  return'Registry';
+}
+
+function toggleProj(doc,card){
+  var idx=state.projects.findIndex(function(p){return p.id===doc.id;});
+  if(idx>=0){state.projects.splice(idx,1);card.classList.remove('sel');card.querySelector('.pcheck').textContent='';}
+  else{
+    if(state.projects.length>=3){alert('Maximum 3 projects at a time.');return;}
+    state.projects.push({id:doc.id,title:doc.title,registry:doc.registry||guessReg(doc.title||'')});
+    card.classList.add('sel');card.querySelector('.pcheck').textContent='✓';
+  }
+  updateSelCount();save();
+}
+
+function updateSelCount(){
+  var el=document.getElementById('selcount'),n=state.projects.length;
+  if(n>0){el.style.display='block';document.getElementById('scnum').textContent=n;}
+  else el.style.display='none';
+}
+
+function validateProj(){
+  var e=document.getElementById('e-proj');
+  if(!state.projects.length){e.style.display='block';return;}
+  e.style.display='none';goTo('s2');
+}
+
+// ── S1B ──
+function handleOfficial(files){
+  state.officialFiles=Array.from(files);
+  var z=document.getElementById('dz-official'),fl=document.getElementById('fl-official');
+  z.classList.add('ok');
+  fl.innerHTML=state.officialFiles.map(function(f){return '<div class="dz-file">📄 '+esc(f.name)+'<span style="color:var(--midGray);margin-left:auto;">'+Math.round(f.size/1024)+' KB</span></div>';}).join('');
+}
+function handleSupport(files){
+  state.supportFiles=Array.from(files);
+  document.getElementById('fl-support').innerHTML=state.supportFiles.map(function(f){return '<div class="dz-file">📁 '+esc(f.name)+'<span style="color:var(--midGray);margin-left:auto;">'+Math.round(f.size/1024)+' KB</span></div>';}).join('');
+}
+
+async function doUpload(){
+  var e=document.getElementById('e-upload');
+  if(!state.officialFiles.length){e.style.display='block';return;}
+  e.style.display='none';
+  var btn=document.getElementById('upload-btn');
+  btn.disabled=true;btn.innerHTML='<span class="isp"></span> Uploading...';
+  try{
+    for(var i=0;i<state.officialFiles.length;i++){
+      var fd=new FormData();fd.append('file',state.officialFiles[i]);fd.append('owner','clearsky001');fd.append('document_type','project_dossier');
+      var r=await fetch(API+'/api/presentations/v2/ingest-pds',{method:'POST',body:fd});
+      if(!r.ok)throw new Error('Upload failed '+r.status);
+      var d=await r.json();
+      if(d.project_id)state.projects.push({id:d.project_id,title:state.officialFiles[i].name.replace('.pdf',''),registry:'Uploaded'});
+    }
+    for(var i=0;i<state.supportFiles.length;i++){
+      var fd=new FormData();fd.append('file',state.supportFiles[i]);fd.append('owner','clearsky001');fd.append('document_type','project_supporting');
+      await fetch(API+'/api/presentations/v2/ingest-pds',{method:'POST',body:fd});
+    }
+    await loadProjects();goTo('s1');
+  }catch(ex){e.textContent='Upload failed: '+ex.message;e.style.display='block';}
+  finally{btn.disabled=false;btn.innerHTML='Upload and continue →';}
+}
+
+// ── S2 ──
+function selOutputType(t,card){
+  state.outputType=t;
+  document.querySelectorAll('.otype').forEach(function(c){c.classList.remove('sel');});
+  card.classList.add('sel');save();
+}
+function validateDetails(){
+  var cp=document.getElementById('cp-input').value.trim();
+  var e=document.getElementById('e-details');
+  if(!cp){e.style.display='block';return;}
+  e.style.display='none';
+  state.cp=cp;state.intent=document.getElementById('intent-input').value.trim();save();
+  goTo('s3');
+}
+
+// ── S3 ──
+function handlePhoto(file){
+  if(!file)return;
+  var ext=file.type==='image/png'?'png':'jpeg';
+  var rd=new FileReader();
+  rd.onload=function(ev){
+    state.photo64=ev.target.result.split(',')[1];state.photoExt=ext;
+    var pv=document.getElementById('photo-prev');pv.src=ev.target.result;pv.style.display='block';
+    var dz=document.getElementById('dz-photo');dz.classList.add('ok');
+    dz.querySelector('.dz-text').textContent='✓ '+file.name;
+    save();
+  };
+  rd.readAsDataURL(file);
+}
+function skipPhoto(){state.photo64=null;save();goTo('s4');}
+
+document.addEventListener('paste',function(e){
+  var items=e.clipboardData&&e.clipboardData.items;
+  if(!items)return;
+  for(var i=0;i<items.length;i++){if(items[i].type.indexOf('image')!==-1){handlePhoto(items[i].getAsFile());break;}}
+});
+
+// ── S4 ──
+function fillSummary(){
+  document.getElementById('sum-proj').textContent=state.projects.map(function(p){return p.title||p.id;}).join(', ')||'—';
+  document.getElementById('sum-cp').textContent=state.cp||'—';
+  var tl={tearsheet:'Tearsheet',investor_brief:'Investor Brief',project_summary:'Project Summary'};
+  document.getElementById('sum-type').textContent=tl[state.outputType]||state.outputType;
+  document.getElementById('sum-photo').textContent=state.photo64?'✓ Photo uploaded':'Branded navy cover (no photo)';
+  document.getElementById('sum-mode').textContent=state.mode==='add'?'Add slides to existing deck':'New standalone presentation';
+}
+
+// ── S5 — GENERATE ──
+var lmsgs=['Reading your project documents...','Identifying key metrics and data...','Writing slide titles and content...','Applying McKinsey quality scoring...','Finalising your slide outline...','Almost ready...'];
+
+async function startGen(){
+  var e=document.getElementById('e-gen');e.style.display='none';
+  if(!state.projects.length){e.textContent='No projects selected.';e.style.display='block';return;}
+  goTo('s5');animateLoad();
+  try{
+    var payload={project_ids:state.projects.map(function(p){return p.id;}),counterparty:state.cp,intent:state.intent||('Generate a '+state.outputType+' for '+state.cp),output_type:state.outputType,pptx_theme:null};
+    var r=await fetch(API+'/api/presentations/v2/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!r.ok){var ed=await r.json().catch(function(){return{};});throw new Error(ed.error||ed.detail||'Generation failed ('+r.status+')');}
+    state.brief=await r.json();save();renderBrief();goTo('s6');
+  }catch(ex){goTo('s4');document.getElementById('e-gen').textContent='Generation failed: '+ex.message;document.getElementById('e-gen').style.display='block';}
+}
+
+function animateLoad(){
+  var si=document.getElementById('lstep'),bi=document.getElementById('lbar'),idx=0;
+  var iv=setInterval(function(){
+    if(idx<lmsgs.length){si.textContent=lmsgs[idx];bi.style.width=Math.min(88,(idx+1)*14)+'%';idx++;}
+    else clearInterval(iv);
+  },3600);
+}
+
+// ── S6 ──
+function renderBrief(){
+  var b=state.brief;if(!b||!b.slides)return;
+  var list=document.getElementById('brief-list');list.innerHTML='';
+  var yc=0;
+  b.slides.forEach(function(s){
+    if(s.mckinsey_score!=='green')yc++;
+    var bck=s.mckinsey_score==='green'?'mkg':s.mckinsey_score==='amber'?'mka':'mkr';
+    var bl=s.mckinsey_score==='green'?'Strong':s.mckinsey_score==='amber'?'Review':'Weak';
+    var c=document.createElement('div');c.className='bcard';
+    c.innerHTML='<div class="bnum">'+String(s.slide_number).padStart(2,'0')+'</div><div class="bcont"><div class="btype">'+esc(s.slide_type||'')+'</div><div class="btitle">'+esc(s.title||'')+'</div>'+(s.subtitle?'<div class="bsub">'+esc(s.subtitle)+'</div>':'')+'</div><div class="mkbadge '+bck+'">'+bl+'</div>';
+    list.appendChild(c);
+  });
+  var w=document.getElementById('brief-warn');
+  if(yc>0){w.style.display='flex';document.getElementById('brief-warn-text').textContent=yc+' slide(s) have limited data and may need editing in PowerPoint after download.';}
+}
+
+// ── S7 ──
+async function doBuild(){
+  var btn=document.getElementById('build-btn');
+  btn.disabled=true;btn.innerHTML='<span class="isp"></span> Building...';
+  goTo('s7');
+  try{
+    state.pptxBuf=await buildBuf(state.brief,state.photo64,state.photoExt);
+    var ds=document.getElementById('done-sub'),rg=document.getElementById('rguide');
+    if(state.mode==='add'){ds.textContent='Download the file below, then follow the steps below to add it to your existing deck in PowerPoint.';rg.style.display='block';}
+    else{ds.textContent='Your branded PowerPoint file is ready. Click Download and open it in PowerPoint.';rg.style.display='none';}
+    goTo('s8');
+  }catch(ex){alert('Build failed: '+ex.message);goTo('s6');btn.disabled=false;btn.innerHTML='🏗 Build my deck';}
+}
+
+function doDownload(){
+  if(!state.pptxBuf){alert('No file ready.');return;}
+  var fn=[(state.cp||'ClearSky').replace(/[^a-zA-Z0-9]/g,'_'),state.outputType,new Date().toISOString().slice(0,10)].join('_')+'.pptx';
+  var blob=new Blob([state.pptxBuf],{type:'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
+  var url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+
+function resetAll(){
+  state={mode:null,projects:[],officialFiles:[],supportFiles:[],cp:'',outputType:'tearsheet',intent:'',photo64:null,photoExt:'jpeg',brief:null,pptxBuf:null};
+  sessionStorage.removeItem('cs3');goTo('s0');
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ── PPTX BRAND CONSTANTS ──
+var C={navy:'0D1B3E',midNavy:'1B2A4A',lightBlue:'5B9BD5',gold:'D4A843',white:'FFFFFF',offWhite:'F5F7FA',darkText:'0D1B3E',midGray:'8A8F9A',borderGray:'D0D7DE',green:'1A8A6E',red:'C0392B'};
+var LW=null,LD=null,HLA=null,HAA=null,HCM=null;
+
+async function fetchB64(url){
+  try{var r=await fetch(url);if(!r.ok)throw new Error(''+r.status);var b=await r.blob();return new Promise(function(res,rej){var fr=new FileReader();fr.onloadend=function(){res(fr.result.split(',')[1]);};fr.onerror=rej;fr.readAsDataURL(b);});}
+  catch(e){console.warn('img fail',url,e.message);return null;}
+}
+
+async function preload(){
+  var base='https://tools.oga.earth/assets/';
+  var rs=await Promise.all([fetchB64(base+'logos/clearsky-logo-white.png'),fetchB64(base+'logos/clearsky-logo-darkblue.png'),fetchB64(base+'team/luis-adaime.png'),fetchB64(base+'team/ana-avramovic.png'),fetchB64(base+'team/carolina-martinez.png')]);
+  LW=rs[0];LD=rs[1];HLA=rs[2];HAA=rs[3];HCM=rs[4];
+}
+
+function chrome(sl,dark){
+  var lb=dark?LW:LD;
+  if(lb)sl.addImage({data:'data:image/png;base64,'+lb,x:.35,y:.12,w:1.6,h:.37});
+  else sl.addText('ClearSky',{x:.35,y:.12,w:1.6,h:.37,fontSize:18,color:dark?C.white:C.navy,fontFace:'Roboto Bold',bold:true});
+  sl.addText('CONFIDENTIAL',{x:7.8,y:.18,w:1.5,h:.18,fontSize:7,color:C.red,fontFace:'Roboto Medium',charSpacing:2,align:'right'});
+  sl.addShape('rect',{x:0,y:5.15,w:10,h:.01,fill:{color:C.borderGray}});
+  sl.addText('ClearSky Limited  ·  103 Cannon Street, London, EC4N 5AG',{x:.35,y:5.2,w:6,h:.2,fontSize:7,color:dark?C.white:C.midGray,fontFace:'Roboto Light'});
+}
+function pageNum(sl,n){sl.addText('Page '+String(n).padStart(2,'0'),{x:8.8,y:5.2,w:.8,h:.2,fontSize:7,color:C.midGray,fontFace:'Roboto Light',align:'right'});}
+function truncU(u){return(!u)?'':u.length>18?u.substring(0,16)+'\u2026':u;}
+
+function statBlocks(sl,stats,y,mw){
+  if(!stats||!stats.length)return;
+  var w=mw||9.0,sx=mw?.35:.5,sc=stats.length,bw=(w-(sc-1)*.15)/sc;
+  stats.forEach(function(s,i){
+    var bx=sx+i*(bw+.15);
+    sl.addShape('rect',{x:bx,y:y,w:bw,h:.95,fill:{color:C.navy},rectRadius:.05});
+    var vs=String(s.value||''),vsz=vs.length>8?14:vs.length>6?16:vs.length>4?18:20;
+    sl.addText(vs,{x:bx+.05,y:y+.08,w:bw-.1,h:.42,fontSize:vsz,color:i%2===0?C.gold:C.lightBlue,fontFace:'Roboto Bold',align:'center',shrinkText:true,wrap:false});
+    if(s.unit)sl.addText(truncU(s.unit),{x:bx+.05,y:y+.52,w:bw-.1,h:.18,fontSize:6,color:C.lightBlue,fontFace:'Roboto Light',align:'center',shrinkText:true,wrap:false});
+    sl.addText(s.label||'',{x:bx+.05,y:y+.72,w:bw-.1,h:.18,fontSize:7.5,color:C.white,fontFace:'Roboto Light',align:'center',shrinkText:true});
+  });
+}
+
+async function assemblePPTX(brief,p64,pext){
+  var pptx=new PptxGenJS();
+  pptx.defineLayout({name:'CS_16x9',width:10,height:5.625});
+  pptx.layout='CS_16x9';
+  var slides=brief.slides||[];
+
+  // COVER
+  var cv=pptx.addSlide();cv.background={color:C.navy};chrome(cv,true);
+  cv.addShape('rect',{x:0,y:0,w:.12,h:5.625,fill:{color:C.gold}});
+  if(p64){cv.addImage({data:'data:image/'+(pext==='png'?'png':'jpeg')+';base64,'+p64,x:0,y:0,w:10,h:5.625});cv.addShape('rect',{x:0,y:0,w:10,h:5.625,fill:{color:'091527'}});}
+  if(brief.counterparty)cv.addText(brief.counterparty.toUpperCase(),{x:.35,y:.65,w:9.3,h:.3,fontSize:9,color:C.gold,fontFace:'Roboto Medium',charSpacing:3});
+  var s0=slides[0]||{};
+  cv.addText(s0.title||'ClearSky',{x:.35,y:1.0,w:9.3,h:1.6,fontSize:34,color:C.white,fontFace:'Roboto Light',shrinkText:true});
+  if(s0.subtitle)cv.addText(s0.subtitle,{x:.35,y:2.65,w:9.3,h:.5,fontSize:14,color:C.lightBlue,fontFace:'Roboto Light',shrinkText:true});
+  if(s0.body)cv.addText(s0.body,{x:.35,y:3.25,w:7.5,h:.8,fontSize:12,color:C.white,fontFace:'Roboto',shrinkText:true});
+  if(s0.stats&&s0.stats.length)statBlocks(cv,s0.stats,4.1,9.0);
+
+  // CONTENT
+  for(var i=1;i<slides.length;i++){
+    var s=slides[i];
+    if(s.slide_type==='metrics')buildMetrics(pptx,s,i);
+    else if(s.slide_type==='project')buildProject(pptx,s,i);
+    else if(s.slide_type==='comparison')buildComparison(pptx,s,i);
+    else buildDefault(pptx,s,i);
+  }
+
+  // CONTACT
+  var cs=pptx.addSlide();cs.background={color:C.navy};chrome(cs,true);
+  cs.addShape('rect',{x:0,y:.55,w:10,h:.04,fill:{color:C.gold}});
+  cs.addText("Interested in purchasing carbon credits, exploring climate investment, or procuring biochar?",{x:.5,y:.72,w:9,h:.55,fontSize:12,color:C.white,fontFace:'Roboto Light',align:'center',shrinkText:true});
+  var cts=[{name:'Luis Felipe Adaime',title:'CCO',email:'luis.adaime@clearskyltd.com',phone:'+34 659 70 02 80',ini:'LA',b:HLA},{name:'Ana Avramovic',title:'Head of Sales',email:'ana.avramovic@clearskyltd.com',phone:'+1 403 999 5757',ini:'AA',b:HAA},{name:'Carolina Martinez',title:'Sales Associate',email:'Carolina.Martinez@clearskyltd.com',phone:'+1 631 494 5327',ini:'CM',b:HCM}];
+  var cw=2.6,ch=2.4,cg=.3,tw=cts.length*cw+(cts.length-1)*cg,sx=(10-tw)/2;
+  cts.forEach(function(ct,i){
+    var cx=sx+i*(cw+cg),cy=1.45;
+    cs.addShape('rect',{x:cx,y:cy,w:cw,h:ch,fill:{color:C.midNavy},rectRadius:.08,line:{color:'2A3A5A',width:1}});
+    if(ct.b)cs.addImage({data:'data:image/png;base64,'+ct.b,x:cx+(cw-.85)/2,y:cy+.18,w:.85,h:.85});
+    else{cs.addShape('ellipse',{x:cx+(cw-.85)/2,y:cy+.18,w:.85,h:.85,fill:{color:C.navy},line:{color:C.gold,width:1.5}});cs.addText(ct.ini,{x:cx+(cw-.85)/2,y:cy+.18,w:.85,h:.85,fontSize:16,color:C.white,fontFace:'Roboto Bold',align:'center',valign:'middle'});}
+    cs.addText(ct.name,{x:cx+.1,y:cy+1.1,w:cw-.2,h:.32,fontSize:11,color:C.white,fontFace:'Roboto Medium',align:'center',shrinkText:true});
+    cs.addText(ct.title,{x:cx+.1,y:cy+1.42,w:cw-.2,h:.28,fontSize:8,color:C.midGray,fontFace:'Roboto',align:'center',shrinkText:true});
+    cs.addText(ct.email,{x:cx+.1,y:cy+1.75,w:cw-.2,h:.24,fontSize:8,color:C.lightBlue,fontFace:'Roboto',align:'center',shrinkText:true});
+    cs.addText(ct.phone,{x:cx+.1,y:cy+1.98,w:cw-.2,h:.22,fontSize:8,color:C.midGray,fontFace:'Roboto',align:'center',shrinkText:true});
+  });
+  cs.addText('www.clearskyltd.com',{x:.5,y:4.05,w:9,h:.32,fontSize:14,color:C.gold,fontFace:'Roboto Light',align:'center'});
+  cs.addText('Scaling Durable, High-Integrity Climate Solutions',{x:.5,y:4.4,w:9,h:.28,fontSize:10,color:C.midGray,fontFace:'Roboto Light',align:'center',italic:true});
+  return pptx;
+}
+
+function buildDefault(pptx,s,idx){
+  var sl=pptx.addSlide();sl.background={color:C.white};chrome(sl,false);pageNum(sl,idx+1);
+  sl.addShape('rect',{x:.35,y:.55,w:.5,h:.025,fill:{color:C.gold}});
+  sl.addText(s.title||'',{x:.35,y:.62,w:9,h:.85,fontSize:22,color:C.navy,fontFace:'Roboto Light',shrinkText:true});
+  if(s.subtitle)sl.addText(s.subtitle,{x:.35,y:1.48,w:9,h:.3,fontSize:10,color:C.lightBlue,fontFace:'Roboto Light',italic:true,shrinkText:true});
+  var cy=s.subtitle?1.9:1.6;
+  if(s.stats&&s.stats.length){statBlocks(sl,s.stats,cy);cy+=1.15;}
+  if(s.table&&s.table.headers&&s.table.rows){
+    var tr=[s.table.headers.map(function(h){return{text:String(h),options:{bold:true,color:C.lightBlue,fill:C.navy,fontSize:9,fontFace:'Roboto Medium'}};})];
+    s.table.rows.forEach(function(row,ri){tr.push(row.map(function(cell){return{text:String(cell||''),options:{color:C.darkText,fill:ri%2===0?C.offWhite:C.white,fontSize:9,fontFace:'Roboto'}};}))}); 
+    sl.addTable(tr,{x:.35,y:cy,w:9.3,border:{type:'solid',color:C.borderGray,pt:.5},rowH:.32,margin:[.06,.08,.06,.08]});cy+=(tr.length*.32)+.25;
+  }
+  if(s.body)sl.addText(s.body,{x:.35,y:cy,w:9.3,h:Math.max(.4,5.0-cy),fontSize:13,color:C.darkText,fontFace:'Roboto',valign:'top',shrinkText:true});
+}
+
+function buildMetrics(pptx,s,idx){
+  var sl=pptx.addSlide();sl.background={color:C.offWhite};chrome(sl,false);pageNum(sl,idx+1);
+  sl.addShape('rect',{x:.35,y:.55,w:.5,h:.025,fill:{color:C.gold}});
+  sl.addText(s.title||'',{x:.35,y:.62,w:9.3,h:.85,fontSize:20,color:C.navy,fontFace:'Roboto Light',shrinkText:true});
+  if(s.subtitle)sl.addText(s.subtitle,{x:.35,y:1.48,w:9.3,h:.3,fontSize:10,color:C.lightBlue,fontFace:'Roboto Light',italic:true,shrinkText:true});
+  if(s.stats&&s.stats.length)statBlocks(sl,s.stats,1.9);
+  if(s.body)sl.addText(s.body,{x:.35,y:3.1,w:9.3,h:1.8,fontSize:12,color:C.navy,fontFace:'Roboto',valign:'top',shrinkText:true});
+}
+
+function buildProject(pptx,s,idx){
+  var sl=pptx.addSlide();sl.background={color:C.white};chrome(sl,false);pageNum(sl,idx+1);
+  sl.addShape('rect',{x:.35,y:.55,w:.5,h:.025,fill:{color:C.gold}});
+  sl.addText(s.title||'',{x:.35,y:.62,w:4.9,h:.85,fontSize:18,color:C.navy,fontFace:'Roboto Light',shrinkText:true});
+  sl.addShape('rect',{x:5.5,y:.55,w:4.5,h:4.55,fill:{color:C.midNavy}});
+  sl.addText('Project Details',{x:5.75,y:.75,w:4,h:.35,fontSize:14,color:C.gold,fontFace:'Roboto Medium'});
+  var pc=[];
+  if(s.subtitle)pc.push({text:s.subtitle+'\n',options:{fontSize:10,color:C.lightBlue}});
+  if(s.body)s.body.replace(/\. /g,'.\n').split('\n').filter(Boolean).forEach(function(t){pc.push({text:'• '+t.trim()+'\n',options:{fontSize:10,color:C.white}});});
+  if(pc.length)sl.addText(pc,{x:5.75,y:1.2,w:4,h:3.7,fontFace:'Roboto',valign:'top',shrinkText:true});
+  if(s.table&&s.table.headers&&s.table.rows){
+    var tr=[s.table.headers.map(function(h){return{text:String(h),options:{bold:true,color:C.lightBlue,fill:C.navy,fontSize:9,fontFace:'Roboto Medium'}};})];
+    s.table.rows.forEach(function(row,ri){tr.push(row.map(function(cell){return{text:String(cell||''),options:{color:C.navy,fill:ri%2===0?C.offWhite:C.white,fontSize:9,fontFace:'Roboto'}};}))}); 
+    sl.addTable(tr,{x:.35,y:1.6,w:4.95,border:{type:'solid',color:C.borderGray,pt:.5},rowH:.36,margin:[.06,.08,.06,.08]});
+  }else if(s.stats&&s.stats.length)statBlocks(sl,s.stats,1.7,4.7);
+}
+
+function buildComparison(pptx,s,idx){
+  var sl=pptx.addSlide();sl.background={color:C.white};chrome(sl,false);pageNum(sl,idx+1);
+  sl.addShape('rect',{x:.35,y:.55,w:.5,h:.025,fill:{color:C.gold}});
+  sl.addText(s.title||'',{x:.35,y:.62,w:4.9,h:.85,fontSize:18,color:C.navy,fontFace:'Roboto Light',shrinkText:true});
+  sl.addShape('rect',{x:5.5,y:.55,w:4.5,h:4.55,fill:{color:C.midNavy}});
+  sl.addText('Key Highlights',{x:5.75,y:.75,w:4,h:.35,fontSize:14,color:C.gold,fontFace:'Roboto Medium'});
+  if(s.stats&&s.stats.length){var py=1.2;s.stats.forEach(function(st,i){sl.addText((st.value||'')+(st.unit?' '+truncU(st.unit):''),{x:5.75,y:py,w:4,h:.38,fontSize:18,color:i%2===0?C.gold:C.lightBlue,fontFace:'Roboto Bold',shrinkText:true,wrap:false});sl.addText(st.label||'',{x:5.75,y:py+.36,w:4,h:.22,fontSize:9,color:C.white,fontFace:'Roboto Light'});sl.addShape('rect',{x:5.75,y:py+.6,w:3.8,h:.008,fill:{color:'2A3A5A'}});py+=.73;});}
+  if(s.subtitle)sl.addText(s.subtitle,{x:.35,y:1.55,w:4.9,h:.35,fontSize:11,color:C.lightBlue,fontFace:'Roboto Light',italic:true,shrinkText:true});
+  if(s.body)sl.addText(s.body,{x:.35,y:2.0,w:4.9,h:2.9,fontSize:13,color:C.navy,fontFace:'Roboto',valign:'top',shrinkText:true});
+}
+
+async function buildBuf(brief,p64,pext){
+  var pptx=await assemblePPTX(brief,p64,pext);
+  return await pptx.write({outputType:'arraybuffer'});
+}
+
+window.addEventListener('DOMContentLoaded',function(){
+  restore();preload();
+  // init project card click handlers for mock data
+  document.querySelectorAll('.pcard').forEach(function(c,i){
+    if(i===0){state.projects=[{id:'439ebb62',title:'ReGenerate Livermore Falls Biochar',registry:'Puro.earth'}];}
+    c.onclick=function(){
+      var doc=MOCK_PROJECTS[i];
+      if(doc)toggleProj(doc,c);
+    };
+  });
+  updateSelCount();
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+</body>
+</html>
