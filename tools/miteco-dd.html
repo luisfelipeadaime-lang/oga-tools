@@ -3074,30 +3074,34 @@ async function docsUploadFiles(fileList) {
 
 // ── Per-row process ──
 async function docsProcessOne(id) {
+  console.log('docsProcessOne called with id:', id);
   docsProcessing.add(id);
   renderDocsTable();
   try {
     const res = await fetch(`${API_BASE}/api/miteco-dd/projects/${currentProjectId}/documents/${id}/process`, { method: 'POST' });
     const data = await res.json();
+    console.log('docsProcessOne response:', data);
     if (data.ok) {
+      // Immediately update local data for fast UI response
       const doc = docsData.find(d => d.id === id);
       if (doc) {
-        doc.category = data.category;
+        doc.category = data.category || doc.category;
         doc.oecc_point = data.oecc_point;
         doc.status = 'processed';
-        doc.extracted_json = { text: data.text_length > 0 ? '(text extracted)' : null, ocr_used: data.ocr_used };
+        doc.doc_type = data.category || doc.doc_type;
       }
-      // Reload full data for accurate text preview
+      // Reload full data for accurate text preview and extracted_json
       try {
         const r2 = await fetch(`${API_BASE}/api/miteco-dd/projects/${currentProjectId}/documents`);
         const d2 = await r2.json();
-        docsData = d2.documents || [];
-      } catch(e) {}
-      toast(`Procesado: ${data.filename} \u2192 ${CATEGORY_LABELS[data.category] || data.category}`);
+        if (d2.ok) docsData = d2.documents || [];
+      } catch(e) { console.warn('Reload after process failed:', e); }
+      toast(`Procesado: ${data.filename} \u2192 ${CATEGORY_LABELS[data.category] || data.category}${data.binary ? ' (binary)' : ''}`);
     } else {
       toast('Error: ' + (data.error || 'unknown'), 'red');
     }
   } catch(e) {
+    console.error('docsProcessOne error:', e);
     toast('Error: ' + e.message, 'red');
   }
   docsProcessing.delete(id);
