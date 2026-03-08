@@ -896,9 +896,18 @@ async function assemblePPTX(brief,p64,pext){
   var slides=brief.slides||[];
 
   // COVER
+  console.log('[COVER] p64:', p64 ? 'length='+p64.length : 'NULL', 'pext:', pext);
   var cv=pptx.addSlide();cv.background={color:C.navy};chrome(cv,true);
+  if(p64){
+    // Photo covers full slide as background
+    cv.addImage({data:'data:image/'+(pext==='png'?'png':'jpeg')+';base64,'+p64,x:0,y:0,w:10,h:5.625});
+    // Dark gradient effect: stacked navy rects from bottom up with decreasing height
+    // This creates readable text area without using the corrupting 'transparency' property
+    cv.addShape('rect',{x:0,y:2.4,w:10,h:3.225,fill:{color:'0D1B3E'}});
+    cv.addShape('rect',{x:0,y:1.8,w:10,h:.7,fill:{color:'162847'}});
+    cv.addShape('rect',{x:0,y:1.4,w:10,h:.5,fill:{color:'1E3457'}});
+  }
   cv.addShape('rect',{x:0,y:0,w:.12,h:5.625,fill:{color:C.gold}});
-  if(p64){cv.addImage({data:'data:image/'+(pext==='png'?'png':'jpeg')+';base64,'+p64,x:0,y:0,w:10,h:5.625});}
   if(brief.counterparty)cv.addText(brief.counterparty.toUpperCase(),{x:.35,y:.65,w:9.3,h:.3,fontSize:9,color:C.gold,fontFace:'Roboto Medium',charSpacing:3});
   var s0=slides[0]||{};
   cv.addText(s0.title||'ClearSky',{x:.35,y:1.0,w:9.3,h:1.6,fontSize:34,color:C.white,fontFace:'Roboto Light',shrinkText:true});
