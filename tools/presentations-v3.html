@@ -299,8 +299,8 @@ body{font-family:var(--font);background:var(--offWhite);color:var(--navy);min-he
   <div class="sel-count" id="selcount" style="display:none;"><span id="scnum">0</span> project(s) selected</div>
 
   <div id="proj-list">
-    <div class="pcard sel">
-      <div class="pcheck">✓</div>
+    <div class="pcard">
+      <div class="pcheck"></div>
       <div class="pinfo">
         <div class="pname">ReGenerate Livermore Falls Biochar</div>
         <div class="pmeta"><span class="rbadge">Puro.earth</span><div class="sdot r"></div><span class="slbl">Ready</span></div>
@@ -638,7 +638,9 @@ function updatePB(step) {
 
 // ── S0 ──
 function selectMode(m) {
-  state.mode=m; save();
+  state.mode=m;
+  state.projects=[];
+  save();
   loadProjects();
   goTo('s1');
 }
@@ -868,11 +870,14 @@ async function doBuild(){
   }catch(ex){
     console.error('doBuild error:', ex);
     var msg = ex && ex.message ? ex.message : String(ex);
+    // Show error on s6 and navigate there
     var eb=document.getElementById('e-build');
     if(eb){eb.textContent='Build failed: '+msg;eb.style.display='block';}
     goTo('s6');
     btn.disabled=false;
     btn.innerHTML='🏗 Build my deck';
+    // Also alert so user sees it even if s6 transition is subtle
+    alert('Build failed: '+msg);
   }
 }
 
@@ -1098,20 +1103,17 @@ function buildComparison(pptx,s,idx){
 }
 
 async function buildBuf(brief,p64,pext){
+  console.log('[BUILD] assemblePPTX start, slides:', brief.slides?brief.slides.length:'none');
   var pptx=await assemblePPTX(brief,p64,pext);
-  return await pptx.write({outputType:'arraybuffer'});
+  console.log('[BUILD] assemblePPTX done, calling pptx.write()');
+  var timeout=new Promise(function(_,rej){setTimeout(function(){rej(new Error('Build timed out after 45 seconds. Try without a cover photo or with a smaller image.'));},45000);});
+  var result=await Promise.race([pptx.write({outputType:'arraybuffer'}),timeout]);
+  console.log('[BUILD] pptx.write() done, bytes:', result?result.byteLength:'null');
+  return result;
 }
 
 window.addEventListener('DOMContentLoaded',function(){
   restore();preload();
-  // init project card click handlers for mock data
-  document.querySelectorAll('.pcard').forEach(function(c,i){
-    if(i===0){state.projects=[{id:'439ebb62',title:'ReGenerate Livermore Falls Biochar',registry:'Puro.earth'}];}
-    c.onclick=function(){
-      var doc=MOCK_PROJECTS[i];
-      if(doc)toggleProj(doc,c);
-    };
-  });
   updateSelCount();
 });
 </script>
