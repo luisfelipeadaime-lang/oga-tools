@@ -2054,16 +2054,6 @@ main {
 </div>
 
 <script>
-// DEBUG: global click listener to trace button clicks
-document.addEventListener('click', function(e) {
-  const btn = e.target.closest('.btn-doc-del');
-  if (btn) {
-    console.log('GLOBAL CLICK on .btn-doc-del:', btn.outerHTML.substring(0, 200));
-    console.log('  dataset:', JSON.stringify(btn.dataset));
-    console.log('  onclick attr:', btn.getAttribute('onclick'));
-  }
-}, true); // capture phase
-
 const VIEWS = {
   pipeline:    { title: 'Project Pipeline',                   sub: 'All active projects · 7 total' },
   intake:      { title: 'Intake — New project',               sub: 'Upload documents, define canonical data' },
@@ -2898,7 +2888,7 @@ function renderDocsTable() {
           ? '<span class="text-badge ocr" style="font-size:9px;">&#9881;...</span>'
           : showConfirm
             ? `<span class="doc-confirm-bar">\u00bfEliminar? <button class="btn-yes" onclick="event.stopPropagation();docsDeleteOne(this.dataset.xid)" data-xid="${d.id}">S\u00ed</button> <button class="btn-no" onclick="event.stopPropagation();docsCancelDelete()">No</button></span>`
-            : `${needsProc ? `<button class="btn-doc-del" style="border-color:var(--forest);color:var(--forest);margin-right:2px;" onclick="event.stopPropagation();console.log('PROCESS BTN CLICKED',this.dataset.xid);docsProcessOne(this.dataset.xid)" data-xid="${d.id}" title="Procesar">\u2699</button>` : ''}<button class="btn-doc-del" onclick="event.stopPropagation();console.log('DELETE BTN CLICKED',this.dataset.xid);docsAskDelete(this.dataset.xid)" data-xid="${d.id}" title="Eliminar">&#128465;</button>`
+            : `${needsProc ? `<button class="btn-doc-del" style="border-color:var(--forest);color:var(--forest);margin-right:2px;" onclick="event.stopPropagation();docsProcessOne(this.dataset.xid)" data-xid="${d.id}" title="Procesar">\u2699</button>` : ''}<button class="btn-doc-del" onclick="event.stopPropagation();docsAskDelete(this.dataset.xid)" data-xid="${d.id}" title="Eliminar">&#128465;</button>`
         }
       </td>
     </tr>`;
@@ -2939,7 +2929,7 @@ function renderDocsTable() {
           <input type="text" id="docEditNotes_${d.id}" value="${esc(d.notes || '')}" placeholder="Notas..." style="width:160px;">
           <button class="btn-save" onclick="docsSaveEdit('${d.id}')">Guardar cambios</button>
         </div>
-        <div style="margin-top:6px;"><a href="#" data-xid="${d.id}" onclick="event.preventDefault();event.stopPropagation();console.log('REPROCESS CLICKED',this.dataset.xid);docsProcessOne(this.dataset.xid)" style="color:var(--forest);font-size:10px;font-family:var(--mono);">&#8634; Re-procesar</a></div>
+        <div style="margin-top:6px;"><a href="#" data-xid="${d.id}" onclick="event.preventDefault();event.stopPropagation();docsProcessOne(this.dataset.xid)" style="color:var(--forest);font-size:10px;font-family:var(--mono);">&#8634; Re-procesar</a></div>
       </div>`;
       html += `<tr><td colspan="8" style="padding:0;"><div class="doc-expand-panel">
         <div class="label">Filename</div><div class="val">${esc(d.filename || '')}</div>
@@ -2999,7 +2989,6 @@ function updateDocsBulkBar() {
 
 // ── Single delete ──
 function docsAskDelete(id) {
-  console.log('docsAskDelete ENTERED, id:', id, 'type:', typeof id);
   docsConfirmDelete = id;
   renderDocsTable();
 }
