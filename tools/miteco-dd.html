@@ -1505,7 +1505,7 @@ main {
     </div>
     <div id="docsBulkBar" style="display:none;margin-bottom:8px;"></div>
     <div id="docsUploadProgress" style="display:none;margin-bottom:8px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:6px;font-size:11px;font-family:var(--mono);color:var(--ink2);"></div>
-    <div id="docsTable"></div>
+    <div id="docsTableWrap"></div>
   </div>
 </div>
 
@@ -2844,11 +2844,11 @@ function docsSortedFiltered() {
 }
 
 function renderDocsTable() {
-  const el = document.getElementById('docsTable');
+  const el = document.getElementById('docsTableWrap');
   const filtered = docsSortedFiltered();
 
   const allChecked = filtered.length > 0 && filtered.every(d => docsSelected.has(d.id));
-  let html = `<table class="docs-tbl"><thead><tr>
+  let html = `<table id="docsTable" class="docs-tbl"><thead><tr>
     <th style="width:28px;"><input type="checkbox" ${allChecked ? 'checked' : ''} onchange="docsToggleAll(this.checked)" title="Seleccionar todo"></th>
     <th>#</th>
     <th style="cursor:pointer;" onclick="docsSortBy('nombre_original')">Nombre original${docsSortArrow('nombre_original')}</th>
@@ -2857,7 +2857,7 @@ function renderDocsTable() {
     <th style="cursor:pointer;" onclick="docsSortBy('texto')">Texto${docsSortArrow('texto')}</th>
     <th style="cursor:pointer;" onclick="docsSortBy('estado')">Estado${docsSortArrow('estado')}</th>
     <th style="width:80px;"></th>
-  </tr></thead><tbody id="docsTableBody">`;
+  </tr></thead><tbody>`;
 
   filtered.forEach((d, idx) => {
     const ej = docEj(d);
@@ -2947,35 +2947,58 @@ function renderDocsTable() {
     html = '<div style="padding:20px;text-align:center;color:var(--ink3);font-size:12px;">No documents match the filter.</div>';
   }
   el.innerHTML = html;
+  initDocsTableListeners();
 }
 
-// ── Event delegation for docs table buttons ──
-(function initDocsTableDelegation() {
-  document.addEventListener('click', function(e) {
-    const el = e.target.closest('#docsTable');
-    if (!el) return;
-
-    // Process button (⚙)
-    const procBtn = e.target.closest('.btn-process-doc');
-    if (procBtn) { e.preventDefault(); e.stopPropagation(); docsProcessOne(procBtn.dataset.docId); return; }
-
-    // Delete button (🗑)
-    const delBtn = e.target.closest('.btn-delete-doc');
-    if (delBtn) { e.preventDefault(); e.stopPropagation(); docsAskDelete(delBtn.dataset.docId); return; }
-
-    // Confirm delete (Sí)
+function initDocsTableListeners() {
+  const table = document.getElementById('docsTable');
+  if (!table) return;
+  const oldTable = table.cloneNode(true);
+  table.parentNode.replaceChild(oldTable, table);
+  const freshTable = document.getElementById('docsTable');
+  freshTable.addEventListener('click', function(e) {
+    // Process button
+    const processBtn = e.target.closest('.btn-process-doc');
+    if (processBtn) {
+      e.stopPropagation();
+      docsProcessOne(processBtn.dataset.docId);
+      return;
+    }
+    // Delete button
+    const deleteBtn = e.target.closest('.btn-delete-doc');
+    if (deleteBtn) {
+      e.stopPropagation();
+      docsAskDelete(deleteBtn.dataset.docId, deleteBtn.dataset.filename);
+      return;
+    }
+    // Confirm delete
     const confirmBtn = e.target.closest('[data-confirm-delete]');
-    if (confirmBtn) { e.preventDefault(); e.stopPropagation(); docsDeleteOne(confirmBtn.dataset.confirmDelete); return; }
-
-    // Cancel delete (No)
+    if (confirmBtn) {
+      e.stopPropagation();
+      docsDeleteConfirmed(confirmBtn.dataset.confirmDelete);
+      return;
+    }
+    // Cancel delete
     const cancelBtn = e.target.closest('[data-cancel-delete]');
-    if (cancelBtn) { e.preventDefault(); e.stopPropagation(); docsCancelDelete(); return; }
-
-    // Re-process link in expanded panel
-    const reprocessLink = e.target.closest('.btn-reprocess-doc');
-    if (reprocessLink) { e.preventDefault(); e.stopPropagation(); docsProcessOne(reprocessLink.dataset.docId); return; }
+    if (cancelBtn) {
+      e.stopPropagation();
+      docsCancelDelete(cancelBtn.dataset.cancelDelete);
+      return;
+    }
+    // Reprocess button
+    const reprocessBtn = e.target.closest('.btn-reprocess-doc');
+    if (reprocessBtn) {
+      e.stopPropagation();
+      docsProcessOne(reprocessBtn.dataset.docId);
+      return;
+    }
+    // Row expand (only if no button was clicked)
+    const row = e.target.closest('tr.doc-row');
+    if (row) {
+      docsToggleExpand(row.dataset.docId);
+    }
   });
-})();
+}
 
 function toggleDocRow(idx) {
   docsExpandedRow = docsExpandedRow === idx ? -1 : idx;
