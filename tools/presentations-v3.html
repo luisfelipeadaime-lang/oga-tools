@@ -548,12 +548,12 @@ body{font-family:var(--font);background:var(--offWhite);color:var(--navy);min-he
     </div>
     <div class="rstep">
       <div class="rstep-num">2</div>
-      <div class="rstep-text">Click <strong>Insert</strong> in the top menu bar (between Home and Draw).</div>
+      <div class="rstep-text">In the <strong>Home</strong> tab, click the small <strong>down arrow</strong> below the <strong>New Slide</strong> button (top-left of the ribbon).</div>
     </div>
     <div class="rstep">
       <div class="rstep-num">3</div>
       <div class="rstep-text">
-        Scroll to the bottom of the Insert menu and click <strong>Reuse Slides</strong>.<br>
+        At the bottom of the dropdown menu, click <strong>Reuse Slides</strong>.<br>
         <span class="rstep-note">On Mac: Insert → Slide from → Reuse Slides</span>
       </div>
     </div>
@@ -923,14 +923,14 @@ function truncU(u){return(!u)?'':u.length>18?u.substring(0,16)+'\u2026':u;}
 
 function statBlocks(sl,stats,y,mw){
   if(!stats||!stats.length)return;
-  var w=mw||9.0,sx=mw?.35:.5,sc=stats.length,bw=(w-(sc-1)*.15)/sc;
-  stats.forEach(function(s,i){
+  var w=mw||9.0,sx=mw?.35:.5,sc=Math.min(stats.length,4),bw=(w-(sc-1)*.15)/sc;
+  stats.slice(0,4).forEach(function(s,i){
     var bx=sx+i*(bw+.15);
     sl.addShape('rect',{x:bx,y:y,w:bw,h:.95,fill:{color:C.navy},rectRadius:.05});
-    var vs=String(s.value||''),vsz=vs.length>8?14:vs.length>6?16:vs.length>4?18:20;
-    sl.addText(vs,{x:bx+.05,y:y+.08,w:bw-.1,h:.42,fontSize:vsz,color:i%2===0?C.gold:C.lightBlue,fontFace:'Roboto Bold',align:'center',shrinkText:true,wrap:false});
-    if(s.unit)sl.addText(truncU(s.unit),{x:bx+.05,y:y+.52,w:bw-.1,h:.18,fontSize:6,color:C.lightBlue,fontFace:'Roboto Light',align:'center',shrinkText:true,wrap:false});
-    sl.addText(s.label||'',{x:bx+.05,y:y+.72,w:bw-.1,h:.18,fontSize:7.5,color:C.white,fontFace:'Roboto Light',align:'center',shrinkText:true});
+    var vs=String(s.value||''),vsz=vs.length>12?11:vs.length>8?13:vs.length>5?16:20;
+    sl.addText(vs,{x:bx+.05,y:y+.06,w:bw-.1,h:.46,fontSize:vsz,color:i%2===0?C.gold:C.lightBlue,fontFace:'Roboto Bold',align:'center',valign:'middle',shrinkText:true});
+    if(s.unit)sl.addText(truncU(s.unit),{x:bx+.05,y:y+.52,w:bw-.1,h:.2,fontSize:6,color:C.lightBlue,fontFace:'Roboto Light',align:'center',shrinkText:true});
+    sl.addText(s.label||'',{x:bx+.05,y:y+.72,w:bw-.1,h:.2,fontSize:7,color:C.white,fontFace:'Roboto Light',align:'center',shrinkText:true});
   });
 }
 
@@ -958,7 +958,8 @@ async function assemblePPTX(brief,p64,pext){
   cv.addShape('rect',{x:0,y:0,w:.12,h:5.625,fill:{color:C.gold}});
   if(brief.counterparty)cv.addText(brief.counterparty.toUpperCase(),{x:.35,y:.65,w:9.3,h:.3,fontSize:9,color:C.gold,fontFace:'Roboto Medium',charSpacing:3});
   var s0=slides[0]||{};
-  cv.addText(s0.title||'ClearSky',{x:.35,y:1.0,w:9.3,h:1.6,fontSize:34,color:C.white,fontFace:'Roboto Light',shrinkText:true});
+  var ctLen=(s0.title||'').length,ctFz=ctLen>100?22:ctLen>60?26:34;
+  cv.addText(s0.title||'ClearSky',{x:.35,y:1.0,w:9.3,h:1.6,fontSize:ctFz,color:C.white,fontFace:'Roboto Light',shrinkText:true});
   if(s0.subtitle)cv.addText(s0.subtitle,{x:.35,y:2.65,w:9.3,h:.5,fontSize:14,color:C.lightBlue,fontFace:'Roboto Light',shrinkText:true});
   if(s0.body)cv.addText(s0.body,{x:.35,y:3.25,w:7.5,h:.8,fontSize:12,color:C.white,fontFace:'Roboto',shrinkText:true});
   if(s0.stats&&s0.stats.length)statBlocks(cv,s0.stats,4.1,9.0);
@@ -1091,7 +1092,7 @@ function buildComparison(pptx,s,idx){
       // Adaptive font: long strings get smaller font so they fit in 2 lines
       var stFz = stVal.length > 22 ? 11 : stVal.length > 15 ? 13 : stVal.length > 10 ? 15 : 18;
       sl.addText(stVal,{x:5.75,y:py,w:4,h:.52,fontSize:stFz,color:i%2===0?C.gold:C.lightBlue,fontFace:'Roboto Bold',valign:'middle',shrinkText:true});
-      sl.addText(st.label||'',{x:5.75,y:py+.54,w:4,h:.22,fontSize:9,color:C.white,fontFace:'Roboto Light'});
+      sl.addText(st.label||'',{x:5.75,y:py+.54,w:4,h:.22,fontSize:9,color:C.white,fontFace:'Roboto Light',shrinkText:true});
       sl.addShape('rect',{x:5.75,y:py+.78,w:3.8,h:.008,fill:{color:'2A3A5A'}});
       py+=.90;
     });
