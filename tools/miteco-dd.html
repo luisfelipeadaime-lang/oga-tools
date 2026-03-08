@@ -3138,7 +3138,8 @@ async function docsProcessPending() {
     const res = await fetch(`${API_BASE}/api/miteco-dd/projects/${currentProjectId}/documents/process-pending`, { method: 'POST' });
     const data = await res.json();
     if (data.ok) {
-      toast(`Encontrados: ${data.pending_found || '?'} pendientes. Procesados: ${data.processed}. Fallidos: ${data.failed}.`);
+      const found = data.pending_found ?? data.pending_count ?? '?';
+      toast(`Encontrados: ${found} pendientes. Procesados: ${data.processed ?? 0}. Fallidos: ${data.failed ?? 0}.`);
       await loadDocsTab();
     } else {
       toast('Error: ' + (data.error || 'unknown'), 'red');
