@@ -898,7 +898,7 @@ async function assemblePPTX(brief,p64,pext){
   // COVER
   var cv=pptx.addSlide();cv.background={color:C.navy};chrome(cv,true);
   cv.addShape('rect',{x:0,y:0,w:.12,h:5.625,fill:{color:C.gold}});
-  if(p64){cv.addImage({data:'data:image/'+(pext==='png'?'png':'jpeg')+';base64,'+p64,x:0,y:0,w:10,h:5.625});cv.addShape('rect',{x:0,y:0,w:10,h:5.625,fill:{color:'091527'}});}
+  if(p64){cv.addImage({data:'data:image/'+(pext==='png'?'png':'jpeg')+';base64,'+p64,x:0,y:0,w:10,h:5.625});}
   if(brief.counterparty)cv.addText(brief.counterparty.toUpperCase(),{x:.35,y:.65,w:9.3,h:.3,fontSize:9,color:C.gold,fontFace:'Roboto Medium',charSpacing:3});
   var s0=slides[0]||{};
   cv.addText(s0.title||'ClearSky',{x:.35,y:1.0,w:9.3,h:1.6,fontSize:34,color:C.white,fontFace:'Roboto Light',shrinkText:true});
