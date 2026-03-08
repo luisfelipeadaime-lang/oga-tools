@@ -915,6 +915,19 @@ async function assemblePPTX(brief,p64,pext){
   if(s0.body)cv.addText(s0.body,{x:.35,y:3.25,w:7.5,h:.8,fontSize:12,color:C.white,fontFace:'Roboto',shrinkText:true});
   if(s0.stats&&s0.stats.length)statBlocks(cv,s0.stats,4.1,9.0);
 
+  // Validate brief — log warnings for thin slides
+  (function validateBrief(slides){
+    slides.forEach(function(s,i){
+      if(i===0) return; // skip cover
+      var warns=[];
+      if(!s.body || s.body.length < 20) warns.push('body missing/thin');
+      if(s.slide_type==='comparison' && (!s.stats || s.stats.length < 2)) warns.push('comparison needs 2+ stats');
+      if(s.slide_type==='project' && (!s.stats || !s.stats.length)) warns.push('project needs stats');
+      if(!s.subtitle) warns.push('no subtitle');
+      if(warns.length) console.warn('[BRIEF] Slide '+(i+1)+' ('+s.slide_type+'): '+warns.join(', '));
+    });
+  })(slides);
+
   // CONTENT
   for(var i=1;i<slides.length;i++){
     var s=slides[i];
@@ -1008,6 +1021,11 @@ function buildProject(pptx,s,idx){
 }
 
 function buildComparison(pptx,s,idx){
+  // Fallback: if comparison slide has thin content, render as default instead
+  var hasStats = s.stats && s.stats.length >= 2;
+  var hasBody = s.body && s.body.length > 50;
+  if(!hasStats && !hasBody){ return buildDefault(pptx,s,idx); }
+
   var sl=pptx.addSlide();sl.background={color:C.white};chrome(sl,false);pageNum(sl,idx+1);
   sl.addShape('rect',{x:.35,y:.55,w:.5,h:.025,fill:{color:C.gold}});
   sl.addText(s.title||'',{x:.35,y:.62,w:4.9,h:.85,fontSize:18,color:C.navy,fontFace:'Roboto Light',shrinkText:true});
