@@ -941,9 +941,12 @@ function buildDefault(pptx,s,idx){
   if(s.subtitle)sl.addText(s.subtitle,{x:.35,y:1.48,w:9,h:.3,fontSize:10,color:C.lightBlue,fontFace:'Roboto Light',italic:true,shrinkText:true});
   var cy=s.subtitle?1.9:1.6;
   if(s.stats&&s.stats.length){statBlocks(sl,s.stats,cy);cy+=1.15;}
-  if(s.table&&s.table.headers&&s.table.rows){
+  var hasTableD = s.table && s.table.headers && s.table.headers.length > 0 &&
+    s.table.rows && s.table.rows.length > 0 &&
+    s.table.rows.some(function(row){return row.some(function(cell){return cell&&String(cell).trim();});});
+  if(hasTableD){
     var tr=[s.table.headers.map(function(h){return{text:String(h),options:{bold:true,color:C.lightBlue,fill:C.navy,fontSize:9,fontFace:'Roboto Medium'}};})];
-    s.table.rows.forEach(function(row,ri){tr.push(row.map(function(cell){return{text:String(cell||''),options:{color:C.darkText,fill:ri%2===0?C.offWhite:C.white,fontSize:9,fontFace:'Roboto'}};}))}); 
+    s.table.rows.forEach(function(row,ri){tr.push(row.map(function(cell){return{text:String(cell||''),options:{color:C.darkText,fill:ri%2===0?C.offWhite:C.white,fontSize:9,fontFace:'Roboto'}};}))});
     sl.addTable(tr,{x:.35,y:cy,w:9.3,border:{type:'solid',color:C.borderGray,pt:.5},rowH:.32,margin:[.06,.08,.06,.08]});cy+=(tr.length*.32)+.25;
   }
   if(s.body)sl.addText(s.body,{x:.35,y:cy,w:9.3,h:Math.max(.4,5.0-cy),fontSize:13,color:C.darkText,fontFace:'Roboto',valign:'top',shrinkText:true});
