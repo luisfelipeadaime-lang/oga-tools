@@ -158,12 +158,19 @@ body{font-family:var(--font);background:var(--offWhite);color:var(--navy);min-he
 .lbar{height:100%;background:var(--lightBlue);width:0%;transition:width .5s ease;border-radius:2px;}
 
 /* BRIEF */
-.bcard{background:var(--white);border:1.5px solid var(--borderGray);border-radius:9px;padding:16px 18px;margin-bottom:10px;display:flex;gap:14px;align-items:flex-start;}
+.bcard{background:var(--white);border:1.5px solid var(--borderGray);border-radius:9px;padding:16px 18px;margin-bottom:12px;display:flex;gap:14px;align-items:flex-start;transition:border-color .15s;}
+.bcard:hover{border-color:var(--lightBlue);}
 .bnum{width:30px;height:30px;border-radius:5px;background:var(--navy);color:var(--white);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--mono);}
 .bcont{flex:1;}
 .btype{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--lightBlue);font-weight:600;margin-bottom:3px;}
 .btitle{font-size:13px;font-weight:500;color:var(--navy);margin-bottom:3px;line-height:1.3;}
 .bsub{font-size:11px;color:var(--midGray);line-height:1.4;}
+.bbody{font-size:11.5px;color:var(--navy);line-height:1.55;margin-top:10px;padding-top:10px;border-top:1px solid var(--borderGray);}
+.bstats{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.bstat{font-size:10px;background:var(--offWhite);border:1px solid var(--borderGray);border-radius:5px;padding:4px 9px;color:var(--navy);line-height:1.2;}
+.bstat-val{font-weight:600;color:var(--lightBlue);}
+.bstat-lbl{color:var(--midGray);margin-left:3px;}
+.bnotes{font-size:10px;color:var(--midGray);font-style:italic;margin-top:6px;}
 .mkbadge{font-size:9px;padding:2px 7px;border-radius:9px;font-weight:600;flex-shrink:0;margin-top:3px;}
 .mkg{background:#E6F7F3;color:var(--green);}
 .mka{background:#FFF8E6;color:#856404;}
@@ -268,19 +275,28 @@ body{font-family:var(--font);background:var(--offWhite);color:var(--navy);min-he
 <div class="screen" id="s1">
   <div class="eyebrow">Step 1 of 5 · Choose Project</div>
   <div class="stitle">Which <strong>project</strong> are we presenting?</div>
-  <div class="ssub">Click to select a project. You can pick up to 3 at once.<br>The green dot means the AI has enough data to build strong slides. Yellow means it might need some help.</div>
+  <div class="ssub">Select a project below, or upload a new one. You can pick up to 3 at once.</div>
 
-  <div class="errbox" id="e-proj">Please select at least one project before continuing.</div>
-  <div class="sel-count" id="selcount" style="display:none;"><span id="scnum">0</span> project(s) selected</div>
-
-  <div class="dz" onclick="goTo('s1b')" style="margin-bottom:4px;">
+  <div class="dz" onclick="goTo('s1b')">
     <div class="dz-icon">📄</div>
     <div class="dz-text">Upload a new project PDF</div>
-    <div class="dz-sub">Click here to add a project that isn't in the list below</div>
+    <div class="dz-sub">Best results with a <strong>PD</strong> (Project Description) or <strong>PDD</strong> (Project Design Document)<br>downloaded directly from a registry — Verra, Puro.earth, Gold Standard, or MITECO</div>
   </div>
-  <div style="text-align:center;margin:12px 0 16px;">
-    <span style="color:var(--midGray);font-size:12px;">— or choose from previously uploaded projects —</span>
+
+  <div class="errbox" id="e-proj" style="margin-top:14px;">Please select at least one project before continuing.</div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;">
+    <button class="btn btn-ghost" onclick="goTo('s0')">← Back</button>
+    <button class="btn btn-primary" id="s1-next" onclick="validateProj()" disabled>Continue →</button>
   </div>
+
+  <div style="display:flex;align-items:center;gap:12px;margin:24px 0 14px;">
+    <div style="flex:1;height:1px;background:var(--borderGray);"></div>
+    <span style="color:var(--midGray);font-size:11px;white-space:nowrap;">or choose from previously uploaded projects</span>
+    <div style="flex:1;height:1px;background:var(--borderGray);"></div>
+  </div>
+
+  <div class="sel-count" id="selcount" style="display:none;"><span id="scnum">0</span> project(s) selected</div>
 
   <div id="proj-list">
     <div class="pcard sel">
@@ -304,11 +320,6 @@ body{font-family:var(--font);background:var(--offWhite);color:var(--navy);min-he
         <div class="pmeta"><span class="rbadge">Verra</span><div class="sdot p"></div><span class="slbl">Limited data</span></div>
       </div>
     </div>
-  </div>
-
-  <div class="bnav">
-    <button class="btn btn-ghost" onclick="goTo('s0')">← Back</button>
-    <button class="btn btn-primary" id="s1-next" onclick="validateProj()" disabled>Continue →</button>
   </div>
 </div>
 
@@ -820,7 +831,21 @@ function renderBrief(){
     var bck=s.mckinsey_score==='green'?'mkg':s.mckinsey_score==='amber'?'mka':'mkr';
     var bl=s.mckinsey_score==='green'?'Strong':s.mckinsey_score==='amber'?'Review':'Weak';
     var c=document.createElement('div');c.className='bcard';
-    c.innerHTML='<div class="bnum">'+String(s.slide_number).padStart(2,'0')+'</div><div class="bcont"><div class="btype">'+esc(s.slide_type||'')+'</div><div class="btitle">'+esc(s.title||'')+'</div>'+(s.subtitle?'<div class="bsub">'+esc(s.subtitle)+'</div>':'')+'</div><div class="mkbadge '+bck+'">'+bl+'</div>';
+    var h='<div class="bnum">'+String(s.slide_number).padStart(2,'0')+'</div><div class="bcont">';
+    h+='<div class="btype">'+esc(s.slide_type||'')+'</div>';
+    h+='<div class="btitle">'+esc(s.title||'')+'</div>';
+    if(s.subtitle) h+='<div class="bsub">'+esc(s.subtitle)+'</div>';
+    if(s.body) h+='<div class="bbody">'+esc(s.body)+'</div>';
+    if(s.stats&&s.stats.length){
+      h+='<div class="bstats">';
+      s.stats.forEach(function(st){
+        h+='<div class="bstat"><span class="bstat-val">'+esc((st.value||'')+(st.unit?' '+st.unit:''))+'</span><span class="bstat-lbl">'+esc(st.label||'')+'</span></div>';
+      });
+      h+='</div>';
+    }
+    if(s.notes) h+='<div class="bnotes">'+esc(s.notes)+'</div>';
+    h+='</div><div class="mkbadge '+bck+'">'+bl+'</div>';
+    c.innerHTML=h;
     list.appendChild(c);
   });
   var w=document.getElementById('brief-warn');
