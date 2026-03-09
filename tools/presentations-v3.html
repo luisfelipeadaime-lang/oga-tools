@@ -277,12 +277,14 @@ body{font-family:var(--font);background:var(--offWhite);color:var(--navy);min-he
   <div class="stitle">Which <strong>project</strong> are we presenting?</div>
   <div class="ssub">Select a project below, or upload a new one. You can pick up to 3 at once.</div>
 
-  <div class="dz" onclick="goTo('s1b')">
-    <div class="dz-icon">📄</div>
-    <div class="dz-text">Upload a new project PDF</div>
-    <div class="dz-sub">Best results with a <strong>PD</strong> (Project Description) or <strong>PDD</strong> (Project Design Document)<br>downloaded directly from a registry — Verra, Puro.earth, Gold Standard, or MITECO</div>
+  <div class="dz" id="dz-quick" onclick="document.getElementById('fi-quick').click()">
+    <input type="file" id="fi-quick" accept=".pdf" onchange="quickUpload(this.files[0])" style="display:none;">
+    <div class="dz-icon" id="dz-quick-icon">📄</div>
+    <div class="dz-text" id="dz-quick-text">Upload a new project PDF</div>
+    <div class="dz-sub" id="dz-quick-sub">Best results with a <strong>PD</strong> (Project Description) or <strong>PDD</strong> (Project Design Document)<br>downloaded directly from a registry — Verra, Puro.earth, Gold Standard, or MITECO</div>
   </div>
 
+  <div style="text-align:center;margin-top:8px;"><span style="color:var(--midGray);font-size:10px;cursor:pointer;text-decoration:underline;" onclick="goTo('s1b')">Need to upload multiple files or supporting materials?</span></div>
   <div class="errbox" id="e-proj" style="margin-top:14px;">Please select at least one project before continuing.</div>
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;">
@@ -713,6 +715,50 @@ function validateProj(){
   var e=document.getElementById('e-proj');
   if(!state.projects.length){e.style.display='block';return;}
   e.style.display='none';goTo('s2');
+}
+
+// ── S1 QUICK UPLOAD ──
+async function quickUpload(file){
+  if(!file)return;
+  if(!file.name.toLowerCase().endsWith('.pdf')){alert('Please select a PDF file.');return;}
+  if(file.size>10*1024*1024){alert('File is too large (max 10 MB). Try splitting the PDF into smaller parts.');return;}
+  var dz=document.getElementById('dz-quick'),icon=document.getElementById('dz-quick-icon'),txt=document.getElementById('dz-quick-text'),sub=document.getElementById('dz-quick-sub');
+  var origIcon=icon.textContent,origTxt=txt.textContent,origSub=sub.innerHTML;
+  icon.innerHTML='<span class="isp"></span>';txt.textContent='Uploading '+file.name+'...';sub.innerHTML='<span style="color:var(--midGray);">'+Math.round(file.size/1024/1024*10)/10+' MB — this may take up to 2 minutes for large files</span>';
+  dz.style.pointerEvents='none';dz.style.opacity='.7';
+  var e=document.getElementById('e-proj');e.style.display='none';
+  try{
+    var fd=new FormData();fd.append('file',file);fd.append('owner','clearsky001');fd.append('document_type','project_dossier');
+    var r=await fetch(API+'/api/presentations/v2/ingest-pds',{method:'POST',body:fd});
+    if(!r.ok){var ed=await r.json().catch(function(){return{};});throw new Error(ed.error||ed.extraction_error||'Upload failed ('+r.status+')');}
+    var d=await r.json();
+    if(d.status==='extraction_failed'){
+      icon.textContent='⚠️';txt.textContent='Upload succeeded but text extraction failed';
+      sub.innerHTML='<span style="color:var(--red);">'+esc(d.extraction_error||'Try a smaller PDF or different format')+'</span>';
+      dz.classList.add('warn');dz.style.pointerEvents='auto';dz.style.opacity='1';
+      // Still add project but warn user
+      if(d.project_id)state.projects.push({id:d.project_id,title:d.title||file.name.replace('.pdf',''),registry:'Uploaded'});
+      await loadProjects();updateSelCount();save();
+      return;
+    }
+    // Success
+    dz.classList.add('ok');icon.textContent='✅';txt.textContent='✓ '+esc(d.title||file.name);
+    sub.innerHTML='<span style="color:var(--green);">'+d.word_count+' words extracted &middot; '+esc(d.summary?d.summary.substring(0,120)+'...':'Ready')+'</span>';
+    if(d.project_id)state.projects.push({id:d.project_id,title:d.title||file.name.replace('.pdf',''),registry:guessReg(d.title||file.name)});
+    await loadProjects();updateSelCount();save();
+  }catch(ex){
+    icon.textContent='❌';txt.textContent='Upload failed';
+    sub.innerHTML='<span style="color:var(--red);">'+esc(ex.message)+'</span><br><span style="color:var(--midGray);font-size:10px;cursor:pointer;text-decoration:underline;" onclick="resetQuickUpload()">Try again</span>';
+    dz.classList.remove('ok');dz.classList.add('warn');
+  }finally{
+    dz.style.pointerEvents='auto';dz.style.opacity='1';
+  }
+}
+function resetQuickUpload(){
+  var dz=document.getElementById('dz-quick'),icon=document.getElementById('dz-quick-icon'),txt=document.getElementById('dz-quick-text'),sub=document.getElementById('dz-quick-sub');
+  dz.classList.remove('ok','warn');icon.textContent='📄';txt.textContent='Upload a new project PDF';
+  sub.innerHTML='Best results with a <strong>PD</strong> (Project Description) or <strong>PDD</strong> (Project Design Document)<br>downloaded directly from a registry — Verra, Puro.earth, Gold Standard, or MITECO';
+  document.getElementById('fi-quick').value='';
 }
 
 // ── S1B ──
