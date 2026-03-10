@@ -872,6 +872,7 @@ function updateTopbar(){
     <span class="spill" style="color:${st.color};background:color-mix(in srgb,${st.color} 14%,transparent)">${st.label}</span>`;
   document.getElementById('crmeta').innerHTML=`${p.flag} ${p.client} · ${p.ha?p.ha.toLocaleString()+' ha':'—'}${p.corcs?` · <span style="color:var(--teal)">${p.corcs.toLocaleString()} CORCs</span>`:''}`;
   document.getElementById('topacts').innerHTML=`
+    <button class="btn btn-s" style="color:var(--red);border-color:var(--red)" onclick="deleteProject()">Delete</button>
     <button class="btn btn-g btn-s">↑ Export</button>
     <button class="btn btn-p btn-s" onclick="showGen()">⚡ Generate</button>`;
 }
@@ -1489,6 +1490,20 @@ function showIntakeScreen(projName){
 }
 function closeIntakeScreen(){document.getElementById('intakescr').classList.remove('on');}
 function closeGen(){document.getElementById('genscr').classList.remove('on');}
+async function deleteProject(){
+  const p=STATE.proj;
+  if(!p) return;
+  if(!confirm(`Delete "${p.name}"? This removes all files, flags, and deliverables. Cannot be undone.`)) return;
+  try {
+    const res=await fetch(API+'/api/pablo/projects/'+p.id,{method:'DELETE'});
+    const data=await res.json();
+    if(!res.ok) throw new Error(data.error||'Delete failed');
+    const idx=PROJECTS.findIndex(x=>x.id===p.id);
+    if(idx!==-1) PROJECTS.splice(idx,1);
+    STATE.proj=null;
+    goHome();
+  } catch(e){ alert('Delete failed: '+e.message); }
+}
 
 init();
 </script>
