@@ -734,13 +734,57 @@ const API = 'https://api-tools.oga.earth';
 // ══ STATE ══════════════════════════════════════════════════
 const STATE = {proj:null, tab:'overview', view:'pipeline', wizStep:1, wizReg:null, wizMeth:null, pendingFile:null, intakeProjectId:null};
 
+// ══ DB→FRONTEND MAPPER ═══════════════════════════════════
+const COUNTRY_FLAGS = {colombia:'🇨🇴',spain:'🇪🇸',españa:'🇪🇸',sierra_leone:'🇸🇱','sierra leone':'🇸🇱',brazil:'🇧🇷',brasil:'🇧🇷',bolivia:'🇧🇴',peru:'🇵🇪',chile:'🇨🇱',argentina:'🇦🇷',mexico:'🇲🇽',uk:'🇬🇧',portugal:'🇵🇹',usa:'🇺🇸',ghana:'🇬🇭',kenya:'🇰🇪',india:'🇮🇳',indonesia:'🇮🇩',australia:'🇦🇺',canada:'🇨🇦',germany:'🇩🇪',france:'🇫🇷',italy:'🇮🇹',japan:'🇯🇵',china:'🇨🇳',uruguay:'🇺🇾',paraguay:'🇵🇾',ecuador:'🇪🇨',mozambique:'🇲🇿',tanzania:'🇹🇿',costa_rica:'🇨🇷','costa rica':'🇨🇷'};
+function dbToFrontend(d){
+  const regMap = {puro:'puro',verra:'verra',miteco:'miteco',isometric:'isometric'};
+  const reg = regMap[d.registry] || 'puro';
+  const fc = d.flag_counts || {};
+  return {
+    id: d.id, name: d.name, client: d.client||'—', country: d.country||'—',
+    flag: (d.country ? COUNTRY_FLAGS[d.country.toLowerCase()] : null) || '🌍',
+    reg, meth: d.methodology||'—', stage: d.stage||'intake',
+    ha: d.area_ha||null, m3: d.volume_m3||null, corcs: d.corcs_base||null,
+    cr: [d.corcs_low||null, d.corcs_high||null],
+    flg: { r: fc.red||0, a: fc.amber||0, g: fc.green||0 },
+    pct: d.progress||0, dm: d.dm_factor||null,
+    sp: d.species ? (typeof d.species==='string' ? d.species.split(',').map(s=>s.trim()) : d.species) : [],
+    notes: d.notes||'', hs: {co:d.client||'—',ct:'—',deal:d.name,last:'—',stg:'—'}, delvd: []
+  };
+}
+
 // ══ INIT ══════════════════════════════════════════════════
-function init(){
+async function init(){
   renderRail();
   renderKanban();
   renderIntelDocs();
   renderLibrary();
   renderAnalytics();
+  // Fetch DB projects and merge
+  try {
+    const res = await fetch(API + '/api/pablo/projects');
+    if(res.ok){
+      const data = await res.json();
+      const dbProjects = (data.projects||[]).map(dbToFrontend);
+      for(const dp of dbProjects){
+        const idx = PROJECTS.findIndex(p => p.id === dp.id);
+        if(idx !== -1){
+          // DB wins for mutable fields, keep hardcoded rich data (hs, delvd, notes, sp) if DB is empty
+          const existing = PROJECTS[idx];
+          dp.hs = existing.hs || dp.hs;
+          dp.delvd = (existing.delvd && existing.delvd.length) ? existing.delvd : dp.delvd;
+          dp.notes = dp.notes || existing.notes;
+          dp.sp = (dp.sp && dp.sp.length) ? dp.sp : existing.sp;
+          dp.flag = existing.flag !== '🌍' ? existing.flag : dp.flag;
+          PROJECTS[idx] = dp;
+        } else {
+          PROJECTS.push(dp);
+        }
+      }
+      renderRail();
+      renderKanban();
+    }
+  } catch(e){ console.warn('PABLO: failed to load projects from API', e); }
 }
 
 // ══ RAIL ══════════════════════════════════════════════════
