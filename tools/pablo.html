@@ -261,6 +261,25 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
 .raginput:focus{border-color:var(--teal)}
 .raginput::placeholder{color:var(--txt3)}
 
+/* ─── LIBRARY UPLOAD & BROWSE ───────────────────────── */
+.lib-layout{display:flex;gap:16px;height:calc(100vh - var(--top-h) - var(--stat-h) - 100px)}
+.lib-upload{width:330px;min-width:330px;background:var(--bg2);border:1px solid var(--border1);border-radius:7px;padding:16px;overflow-y:auto}
+.lib-browse{flex:1;background:var(--bg2);border:1px solid var(--border1);border-radius:7px;overflow:hidden;display:flex;flex-direction:column}
+.lib-browse-hdr{padding:10px 14px;border-bottom:1px solid var(--border1);display:flex;align-items:center;gap:10px}
+.lib-browse-list{flex:1;overflow-y:auto;padding:6px}
+.lib-doc-row{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:5px;border:1px solid var(--border0);background:var(--bg3);margin-bottom:4px;transition:all .13s}
+.lib-doc-row:hover{border-color:var(--border2);background:var(--bg4)}
+.lib-doc-icon{font-size:15px;flex-shrink:0}
+.lib-doc-info{flex:1;min-width:0}
+.lib-doc-name{font-family:'Syne',sans-serif;font-size:11.5px;font-weight:700;color:var(--txt0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lib-doc-meta{display:flex;gap:5px;align-items:center;margin-top:3px;flex-wrap:wrap}
+.lib-sel{width:100%;background:var(--bg3);border:1px solid var(--border1);border-radius:5px;padding:7px 10px;font-family:'Literata',serif;font-size:12px;color:var(--txt0);outline:none;cursor:pointer}
+.lib-sel:focus{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-glow)}
+.lib-sel option{background:var(--bg2);color:var(--txt0)}
+.lib-dzone{border:1.5px dashed var(--border2);border-radius:5px;padding:18px 12px;text-align:center;cursor:pointer;transition:all .18s;font-size:11px;color:var(--txt2)}
+.lib-dzone:hover,.lib-dzone.drag{border-color:var(--teal);background:var(--teal-faint)}
+.intel-answer{padding:12px 15px;border-top:1px solid var(--border1);background:var(--bg1);max-height:280px;overflow-y:auto;font-size:12px;line-height:1.6}
+
 /* ─── WIZARD ──────────────────────────────────────────── */
 #wiz-ov{position:fixed;inset:0;background:rgba(4,11,24,.88);backdrop-filter:blur(5px);z-index:100;display:none;align-items:center;justify-content:center}
 #wiz-ov.on{display:flex}
@@ -516,21 +535,21 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
     <div id="v-intel" class="view" style="display:flex;height:100%">
       <div class="intsidebar">
         <div class="intfiltlbl">Registry</div>
-        <div class="intfilt on">All methodologies</div>
-        <div class="intfilt">Puro.earth TSB</div>
-        <div class="intfilt">Verra VCS</div>
-        <div class="intfilt">MITECO España</div>
-        <div class="intfilt">Isometric</div>
+        <div class="intfilt on" onclick="filterIntel('')">All</div>
+        <div class="intfilt" onclick="filterIntel('Puro.earth')">Puro.earth</div>
+        <div class="intfilt" onclick="filterIntel('Verra')">Verra VCS</div>
+        <div class="intfilt" onclick="filterIntel('MITECO')">MITECO</div>
+        <div class="intfilt" onclick="filterIntel('Isometric')">Isometric</div>
         <div class="intfiltlbl" style="margin-top:12px">Type</div>
-        <div class="intfilt">Methodology PDFs</div>
-        <div class="intfilt">Benchmarks</div>
-        <div class="intfilt">Templates</div>
-        <div class="intfilt">Audit reports</div>
+        <div class="intfilt" onclick="filterIntel('methodology')">Methodologies</div>
+        <div class="intfilt" onclick="filterIntel('benchmark')">Benchmarks</div>
+        <div class="intfilt" onclick="filterIntel('audit_report')">Audit reports</div>
       </div>
       <div class="intmain">
         <div class="intdocs" id="intdocs"></div>
+        <div class="intel-answer" id="intel-answer" style="display:none"></div>
         <div class="ragbar">
-          <input class="raginput" id="raginput" placeholder="Ask about Puro.earth TSB eligibility, Colombia forestry law, MITECO OECC points…" onkeydown="if(event.key==='Enter')askRAG()">
+          <input class="raginput" id="raginput" placeholder="Ask about methodologies, eligibility rules, benchmarks…" onkeydown="if(event.key==='Enter')askRAG()">
           <button class="btn btn-p btn-s" onclick="askRAG()">Ask</button>
         </div>
       </div>
@@ -538,9 +557,62 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
 
     <!-- Platform: Library -->
     <div id="v-library" class="view">
-      <div style="padding:28px">
-        <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--txt0);margin-bottom:18px">Knowledge Library</div>
-        <div id="lib-docs"></div>
+      <div style="padding:20px">
+        <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--txt0);margin-bottom:14px">Knowledge Library</div>
+        <div class="lib-layout">
+          <!-- Upload panel -->
+          <div class="lib-upload">
+            <div style="font-family:'Syne',sans-serif;font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--txt3);margin-bottom:12px">Upload Document</div>
+            <div class="fgrp"><label class="flabel">Registry</label>
+              <select class="lib-sel" id="lib-reg" onchange="updateLibMethods();checkLibUploadReady()">
+                <option value="">Select…</option>
+                <option value="puro">Puro.earth</option>
+                <option value="verra">Verra VCS</option>
+                <option value="miteco">MITECO España</option>
+                <option value="isometric">Isometric</option>
+                <option value="general">General</option>
+              </select>
+            </div>
+            <div class="fgrp"><label class="flabel">Methodology</label>
+              <select class="lib-sel" id="lib-meth" disabled onchange="checkLibUploadReady()">
+                <option value="">Select registry first…</option>
+              </select>
+            </div>
+            <div class="fgrp"><label class="flabel">Document Type</label>
+              <select class="lib-sel" id="lib-type" onchange="checkLibUploadReady()">
+                <option value="">Select…</option>
+                <option value="methodology">Methodology</option>
+                <option value="pdd_example">PDD Example</option>
+                <option value="mrv_plan">MRV Plan</option>
+                <option value="audit_report">Audit Report</option>
+                <option value="benchmark">Benchmark</option>
+                <option value="heuristic">Heuristic</option>
+                <option value="guidance">Guidance</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="fgrp"><label class="flabel">Display Name</label>
+              <input class="finput" id="lib-dname" placeholder="e.g. TSB Methodology Edition 2023" oninput="checkLibUploadReady()">
+            </div>
+            <div class="fgrp">
+              <div class="lib-dzone" id="lib-dropzone" onclick="document.getElementById('lib-file-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="libHandleDrop(event)">
+                <span>Drop file here or click to browse</span>
+                <div style="font-size:10px;color:var(--txt3);margin-top:4px">PDF, DOCX, XLSX, TXT</div>
+              </div>
+              <input type="file" id="lib-file-input" hidden accept=".pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="libHandleFile(this)">
+            </div>
+            <button class="btn btn-p" id="lib-upload-btn" onclick="uploadLibraryDoc()" disabled style="width:100%;justify-content:center;margin-bottom:10px">Upload &amp; Extract</button>
+            <div id="lib-log"></div>
+          </div>
+          <!-- Browse panel -->
+          <div class="lib-browse">
+            <div class="lib-browse-hdr">
+              <input class="dsearch" id="lib-search-input" placeholder="Search documents…" oninput="clearTimeout(STATE.libSearchTimer);STATE.libSearchTimer=setTimeout(loadLibraryDocs,300)" style="max-width:none;flex:1;background:var(--bg3);border-color:var(--border1);color:var(--txt0)">
+              <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--txt2)" id="lib-doc-count"></span>
+            </div>
+            <div class="lib-browse-list" id="lib-docs"></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -707,14 +779,7 @@ const FLAGS = {
     {s:'amber', label:'DM factor pending validation', note:'50% assumption pending lab confirmation. ±15% swing in final CORC count (±4,900 CORCs at base).', src:'Inventory data'},
   ],
 };
-const INTEL_DOCS = [
-  {icon:'📋', name:'Puro.earth TSB Methodology — Edition 2023', type:'Methodology', reg:'Puro.earth', rel:'Relevant to: Soil cap integrity, Species eligibility, FSC certification flags'},
-  {icon:'📊', name:'WoodCache PBC — CORC Pricing & Project Summary', type:'Benchmark', reg:'Puro.earth', rel:'Relevant to: CORC price assumptions ($150–$160/t on Nasdaq Aug 2024)'},
-  {icon:'📊', name:'Carbon Sequestration Inc. — Operations Report 2024', type:'Benchmark', reg:'Puro.earth', rel:'Relevant to: Pit design, clay cap depth, operational benchmarks'},
-  {icon:'📋', name:'Verra VM0047 — ARR Non-Forest Methodology v1.0', type:'Methodology', reg:'Verra VCS', rel:null},
-  {icon:'📝', name:'Colombia Forestry Carbon — Vichada Market Overview 2025', type:'Reference', reg:'General', rel:'Relevant to: Corporinoquía permit timeline, competitive landscape'},
-  {icon:'📋', name:'MITECO OECC — Registro de Huella de Carbono Methodology', type:'Methodology', reg:'MITECO España', rel:null},
-];
+// INTEL_DOCS removed — now loaded live from /api/wiki/docs
 const SCRIPTS = [
   ['run_analysis.py','Pipeline orchestrator — runs full sequence end-to-end'],
   ['miteco_gis_analysis.py','CORINE · Natura 2000 · SIOSE · EFFIS · slopes · Catastro'],
@@ -732,7 +797,7 @@ const SCRIPTS = [
 const API = 'https://api-tools.oga.earth';
 
 // ══ STATE ══════════════════════════════════════════════════
-const STATE = {proj:null, tab:'overview', view:'pipeline', wizStep:1, wizReg:null, wizMeth:null, pendingFile:null, intakeProjectId:null};
+const STATE = {proj:null, tab:'overview', view:'pipeline', wizStep:1, wizReg:null, wizMeth:null, pendingFile:null, intakeProjectId:null, libraryFile:null, libSearchTimer:null, intelFilter:''};
 
 // ══ DB→FRONTEND MAPPER ═══════════════════════════════════
 const COUNTRY_FLAGS = {colombia:'🇨🇴',spain:'🇪🇸',españa:'🇪🇸',sierra_leone:'🇸🇱','sierra leone':'🇸🇱',brazil:'🇧🇷',brasil:'🇧🇷',bolivia:'🇧🇴',peru:'🇵🇪',chile:'🇨🇱',argentina:'🇦🇷',mexico:'🇲🇽',uk:'🇬🇧',portugal:'🇵🇹',usa:'🇺🇸',ghana:'🇬🇭',kenya:'🇰🇪',india:'🇮🇳',indonesia:'🇮🇩',australia:'🇦🇺',canada:'🇨🇦',germany:'🇩🇪',france:'🇫🇷',italy:'🇮🇹',japan:'🇯🇵',china:'🇨🇳',uruguay:'🇺🇾',paraguay:'🇵🇾',ecuador:'🇪🇨',mozambique:'🇲🇿',tanzania:'🇹🇿',costa_rica:'🇨🇷','costa rica':'🇨🇷'};
@@ -890,6 +955,7 @@ function tab(t){
   if(t==='analysis') renderAnalysis();
   if(t==='deliverables') renderDel();
   if(t==='agents') renderAgents();
+  if(t==='intel') loadIntelDocs(STATE.proj);
 }
 
 // ══ OVERVIEW ══════════════════════════════════════════════
@@ -1154,36 +1220,245 @@ function dispatch(s){
 }
 
 // ══ INTEL ═════════════════════════════════════════════════
-function renderIntelDocs(){
+function docIcon(type){
+  const icons={methodology:'📋',pdd:'📄',pdd_example:'📄',mrv_plan:'📊',audit_report:'🔍',verification_report:'🔍',benchmark:'📈',heuristic:'💡',guidance:'📝',technical_report:'📊',other:'📄'};
+  return icons[type]||'📄';
+}
+
+function renderIntelDocs(){ loadIntelDocs(STATE.proj); }
+
+function loadIntelDocs(p){
   const el=document.getElementById('intdocs');
   if(!el) return;
-  el.innerHTML=INTEL_DOCS.map(d=>`<div class="idcard">
-    <div class="idicon">${d.icon}</div>
-    <div style="flex:1">
-      <div class="idname">${d.name}</div>
-      <div class="idmeta">${d.type} · ${d.reg}</div>
-      ${d.rel?`<div class="idrel">${d.rel}</div>`:''}
-    </div>
-    <button class="btn btn-g btn-s">View</button>
-  </div>`).join('');
-  // intfilt clicks
-  document.querySelectorAll('.intfilt').forEach(el=>{
-    el.onclick=function(){document.querySelectorAll('.intfilt').forEach(e=>e.classList.remove('on'));this.classList.add('on')};
+  el.innerHTML='<div style="color:var(--txt2);font-size:11px;padding:12px">Loading library docs…</div>';
+
+  // Build search query from project registry or active filter
+  let q = STATE.intelFilter || '';
+  if(!q && p?.reg){
+    q = REGS[p.reg]?.label || p.reg;
+  }
+
+  let url = `${API}/api/wiki/docs?limit=25`;
+  if(q) url += `&q=${encodeURIComponent(q)}`;
+
+  fetch(url).then(r=>r.json()).then(data=>{
+    const docs = data.docs || [];
+    if(!docs.length){
+      // Fallback: fetch all docs
+      return fetch(`${API}/api/wiki/docs?limit=30`).then(r=>r.json()).then(d2=>{
+        renderIntelDocsList(el, d2.docs||[]);
+      });
+    }
+    renderIntelDocsList(el, docs);
+  }).catch(e=>{
+    el.innerHTML=`<div style="color:var(--red);font-size:11px;padding:12px">Error: ${e.message}</div>`;
   });
 }
-function renderLibrary(){
-  const el=document.getElementById('lib-docs');
-  if(!el) return;
-  el.innerHTML=INTEL_DOCS.map(d=>`<div class="idcard">
-    <div class="idicon">${d.icon}</div>
-    <div style="flex:1"><div class="idname">${d.name}</div><div class="idmeta">${d.type} · ${d.reg}</div></div>
-    <button class="btn btn-g btn-s">View</button>
-  </div>`).join('');
+
+function renderIntelDocsList(el, docs){
+  if(!docs.length){
+    el.innerHTML='<div style="color:var(--txt2);font-size:11px;padding:12px">No library docs yet. Upload via Knowledge Library.</div>';
+    return;
+  }
+  el.innerHTML=docs.map(d=>{
+    const typeVal = d.document_type || 'other';
+    const typeLbl = typeVal.replace(/_/g,' ');
+    return `<div class="idcard" onclick="askAboutDoc('${d.id}','${(d.title||'').replace(/'/g,"\\\\'")}')">
+      <div class="idicon">${docIcon(typeVal)}</div>
+      <div style="flex:1">
+        <div class="idname">${d.title||'Untitled'}</div>
+        <div class="idmeta">${typeLbl} · ${d.word_count?d.word_count.toLocaleString()+' words':'processing…'}</div>
+      </div>
+    </div>`;
+  }).join('');
 }
-function askRAG(){
-  const v=document.getElementById('raginput').value.trim();
+
+function askAboutDoc(id, title){
+  const inp = document.getElementById('raginput');
+  if(inp){ inp.value = 'Summarize the key points of "'+title+'"'; inp.focus(); }
+}
+
+function filterIntel(q){
+  STATE.intelFilter = q;
+  document.querySelectorAll('.intfilt').forEach(e=>e.classList.remove('on'));
+  event.target.classList.add('on');
+  loadIntelDocs(STATE.proj);
+}
+
+// ══ KNOWLEDGE LIBRARY ════════════════════════════════════
+function renderLibrary(){ loadLibraryDocs(); }
+
+async function loadLibraryDocs(){
+  const panel = document.getElementById('lib-docs');
+  if(!panel) return;
+  panel.innerHTML='<div style="color:var(--txt2);font-size:11px;padding:8px">Loading…</div>';
+  const q = document.getElementById('lib-search-input')?.value.trim() || '';
+  let url = `${API}/api/wiki/docs?limit=50`;
+  if(q) url += `&q=${encodeURIComponent(q)}`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    const docs = data.docs || [];
+    const countEl = document.getElementById('lib-doc-count');
+    if(countEl) countEl.textContent = (data.total||docs.length)+' docs';
+
+    if(!docs.length){
+      panel.innerHTML='<div style="color:var(--txt2);font-size:11px;padding:12px">No documents yet — upload your first one.</div>';
+      return;
+    }
+
+    panel.innerHTML = docs.map(d=>{
+      const tags = d.tags || [];
+      const regTag  = tags.find(t=>t.type==='registry'||t.type==='standard');
+      const methTag = tags.find(t=>t.type==='methodology');
+      const typeVal = d.document_type || 'other';
+      const reg = regTag?.value || '';
+      const regColors = {'puro':'var(--teal)','puro.earth':'var(--teal)','verra':'var(--blue)','verra vcs':'var(--blue)','miteco':'var(--amber)','miteco españa':'var(--amber)','isometric':'var(--violet)'};
+      const regColor = regColors[reg.toLowerCase()] || 'var(--txt1)';
+      return `<div class="lib-doc-row">
+        <div class="lib-doc-icon">${docIcon(typeVal)}</div>
+        <div class="lib-doc-info">
+          <div class="lib-doc-name" title="${(d.title||'').replace(/"/g,'&quot;')}">${d.title||'Untitled'}</div>
+          <div class="lib-doc-meta">
+            ${reg?`<span class="badge" style="color:${regColor};background:color-mix(in srgb,${regColor} 10%,transparent);font-size:9px;padding:1px 6px">${reg.toUpperCase()}</span>`:''}
+            ${methTag?`<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--txt2)">${methTag.value.toUpperCase()}</span>`:''}
+            <span style="font-size:10px;color:var(--txt2)">${typeVal.replace(/_/g,' ')}</span>
+            ${d.word_count?`<span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--txt3)">${d.word_count.toLocaleString()}w</span>`:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e){
+    panel.innerHTML=`<div style="color:var(--red);font-size:11px;padding:8px">Failed to load: ${e.message}</div>`;
+  }
+}
+
+// Library upload helpers
+const LIB_METHODS = {
+  puro:[{v:'tsb',l:'TSB'},{v:'biochar',l:'Biochar'}],
+  verra:[{v:'vm0047',l:'VM0047'},{v:'vm0042',l:'VM0042'},{v:'vm0044',l:'VM0044'},{v:'vm0048',l:'VM0048'}],
+  miteco:[{v:'sumideros',l:'Sumideros'},{v:'agricultura_conservacion',l:'Agricultura Conservación'}],
+  isometric:[{v:'subsurface_biomass',l:'Subsurface Biomass'},{v:'beccs',l:'BECCS'}],
+  general:[{v:'general',l:'General'}]
+};
+
+function updateLibMethods(){
+  const reg = document.getElementById('lib-reg').value;
+  const sel = document.getElementById('lib-meth');
+  if(!reg){ sel.disabled=true; sel.innerHTML='<option value="">Select registry first…</option>'; return; }
+  const methods = LIB_METHODS[reg] || [{v:'general',l:'General'}];
+  sel.disabled=false;
+  sel.innerHTML = '<option value="">Select…</option>' + methods.map(m=>`<option value="${m.v}">${m.l}</option>`).join('');
+}
+
+function libHandleDrop(e){
+  e.preventDefault();
+  const dz=document.getElementById('lib-dropzone');
+  dz.classList.remove('drag');
+  const f=e.dataTransfer.files[0];
+  if(f){ STATE.libraryFile=f; dz.innerHTML=`<div style="color:var(--teal);font-family:'Syne',sans-serif;font-weight:700">✓ ${f.name}</div><div style="font-size:10px;color:var(--txt2);margin-top:2px">${(f.size/1024).toFixed(0)} KB</div>`; checkLibUploadReady(); }
+}
+
+function libHandleFile(inp){
+  const f=inp.files[0];
+  if(f){ STATE.libraryFile=f; const dz=document.getElementById('lib-dropzone'); dz.innerHTML=`<div style="color:var(--teal);font-family:'Syne',sans-serif;font-weight:700">✓ ${f.name}</div><div style="font-size:10px;color:var(--txt2);margin-top:2px">${(f.size/1024).toFixed(0)} KB</div>`; checkLibUploadReady(); }
+}
+
+function checkLibUploadReady(){
+  const ready = STATE.libraryFile && document.getElementById('lib-reg').value && document.getElementById('lib-meth').value && document.getElementById('lib-type').value && document.getElementById('lib-dname').value.trim();
+  document.getElementById('lib-upload-btn').disabled = !ready;
+}
+
+async function uploadLibraryDoc(){
+  const file = STATE.libraryFile;
+  const dname = document.getElementById('lib-dname').value.trim();
+  if(!file||!dname){ alert('Fill all fields and select a file'); return; }
+
+  const log = document.getElementById('lib-log');
+  log.innerHTML='';
+  const addRow = (msg, st='run') => {
+    const row = document.createElement('div');
+    row.className='genstep fadein';
+    row.innerHTML=`<span class="gslbl">${msg}</span><span class="gsst ${st==='run'?'run blinking':st==='ok'?'ok':'err'}">${st==='run'?'●':st==='ok'?'✓':'✗'}</span>`;
+    log.appendChild(row); log.scrollTop=9999;
+    return row;
+  };
+
+  const r1 = addRow(`Uploading ${file.name}…`);
+  document.getElementById('lib-upload-btn').disabled=true;
+
+  try {
+    const fd = new FormData();
+    fd.append('file', file, file.name);
+    fd.append('owner', 'clearsky');
+    fd.append('uploaded_by', 'pablo_library');
+
+    const res = await fetch(`${API}/api/knowledge/ingest`, {method:'POST', body:fd});
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error||`HTTP ${res.status}`);
+
+    const ws = r1.querySelector('.gsst'); ws.className='gsst ok'; ws.textContent='✓';
+    r1.querySelector('.gslbl').textContent=`Uploaded · ${data.extraction?.word_count||0} words extracted`;
+
+    if(data.knowledge_doc?.id){
+      addRow('AI enrichment complete — tags + summary generated', 'ok');
+    } else if(data.file_id){
+      addRow('File stored · AI extraction processing', 'ok');
+    }
+    addRow(`${dname} ready in library`, 'ok');
+
+    // Reset form
+    document.getElementById('lib-dname').value='';
+    STATE.libraryFile=null;
+    document.getElementById('lib-dropzone').innerHTML='<span>Drop file here or click to browse</span><div style="font-size:10px;color:var(--txt3);margin-top:4px">PDF, DOCX, XLSX, TXT</div>';
+    document.getElementById('lib-upload-btn').disabled=true;
+    loadLibraryDocs();
+
+  } catch(e){
+    const ws=r1.querySelector('.gsst'); ws.className='gsst err'; ws.textContent='✗';
+    r1.querySelector('.gslbl').textContent=`Upload failed: ${e.message}`;
+    document.getElementById('lib-upload-btn').disabled=false;
+  }
+}
+
+// ══ RAG ═══════════════════════════════════════════════════
+async function askRAG(){
+  const v = document.getElementById('raginput')?.value.trim();
   if(!v) return;
-  alert(`RAG Query:\n"${v}"\n\n→ Routes to /api/pablo/library with project context\n→ Response with source citations appears inline`);
+  const p = STATE.proj;
+  const ansEl = document.getElementById('intel-answer');
+  if(!ansEl) return;
+  ansEl.style.display='block';
+  ansEl.innerHTML='<span style="color:var(--txt2)">Searching documents…</span>';
+
+  // Build tags from project registry
+  const tags = [];
+  if(p?.reg){
+    const regLabel = REGS[p.reg]?.label || p.reg;
+    tags.push(regLabel);
+    const methSlug = p.meth?.split('—')[1]?.trim() || p.meth?.split('—')[0]?.trim();
+    if(methSlug) tags.push(methSlug);
+  }
+
+  try {
+    const res = await fetch(`${API}/api/wiki/ask`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ question:v, tags, limit:10 })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error||`HTTP ${res.status}`);
+
+    const modelName = data.model?.includes('haiku')?'Haiku':'Sonnet';
+    ansEl.innerHTML=`
+      <div style="color:var(--txt0);line-height:1.6;margin-bottom:8px;white-space:pre-wrap">${data.answer||'No answer generated.'}</div>
+      ${data.sources?.length?`<div style="font-size:10px;color:var(--txt2);margin-top:6px">Sources: ${data.sources.map(s=>`<span style="color:var(--teal);cursor:pointer">${s.title||s.id}</span>`).join(' · ')}</div>`:''}
+      <div style="font-size:9px;color:var(--txt3);margin-top:4px;font-family:'DM Mono',monospace">${modelName} · ${data.context_docs||0} docs · ${((data.context_chars||0)/1000).toFixed(1)}k chars</div>
+    `;
+  } catch(e){
+    ansEl.innerHTML=`<span style="color:var(--red)">Error: ${e.message}</span>`;
+  }
 }
 
 // ══ PLATFORM VIEWS ════════════════════════════════════════
@@ -1359,6 +1634,9 @@ async function startIntake(){
     PROJECTS.unshift(newProj);
     renderRail();
     renderKanban();
+
+    // Promote project data to knowledge base (fire and forget)
+    fetch(`${API}/api/knowledge/sync-projects`,{method:'POST',headers:{'Content-Type':'application/json'}}).catch(()=>{});
 
     document.getElementById('intake-cta').style.display='flex';
     document.getElementById('intake-cta-btn').textContent = 'Open project workspace →';
