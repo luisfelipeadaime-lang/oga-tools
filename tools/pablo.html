@@ -277,49 +277,7 @@ nav{flex:1;padding-top:8px;}
 </div>
 
 <script>
-// ─── API ─────────────────────────────────────────────────────────
-const API_BASE = 'https://api-tools.oga.earth';
-
-async function loadProjects() {
-  try {
-    const r = await fetch(API_BASE + '/api/pablo/projects');
-    const data = await r.json();
-    return (data.projects || []).map(p => ({
-      ...p,
-      country: p.country || '',
-      corcs_range: [p.corcs_low || null, p.corcs_high || null],
-      flags: p.flag_counts || { red: 0, amber: 0, green: 0 },
-      species: p.species ? p.species.split('|') : [],
-      deliverables: [],
-      created: (p.created_at || '').slice(0, 10),
-      updated: (p.updated_at || '').slice(0, 10),
-    }));
-  } catch (e) {
-    console.warn('API failed, using mock data:', e);
-    return null;
-  }
-}
-
-async function loadProjectDetail(id) {
-  try {
-    const r = await fetch(API_BASE + '/api/pablo/projects/' + id);
-    return await r.json();
-  } catch (e) {
-    console.warn('Detail API failed:', e);
-    return null;
-  }
-}
-
-async function createProject(body) {
-  const r = await fetch(API_BASE + '/api/pablo/projects', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  return await r.json();
-}
-
-// ─── DATA (mock fallback) ────────────────────────────────────────
+// ─── DATA ────────────────────────────────────────────────────────
 const REGISTRIES = [
   { id:"puro",      label:"Puro.earth",     color:"#00D4AA", methods:["TSB — Terrestrial Storage of Biomass","Biochar — Enhanced Weathering","Biochar — Permanence Protocol"] },
   { id:"verra",     label:"Verra VCS",       color:"#3B82F6", methods:["VM0047 — ARR Non-Forest","VM0042 — REDD+","VM0044 — IFM","VM0048 — ARR Restoration"] },
@@ -431,7 +389,6 @@ let modalStep = 1;
 let modalRegistry = "";
 let modalMethod = "";
 let libraryRegistry = "puro";
-let liveProjects = null; // set after API load
 
 // ─── ICONS ───────────────────────────────────────────────────────
 const SVG = {
@@ -473,20 +430,9 @@ function progressBar(val, color){
 function statusColor(s){ return s==="red"?"#FF4560":s==="amber"?"#F0A500":"#2ED573"; }
 const TYPE_COLOR = {methodology:"#00D4AA", benchmark:"#3B82F6", audit:"#F0A500", template:"#A78BFA"};
 
-// ─── ACTIVE DATA ─────────────────────────────────────────────────
-function getProjects() { return liveProjects || PROJECTS; }
-
 // ─── INIT ────────────────────────────────────────────────────────
-async function init(){
+function init(){
   renderSidebarBadges();
-  // Load from API first, fall back to mock
-  const apiData = await loadProjects();
-  if (apiData && apiData.length > 0) {
-    liveProjects = apiData;
-    console.log('Loaded ' + apiData.length + ' projects from API');
-  } else {
-    console.log('Using mock PROJECTS data');
-  }
   renderSidebarStats();
   renderStatsBar();
   renderTopbarMeta();
@@ -505,12 +451,11 @@ function renderSidebarBadges(){
 }
 
 function renderSidebarStats(){
-  const P = getProjects();
-  const totalCORCs = P.reduce((a,p)=>a+(p.corcs_base||0),0);
-  const active = P.filter(p=>!["intake","delivered"].includes(p.stage)).length;
+  const totalCORCs = PROJECTS.reduce((a,p)=>a+(p.corcs_base||0),0);
+  const active = PROJECTS.filter(p=>!["intake","delivered"].includes(p.stage)).length;
   const el = document.getElementById("sidebar-stats");
   el.innerHTML = [
-    ["Total Projects", P.length],
+    ["Total Projects", PROJECTS.length],
     ["Active Analysis", active],
     ["CORCs Modeled", totalCORCs.toLocaleString()],
   ].map(([l,v])=>`
@@ -521,27 +466,25 @@ function renderSidebarStats(){
 }
 
 function renderTopbarMeta(){
-  const P = getProjects();
   const el = document.getElementById("topbar-meta");
   if(currentView !== "pipeline"){ el.innerHTML=""; return; }
-  const delivered = P.filter(p=>p.stage==="delivered").length;
-  const active = P.filter(p=>!["intake","delivered"].includes(p.stage)).length;
+  const delivered = PROJECTS.filter(p=>p.stage==="delivered").length;
+  const active = PROJECTS.filter(p=>!["intake","delivered"].includes(p.stage)).length;
   el.innerHTML = [
-    {t:`${P.length} projects`, c:"#6B87B0"},
+    {t:`${PROJECTS.length} projects`, c:"#6B87B0"},
     {t:`${delivered} delivered`, c:"#2ED573"},
     {t:`${active} in progress`, c:"#F0A500"},
   ].map(x=>`<span style="font-size:12px;color:${x.c};font-family:'DM Mono',monospace;">${x.t} ·</span>`).join("");
 }
 
 function renderStatsBar(){
-  const P = getProjects();
-  const totalCORCs = P.reduce((a,p)=>a+(p.corcs_base||0),0);
-  const totalHa = P.reduce((a,p)=>a+(p.area_ha||0),0);
-  const totalVol = P.reduce((a,p)=>a+(p.volume_m3||0),0);
-  const redFlags = P.reduce((a,p)=>a+(p.flags?.red||0),0);
-  const amberFlags = P.reduce((a,p)=>a+(p.flags?.amber||0),0);
-  const methods = new Set(P.map(p=>p.methodology)).size;
-  const regs = new Set(P.map(p=>p.registry)).size;
+  const totalCORCs = PROJECTS.reduce((a,p)=>a+(p.corcs_base||0),0);
+  const totalHa = PROJECTS.reduce((a,p)=>a+(p.area_ha||0),0);
+  const totalVol = PROJECTS.reduce((a,p)=>a+(p.volume_m3||0),0);
+  const redFlags = PROJECTS.reduce((a,p)=>a+p.flags.red,0);
+  const amberFlags = PROJECTS.reduce((a,p)=>a+p.flags.amber,0);
+  const methods = new Set(PROJECTS.map(p=>p.methodology)).size;
+  const regs = new Set(PROJECTS.map(p=>p.registry)).size;
   const el = document.getElementById("statsbar");
   el.innerHTML = [
     {l:"Total Area",       v:totalHa.toLocaleString()+" ha",             c:"#E2EBF8"},
@@ -566,7 +509,7 @@ function renderPipeline(){
   document.getElementById("kanban").style.cssText = "display:flex;gap:12px;height:100%;overflow-x:auto;padding-bottom:16px;";
   const kanban = document.getElementById("kanban");
   kanban.innerHTML = STAGES.map(s=>{
-    const cards = getProjects().filter(p=>p.stage===s.id);
+    const cards = PROJECTS.filter(p=>p.stage===s.id);
     return `
       <div class="kanban-col">
         <div class="kanban-col-header" style="border-top:2px solid ${s.color};">
@@ -619,14 +562,8 @@ function renderCard(p){
 }
 
 // ─── DETAIL PANEL ────────────────────────────────────────────────
-async function openDetail(id){
-  selectedProject = getProjects().find(p=>p.id===id);
-  // Try loading detailed flags from API
-  const detail = await loadProjectDetail(id);
-  if (detail && detail.flags) {
-    selectedProject._apiFlags = detail.flags;
-    if (detail.deliverables) selectedProject._apiDeliverables = detail.deliverables;
-  }
+function openDetail(id){
+  selectedProject = PROJECTS.find(p=>p.id===id);
   renderDetail("overview");
   document.getElementById("detail-panel").style.display="block";
 }
@@ -639,7 +576,7 @@ function closeDetail(){
 function renderDetail(tab){
   const p = selectedProject; if(!p) return;
   const r = reg(p.registry);
-  const flags = p._apiFlags || FLAG_DATA[p.id] || {
+  const flags = FLAG_DATA[p.id] || {
     technical:[
       {label:"Species eligibility (C:N >80)", status:"amber", note:"Lab data required"},
       {label:"Leaf exclusion protocol", status:"amber", note:"Protocol not yet documented"},
@@ -655,7 +592,6 @@ function renderDetail(tab){
       {label:"Double-counting boundary", status:"green", note:"No conflicts identified"},
     ],
   };
-  const deliverables = p._apiDeliverables || p.deliverables || [];
 
   const tabContent = {
     overview:`
@@ -722,13 +658,11 @@ function renderDetail(tab){
     deliverables:`
       <div class="fade-in">
         ${label("Generated Deliverables","display:block;margin-bottom:16px;")}
-        ${deliverables.length ? deliverables.map(d=>{
-          const name = typeof d === 'string' ? d : (d.filename || d.name || 'Document');
-          return `
+        ${p.deliverables.length ? p.deliverables.map(d=>`
           <div class="deliverable-item">
-            <div style="display:flex;align-items:center;gap:10px;color:#00D4AA;">${SVG.file}<span style="font-size:13px;color:#E2EBF8;">${name}</span></div>
+            <div style="display:flex;align-items:center;gap:10px;color:#00D4AA;">${SVG.file}<span style="font-size:13px;color:#E2EBF8;">${d}</span></div>
             <button class="btn-ghost" style="padding:5px 10px;font-size:12px;">${SVG.dl}</button>
-          </div>`;}).join("") : `
+          </div>`).join("") : `
           <div class="deliverable-empty">
             <div style="margin-bottom:8px;color:#3A5070;">${SVG.file}</div>
             No deliverables generated yet
@@ -1013,31 +947,9 @@ function handleDrop(e){
     <div style="color:#00D4AA;font-size:14px;font-weight:600;">${SVG.check} ${f.name}</div>
     <div style="font-size:12px;color:#6B87B0;margin-top:4px;">${(f.size/1024/1024).toFixed(1)} MB — ready to upload</div>`;
 }
-async function startAnalysis(){
-  const name = document.getElementById('inp-name')?.value?.trim();
-  const client = document.getElementById('inp-client')?.value?.trim();
-  const country = document.getElementById('inp-country')?.value?.trim();
-  const notes = document.getElementById('inp-notes')?.value?.trim();
-  if(!name){ alert('Project name is required.'); return; }
-  // Build a slug-style id from the name
-  const id = name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40);
-  const body = {
-    id, name, client: client||'', country: country||'',
-    registry: modalRegistry, methodology: modalMethod,
-    stage: 'intake', progress: 0, notes: notes||''
-  };
-  try {
-    const result = await createProject(body);
-    if(result.error){ alert('Error: ' + result.error); return; }
-    hideModal();
-    // Reload projects from API and re-render
-    const fresh = await loadProjects();
-    if(fresh && fresh.length > 0) liveProjects = fresh;
-    renderSidebarStats(); renderStatsBar(); renderTopbarMeta(); renderPipeline();
-  } catch(e){
-    console.error('Create project failed:', e);
-    alert('Failed to create project. Check console.');
-  }
+function startAnalysis(){
+  hideModal();
+  alert("POST /api/pablo/intake — ZIP intake pipeline will be wired here.");
 }
 function syncR2(){
   alert("R2 Sync — GET /api/pablo/library will refresh document list.");
