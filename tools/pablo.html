@@ -1299,7 +1299,8 @@ async function startIntake(){
       PROJECTS.unshift(newProj);
       renderRail();
       renderKanban();
-      selectProj(newProj);
+      closeIntakeScreen();
+      openProject(newProj.id);
     };
   } catch(e) {
     setStatus(r3,'err',`Processing failed: ${e.message}`);
