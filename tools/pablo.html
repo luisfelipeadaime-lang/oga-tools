@@ -1228,6 +1228,7 @@ async function startIntake(){
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
+        id: name.toLowerCase().replace(/[^a-z0-9]/g,'_').slice(0,20) + '_' + Date.now().toString(36),
         name, client, country, notes,
         registry: STATE.wizReg,
         methodology: STATE.wizMeth,
