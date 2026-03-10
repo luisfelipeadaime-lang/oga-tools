@@ -1298,6 +1298,7 @@ async function startIntake(){
       };
       PROJECTS.unshift(newProj);
       renderRail();
+      renderKanban();
       selectProj(newProj);
     };
   } catch(e) {
