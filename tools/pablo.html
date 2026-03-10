@@ -3,959 +3,1244 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PABLO — Carbon Project Developer</title>
+<title>PABLO — Automated Developer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Literata:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet">
 <style>
-/* ─── RESET ─────────────────────────────────────────────────────── */
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:#030810;color:#E2EBF8;font-family:'DM Sans',sans-serif;overflow:hidden;height:100vh;}
-::-webkit-scrollbar{width:4px;height:4px;}
-::-webkit-scrollbar-track{background:#070F1E;}
-::-webkit-scrollbar-thumb{background:#243D60;border-radius:2px;}
+:root {
+  --bg0:#040B18; --bg1:#070F1E; --bg2:#0A1628; --bg3:#0E1F36;
+  --bg4:#142744; --bg5:#1A3055;
+  --border0:#0F1E30; --border1:#162C44; --border2:#1E3A58;
+  --teal:#00C896; --teal2:#009E78; --teal-glow:rgba(0,200,150,.12); --teal-faint:rgba(0,200,150,.05);
+  --amber:#F5A623; --amber-dim:rgba(245,166,35,.14);
+  --red:#FF4757; --red-dim:rgba(255,71,87,.12);
+  --green:#2ED573; --green-dim:rgba(46,213,115,.12);
+  --blue:#5B9CF6; --blue-dim:rgba(91,156,246,.12);
+  --violet:#A78BFA; --violet-dim:rgba(167,139,250,.12);
+  --txt0:#D8E8F5; --txt1:#8AACCC; --txt2:#445E78; --txt3:#253344;
+  --doc-bg:#F7F5F0; --doc-bg2:#EDEAE3; --doc-border:#D8D4CC;
+  --doc-txt0:#1A2430; --doc-txt1:#556070; --doc-txt2:#9AABB8;
+  --rail-w:218px; --top-h:50px; --stat-h:40px; --tab-h:40px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,serif;font-size:13px;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+::-webkit-scrollbar-track{background:transparent}
+.syne{font-family:'Syne',sans-serif}
+.mono{font-family:'DM Mono',monospace}
 
-/* ─── FONTS ──────────────────────────────────────────────────────── */
-.syne{font-family:'Syne',sans-serif;}
-.mono{font-family:'DM Mono',monospace;}
+/* ─── LAYOUT ─────────────────────────────────────────── */
+#app{display:flex;height:100vh;overflow:hidden}
+#rail{width:var(--rail-w);min-width:var(--rail-w);background:var(--bg1);border-right:1px solid var(--border1);display:flex;flex-direction:column;overflow:hidden}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
 
-/* ─── ANIMATIONS ─────────────────────────────────────────────────── */
-@keyframes pulse-amber{0%{box-shadow:0 0 0 0 rgba(240,165,0,.4);}70%{box-shadow:0 0 0 6px rgba(240,165,0,0);}100%{box-shadow:0 0 0 0 rgba(240,165,0,0);}}
-@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-@keyframes slideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
-@keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
-@keyframes dotPulse{0%{opacity:1;}50%{opacity:.4;}100%{opacity:1;}}
+/* ─── RAIL ───────────────────────────────────────────── */
+.rail-logo{padding:16px 14px 12px;border-bottom:1px solid var(--border0)}
+.rail-logo .mark{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;letter-spacing:.1em;color:var(--teal)}
+.rail-logo .sub{font-size:10px;color:var(--txt2);letter-spacing:.12em;text-transform:uppercase;margin-top:1px}
+.rsec{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3);padding:12px 14px 5px}
+.rprojects{flex:1;overflow-y:auto;padding:0 6px}
+.rproject{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:5px;cursor:pointer;border:1px solid transparent;transition:all .14s;margin-bottom:2px}
+.rproject:hover{background:var(--bg3)}
+.rproject.active{background:var(--teal-glow);border-color:rgba(0,200,150,.22)}
+.rdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.rinfo{flex:1;min-width:0}
+.rname{font-family:'Syne',sans-serif;font-size:11.5px;font-weight:700;color:var(--txt0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rproject.active .rname{color:var(--teal)}
+.rmeta{font-size:10px;color:var(--txt2);margin-top:1px;font-family:'DM Mono',monospace}
+.rbadge{font-size:9px;font-weight:700;letter-spacing:.04em;padding:2px 6px;border-radius:3px;font-family:'Syne',sans-serif;flex-shrink:0}
+.rnew{display:flex;align-items:center;gap:7px;padding:6px 8px;margin:3px 6px 0;border-radius:5px;cursor:pointer;color:var(--txt2);font-size:11px;border:1px dashed var(--border2);transition:all .14s}
+.rnew:hover{color:var(--teal);border-color:var(--teal);background:var(--teal-faint)}
+.rnav{padding:0 6px}
+.rnavitem{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:5px;cursor:pointer;color:var(--txt1);font-size:11.5px;font-family:'Syne',sans-serif;font-weight:600;transition:all .14s;border:1px solid transparent;margin-bottom:2px}
+.rnavitem:hover{background:var(--bg3);color:var(--txt0)}
+.rnavitem.active{background:var(--teal-glow);color:var(--teal);border-color:rgba(0,200,150,.18)}
+.divln{height:1px;background:var(--border0);margin:8px 0}
+.agentbar{border-top:1px solid var(--border0);padding:8px 6px;background:var(--bg0)}
+.agbar-lbl{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--txt3);padding:0 8px;margin-bottom:5px}
+.agrow{display:flex;align-items:center;gap:8px;padding:4px 8px;border-radius:4px;cursor:pointer;transition:background .12s}
+.agrow:hover{background:var(--bg2)}
+.agpulse{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.agpulse.g{background:var(--green);box-shadow:0 0 0 2px rgba(46,213,115,.2)}
+.agpulse.a{background:var(--amber);box-shadow:0 0 0 2px rgba(245,166,35,.2)}
+.agpulse.d{background:var(--txt3)}
+.agname{flex:1;font-size:11px;font-weight:600;font-family:'Syne',sans-serif;color:var(--txt1)}
+.agstat{font-size:10px;color:var(--txt3);font-family:'DM Mono',monospace}
 
-.fade-in{animation:fadeIn .3s ease forwards;}
-.slide-in{animation:slideIn .25s ease forwards;}
+/* ─── TOP BAR ─────────────────────────────────────────── */
+#topbar{height:var(--top-h);min-height:var(--top-h);background:var(--bg1);border-bottom:1px solid var(--border1);display:flex;align-items:center;padding:0 22px;gap:12px;flex-shrink:0}
+.crumb{display:flex;align-items:center;gap:8px;font-size:12px}
+.crumb-dim{color:var(--txt2);cursor:pointer;transition:color .12s}
+.crumb-dim:hover{color:var(--txt1)}
+.crumb-sep{color:var(--txt3)}
+.crumb-cur{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--txt0)}
+.crumb-meta{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--txt2)}
+.topacts{margin-left:auto;display:flex;align-items:center;gap:8px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.04em;font-family:'Syne',sans-serif}
+.spill{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-family:'Syne',sans-serif}
 
-/* ─── LAYOUT ─────────────────────────────────────────────────────── */
-#app{display:flex;height:100vh;overflow:hidden;background:#030810;}
+/* ─── STAT BAR ─────────────────────────────────────────── */
+#statbar{display:flex;gap:1px;background:var(--border0);border-bottom:1px solid var(--border1);flex-shrink:0}
+.stile{flex:1;background:var(--bg1);padding:8px 14px;min-width:0}
+.stlbl{font-size:9px;color:var(--txt2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+.stval{font-family:'DM Mono',monospace;font-size:15px;font-weight:500}
 
-/* SIDEBAR */
-#sidebar{width:220px;background:#070F1E;border-right:1px solid #1C3050;display:flex;flex-direction:column;padding:0 12px;flex-shrink:0;}
-.sidebar-logo{padding:20px 4px 16px;border-bottom:1px solid #1C3050;margin-bottom:8px;}
-.sidebar-logo-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:#00D4AA;letter-spacing:.05em;}
-.sidebar-logo-sub{font-size:10px;color:#3A5070;font-family:'DM Mono',monospace;margin-top:2px;}
-.sidebar-registries{display:flex;flex-direction:column;gap:6px;padding:12px 4px;}
-.registry-badge{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;border:1px solid;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;}
-nav{flex:1;padding-top:8px;}
-.nav-label{display:block;margin:4px 14px 6px;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;color:#3A5070;text-transform:uppercase;}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:6px;cursor:pointer;font-size:13px;color:#6B87B0;transition:all .15s ease;font-weight:500;border:1px solid transparent;}
-.nav-item:hover{background:#112034;color:#E2EBF8;}
-.nav-item.active{background:rgba(0,212,170,.08);color:#00D4AA;border-color:rgba(0,212,170,.2);}
-.nav-item svg{flex-shrink:0;}
-.sidebar-stats{padding:12px 4px 20px;border-top:1px solid #1C3050;}
-.sidebar-stat{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
-.sidebar-stat-label{font-size:11px;color:#3A5070;}
-.sidebar-stat-val{font-family:'DM Mono',monospace;font-size:11px;color:#6B87B0;font-weight:500;}
+/* ─── PROJ TABS ───────────────────────────────────────── */
+#ptabs{display:flex;background:var(--bg1);border-bottom:1px solid var(--border1);padding:0 22px;flex-shrink:0}
+.ptab{padding:11px 14px 9px;cursor:pointer;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt2);border-bottom:2px solid transparent;transition:all .14s;white-space:nowrap;font-family:'Syne',sans-serif}
+.ptab:hover{color:var(--txt1)}
+.ptab.on{color:var(--teal);border-bottom-color:var(--teal)}
 
-/* MAIN */
-#main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+/* ─── CONTENT ─────────────────────────────────────────── */
+#content{flex:1;overflow:hidden;position:relative}
+.view{display:none;height:100%;overflow-y:auto}
+.view.on{display:block}
+.view.docmode{background:var(--doc-bg)}
 
-/* TOP BAR */
-#topbar{height:56px;border-bottom:1px solid #1C3050;background:#070F1E;display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;}
-.topbar-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#E2EBF8;}
-.topbar-meta{display:flex;gap:6px;align-items:center;}
-.topbar-meta span{font-size:12px;font-family:'DM Mono',monospace;}
-.topbar-actions{display:flex;gap:10px;align-items:center;}
+/* ─── BUTTONS ─────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:6px;border-radius:5px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;font-size:11px;letter-spacing:.04em;transition:all .14s;white-space:nowrap;border:none;padding:6px 13px}
+.btn-p{background:var(--teal);color:var(--bg0)}
+.btn-p:hover{background:#00DDA8;box-shadow:0 0 16px rgba(0,200,150,.3)}
+.btn-g{background:transparent;color:var(--txt1);border:1px solid var(--border2)}
+.btn-g:hover{border-color:var(--border2);color:var(--txt0);background:var(--bg3)}
+.btn-s{padding:5px 10px;font-size:10.5px}
+.btn-danger{background:transparent;color:var(--red);border:1px solid rgba(255,71,87,.28)}
+.btn-danger:hover{background:var(--red-dim)}
 
-/* STATS BAR */
-#statsbar{display:flex;gap:12px;padding:14px 24px;border-bottom:1px solid #1C3050;background:#070F1E;flex-shrink:0;overflow-x:auto;}
-.stat-card{background:#0C1829;border:1px solid #1C3050;border-radius:8px;padding:10px 14px;flex:1;min-width:110px;}
-.stat-card-label{display:block;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;color:#3A5070;text-transform:uppercase;margin-bottom:4px;}
-.stat-card-val{font-family:'DM Mono',monospace;font-size:16px;font-weight:600;}
+/* ─── KANBAN ──────────────────────────────────────────── */
+#pipeline-view{padding:18px 20px;overflow-y:auto;height:100%}
+.kboard{display:flex;gap:10px;min-height:calc(100% - 30px);padding-bottom:16px}
+.kcol{min-width:210px;max-width:226px;display:flex;flex-direction:column}
+.khead{padding:7px 10px;background:var(--bg2);border:1px solid var(--border1);border-top:2px solid var(--sc,var(--teal));border-radius:0 0 5px 5px;display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+.khtitle{font-family:'Syne',sans-serif;font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.khcount{font-family:'DM Mono',monospace;font-size:11px;font-weight:600;padding:1px 6px;border-radius:3px}
+.kcard{background:var(--bg2);border:1px solid var(--border1);border-radius:7px;padding:11px 12px;margin-bottom:7px;cursor:pointer;transition:all .16s;position:relative;overflow:hidden}
+.kcard::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ca,var(--teal));opacity:.55}
+.kcard:hover{border-color:var(--border2);transform:translateY(-1px);box-shadow:0 5px 18px rgba(0,0,0,.4)}
+.kcname{font-family:'Syne',sans-serif;font-size:11.5px;font-weight:700;color:var(--txt0);margin-bottom:3px}
+.kcclient{font-size:10.5px;color:var(--txt2);margin-bottom:5px}
+.kcmeth{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--txt3);margin-bottom:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kcstats{display:flex;gap:10px;margin-bottom:7px}
+.kcstat-v{font-family:'DM Mono',monospace;font-size:12.5px;font-weight:500;color:var(--txt0)}
+.kcstat-l{font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em}
+.kcflags{display:flex;align-items:center;gap:5px}
+.fldot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.flcount{display:flex;align-items:center;gap:3px;font-family:'DM Mono',monospace;font-size:10.5px}
+.kprog{height:2px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:7px}
+.kpfill{height:100%;border-radius:2px;transition:width .4s}
+.kcta{font-size:10.5px;color:var(--txt2);margin-top:6px}
+.kempty{border:1px dashed var(--border1);border-radius:6px;padding:16px;text-align:center;color:var(--txt3);font-size:10.5px}
 
-/* CONTENT AREA */
-#content{flex:1;overflow:hidden;padding:24px;position:relative;}
+/* ─── OVERVIEW ────────────────────────────────────────── */
+.ov-grid{display:grid;grid-template-columns:1fr 1fr 290px;gap:14px;padding:20px}
+.ovc{background:var(--bg2);border:1px solid var(--border1);border-radius:7px;padding:18px}
+.ovt{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--txt2);margin-bottom:12px;font-family:'Syne',sans-serif}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mcell{background:var(--bg3);border-radius:5px;padding:9px 11px;border:1px solid var(--border1)}
+.mlbl{font-size:10px;color:var(--txt2);margin-bottom:2px}
+.mval{font-family:'DM Mono',monospace;font-size:13.5px;font-weight:500;color:var(--txt0)}
+.spchip{display:inline-flex;align-items:center;padding:2px 9px;border-radius:3px;font-size:11px;background:var(--teal-faint);color:var(--teal);border:1px solid rgba(0,200,150,.18);margin:0 4px 4px 0;font-style:italic}
+.nfield{background:var(--bg3);border:1px solid var(--border1);border-radius:5px;padding:10px 12px;font-size:12px;color:var(--txt1);line-height:1.6}
+.hsrow{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border0)}
+.hslbl{font-size:11px;color:var(--txt2)}
+.hsval{font-size:11px;color:var(--txt0);font-weight:600;font-family:'Syne',sans-serif}
+.hsdeal{padding:2px 8px;border-radius:4px;font-size:9.5px;font-weight:700;font-family:'Syne',sans-serif;background:var(--teal-glow);color:var(--teal);border:1px solid rgba(0,200,150,.2)}
+.fccat{margin-bottom:13px}
+.fccname{font-family:'Syne',sans-serif;font-size:11.5px;font-weight:700;color:var(--txt1);margin-bottom:4px}
+.fcrow{display:flex;align-items:center;gap:6px}
+.fctop{font-size:10.5px;color:var(--txt2);line-height:1.4;margin-top:4px}
+.fctop a{color:var(--teal);cursor:pointer;text-decoration:none}
 
-/* BUTTONS */
-.btn-primary{background:#00D4AA;color:#030810;border:none;border-radius:6px;padding:8px 16px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;cursor:pointer;transition:all .15s ease;display:flex;align-items:center;gap:6px;}
-.btn-primary:hover{background:#00F0C0;box-shadow:0 0 16px rgba(0,212,170,.4);}
-.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
-.btn-ghost{background:transparent;color:#6B87B0;border:1px solid #1C3050;border-radius:6px;padding:8px 14px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .15s ease;display:flex;align-items:center;gap:6px;}
-.btn-ghost:hover{border-color:#243D60;color:#E2EBF8;}
+/* ─── DOCUMENTS ───────────────────────────────────────── */
+.dochead{padding:14px 20px;border-bottom:1px solid var(--doc-border);display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0;background:var(--doc-bg)}
+.docstat{font-size:12px;color:var(--doc-txt1)}
+.docstat strong{color:var(--doc-txt0);font-family:'DM Mono',monospace}
+.ochip{display:inline-flex;align-items:center;font-family:'DM Mono',monospace;font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:3px}
+.doctoolbar{padding:9px 20px;background:var(--doc-bg2);border-bottom:1px solid var(--doc-border);display:flex;align-items:center;gap:9px}
+.dbtn{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:5px;cursor:pointer;font-size:11.5px;font-weight:700;font-family:'Syne',sans-serif;transition:all .14s;border:none}
+.dbtn-p{background:var(--doc-txt0);color:#fff}
+.dbtn-p:hover{background:#2A3F55}
+.dbtn-g{background:#fff;color:var(--doc-txt1);border:1px solid var(--doc-border)}
+.dbtn-g:hover{background:var(--doc-bg2)}
+.dsearch{flex:1;max-width:300px;background:#fff;border:1px solid var(--doc-border);border-radius:5px;padding:6px 11px;font-family:'Literata',serif;font-size:12px;color:var(--doc-txt0);outline:none}
+.dsearch:focus{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-glow)}
+.dtbl{width:100%;border-collapse:collapse}
+.dtbl th{text-align:left;padding:7px 11px;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--doc-txt2);border-bottom:1px solid var(--doc-border);background:var(--doc-bg2);position:sticky;top:0;z-index:2;font-family:'Syne',sans-serif}
+.dtbl td{padding:9px 11px;border-bottom:1px solid var(--doc-border);background:#fff;font-size:11.5px;color:var(--doc-txt0);vertical-align:middle}
+.dtbl tr:hover td{background:#F2F0EA}
+.dfname{font-weight:600;max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dtag{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10.5px;background:var(--doc-bg2);color:var(--doc-txt1);border:1px solid var(--doc-border)}
+.dpt{font-family:'DM Mono',monospace;font-size:11px;font-weight:600;color:var(--doc-txt1);text-align:center}
+.sbadge{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:3px;font-size:10.5px;font-weight:700;font-family:'Syne',sans-serif}
+.s-ok{background:rgba(46,213,115,.1);color:#1A8A4A;border:1px solid rgba(46,213,115,.2)}
+.s-ocr{background:rgba(245,166,35,.1);color:#A07000;border:1px solid rgba(245,166,35,.2)}
+.s-no{background:var(--doc-bg2);color:var(--doc-txt2);border:1px solid var(--doc-border)}
+.icnbtn{width:24px;height:24px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:none;background:var(--doc-bg2);color:var(--doc-txt1);transition:all .12s}
+.icnbtn:hover{background:var(--doc-border)}
 
-/* KANBAN */
-#kanban{display:flex;gap:12px;height:100%;overflow-x:auto;padding-bottom:16px;}
-.kanban-col{min-width:240px;max-width:260px;display:flex;flex-direction:column;gap:8px;}
-.kanban-col-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#0C1829;border:1px solid #1C3050;border-radius:0 0 6px 6px;margin-bottom:4px;}
-.kanban-col-label{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.08em;}
-.kanban-col-count{border-radius:4px;padding:1px 7px;font-size:11px;font-family:'DM Mono',monospace;font-weight:600;}
-.kanban-col-body{flex:1;overflow-y:auto;padding-right:2px;}
-.kanban-empty{border:1px dashed #1C3050;border-radius:8px;padding:20px;text-align:center;color:#3A5070;font-size:12px;}
+/* ─── ANALYSIS ────────────────────────────────────────── */
+.anwrap{padding:20px;height:100%;overflow-y:auto}
+.ancols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px}
+.anch{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.anct{font-family:'Syne',sans-serif;font-size:12px;font-weight:700}
+.fcard{border-left:3px solid;border-radius:0 5px 5px 0;padding:10px 11px;margin-bottom:7px}
+.fcard.r{background:var(--red-dim);border-left-color:var(--red)}
+.fcard.a{background:var(--amber-dim);border-left-color:var(--amber)}
+.fcard.g{background:var(--green-dim);border-left-color:var(--green)}
+.flbl{font-size:12px;font-weight:600;color:var(--txt0);margin-bottom:3px;font-family:'Syne',sans-serif}
+.fnote{font-size:11px;color:var(--txt2);line-height:1.5}
+.facts{display:flex;gap:6px;margin-top:7px}
+.ffixbtn{font-size:9.5px;padding:3px 8px;border-radius:3px;background:var(--red-dim);color:var(--red);border:1px solid rgba(255,71,87,.25);cursor:pointer;font-weight:700;transition:all .12s;font-family:'Syne',sans-serif}
+.ffixbtn:hover{background:rgba(255,71,87,.22)}
+.fsrclink{font-size:9.5px;color:var(--teal);cursor:pointer;padding:3px 6px;font-family:'Syne',sans-serif}
+.chksec{background:var(--bg2);border:1px solid var(--border1);border-radius:7px;padding:15px 18px}
+.chktitle{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--txt2);margin-bottom:11px;font-family:'Syne',sans-serif}
+.chkgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.chkitem{display:flex;align-items:center;gap:6px;padding:6px 9px;border-radius:4px;font-size:10.5px;font-family:'Syne',sans-serif;font-weight:600}
+.chkitem.pass{background:var(--green-dim);color:var(--green);border:1px solid rgba(46,213,115,.18)}
+.chkitem.fail{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,71,87,.18)}
+.chkitem.warn{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(245,166,35,.18)}
+.chkitem.pend{background:var(--bg3);color:var(--txt2);border:1px solid var(--border1)}
 
-/* PROJECT CARD */
-.project-card{background:#0C1829;border:1px solid #1C3050;border-radius:8px;padding:14px;margin-bottom:8px;position:relative;overflow:hidden;cursor:pointer;transition:all .2s ease;}
-.project-card:hover{border-color:#243D60;transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,0,0,.4);}
-.project-card.delivered-glow{border-color:rgba(46,213,115,.3)!important;}
-.card-accent{position:absolute;top:0;left:0;right:0;height:2px;opacity:.6;}
-.card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;}
-.card-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:#E2EBF8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.card-client{font-size:11px;color:#6B87B0;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.card-method{font-size:11px;color:#3A5070;margin-bottom:10px;font-family:'DM Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.card-stats{display:flex;gap:12px;margin-bottom:10px;align-items:center;}
-.card-stat-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:#E2EBF8;}
-.card-stat-label{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;color:#3A5070;text-transform:uppercase;}
-.card-teal{color:#00D4AA!important;}
-.spinner{width:20px;height:20px;border-radius:50%;border:1.5px solid #F0A500;border-top-color:transparent;animation:spin 1s linear infinite;flex-shrink:0;}
+/* ─── DELIVERABLES ────────────────────────────────────── */
+.dlwrap{padding:20px;overflow-y:auto;height:100%;display:flex;flex-direction:column;gap:14px}
+.dlsec{background:var(--bg2);border:1px solid var(--border1);border-radius:7px;padding:18px}
+.dlsect{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--txt2);margin-bottom:12px;font-family:'Syne',sans-serif}
+.dli{display:flex;align-items:flex-start;gap:11px;padding:11px;border-radius:5px;border:1px solid var(--border1);margin-bottom:7px;background:var(--bg3);cursor:pointer;transition:border-color .13s}
+.dli:hover{border-color:var(--border2)}
+.dli.sel{border-color:var(--teal);background:var(--teal-faint)}
+.dli.dim{opacity:.4;cursor:default}
+.dlchk{width:15px;height:15px;border-radius:3px;border:1.5px solid var(--border2);flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all .13s}
+.dli.sel .dlchk{background:var(--teal);border-color:var(--teal)}
+.dliname{font-size:12.5px;font-weight:600;color:var(--txt0);margin-bottom:2px;font-family:'Syne',sans-serif}
+.dli.dim .dliname{color:var(--txt2)}
+.dlneeds{font-size:11px;color:var(--amber)}
+.dlna{font-size:11px;color:var(--txt3)}
+.dlfmt{font-family:'DM Mono',monospace;font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:3px;background:var(--bg4);color:var(--txt2);flex-shrink:0;margin-top:3px}
+.dlgenrow{display:flex;align-items:center;gap:12px;padding-top:6px}
+.dlprev{display:flex;align-items:center;gap:11px;padding:9px 13px;background:var(--bg3);border:1px solid var(--border1);border-radius:5px;margin-bottom:7px}
 
-/* FLAGS */
-.flag-row{display:flex;gap:6px;font-size:11px;font-family:'DM Mono',monospace;align-items:center;}
-.flag-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;}
+/* ─── AGENTS TAB ──────────────────────────────────────── */
+.agwrap{padding:20px;display:flex;gap:14px;height:100%;overflow-y:auto}
+.agpanel{flex:1;background:var(--bg2);border:1px solid var(--border1);border-radius:7px;overflow:hidden;display:flex;flex-direction:column}
+.agph{padding:13px 15px;border-bottom:1px solid var(--border1);display:flex;align-items:center;gap:9px;background:var(--bg1);flex-shrink:0}
+.agpname{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--txt0);flex:1}
+.agpbody{padding:15px;overflow-y:auto;flex:1}
+.agscript{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:4px;background:var(--bg3);border:1px solid var(--border1);margin-bottom:5px}
+.agsname{flex:1;font-family:'DM Mono',monospace;font-size:10.5px;color:var(--txt1)}
+.agsdesc{font-size:10.5px;color:var(--txt3);margin-bottom:4px}
+.runbtn{padding:4px 9px;border-radius:3px;font-size:9.5px;font-weight:700;background:var(--teal-glow);color:var(--teal);border:1px solid rgba(0,200,150,.2);cursor:pointer;transition:all .12s;font-family:'Syne',sans-serif}
+.runbtn:hover{background:rgba(0,200,150,.2)}
+.jlog{margin-top:11px}
+.jlsub{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3);margin-bottom:7px;font-family:'Syne',sans-serif}
+.jle{display:flex;gap:9px;padding:5px 0;border-bottom:1px solid var(--border0);font-size:11px}
+.jlt{color:var(--txt3);font-family:'DM Mono',monospace;flex-shrink:0}
+.jlm{color:var(--txt1)}
+.jlm.ok{color:var(--green)}
+.jlm.err{color:var(--red)}
 
-/* PROGRESS */
-.progress-bar{height:3px;background:#112034;border-radius:2px;overflow:hidden;width:100%;}
-.progress-fill{height:100%;border-radius:2px;transition:width .4s ease;}
+/* ─── INTEL TAB ───────────────────────────────────────── */
+.intwrap{display:flex;height:100%}
+.intsidebar{width:185px;min-width:185px;border-right:1px solid var(--border1);background:var(--bg2);padding:14px 6px}
+.intfiltlbl{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--txt3);padding:0 8px;margin-bottom:6px;font-family:'Syne',sans-serif}
+.intfilt{padding:6px 8px;border-radius:4px;cursor:pointer;font-size:11.5px;color:var(--txt1);transition:all .12s;border:1px solid transparent;font-family:'Syne',sans-serif;font-weight:600;margin-bottom:2px}
+.intfilt:hover{background:var(--bg3)}
+.intfilt.on{background:var(--teal-glow);color:var(--teal);border-color:rgba(0,200,150,.18)}
+.intmain{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.intdocs{flex:1;overflow-y:auto;padding:14px}
+.idcard{display:flex;gap:11px;padding:11px;border-radius:5px;background:var(--bg2);border:1px solid var(--border1);margin-bottom:7px;cursor:pointer;transition:all .13s}
+.idcard:hover{border-color:var(--border2)}
+.idicon{width:30px;height:30px;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px;background:var(--bg3)}
+.idname{font-size:12px;font-weight:600;color:var(--txt0);margin-bottom:2px;font-family:'Syne',sans-serif}
+.idmeta{font-size:10.5px;color:var(--txt2)}
+.idrel{font-size:10px;color:var(--teal);margin-top:3px}
+.ragbar{border-top:1px solid var(--border1);padding:12px 15px;background:var(--bg1);display:flex;gap:9px;align-items:center;flex-shrink:0}
+.raginput{flex:1;background:var(--bg3);border:1px solid var(--border1);border-radius:5px;padding:8px 11px;font-family:'Literata',serif;font-size:12px;color:var(--txt0);outline:none}
+.raginput:focus{border-color:var(--teal)}
+.raginput::placeholder{color:var(--txt3)}
 
-/* TAGS */
-.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.04em;font-family:'Syne',sans-serif;}
+/* ─── WIZARD ──────────────────────────────────────────── */
+#wiz-ov{position:fixed;inset:0;background:rgba(4,11,24,.88);backdrop-filter:blur(5px);z-index:100;display:none;align-items:center;justify-content:center}
+#wiz-ov.on{display:flex}
+.wizbox{background:var(--bg1);border:1px solid var(--border2);border-radius:10px;width:620px;max-height:88vh;overflow-y:auto;box-shadow:0 28px 72px rgba(0,0,0,.65);animation:fadeup .18s ease}
+.wizhead{padding:20px 22px;border-bottom:1px solid var(--border1);display:flex;align-items:flex-start;justify-content:space-between}
+.wizt{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--txt0)}
+.wizsub{font-size:11px;color:var(--txt2);margin-top:3px}
+.closebtn{background:none;border:none;cursor:pointer;color:var(--txt2);padding:3px;border-radius:3px;transition:color .12s}
+.closebtn:hover{color:var(--txt0)}
+.wizsteps{display:flex;padding:15px 22px 0;gap:0}
+.wstep{display:flex;align-items:center;flex:1}
+.wsdot{width:23px;height:23px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;flex-shrink:0;font-family:'DM Mono',monospace;transition:all .18s}
+.wsdot.done{background:var(--teal);color:var(--bg0)}
+.wsdot.active{background:var(--bg3);border:1.5px solid var(--teal);color:var(--teal)}
+.wsdot.future{background:var(--bg3);border:1.5px solid var(--border2);color:var(--txt3)}
+.wsline{flex:1;height:1.5px;background:var(--border1);margin:0 5px}
+.wsline.done{background:var(--teal)}
+.wizbody{padding:18px 22px 22px}
+.regtile{padding:13px;border-radius:7px;border:1.5px solid var(--border1);background:var(--bg3);cursor:pointer;transition:all .13s}
+.regtile:hover{border-color:var(--border2)}
+.regname{font-family:'Syne',sans-serif;font-size:12.5px;font-weight:700;margin-bottom:3px}
+.regcount{font-size:10.5px;color:var(--txt2)}
+.methitem{padding:9px 13px;border-radius:5px;border:1.5px solid var(--border1);background:var(--bg3);cursor:pointer;font-family:'DM Mono',monospace;font-size:11.5px;color:var(--txt1);transition:all .13s;margin-bottom:5px}
+.methitem:hover{border-color:var(--border2)}
+.methitem.sel{color:var(--teal);border-color:var(--teal);background:var(--teal-faint)}
+.flabel{font-size:10.5px;font-weight:700;color:var(--txt1);margin-bottom:5px;display:block;font-family:'Syne',sans-serif;letter-spacing:.04em}
+.finput{width:100%;background:var(--bg3);border:1px solid var(--border1);border-radius:5px;padding:8px 11px;font-family:'Literata',serif;font-size:12.5px;color:var(--txt0);outline:none;transition:border-color .13s}
+.finput:focus{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-glow)}
+.finput::placeholder{color:var(--txt3)}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fgrp{margin-bottom:12px}
+.dzone{border:1.5px dashed var(--border2);border-radius:7px;padding:36px 28px;text-align:center;cursor:pointer;transition:all .18s}
+.dzone:hover,.dzone.drag{border-color:var(--teal);background:var(--teal-faint)}
+.dzont{font-size:14px;font-weight:600;color:var(--txt1);margin-bottom:4px;font-family:'Syne',sans-serif;margin-top:10px}
+.dzsub{font-size:11.5px;color:var(--txt2)}
+.expitem{display:flex;align-items:center;gap:9px;padding:7px 11px;border-radius:4px;background:var(--bg3);border:1px solid var(--border1);margin-bottom:5px;font-size:11.5px}
+.expname{font-weight:600;color:var(--txt1);flex:1;font-family:'Syne',sans-serif}
+.expext{font-family:'DM Mono',monospace;font-size:10px;color:var(--txt2)}
+.expreq{font-size:9.5px;padding:2px 7px;border-radius:3px;font-weight:700;font-family:'Syne',sans-serif}
+.req-y{background:var(--teal-glow);color:var(--teal)}
+.req-n{background:var(--bg4);color:var(--txt3)}
+.wizfoot{padding:14px 22px;border-top:1px solid var(--border1);display:flex;align-items:center;justify-content:space-between}
+.wizsum{background:var(--bg3);border:1px solid var(--border1);border-radius:5px;padding:9px 13px;margin-bottom:12px;display:flex;align-items:center;gap:9px}
 
-/* DETAIL PANEL */
-#detail-panel{position:fixed;right:0;top:0;bottom:0;width:440px;background:#070F1E;border-left:1px solid #243D60;z-index:50;overflow-y:auto;animation:slideIn .25s ease;box-shadow:-8px 0 32px rgba(0,0,0,.4);}
-.panel-header{padding:20px 24px 16px;border-bottom:1px solid #1C3050;background:#0C1829;position:sticky;top:0;z-index:10;}
-.panel-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-.panel-badges{display:flex;gap:8px;flex-wrap:wrap;}
-.tab-bar{display:flex;border-bottom:1px solid #1C3050;margin-top:16px;margin-left:-24px;margin-right:-24px;padding-left:24px;}
-.tab-btn{padding:8px 16px;font-size:12px;font-weight:600;font-family:'Syne',sans-serif;letter-spacing:.05em;border:none;background:none;color:#6B87B0;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s ease;}
-.tab-btn.active{color:#00D4AA;border-bottom-color:#00D4AA;}
-.tab-btn:hover:not(.active){color:#E2EBF8;}
-.panel-body{padding:24px;}
+/* ─── GENERATION SCREEN ───────────────────────────────── */
+#genscr{position:fixed;inset:0;background:var(--bg0);z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px}
+#genscr.on{display:flex}
+.gent{font-family:'Syne',sans-serif;font-size:21px;font-weight:700;color:var(--txt0);margin-bottom:7px}
+.gensub{font-size:12px;color:var(--txt2);margin-bottom:36px;font-family:'DM Mono',monospace}
+.genlog{width:100%;max-width:540px}
+.gensect{font-family:'Syne',sans-serif;font-size:11.5px;font-weight:700;color:var(--txt1);margin:14px 0 7px}
+.genstep{display:flex;align-items:center;gap:11px;padding:6px 0;font-size:11.5px;border-bottom:1px solid var(--border1)}
+.gslbl{flex:1;color:var(--txt1)}
+.gsst{font-family:'DM Mono',monospace;font-size:10.5px}
+.gsst.ok{color:var(--green)}
+.gsst.run{color:var(--amber)}
+.gsst.wait{color:var(--txt3)}
+.gendls{margin-top:26px;display:flex;flex-direction:column;gap:9px;width:100%;max-width:540px}
+.gendl{display:flex;align-items:center;gap:11px;padding:13px 16px;border-radius:7px;background:var(--bg2);border:1px solid var(--teal);cursor:pointer;transition:all .13s;text-decoration:none;color:var(--teal)}
+.gendl:hover{background:var(--teal-glow)}
+.gdname{font-size:12.5px;font-weight:700;flex:1;font-family:'Syne',sans-serif}
+.gdsize{font-family:'DM Mono',monospace;font-size:10.5px;color:var(--txt2)}
 
-/* METRICS GRID */
-.metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
-.metric-cell{background:#112034;border-radius:6px;padding:10px 12px;border:1px solid #1C3050;}
-
-/* FLAG ITEM */
-.flag-item{display:flex;gap:12px;align-items:flex-start;background:#112034;border:1px solid #1C3050;border-left-width:3px;border-radius:0 6px 6px 0;padding:10px 14px;margin-bottom:8px;}
-.flag-item-label{font-size:13px;color:#E2EBF8;margin-bottom:3px;font-weight:500;}
-.flag-item-note{font-size:11px;color:#6B87B0;}
-.flag-status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:2px;}
-
-/* DELIVERABLE ITEM */
-.deliverable-item{display:flex;align-items:center;justify-content:space-between;background:#112034;border:1px solid #1C3050;border-radius:8px;padding:12px 16px;margin-bottom:8px;}
-.deliverable-empty{border:1.5px dashed #243D60;border-radius:8px;padding:32px;text-align:center;color:#3A5070;font-size:13px;}
-
-/* MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(3,8,16,.85);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease;}
-.modal-box{background:#070F1E;border:1px solid #243D60;border-radius:12px;width:600px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);animation:fadeIn .25s ease;}
-.modal-header{padding:20px 24px;border-bottom:1px solid #1C3050;display:flex;align-items:center;justify-content:space-between;}
-.step-indicator{padding:16px 24px 0;display:flex;}
-.step-dot-wrap{display:flex;align-items:center;flex:1;}
-.step-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:'DM Mono',monospace;transition:all .2s ease;flex-shrink:0;}
-.step-line{flex:1;height:1.5px;margin:0 6px;margin-top:0;}
-.modal-body{padding:24px;}
-.modal-footer{display:flex;gap:10px;align-items:center;justify-content:flex-end;margin-top:24px;padding-top:20px;border-top:1px solid #1C3050;}
-
-/* REGISTRY SELECTOR */
-.registry-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;}
-.registry-option{padding:12px 16px;border-radius:8px;cursor:pointer;transition:all .15s ease;border:1.5px solid #1C3050;background:#112034;}
-.registry-option:hover{border-color:#243D60;}
-.registry-option.selected{}
-.method-list{display:flex;flex-direction:column;gap:6px;}
-.method-option{padding:10px 14px;border-radius:6px;cursor:pointer;font-size:13px;transition:all .15s ease;border:1.5px solid #1C3050;background:#112034;font-family:'DM Mono',monospace;}
-.method-option:hover{border-color:#243D60;}
-
-/* DROP ZONE */
-.drop-zone{border:1.5px dashed #243D60;border-radius:8px;padding:32px;text-align:center;cursor:pointer;transition:all .2s ease;}
-.drop-zone:hover,.drop-zone.dragging{border-color:#00D4AA;background:rgba(0,212,170,.03);}
-
-/* INPUT */
-.input-field{background:#112034;border:1px solid #1C3050;border-radius:6px;color:#E2EBF8;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;width:100%;outline:none;transition:border-color .15s ease;}
-.input-field:focus{border-color:#00D4AA;box-shadow:0 0 0 2px rgba(0,212,170,.1);}
-.select-field{background:#112034;border:1px solid #1C3050;border-radius:6px;color:#E2EBF8;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;width:100%;outline:none;cursor:pointer;appearance:none;}
-.select-field:focus{border-color:#00D4AA;}
-
-/* FORM GRID */
-.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
-.form-group{margin-bottom:16px;}
-.form-label{display:block;margin-bottom:8px;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;color:#3A5070;text-transform:uppercase;}
-
-/* CLOSE BTN */
-.close-btn{background:none;border:none;cursor:pointer;color:#6B87B0;padding:4px;display:flex;align-items:center;justify-content:center;}
-.close-btn:hover{color:#E2EBF8;}
-
-/* LIBRARY */
-.library-wrap{display:flex;gap:20px;}
-.library-sidebar{width:200px;flex-shrink:0;}
-.library-content{flex:1;}
-.lib-nav-item{display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;border:1px solid transparent;margin-bottom:4px;transition:all .15s ease;}
-.doc-item{display:flex;align-items:center;justify-content:space-between;background:#0C1829;border:1px solid #1C3050;border-radius:8px;padding:12px 16px;margin-bottom:6px;}
-.doc-item.pending{opacity:.5;}
-
-/* ANALYTICS */
-.analytics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
-.analytics-card{background:#0C1829;border:1px solid #1C3050;border-top:3px solid;border-radius:0 0 8px 8px;padding:20px;}
-
-/* SPECIES CHIPS */
-.species-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;}
-.species-chip{background:rgba(0,212,170,.07);color:#00D4AA;padding:3px 10px;border-radius:4px;font-size:12px;border:1px solid rgba(0,212,170,.2);}
-
-/* CONFIG SUMMARY */
-.config-summary{background:#112034;border-radius:8px;padding:14px;border:1px solid #1C3050;}
-
-/* EXPECTED CONTENTS */
-.expected-item{display:flex;align-items:center;gap:10px;font-size:12px;color:#6B87B0;margin-bottom:8px;}
+/* ─── ANIMATIONS ──────────────────────────────────────── */
+@keyframes fadeup{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.fadein{animation:fadeup .26s ease forwards}
+.spinning{animation:spin 1s linear infinite}
+.blinking{animation:blink 1.4s ease infinite}
 </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- ── SIDEBAR ── -->
-  <div id="sidebar">
-    <div class="sidebar-logo">
-      <div class="syne sidebar-logo-title">CARBON DEV</div>
-      <div class="mono sidebar-logo-sub">tools.oga.earth · PABLO</div>
-    </div>
-
-    <div class="sidebar-registries" id="registry-badges"></div>
-
-    <nav>
-      <span class="nav-label">Platform</span>
-      <div class="nav-item active" onclick="switchView('pipeline')" id="nav-pipeline">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        Pipeline
-      </div>
-      <div class="nav-item" onclick="switchView('library')" id="nav-library">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-        Knowledge Library
-      </div>
-      <div class="nav-item" onclick="switchView('analytics')" id="nav-analytics">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        Analytics
-      </div>
-      <span class="nav-label" style="margin-top:16px;">System</span>
-      <div class="nav-item">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        Settings
-      </div>
-    </nav>
-
-    <div class="sidebar-stats" id="sidebar-stats"></div>
+<!-- ═══ RAIL ═════════════════════════════════════════════ -->
+<div id="rail">
+  <div class="rail-logo">
+    <div class="mark">PABLO</div>
+    <div class="sub">Automated Developer</div>
   </div>
 
-  <!-- ── MAIN ── -->
-  <div id="main">
+  <div class="rsec">Projects</div>
+  <div class="rprojects" id="rprojects"></div>
+  <div class="rnew" onclick="openWiz()">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    New project
+  </div>
 
-    <!-- TOP BAR -->
-    <div id="topbar">
-      <div style="display:flex;align-items:center;gap:20px;">
-        <div class="syne topbar-title" id="topbar-title">Project Pipeline</div>
-        <div class="topbar-meta" id="topbar-meta"></div>
+  <div class="divln" style="margin:9px 0 0"></div>
+  <div class="rsec">Platform</div>
+  <div class="rnav">
+    <div class="rnavitem on" id="nav-pipeline" onclick="showPlatform('pipeline')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Pipeline
+    </div>
+    <div class="rnavitem" id="nav-library" onclick="showPlatform('library')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      Knowledge Library
+    </div>
+    <div class="rnavitem" id="nav-analytics" onclick="showPlatform('analytics')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Analytics
+    </div>
+  </div>
+
+  <!-- Agent bar always visible -->
+  <div class="agentbar" style="margin-top:auto">
+    <div class="agbar-lbl">Agents</div>
+    <div class="agrow">
+      <div class="agpulse g blinking"></div>
+      <span class="agname">ForestEngineer</span>
+      <span class="agstat">0 queued</span>
+    </div>
+    <div class="agrow">
+      <div class="agpulse g"></div>
+      <span class="agname">HubSpot</span>
+      <span class="agstat">synced 4m</span>
+    </div>
+    <div class="agrow">
+      <div class="agpulse g"></div>
+      <span class="agname">AI Engine</span>
+      <span class="agstat">v47 · ready</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MAIN ══════════════════════════════════════════════ -->
+<div id="main">
+
+  <!-- Top bar -->
+  <div id="topbar">
+    <div class="crumb" id="crumb">
+      <span class="crumb-cur">Project Pipeline</span>
+    </div>
+    <div class="crumb-meta" id="crmeta"></div>
+    <div class="topacts" id="topacts">
+      <button class="btn btn-g btn-s" onclick="openWiz()">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Project
+      </button>
+      <button class="btn btn-p btn-s" onclick="if(STATE.proj)showGen();else alert('Select a project first')">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Generate
+      </button>
+    </div>
+  </div>
+
+  <!-- Stat bar -->
+  <div id="statbar">
+    <div class="stile"><div class="stlbl">Projects</div><div class="stval" style="color:var(--txt0)">5</div></div>
+    <div class="stile"><div class="stlbl">Total Area</div><div class="stval" style="color:var(--txt0)">82,580 ha</div></div>
+    <div class="stile"><div class="stlbl">CORCs Modeled</div><div class="stval" style="color:var(--teal)">42,474</div></div>
+    <div class="stile"><div class="stlbl">Revenue @$120</div><div class="stval" style="color:var(--teal)">$5.1M</div></div>
+    <div class="stile"><div class="stlbl">Red Flags</div><div class="stval" style="color:var(--red)">9</div></div>
+    <div class="stile"><div class="stlbl">Amber Flags</div><div class="stval" style="color:var(--amber)">11</div></div>
+    <div class="stile"><div class="stlbl">Registries</div><div class="stval" style="color:var(--blue)">3</div></div>
+    <div class="stile"><div class="stlbl">Agents Active</div><div class="stval" style="color:var(--green)">3</div></div>
+  </div>
+
+  <!-- Project tabs (hidden when on pipeline/platform) -->
+  <div id="ptabs" style="display:none">
+    <div class="ptab on" onclick="tab('overview')">Overview</div>
+    <div class="ptab" onclick="tab('documents')">Documents</div>
+    <div class="ptab" onclick="tab('analysis')">Analysis</div>
+    <div class="ptab" onclick="tab('deliverables')">Deliverables</div>
+    <div class="ptab" onclick="tab('agents')">Agents</div>
+    <div class="ptab" onclick="tab('intel')">Intel</div>
+  </div>
+
+  <!-- Content area -->
+  <div id="content">
+
+    <!-- Pipeline view -->
+    <div id="v-pipeline" class="view on">
+      <div id="pipeline-view"></div>
+    </div>
+
+    <!-- Overview -->
+    <div id="v-overview" class="view">
+      <div class="ov-grid" id="ov-content"></div>
+    </div>
+
+    <!-- Documents -->
+    <div id="v-documents" class="view docmode" style="display:flex;flex-direction:column">
+      <div class="dochead" id="dochead">
+        <span class="docstat"><strong id="dcount">69</strong> files</span>
+        <span class="docstat"><strong>21</strong> categories</span>
+        <span class="docstat"><strong>28</strong> with text</span>
+        <span class="docstat" style="color:var(--amber)"><strong>13</strong> OCR needed</span>
+        <div style="margin-left:8px;display:flex;gap:4px;align-items:center">
+          <span style="font-size:9px;color:var(--doc-txt2);margin-right:2px;font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.1em">OECC</span>
+          <span class="ochip" style="background:rgba(255,71,87,.1);color:#C02030;border:1px solid rgba(255,71,87,.2)">1×</span>
+          <span class="ochip" style="background:rgba(46,213,115,.1);color:#1A8A4A;border:1px solid rgba(46,213,115,.2)">2✓</span>
+          <span class="ochip" style="background:rgba(255,71,87,.1);color:#C02030;border:1px solid rgba(255,71,87,.2)">3×</span>
+          <span class="ochip" style="background:rgba(46,213,115,.1);color:#1A8A4A;border:1px solid rgba(46,213,115,.2)">4✓</span>
+          <span class="ochip" style="background:rgba(255,71,87,.1);color:#C02030;border:1px solid rgba(255,71,87,.2)">5×</span>
+          <span class="ochip" style="background:rgba(46,213,115,.1);color:#1A8A4A;border:1px solid rgba(46,213,115,.2)">6✓</span>
+        </div>
       </div>
-      <div class="topbar-actions">
-        <button class="btn-ghost" onclick="syncR2()" style="font-size:12px;padding:6px 12px;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
-          R2 Sync
+      <div class="doctoolbar">
+        <button class="dbtn dbtn-p" onclick="alert('Upload: routes to /api/pablo/intake/upload-chunk')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          Subir documento
         </button>
-        <button class="btn-primary" onclick="showModal()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          New Project
+        <button class="dbtn dbtn-g" onclick="alert('Routes to /api/pablo/intake/from-r2')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Procesar pendientes
         </button>
+        <button class="dbtn dbtn-g" style="margin-left:auto" onclick="alert('ForestEngineer GIS job dispatched to D1 jobs table')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+          Run ForestEngineer
+        </button>
+        <input class="dsearch" placeholder="Filter by name or category…" oninput="filterDocs(this.value)">
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:0 20px 20px">
+        <table class="dtbl">
+          <thead>
+            <tr>
+              <th style="width:30px"><input type="checkbox"></th>
+              <th style="width:32px">#</th>
+              <th>Nombre original</th>
+              <th>Categoría</th>
+              <th style="text-align:center">Punto</th>
+              <th style="text-align:center">Texto</th>
+              <th style="text-align:right">Estado</th>
+              <th style="width:70px"></th>
+            </tr>
+          </thead>
+          <tbody id="dtbody"></tbody>
+        </table>
       </div>
     </div>
 
-    <!-- STATS BAR -->
-    <div id="statsbar" style="display:none;"></div>
+    <!-- Analysis -->
+    <div id="v-analysis" class="view">
+      <div class="anwrap" id="an-content"></div>
+    </div>
 
-    <!-- CONTENT -->
-    <div id="content">
-      <div id="view-pipeline" class="fade-in" style="height:100%;"></div>
-      <div id="view-library" class="fade-in" style="display:none;height:100%;overflow-y:auto;"></div>
-      <div id="view-analytics" class="fade-in" style="display:none;"></div>
+    <!-- Deliverables -->
+    <div id="v-deliverables" class="view">
+      <div class="dlwrap" id="dl-content"></div>
+    </div>
+
+    <!-- Agents -->
+    <div id="v-agents" class="view">
+      <div class="agwrap" id="ag-content"></div>
+    </div>
+
+    <!-- Intel -->
+    <div id="v-intel" class="view" style="display:flex;height:100%">
+      <div class="intsidebar">
+        <div class="intfiltlbl">Registry</div>
+        <div class="intfilt on">All methodologies</div>
+        <div class="intfilt">Puro.earth TSB</div>
+        <div class="intfilt">Verra VCS</div>
+        <div class="intfilt">MITECO España</div>
+        <div class="intfilt">Isometric</div>
+        <div class="intfiltlbl" style="margin-top:12px">Type</div>
+        <div class="intfilt">Methodology PDFs</div>
+        <div class="intfilt">Benchmarks</div>
+        <div class="intfilt">Templates</div>
+        <div class="intfilt">Audit reports</div>
+      </div>
+      <div class="intmain">
+        <div class="intdocs" id="intdocs"></div>
+        <div class="ragbar">
+          <input class="raginput" id="raginput" placeholder="Ask about Puro.earth TSB eligibility, Colombia forestry law, MITECO OECC points…" onkeydown="if(event.key==='Enter')askRAG()">
+          <button class="btn btn-p btn-s" onclick="askRAG()">Ask</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Platform: Library -->
+    <div id="v-library" class="view">
+      <div style="padding:28px">
+        <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--txt0);margin-bottom:18px">Knowledge Library</div>
+        <div id="lib-docs"></div>
+      </div>
+    </div>
+
+    <!-- Platform: Analytics -->
+    <div id="v-analytics" class="view">
+      <div style="padding:22px">
+        <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--txt0);margin-bottom:18px">Analytics</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:18px" id="anlytic-tiles"></div>
+        <div style="background:var(--bg2);border:1px solid var(--border1);border-radius:7px;padding:22px;color:var(--txt3);text-align:center;font-size:12px">
+          CORC projection curves · timeline analysis · scenario overlays · methodology comparison — <span style="color:var(--teal)">next sprint</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ═══ WIZARD ════════════════════════════════════════════ -->
+<div id="wiz-ov" onclick="if(event.target===this)closeWiz()">
+  <div class="wizbox">
+    <div class="wizhead">
+      <div>
+        <div class="wizt">New Project</div>
+        <div class="wizsub" id="wiz-sub">Step 1 of 3 — Registry &amp; Methodology</div>
+      </div>
+      <button class="closebtn" onclick="closeWiz()">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="wizsteps" id="wizsteps">
+      <div class="wstep"><div class="wsdot active" id="ws1">1</div><div class="wsline" id="wl1"></div></div>
+      <div class="wstep"><div class="wsdot future" id="ws2">2</div><div class="wsline" id="wl2"></div></div>
+      <div class="wstep"><div class="wsdot future" id="ws3">3</div></div>
+    </div>
+    <div class="wizbody">
+      <div id="ws-1">
+        <div class="flabel" style="margin-bottom:9px">Select registry</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:15px">
+          <div class="regtile" onclick="selReg('puro',this)"><div class="regname" style="color:var(--teal)">Puro.earth</div><div class="regcount">3 methodologies</div></div>
+          <div class="regtile" onclick="selReg('verra',this)"><div class="regname" style="color:var(--blue)">Verra VCS</div><div class="regcount">4 methodologies</div></div>
+          <div class="regtile" onclick="selReg('miteco',this)"><div class="regname" style="color:var(--amber)">MITECO España</div><div class="regcount">3 methodologies</div></div>
+          <div class="regtile" onclick="selReg('isometric',this)"><div class="regname" style="color:var(--violet)">Isometric</div><div class="regcount">3 methodologies</div></div>
+        </div>
+        <div id="mlist-wrap" style="display:none">
+          <div class="flabel" style="margin-bottom:8px">Select methodology</div>
+          <div id="mlist"></div>
+        </div>
+      </div>
+      <div id="ws-2" style="display:none">
+        <div class="wizsum" id="wizsum"></div>
+        <div class="fg2">
+          <div class="fgrp"><label class="flabel">Project Name</label><input class="finput" id="f-name" placeholder="e.g. Proyecto Marakoa"></div>
+          <div class="fgrp"><label class="flabel">Country</label><input class="finput" id="f-country" placeholder="e.g. Colombia"></div>
+        </div>
+        <div class="fgrp"><label class="flabel">Client / Counterparty</label><input class="finput" id="f-client" placeholder="Company or entity"></div>
+        <div class="fgrp"><label class="flabel">Notes / Context</label><textarea class="finput" rows="3" id="f-notes" placeholder="Key contacts, constraints, existing agreements…" style="resize:vertical"></textarea></div>
+      </div>
+      <div id="ws-3" style="display:none">
+        <div class="dzone" id="dzone" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)" onclick="document.getElementById('ffile').click()">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--txt2)" stroke-width="1.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          <div class="dzont">Drop project data room ZIP</div>
+          <div class="dzsub">Inventory · shapefiles · contracts · soil reports · PDFs</div>
+        </div>
+        <input type="file" id="ffile" accept=".zip" style="display:none" onchange="handleFS(this)">
+        <div style="margin-top:15px">
+          <div class="flabel" style="margin-bottom:8px">Expected contents</div>
+          <div class="expitem"><span class="expname">Inventory data</span><span class="expext">.xlsx — biomass by plot</span><span class="expreq req-y">Required</span></div>
+          <div class="expitem"><span class="expname">Lithology / soil report</span><span class="expext">.pdf or .docx</span><span class="expreq req-y">Required</span></div>
+          <div class="expitem"><span class="expname">Plantation maps</span><span class="expext">.shp, .geojson, .kml</span><span class="expreq req-n">Optional</span></div>
+          <div class="expitem"><span class="expname">Legal documents</span><span class="expext">Contracts, titles, permits</span><span class="expreq req-n">Optional</span></div>
+          <div class="expitem"><span class="expname">Methodology docs</span><span class="expext">Auto-loaded from library</span><span class="expreq req-n">Optional</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="wizfoot">
+      <button class="btn btn-g btn-s" id="wiz-back" onclick="wizBack()" style="display:none">← Back</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-p" id="wiz-next" onclick="wizNext()">Next →</button>
     </div>
   </div>
+</div>
 
-  <!-- ── DETAIL PANEL ── -->
-  <div id="detail-panel" style="display:none;"></div>
-
-  <!-- ── MODAL ── -->
-  <div id="modal-overlay" class="modal-overlay" style="display:none;" onclick="handleModalBg(event)">
-    <div class="modal-box" id="modal-box"></div>
+<!-- ═══ GENERATION SCREEN ════════════════════════════════ -->
+<div id="genscr">
+  <div class="gent">Generating deliverables</div>
+  <div class="gensub" id="gensub">loading…</div>
+  <div class="genlog" id="genlog"></div>
+  <div class="gendls" id="gendls" style="display:none">
+    <a class="gendl" href="#" onclick="return false">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span class="gdname">Pre-Feasibility Memo</span>
+      <span class="gdsize">DOCX · 84 KB</span>
+    </a>
+    <a class="gendl" href="#" onclick="return false">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+      <span class="gdname">Financial Model — 3 Scenarios</span>
+      <span class="gdsize">XLSX · 112 KB</span>
+    </a>
+    <button class="btn btn-g" style="margin-top:6px" onclick="closeGen()">← Back to project</button>
   </div>
-
 </div>
 
 <script>
-// ─── DATA ────────────────────────────────────────────────────────
-const REGISTRIES = [
-  { id:"puro",      label:"Puro.earth",     color:"#00D4AA", methods:["TSB — Terrestrial Storage of Biomass","Biochar — Enhanced Weathering","Biochar — Permanence Protocol"] },
-  { id:"verra",     label:"Verra VCS",       color:"#3B82F6", methods:["VM0047 — ARR Non-Forest","VM0042 — REDD+","VM0044 — IFM","VM0048 — ARR Restoration"] },
-  { id:"miteco",    label:"MITECO España",   color:"#F0A500", methods:["Sumideros Forestales","Agricultura de Conservación","Gestión Forestal Sostenible"] },
-  { id:"isometric", label:"Isometric",       color:"#A78BFA", methods:["Subsurface Biomass Carbon v1.1","BECCS Protocol","Enhanced Rock Weathering"] },
-];
-
+// ══ DATA ══════════════════════════════════════════════════
+const REGS = {
+  puro:      {label:'Puro.earth',    color:'var(--teal)',   short:'Puro',     methods:['TSB — Terrestrial Storage of Biomass','Biochar — Enhanced Weathering','Biochar — Permanence Protocol']},
+  verra:     {label:'Verra VCS',     color:'var(--blue)',   short:'Verra',    methods:['VM0047 — ARR Non-Forest','VM0042 — REDD+','VM0044 — IFM','VM0048 — ARR Restoration']},
+  miteco:    {label:'MITECO España', color:'var(--amber)',  short:'MITECO',   methods:['Sumideros Forestales (ARR)','Agricultura de Conservación','Gestión Forestal Sostenible']},
+  isometric: {label:'Isometric',     color:'var(--violet)', short:'Isom.',    methods:['Subsurface Biomass Carbon v1.1','BECCS Protocol','Enhanced Rock Weathering']},
+};
 const STAGES = [
-  { id:"intake",      label:"INTAKE",      color:"#3B82F6" },
-  { id:"analysis",    label:"ANALYSIS",    color:"#F0A500" },
-  { id:"eligibility", label:"ELIGIBILITY", color:"#A78BFA" },
-  { id:"generating",  label:"GENERATING",  color:"#F0A500" },
-  { id:"delivered",   label:"DELIVERED",   color:"#2ED573" },
+  {id:'intake',      label:'INTAKE',          color:'var(--blue)'},
+  {id:'analysis',    label:'GIS / ANALYSIS',  color:'var(--amber)'},
+  {id:'eligibility', label:'ELIGIBILITY',     color:'var(--violet)'},
+  {id:'generating',  label:'DOC GENERATION',  color:'var(--teal)'},
+  {id:'review',      label:'REVIEW / OECC',   color:'var(--red)'},
+  {id:'delivered',   label:'DELIVERED',       color:'var(--green)'},
 ];
-
 const PROJECTS = [
-  {
-    id:"marakoa", name:"Proyecto Marakoa", client:"Inforcol / Lignum Resources", country:"🇨🇴",
-    registry:"puro", methodology:"TSB — Terrestrial Storage of Biomass", stage:"delivered",
-    area_ha:1737, volume_m3:158460, corcs_base:32724, corcs_range:[20452,44996],
-    flags:{red:2,amber:2,green:1}, created:"2026-01-15", updated:"2026-03-10",
-    deliverables:["Pre-Feasibility Memo (DOCX)","Financial Model (XLSX)"],
-    progress:100, dm_factor:0.50, species:["Acacia mangium","Eucalyptus pellita"],
-    notes:"Colcex contract resolution pending — go/no-go gate.",
-  },
-  {
-    id:"bosquia", name:"Bosquia Asturias", client:"Bosquia SL", country:"🇪🇸",
-    registry:"puro", methodology:"TSB — Terrestrial Storage of Biomass", stage:"eligibility",
-    area_ha:420, volume_m3:38200, corcs_base:7800, corcs_range:[5100,11400],
-    flags:{red:1,amber:3,green:2}, created:"2026-02-03", updated:"2026-03-08",
-    deliverables:[], progress:62, dm_factor:0.65, species:["Pinus radiata","Eucalyptus globulus"],
-    notes:"Addendum No. 1 accepted. MITECO coordination needed.",
-  },
-  {
-    id:"naturebrain", name:"NatureBrain Sierra Leone", client:"NatureBrain / InfraOceans", country:"🇸🇱",
-    registry:"verra", methodology:"VM0047 — ARR Non-Forest", stage:"analysis",
-    area_ha:12400, volume_m3:null, corcs_base:null, corcs_range:[null,null],
-    flags:{red:3,amber:2,green:0}, created:"2026-02-18", updated:"2026-03-05",
-    deliverables:[], progress:28, dm_factor:null, species:["Mixed tropical"],
-    notes:"LOI $5M, $10M call option. Title chain requires verification.",
-  },
-  {
-    id:"amoedo", name:"Amoedo TSB", client:"CMVMC de Amoedo", country:"🇪🇸",
-    registry:"puro", methodology:"TSB — Terrestrial Storage of Biomass", stage:"generating",
-    area_ha:89, volume_m3:9200, corcs_base:1950, corcs_range:[1400,2600],
-    flags:{red:0,amber:1,green:4}, created:"2026-02-28", updated:"2026-03-09",
-    deliverables:[], progress:78, dm_factor:0.72, species:["Eucalyptus globulus"],
-    notes:"22.27 ha definitiva, 18,507 tCO₂, 3,365 disponibles.",
-  },
-  {
-    id:"elysium", name:"Elysium Cerrado REDD+", client:"Elysium Asset Management", country:"🇧🇷",
-    registry:"verra", methodology:"VM0042 — REDD+", stage:"intake",
-    area_ha:68000, volume_m3:null, corcs_base:null, corcs_range:[null,null],
-    flags:{red:2,amber:1,green:0}, created:"2026-03-08", updated:"2026-03-08",
-    deliverables:[], progress:5, dm_factor:null, species:["Cerrado native"],
-    notes:"VM0047+VM0044 conflation identified. Screening only.",
-  },
+  {id:'marakoa',      name:'Proyecto Marakoa',       client:'Inforcol / Lignum Resources', flag:'🇨🇴', reg:'puro',      meth:'TSB — Terrestrial Storage of Biomass', stage:'delivered',   ha:1737,  m3:158460, corcs:32724, cr:[20452,44996], flg:{r:2,a:2,g:1}, pct:100, dm:0.50, sp:['Acacia mangium','Eucalyptus pellita'],     notes:'Colcex contract encumbrance on carbon rights — GO/NO-GO gate. Colcex conversation required before PDD.',     hs:{co:'Inforcol S.A.S.',ct:'Juan Mato Pin',deal:'Marakoa TSB',last:'3 days ago',stg:'Active Origination'},    delvd:['Pre-Feasibility Memo (DOCX)','Financial Model — 3 Scenarios (XLSX)']},
+  {id:'bosquia',      name:'Bosquia Asturias',        client:'Bosquia SL',                  flag:'🇪🇸', reg:'puro',      meth:'TSB — Terrestrial Storage of Biomass', stage:'eligibility', ha:420,   m3:38200,  corcs:7800,  cr:[5100,11400],   flg:{r:1,a:3,g:2}, pct:62,  dm:0.65, sp:['Pinus radiata','Eucalyptus globulus'],     notes:'Addendum No. 1 accepted by JC. MITECO coordination needed for pits in ZEPA buffer.',                        hs:{co:'Bosquia SL',ct:'Bosquia management',deal:'Asturias Addendum',last:'2 days ago',stg:'Contracting'},      delvd:[]},
+  {id:'naturebrain',  name:'NatureBrain Sierra Leone', client:'NatureBrain / InfraOceans', flag:'🇸🇱', reg:'verra',     meth:'VM0047 — ARR Non-Forest',             stage:'analysis',    ha:12400, m3:null,   corcs:null,  cr:[null,null],    flg:{r:3,a:2,g:0}, pct:28,  dm:null, sp:['Mixed tropical'],                          notes:'LOI $5M + $10M call option. Title chain broken since 1864. Eligible area ~98ha vs 467ha headline.',           hs:{co:'NatureBrain Ltd',ct:'Miguel Angel Garcia Tamargo',deal:'Sierra Leone LOI',last:'8 days ago',stg:'DD Phase'}, delvd:[]},
+  {id:'amoedo',       name:'Amoedo TSB',              client:'CMVMC de Amoedo',             flag:'🇪🇸', reg:'puro',      meth:'TSB — Terrestrial Storage of Biomass', stage:'review',      ha:22.27, m3:9200,   corcs:1950,  cr:[1400,2600],    flg:{r:0,a:1,g:4}, pct:85,  dm:0.72, sp:['Eucalyptus globulus'],                      notes:'22.27 ha definitiva · 18,507 tCO₂ · 3,365 disponibles. Brian signature on Anexo II is the final blocker.',  hs:{co:'CMVMC de Amoedo',ct:'Miguel Míguez (President)',deal:'Amoedo Carbon Package',last:'Today',stg:'Package Ready'}, delvd:['MITECO Subsanación Package (ZIP)']},
+  {id:'elysium',      name:'Elysium Cerrado REDD+',   client:'Elysium Asset Management',   flag:'🇧🇷', reg:'verra',     meth:'VM0042 — REDD+',                      stage:'intake',      ha:68000, m3:null,   corcs:null,  cr:[null,null],    flg:{r:2,a:1,g:0}, pct:5,   dm:null, sp:['Cerrado native'],                          notes:'VM0047+VM0044 conflation identified. Screening only. No registry registration yet.',                          hs:{co:'Elysium Asset Management',ct:'—',deal:'Cerrado Screening',last:'2 days ago',stg:'Initial Contact'},     delvd:[]},
+];
+const DOCS_DATA = [
+  {n:1, fn:'260306_CALCULADORA_ABSORCIONES_FINAL.xlsx', cat:'Calculadora', pt:2, txt:true, st:'ok'},
+  {n:2, fn:'222724_Informe_validacion_160145_PAZOS_v3.pdf', cat:'Certificación Trabajos', pt:4, txt:false, st:'notext'},
+  {n:3, fn:'260306_Plan_Gestion_Cronograma_Amoedo_v02.pdf', cat:'Plan de Gestión', pt:5, txt:false, st:'notext'},
+  {n:4, fn:'03_subparcelas_classified.geojson', cat:'Shapefile/Geodata', pt:6, txt:false, st:'notext'},
+  {n:5, fn:'03_subparcelas_classified_v2.dbf', cat:'Shapefile/Geodata', pt:6, txt:true, st:'ok'},
+  {n:6, fn:'03_subparcelas_classified_v2.shp', cat:'Shapefile/Geodata', pt:6, txt:false, st:'notext'},
+  {n:7, fn:'260306_Limite_PA_Clearsky.zip', cat:'Shapefile/Geodata', pt:6, txt:false, st:'notext'},
+  {n:8, fn:'PA_Amoedo_Analisis_FCC.dbf', cat:'Shapefile/Geodata', pt:6, txt:true, st:'ok'},
+  {n:9, fn:'Memoria_Descriptiva_Amoedo_v3.pdf', cat:'Memoria Descriptiva', pt:1, txt:false, st:'ocr'},
+  {n:10, fn:'Formulario_PA_Amoedo_v2.xlsx', cat:'Formulario PA', pt:1, txt:true, st:'ok'},
+  {n:11, fn:'Certificacion_Tecnica_COETFOGA_Amoedo.pdf', cat:'Certificación Técnica', pt:9, txt:false, st:'ocr'},
+  {n:12, fn:'Acreditacion_Propiedad_Nota_Simple.pdf', cat:'Acreditación Propiedad', pt:7, txt:false, st:'ocr'},
+];
+const FLAGS = {
+  technical:[
+    {s:'green', label:'Species eligibility (C:N >80)', note:'Woody stems confirmed. Acacia mangium woody fraction meets C:N requirement under Puro TSB Ed. 2023 Rule 4.1.6.', src:'Inventory data'},
+    {s:'amber', label:'Leaf exclusion protocol', note:'Protocol design needed. Leaves must be physically separated from woody fraction before burial and documented.', src:null},
+    {s:'amber', label:'Dry matter content (DM factor)', note:'Lab measurement required. Currently using 50% assumption — must be validated per ton before CORC issuance.', src:null},
+    {s:'amber', label:'Moisture stress test (GWP₂₀)', note:'Water activity data not yet collected. Required for Puro.earth Edition 2023 compliance, Section 3.4.', src:null},
+    {s:'red',   label:'Soil cap integrity — Haplaquox risk', note:'CRITICAL: Vichada Llanos are seasonally flooded Oxisols. Drainage engineering required before burial pit design can proceed.', src:'GIS analysis'},
+  ],
+  legal:[
+    {s:'red',   label:'Carbon rights — Colcex contract', note:'GO/NO-GO GATE: Existing timber contract with Colcex may encumber carbon rights. Must resolve before project proceeds to PDD.', src:'Contract docs'},
+    {s:'amber', label:'FSC / PEFC certification', note:'Not certified. Puro.earth TSB requires certification. Three pathways: FSC full (18–24mo), PEFC/CERTFOR (faster), Puro internal.', src:null},
+    {s:'amber', label:'100-year land easement', note:'Notarization and registration with Corporinoquía required before CORC issuance. Currently draft only.', src:null},
+    {s:'green', label:'Double-counting boundary', note:'TSB carbon flows distinct from any ARR/REDD+ project in the area. No VCS conflict identified.', src:'Registry check'},
+  ],
+  financial:[
+    {s:'amber', label:'DM factor pending validation', note:'50% assumption pending lab confirmation. ±15% swing in final CORC count (±4,900 CORCs at base).', src:'Inventory data'},
+  ],
+};
+const INTEL_DOCS = [
+  {icon:'📋', name:'Puro.earth TSB Methodology — Edition 2023', type:'Methodology', reg:'Puro.earth', rel:'Relevant to: Soil cap integrity, Species eligibility, FSC certification flags'},
+  {icon:'📊', name:'WoodCache PBC — CORC Pricing & Project Summary', type:'Benchmark', reg:'Puro.earth', rel:'Relevant to: CORC price assumptions ($150–$160/t on Nasdaq Aug 2024)'},
+  {icon:'📊', name:'Carbon Sequestration Inc. — Operations Report 2024', type:'Benchmark', reg:'Puro.earth', rel:'Relevant to: Pit design, clay cap depth, operational benchmarks'},
+  {icon:'📋', name:'Verra VM0047 — ARR Non-Forest Methodology v1.0', type:'Methodology', reg:'Verra VCS', rel:null},
+  {icon:'📝', name:'Colombia Forestry Carbon — Vichada Market Overview 2025', type:'Reference', reg:'General', rel:'Relevant to: Corporinoquía permit timeline, competitive landscape'},
+  {icon:'📋', name:'MITECO OECC — Registro de Huella de Carbono Methodology', type:'Methodology', reg:'MITECO España', rel:null},
+];
+const SCRIPTS = [
+  ['run_analysis.py','Pipeline orchestrator — runs full sequence end-to-end'],
+  ['miteco_gis_analysis.py','CORINE · Natura 2000 · SIOSE · EFFIS · slopes · Catastro'],
+  ['species_decision_engine.py','Species selection + MITECO factor optimization · banda marrón exclusion'],
+  ['soil_query.py','SoilGrids API — WRB classification, pH, texture, carbon content'],
+  ['generate_maps.py','A4 DD report maps via QGIS QgsPrintLayout (PNOA + DIN 6771)'],
+  ['clearsky_map_template.py','Project-agnostic map engine from GPKG · multi-site auto-detection'],
+  ['dd_report_generator.py','DD report · 3-scenario financials · sensitivity analysis'],
+  ['fill_calculator.py','MITECO calculator template filler · tracked changes'],
+  ['build_review_gpkg.py','Zone-based GPKG builder for review packages'],
+  ['create_shapefile_from_refcats.py','INSPIRE WFS shapefile from Catastro reference codes'],
 ];
 
-const FLAG_DATA = {
-  marakoa: {
-    technical:[
-      {label:"Species eligibility (C:N >80)", status:"green", note:"Woody stems confirmed eligible"},
-      {label:"Leaf exclusion protocol", status:"amber", note:"Protocol not yet documented"},
-      {label:"Dry matter content (DM)", status:"amber", note:"⚠ Lab measurement required"},
-      {label:"Moisture stress test (GWP₂₀)", status:"amber", note:"Pending water activity data"},
-      {label:"Soil cap integrity", status:"red", note:"Haplaquox risk — drainage design needed"},
-    ],
-    legal:[
-      {label:"Carbon rights / Existing contract", status:"red", note:"Colcex contract — must resolve (go/no-go)"},
-      {label:"FSC / PEFC certification", status:"red", note:"Not certified — 3 pathways identified"},
-      {label:"100-year land easement", status:"amber", note:"Notarization required before issuance"},
-      {label:"Environmental permit (Corporinoquía)", status:"amber", note:"6–18 month timeline expected"},
-      {label:"Double-counting boundary (VCS)", status:"green", note:"Distinct carbon flows documented"},
-    ],
-  },
-};
+// ══ STATE ══════════════════════════════════════════════════
+const STATE = {proj:null, tab:'overview', view:'pipeline', wizStep:1, wizReg:null, wizMeth:null};
 
-const LIBRARY_DOCS = {
-  puro:[
-    {name:"TSB Ed.2023 v.1 — Terrestrial Storage of Biomass", type:"methodology", size:"2.1 MB", status:"loaded"},
-    {name:"WoodCache Walsenburg — PDD", type:"benchmark", size:"840 KB", status:"loaded"},
-    {name:"WoodCache Walsenburg — DNV Audit 2024", type:"audit", size:"1.2 MB", status:"loaded"},
-    {name:"Fasera TSB Facility 1 — PDD", type:"benchmark", size:"620 KB", status:"loaded"},
-    {name:"Fasera — EnergyLink Audit 2025", type:"audit", size:"950 KB", status:"loaded"},
-    {name:"Marakoa Pre-Feasibility DOCX Template", type:"template", size:"56 KB", status:"loaded"},
-    {name:"Marakoa Financial Model XLSX Template", type:"template", size:"34 KB", status:"loaded"},
-    {name:"TSB Ed.2024 v.2 — DRAFT", type:"methodology", size:"—", status:"pending"},
-  ],
-  verra:[
-    {name:"VM0047 ARR v2.0 — Non-Forest", type:"methodology", size:"3.4 MB", status:"loaded"},
-    {name:"VM0042 REDD+ v4.0", type:"methodology", size:"2.8 MB", status:"loaded"},
-    {name:"VM0044 IFM v3.0", type:"methodology", size:"2.1 MB", status:"loaded"},
-    {name:"VM0048 ARR Restoration", type:"methodology", size:"1.9 MB", status:"loaded"},
-  ],
-  miteco:[
-    {name:"Real Decreto 163/2014 — Sumideros", type:"methodology", size:"1.1 MB", status:"loaded"},
-    {name:"Amoedo Subsanación MITECO", type:"benchmark", size:"320 KB", status:"loaded"},
-  ],
-  isometric:[
-    {name:"Subsurface Biomass Carbon Removal v1.1", type:"methodology", size:"1.8 MB", status:"loaded"},
-  ],
-};
-
-// ─── STATE ───────────────────────────────────────────────────────
-let currentView = "pipeline";
-let selectedProject = null;
-let modalStep = 1;
-let modalRegistry = "";
-let modalMethod = "";
-let libraryRegistry = "puro";
-
-// ─── ICONS ───────────────────────────────────────────────────────
-const SVG = {
-  check: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`,
-  file:  `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
-  dl:    `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
-  close: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
-  zap:   `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
-  up:    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>`,
-  chev:  `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="9 18 15 12 9 6"/></svg>`,
-};
-
-// ─── HELPERS ─────────────────────────────────────────────────────
-function reg(id){ return REGISTRIES.find(r=>r.id===id); }
-function stage(id){ return STAGES.find(s=>s.id===id); }
-function fmt(n){ return n != null ? n.toLocaleString() : "—"; }
-function label(txt, style=""){
-  return `<span class="syne" style="font-size:10px;font-weight:700;letter-spacing:.1em;color:#3A5070;text-transform:uppercase;${style}">${txt}</span>`;
-}
-function badge(registryId){
-  const r = reg(registryId); if(!r) return "";
-  return `<span class="tag" style="background:${r.color}18;color:${r.color};border:1px solid ${r.color}30;">${r.label}</span>`;
-}
-function stageTag(stageId){
-  const s = stage(stageId); if(!s) return "";
-  const dot = stageId==="generating" ? `<span style="width:6px;height:6px;border-radius:50%;background:${s.color};display:inline-block;animation:dotPulse 1s infinite;"></span>` : "";
-  return `<span class="tag" style="background:${s.color}18;color:${s.color};border:1px solid ${s.color}30;">${dot}${s.label}</span>`;
-}
-function flagSummary(flags){
-  let html = `<div class="flag-row">`;
-  if(flags.red>0)   html += `<span style="display:flex;align-items:center;gap:3px;color:#FF4560;"><span class="flag-dot" style="background:#FF4560;"></span>${flags.red}</span>`;
-  if(flags.amber>0) html += `<span style="display:flex;align-items:center;gap:3px;color:#F0A500;"><span class="flag-dot" style="background:#F0A500;"></span>${flags.amber}</span>`;
-  if(flags.green>0) html += `<span style="display:flex;align-items:center;gap:3px;color:#2ED573;"><span class="flag-dot" style="background:#2ED573;"></span>${flags.green}</span>`;
-  return html + `</div>`;
-}
-function progressBar(val, color){
-  return `<div class="progress-bar"><div class="progress-fill" style="width:${val}%;background:${color};"></div></div>`;
-}
-function statusColor(s){ return s==="red"?"#FF4560":s==="amber"?"#F0A500":"#2ED573"; }
-const TYPE_COLOR = {methodology:"#00D4AA", benchmark:"#3B82F6", audit:"#F0A500", template:"#A78BFA"};
-
-// ─── INIT ────────────────────────────────────────────────────────
+// ══ INIT ══════════════════════════════════════════════════
 function init(){
-  renderSidebarBadges();
-  renderSidebarStats();
-  renderStatsBar();
-  renderTopbarMeta();
-  renderPipeline();
+  renderRail();
+  renderKanban();
+  renderIntelDocs();
   renderLibrary();
   renderAnalytics();
 }
 
-function renderSidebarBadges(){
-  const el = document.getElementById("registry-badges");
-  el.innerHTML = REGISTRIES.map(r=>`
-    <div class="registry-badge" style="background:${r.color}10;border-color:${r.color}30;color:${r.color};">
-      <span style="width:6px;height:6px;border-radius:50%;background:${r.color};"></span>
-      <span style="font-size:11px;">${r.label}</span>
-    </div>`).join("");
-}
-
-function renderSidebarStats(){
-  const totalCORCs = PROJECTS.reduce((a,p)=>a+(p.corcs_base||0),0);
-  const active = PROJECTS.filter(p=>!["intake","delivered"].includes(p.stage)).length;
-  const el = document.getElementById("sidebar-stats");
-  el.innerHTML = [
-    ["Total Projects", PROJECTS.length],
-    ["Active Analysis", active],
-    ["CORCs Modeled", totalCORCs.toLocaleString()],
-  ].map(([l,v])=>`
-    <div class="sidebar-stat">
-      <span class="sidebar-stat-label">${l}</span>
-      <span class="sidebar-stat-val">${v}</span>
-    </div>`).join("");
-}
-
-function renderTopbarMeta(){
-  const el = document.getElementById("topbar-meta");
-  if(currentView !== "pipeline"){ el.innerHTML=""; return; }
-  const delivered = PROJECTS.filter(p=>p.stage==="delivered").length;
-  const active = PROJECTS.filter(p=>!["intake","delivered"].includes(p.stage)).length;
-  el.innerHTML = [
-    {t:`${PROJECTS.length} projects`, c:"#6B87B0"},
-    {t:`${delivered} delivered`, c:"#2ED573"},
-    {t:`${active} in progress`, c:"#F0A500"},
-  ].map(x=>`<span style="font-size:12px;color:${x.c};font-family:'DM Mono',monospace;">${x.t} ·</span>`).join("");
-}
-
-function renderStatsBar(){
-  const totalCORCs = PROJECTS.reduce((a,p)=>a+(p.corcs_base||0),0);
-  const totalHa = PROJECTS.reduce((a,p)=>a+(p.area_ha||0),0);
-  const totalVol = PROJECTS.reduce((a,p)=>a+(p.volume_m3||0),0);
-  const redFlags = PROJECTS.reduce((a,p)=>a+p.flags.red,0);
-  const amberFlags = PROJECTS.reduce((a,p)=>a+p.flags.amber,0);
-  const methods = new Set(PROJECTS.map(p=>p.methodology)).size;
-  const regs = new Set(PROJECTS.map(p=>p.registry)).size;
-  const el = document.getElementById("statsbar");
-  el.innerHTML = [
-    {l:"Total Area",       v:totalHa.toLocaleString()+" ha",             c:"#E2EBF8"},
-    {l:"Total Volume",     v:totalVol.toLocaleString()+" m³",            c:"#E2EBF8"},
-    {l:"CORCs Modeled",    v:totalCORCs.toLocaleString(),                 c:"#00D4AA"},
-    {l:"Revenue @ $120",   v:"$"+(totalCORCs*120/1e6).toFixed(1)+"M",    c:"#00D4AA"},
-    {l:"Open Red Flags",   v:redFlags,                                    c:"#FF4560"},
-    {l:"Open Amber",       v:amberFlags,                                  c:"#F0A500"},
-    {l:"Methodologies",    v:methods+" active",                           c:"#3B82F6"},
-    {l:"Registries",       v:regs+" active",                              c:"#A78BFA"},
-  ].map(x=>`
-    <div class="stat-card">
-      <span class="stat-card-label">${x.l}</span>
-      <span class="mono stat-card-val" style="color:${x.c};">${x.v}</span>
-    </div>`).join("");
-}
-
-// ─── PIPELINE ────────────────────────────────────────────────────
-function renderPipeline(){
-  const el = document.getElementById("view-pipeline");
-  el.innerHTML = `<div id="kanban"></div>`;
-  document.getElementById("kanban").style.cssText = "display:flex;gap:12px;height:100%;overflow-x:auto;padding-bottom:16px;";
-  const kanban = document.getElementById("kanban");
-  kanban.innerHTML = STAGES.map(s=>{
-    const cards = PROJECTS.filter(p=>p.stage===s.id);
-    return `
-      <div class="kanban-col">
-        <div class="kanban-col-header" style="border-top:2px solid ${s.color};">
-          <span class="kanban-col-label syne" style="color:${s.color};">${s.label}</span>
-          <span class="kanban-col-count" style="background:${s.color}20;color:${s.color};">${cards.length}</span>
-        </div>
-        <div class="kanban-col-body">
-          ${cards.length ? cards.map(p=>renderCard(p)).join("") : `<div class="kanban-empty">No projects</div>`}
-        </div>
-      </div>`;
-  }).join("");
-}
-
-function renderCard(p){
-  const s = stage(p.stage);
-  const barColor = p.stage==="delivered" ? "#2ED573" : p.stage==="generating" ? "#F0A500" : "#00D4AA";
-  const indicator = p.stage==="generating"
-    ? `<div class="spinner"></div>`
-    : p.stage==="delivered"
-    ? `<span style="color:#2ED573;">${SVG.check}</span>`
-    : "";
-  return `
-    <div class="project-card ${p.stage==="delivered"?"delivered-glow":""}" onclick="openDetail('${p.id}')">
-      <div class="card-accent" style="background:${s?.color||"#00D4AA"};"></div>
-      <div class="card-header">
-        <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">
-          <span style="font-size:16px;">${p.country}</span>
-          <span class="card-name">${p.name}</span>
-        </div>
-        ${indicator}
+// ══ RAIL ══════════════════════════════════════════════════
+function renderRail(){
+  document.getElementById('rprojects').innerHTML = PROJECTS.map(p=>{
+    const reg=REGS[p.reg];
+    const ac = STATE.proj?.id===p.id;
+    const dc = p.flg.r>0?'var(--red)':p.flg.a>0?'var(--amber)':'var(--green)';
+    if(p.stage==='delivered') { /* dot stays green */ }
+    return `<div class="rproject ${ac?'active':''}" onclick="openProject('${p.id}')">
+      <div class="rdot" style="background:${dc}"></div>
+      <div class="rinfo">
+        <div class="rname">${p.flag} ${p.name}</div>
+        <div class="rmeta">${p.ha?p.ha.toLocaleString()+' ha':'—'} · ${p.meth.split('—')[0].trim()}</div>
       </div>
-      <div class="card-client">${p.client}</div>
-      <div class="card-method">${p.methodology}</div>
-      ${p.area_ha ? `
-      <div class="card-stats">
-        <div>
-          <div class="mono card-stat-val">${fmt(p.area_ha)}</div>
-          <div class="card-stat-label syne">ha</div>
-        </div>
-        ${p.corcs_base ? `
-        <div>
-          <div class="mono card-stat-val card-teal">${fmt(p.corcs_base)}</div>
-          <div class="card-stat-label syne">CORCs base</div>
-        </div>` : ""}
-        <div style="margin-left:auto;">${flagSummary(p.flags)}</div>
-      </div>` : ""}
-      ${progressBar(p.progress, barColor)}
-      <div class="mono" style="font-size:10px;color:#3A5070;margin-top:4px;">${p.progress}%</div>
+      <span class="rbadge" style="color:${reg.color};background:color-mix(in srgb,${reg.color} 10%,transparent)">${reg.short}</span>
     </div>`;
+  }).join('');
 }
 
-// ─── DETAIL PANEL ────────────────────────────────────────────────
-function openDetail(id){
-  selectedProject = PROJECTS.find(p=>p.id===id);
-  renderDetail("overview");
-  document.getElementById("detail-panel").style.display="block";
+// ══ KANBAN ════════════════════════════════════════════════
+function renderKanban(){
+  const wrap = document.getElementById('pipeline-view');
+  wrap.innerHTML = `<div style="display:flex;gap:10px;min-height:calc(100% - 36px);padding-bottom:16px">
+    ${STAGES.map(st=>{
+      const cards = PROJECTS.filter(p=>p.stage===st.id);
+      return `<div style="min-width:210px;max-width:226px;display:flex;flex-direction:column">
+        <div class="khead" style="--sc:${st.color}">
+          <span class="khtitle" style="color:${st.color}">${st.label}</span>
+          <span class="khcount" style="background:color-mix(in srgb,${st.color} 12%,transparent);color:${st.color}">${cards.length}</span>
+        </div>
+        ${cards.map(p=>renderCard(p,st.color)).join('')}
+        ${!cards.length?'<div class="kempty">No projects</div>':''}
+      </div>`;
+    }).join('')}
+  </div>`;
 }
-
-function closeDetail(){
-  document.getElementById("detail-panel").style.display="none";
-  selectedProject=null;
-}
-
-function renderDetail(tab){
-  const p = selectedProject; if(!p) return;
-  const r = reg(p.registry);
-  const flags = FLAG_DATA[p.id] || {
-    technical:[
-      {label:"Species eligibility (C:N >80)", status:"amber", note:"Lab data required"},
-      {label:"Leaf exclusion protocol", status:"amber", note:"Protocol not yet documented"},
-      {label:"Dry matter content (DM)", status:"amber", note:"Lab measurement required"},
-      {label:"Moisture stress test (GWP₂₀)", status:"amber", note:"Pending water activity data"},
-      {label:"Soil cap integrity", status:"amber", note:"Soil testing pending"},
-    ],
-    legal:[
-      {label:"Carbon rights clear", status:"amber", note:"Legal review pending"},
-      {label:"FSC / PEFC certification", status:"amber", note:"Certification status unknown"},
-      {label:"100-year land easement", status:"amber", note:"Notarization required"},
-      {label:"Environmental permit", status:"amber", note:"Timeline unknown"},
-      {label:"Double-counting boundary", status:"green", note:"No conflicts identified"},
-    ],
-  };
-
-  const tabContent = {
-    overview:`
-      <div class="fade-in">
-        ${label("Key Metrics","display:block;margin-bottom:12px;")}
-        <div class="metrics-grid">
-          ${[
-            ["Area",        p.area_ha ? fmt(p.area_ha)+" ha" : "—"],
-            ["Volume",      p.volume_m3 ? fmt(p.volume_m3)+" m³" : "—"],
-            ["CORCs (base)",p.corcs_base ? fmt(p.corcs_base) : "—"],
-            ["CORC range",  p.corcs_range[0] ? fmt(p.corcs_range[0])+" – "+fmt(p.corcs_range[1]) : "—"],
-            ["DM factor",   p.dm_factor ? (p.dm_factor*100).toFixed(0)+"%" : "⚠ TBD"],
-            ["Registry",    r?.label||"—"],
-          ].map(([l,v])=>`
-            <div class="metric-cell">
-              ${label(l,"display:block;margin-bottom:4px;")}
-              <span class="mono" style="font-size:13px;color:#E2EBF8;font-weight:500;">${v}</span>
-            </div>`).join("")}
+function renderCard(p,sc){
+  const reg=REGS[p.reg];
+  const prgc = p.stage==='delivered'?'var(--green)':p.stage==='review'?'var(--amber)':'var(--teal)';
+  const cta = {intake:'→ Upload ZIP',analysis:'→ Run ForestEngineer',eligibility:'→ Check eligibility',generating:'→ Generating…',review:'→ Review package',delivered:'→ View deliverables'};
+  const spin = p.stage==='generating'?`<div style="width:14px;height:14px;border-radius:50%;border:1.5px solid var(--amber);border-top-color:transparent" class="spinning"></div>`:'';
+  const chk = p.stage==='delivered'?`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`:'';
+  return `<div class="kcard" style="--ca:${reg.color}" onclick="openProject('${p.id}')">
+    <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px">${spin}${chk}
+      <span class="kcname">${p.flag} ${p.name}</span>
+    </div>
+    <div class="kcclient">${p.client}</div>
+    <div class="kcmeth">${p.meth}</div>
+    <div class="kcstats">
+      <div><div class="kcstat-v">${p.ha?p.ha.toLocaleString():'—'}</div><div class="kcstat-l">ha</div></div>
+      ${p.corcs?`<div><div class="kcstat-v" style="color:var(--teal)">${p.corcs.toLocaleString()}</div><div class="kcstat-l">CORCs</div></div>`:''}
+      <div style="margin-left:auto">
+        <div class="kcflags">
+          ${p.flg.r?`<span class="flcount"><span class="fldot" style="background:var(--red)"></span>${p.flg.r}</span>`:''}
+          ${p.flg.a?`<span class="flcount"><span class="fldot" style="background:var(--amber)"></span>${p.flg.a}</span>`:''}
+          ${p.flg.g?`<span class="flcount"><span class="fldot" style="background:var(--green)"></span>${p.flg.g}</span>`:''}
         </div>
-        ${label("Species","display:block;margin-bottom:8px;")}
-        <div class="species-chips">${p.species.map(s=>`<span class="species-chip">${s}</span>`).join("")}</div>
-        ${label("Notes","display:block;margin-bottom:8px;")}
-        <div style="background:#112034;border-radius:6px;padding:12px;font-size:13px;color:#6B87B0;border:1px solid #1C3050;line-height:1.6;">${p.notes}</div>
-        <div style="margin-top:20px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            ${label("Progress")}<span class="mono" style="font-size:12px;color:#6B87B0;">${p.progress}%</span>
-          </div>
-          ${progressBar(p.progress, p.stage==="delivered"?"#2ED573":"#00D4AA")}
-        </div>
-        <div style="margin-top:20px;">${label("Timeline","display:block;margin-bottom:8px;")}
-          <div class="mono" style="font-size:12px;color:#6B87B0;">
-            <div style="display:flex;gap:8px;margin-bottom:4px;"><span style="color:#3A5070;">Created:</span><span>${p.created}</span></div>
-            <div style="display:flex;gap:8px;"><span style="color:#3A5070;">Updated:</span><span>${p.updated}</span></div>
-          </div>
-        </div>
-      </div>`,
-
-    technical:`
-      <div class="fade-in">
-        ${label("Technical Eligibility Flags","display:block;margin-bottom:16px;")}
-        ${flags.technical.map(f=>`
-          <div class="flag-item" style="border-left-color:${statusColor(f.status)};">
-            <div style="flex:1;">
-              <div class="flag-item-label">${f.label}</div>
-              <div class="flag-item-note">${f.note}</div>
-            </div>
-            <div class="flag-status-dot" style="background:${statusColor(f.status)};"></div>
-          </div>`).join("")}
-      </div>`,
-
-    legal:`
-      <div class="fade-in">
-        ${label("Legal & Regulatory Flags","display:block;margin-bottom:16px;")}
-        ${flags.legal.map(f=>`
-          <div class="flag-item" style="border-left-color:${statusColor(f.status)};">
-            <div style="flex:1;">
-              <div class="flag-item-label">${f.label}</div>
-              <div class="flag-item-note">${f.note}</div>
-            </div>
-            <div class="flag-status-dot" style="background:${statusColor(f.status)};"></div>
-          </div>`).join("")}
-      </div>`,
-
-    deliverables:`
-      <div class="fade-in">
-        ${label("Generated Deliverables","display:block;margin-bottom:16px;")}
-        ${p.deliverables.length ? p.deliverables.map(d=>`
-          <div class="deliverable-item">
-            <div style="display:flex;align-items:center;gap:10px;color:#00D4AA;">${SVG.file}<span style="font-size:13px;color:#E2EBF8;">${d}</span></div>
-            <button class="btn-ghost" style="padding:5px 10px;font-size:12px;">${SVG.dl}</button>
-          </div>`).join("") : `
-          <div class="deliverable-empty">
-            <div style="margin-bottom:8px;color:#3A5070;">${SVG.file}</div>
-            No deliverables generated yet
-            <div style="font-size:11px;margin-top:4px;">Complete analysis to generate reports</div>
-          </div>`}
-        ${p.stage !== "delivered" ? `
-          <button class="btn-primary" style="width:100%;margin-top:16px;justify-content:center;" onclick="generateDeliverables('${p.id}')">
-            ${SVG.zap} Generate Deliverables
-          </button>` : ""}
-      </div>`,
-  };
-
-  document.getElementById("detail-panel").innerHTML = `
-    <div class="panel-header">
-      <div class="panel-title-row">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:20px;">${p.country}</span>
-          <span class="syne" style="font-size:16px;font-weight:700;color:#E2EBF8;">${p.name}</span>
-        </div>
-        <button class="close-btn" onclick="closeDetail()">${SVG.close}</button>
-      </div>
-      <div class="panel-badges">${badge(p.registry)} ${stageTag(p.stage)}</div>
-      <div class="tab-bar">
-        ${["overview","technical","legal","deliverables"].map(t=>`
-          <button class="tab-btn ${t===tab?"active":""}" onclick="renderDetail('${t}')">${t.toUpperCase()}</button>`).join("")}
       </div>
     </div>
-    <div class="panel-body">${tabContent[tab]||""}</div>`;
+    <div class="kprog"><div class="kpfill" style="width:${p.pct}%;background:${prgc}"></div></div>
+    <div class="kcta">${cta[p.stage]||''}</div>
+  </div>`;
 }
 
-function generateDeliverables(id){
-  alert("Generate Deliverables — Worker endpoint POST /api/pablo/generate will be wired here. Project: "+id);
+// ══ OPEN PROJECT ══════════════════════════════════════════
+function openProject(id){
+  STATE.proj = PROJECTS.find(p=>p.id===id);
+  if(!STATE.proj) return;
+  ['pipeline','library','analytics'].forEach(v=>document.getElementById('nav-'+v).classList.remove('on'));
+  renderRail();
+  document.getElementById('ptabs').style.display='flex';
+  updateTopbar();
+  tab('overview');
 }
-
-// ─── LIBRARY ─────────────────────────────────────────────────────
-function renderLibrary(){
-  const el = document.getElementById("view-library");
-  renderLibraryContent(el);
+function updateTopbar(){
+  const p=STATE.proj;
+  const reg=REGS[p.reg];
+  const st=STAGES.find(s=>s.id===p.stage);
+  document.getElementById('crumb').innerHTML=`
+    <span class="crumb-dim" onclick="goHome()">Pipeline</span>
+    <span class="crumb-sep">›</span>
+    <span class="crumb-cur">${p.name}</span>
+    <span class="badge" style="color:${reg.color};background:color-mix(in srgb,${reg.color} 12%,transparent)">${reg.label}</span>
+    <span class="spill" style="color:${st.color};background:color-mix(in srgb,${st.color} 14%,transparent)">${st.label}</span>`;
+  document.getElementById('crmeta').innerHTML=`${p.flag} ${p.client} · ${p.ha?p.ha.toLocaleString()+' ha':'—'}${p.corcs?` · <span style="color:var(--teal)">${p.corcs.toLocaleString()} CORCs</span>`:''}`;
+  document.getElementById('topacts').innerHTML=`
+    <button class="btn btn-g btn-s">↑ Export</button>
+    <button class="btn btn-p btn-s" onclick="showGen()">⚡ Generate</button>`;
 }
-
-function renderLibraryContent(el){
-  const docs = LIBRARY_DOCS[libraryRegistry] || [];
-  el.innerHTML = `
-    <div class="fade-in">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
-        <div>
-          <div class="syne" style="font-size:20px;font-weight:700;color:#E2EBF8;">Knowledge Library</div>
-          <div style="font-size:13px;color:#6B87B0;margin-top:2px;">Canonical methodology docs, benchmarks, and templates stored in R2</div>
-        </div>
-        <button class="btn-primary">${SVG.up} Upload to R2</button>
-      </div>
-      <div class="library-wrap">
-        <div class="library-sidebar">
-          ${label("Registry","display:block;margin-bottom:10px;")}
-          ${REGISTRIES.map(r=>`
-            <div class="lib-nav-item ${r.id===libraryRegistry?"":""}"
-              onclick="setLibraryRegistry('${r.id}')"
-              style="background:${r.id===libraryRegistry?r.color+"12":"transparent"};color:${r.id===libraryRegistry?r.color:"#6B87B0"};border-color:${r.id===libraryRegistry?r.color+"30":"transparent"};">
-              <span style="width:8px;height:8px;border-radius:50%;background:${r.color};flex-shrink:0;"></span>
-              ${r.label}
-            </div>`).join("")}
-        </div>
-        <div class="library-content">
-          ${label("Documents — "+reg(libraryRegistry)?.label,"display:block;margin-bottom:10px;")}
-          ${docs.map(d=>`
-            <div class="doc-item ${d.status==="pending"?"pending":""}">
-              <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;color:${TYPE_COLOR[d.type]||"#6B87B0"};">
-                ${SVG.file}
-                <span style="font-size:13px;color:#E2EBF8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.name}</span>
-              </div>
-              <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
-                <span class="tag" style="background:${TYPE_COLOR[d.type]||"#3A5070"}18;color:${TYPE_COLOR[d.type]||"#3A5070"};">${d.type}</span>
-                <span class="mono" style="font-size:11px;color:#3A5070;min-width:50px;text-align:right;">${d.size}</span>
-                ${d.status==="loaded"
-                  ? `<span style="color:#2ED573;">${SVG.check}</span>`
-                  : `<span style="font-size:11px;color:#F0A500;">PENDING</span>`}
-              </div>
-            </div>`).join("")}
-        </div>
-      </div>
-    </div>`;
-}
-
-function setLibraryRegistry(id){
-  libraryRegistry = id;
-  renderLibraryContent(document.getElementById("view-library"));
-}
-
-// ─── ANALYTICS ───────────────────────────────────────────────────
-function renderAnalytics(){
-  const el = document.getElementById("view-analytics");
-  el.innerHTML = `
-    <div class="fade-in">
-      <div class="syne" style="font-size:20px;font-weight:700;color:#E2EBF8;margin-bottom:20px;">Analytics</div>
-      <div class="analytics-grid" style="margin-bottom:20px;">
-        ${[
-          ["Puro.earth","3 projects","42,474 CORCs","#00D4AA"],
-          ["Verra VCS","2 projects","—","#3B82F6"],
-          ["MITECO","0 projects","—","#F0A500"],
-          ["Isometric","0 projects","—","#A78BFA"],
-        ].map(([r,c,corcs,color])=>`
-          <div class="analytics-card" style="border-top-color:${color};">
-            <div class="syne" style="font-size:14px;font-weight:700;color:${color};margin-bottom:8px;">${r}</div>
-            <div style="font-size:12px;color:#6B87B0;">${c}</div>
-            <div class="mono" style="font-size:18px;font-weight:600;color:#E2EBF8;margin-top:6px;">${corcs}</div>
-            ${label("CORCs modeled","display:block;margin-top:4px;")}
-          </div>`).join("")}
-      </div>
-      <div style="background:#0C1829;border:1px solid #1C3050;border-radius:8px;padding:20px;color:#3A5070;text-align:center;font-size:13px;">
-        Full analytics dashboard — CORC curves, timeline charts, methodology comparison — coming next sprint.
-      </div>
-    </div>`;
-}
-
-// ─── VIEW SWITCHER ───────────────────────────────────────────────
-function switchView(v){
-  currentView = v;
-  ["pipeline","library","analytics"].forEach(id=>{
-    document.getElementById("view-"+id).style.display = id===v ? "block" : "none";
-    document.getElementById("nav-"+id)?.classList.toggle("active", id===v);
+function tab(t){
+  STATE.tab=t;
+  document.querySelectorAll('.ptab').forEach((el,i)=>{
+    const tabs=['overview','documents','analysis','deliverables','agents','intel'];
+    el.classList.toggle('on', tabs[i]===t);
   });
-  if(v==="pipeline") document.getElementById("view-pipeline").style.height="100%";
-  document.getElementById("topbar-title").textContent =
-    v==="pipeline" ? "Project Pipeline" : v==="library" ? "Knowledge Library" : "Analytics";
-  document.getElementById("statsbar").style.display = v==="pipeline" ? "flex" : "none";
-  renderTopbarMeta();
+  document.querySelectorAll('#content .view').forEach(v=>v.classList.remove('on'));
+  const el=document.getElementById('v-'+t);
+  if(el) el.classList.add('on');
+  if(t==='overview') renderOv();
+  if(t==='documents') renderDocs();
+  if(t==='analysis') renderAnalysis();
+  if(t==='deliverables') renderDel();
+  if(t==='agents') renderAgents();
 }
 
-// ─── MODAL (NEW PROJECT) ─────────────────────────────────────────
-function showModal(){
-  modalStep=1; modalRegistry=""; modalMethod="";
-  renderModal();
-  document.getElementById("modal-overlay").style.display="flex";
-}
-function hideModal(){
-  document.getElementById("modal-overlay").style.display="none";
-}
-function handleModalBg(e){
-  if(e.target===document.getElementById("modal-overlay")) hideModal();
-}
-
-function renderModal(){
-  const stepLabels = ["Registry & Methodology","Project Details","Upload Data"];
-  const canNext = modalStep===1 ? (modalRegistry&&modalMethod) : true;
-
-  const stepDots = [1,2,3].map(s=>{
-    const done = s < modalStep;
-    const active = s <= modalStep;
-    return `
-      <div class="step-dot-wrap">
-        <div class="step-dot" style="background:${active?"#00D4AA":"#112034"};border:1.5px solid ${active?"#00D4AA":"#1C3050"};color:${active?"#030810":"#3A5070"};">
-          ${done ? SVG.check.replace("14","12") : s}
-        </div>
-        ${s<3?`<div class="step-line" style="background:${s<modalStep?"#00D4AA":"#1C3050"};"></div>`:""}
-      </div>`;
-  }).join("");
-
-  let bodyHtml = "";
-  if(modalStep===1){
-    bodyHtml = `
-      <div class="fade-in">
-        ${label("Select Registry","display:block;margin-bottom:12px;")}
-        <div class="registry-grid">
-          ${REGISTRIES.map(r=>`
-            <div class="registry-option ${modalRegistry===r.id?"selected":""}"
-              onclick="selectRegistry('${r.id}')"
-              style="border-color:${modalRegistry===r.id?r.color:"#1C3050"};background:${modalRegistry===r.id?r.color+"10":"#112034"};">
-              <div class="syne" style="font-size:13px;font-weight:600;color:${modalRegistry===r.id?r.color:"#E2EBF8"};margin-bottom:4px;">${r.label}</div>
-              <div style="font-size:11px;color:#3A5070;">${r.methods.length} methodologies</div>
-            </div>`).join("")}
-        </div>
-        ${modalRegistry ? `
-          <div class="fade-in">
-            ${label("Select Methodology","display:block;margin-bottom:10px;")}
-            <div class="method-list">
-              ${(reg(modalRegistry)?.methods||[]).map(m=>`
-                <div class="method-option"
-                  onclick="selectMethod('${m.replace(/'/g,"\\'")}')"
-                  style="border-color:${modalMethod===m?reg(modalRegistry)?.color||"#00D4AA":"#1C3050"};background:${modalMethod===m?(reg(modalRegistry)?.color||"#00D4AA")+"10":"#112034"};color:${modalMethod===m?reg(modalRegistry)?.color||"#00D4AA":"#6B87B0"};">
-                  ${m}
-                </div>`).join("")}
-            </div>
-          </div>` : ""}
-      </div>`;
-  } else if(modalStep===2){
-    bodyHtml = `
-      <div class="fade-in">
-        <div class="form-group">
-          ${label("Project Name","display:block;margin-bottom:8px;")}
-          <input class="input-field" placeholder="e.g. Proyecto Marakoa" id="inp-name">
-        </div>
-        <div class="form-grid-2">
-          <div>
-            ${label("Client / Originator","display:block;margin-bottom:8px;")}
-            <input class="input-field" placeholder="Client name" id="inp-client">
-          </div>
-          <div>
-            ${label("Country","display:block;margin-bottom:8px;")}
-            <input class="input-field" placeholder="e.g. Colombia" id="inp-country">
-          </div>
-        </div>
-        <div class="form-group">
-          ${label("Notes / Context","display:block;margin-bottom:8px;")}
-          <textarea class="input-field" rows="3" placeholder="Any context, contacts, constraints..." style="resize:vertical;" id="inp-notes"></textarea>
-        </div>
-        <div class="config-summary">
-          ${label("Selected Configuration","display:block;margin-bottom:8px;")}
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-            ${badge(modalRegistry)}
-            <span class="mono" style="font-size:11px;color:#6B87B0;">${modalMethod}</span>
-          </div>
-        </div>
-      </div>`;
-  } else {
-    bodyHtml = `
-      <div class="fade-in">
-        ${label("Upload Project Data","display:block;margin-bottom:12px;")}
-        <div class="drop-zone" id="drop-zone"
-          ondragover="event.preventDefault();this.classList.add('dragging')"
-          ondragleave="this.classList.remove('dragging')"
-          ondrop="handleDrop(event)">
-          ${SVG.up.replace("14","28")}
-          <div style="margin-top:10px;font-size:14px;color:#6B87B0;">Drop your ZIP file here</div>
-          <div style="font-size:12px;color:#3A5070;margin-top:4px;">Inventory Excel, soil reports, shapefiles, contracts, maps</div>
-        </div>
-        ${label("Expected Contents","display:block;margin:16px 0 10px;")}
-        ${[
-          ["Inventory data",".xlsx — biomass by plot/finca",true],
-          ["Lithogeology / soil",".docx or .pdf",true],
-          ["Plantation maps",".shp, .geojson, or .rar",false],
-          ["Legal documents","Contracts, titles, certifications",false],
-          ["Methodology docs",".md or .pdf (loaded from library if absent)",false],
-        ].map(([n,e,req])=>`
-          <div class="expected-item">
-            <span class="flag-dot" style="background:${req?"#00D4AA":"#3A5070"};flex-shrink:0;"></span>
-            <span style="color:${req?"#E2EBF8":"#6B87B0"};min-width:140px;">${n}</span>
-            <span class="mono" style="color:#3A5070;">${e}</span>
-          </div>`).join("")}
-      </div>`;
-  }
-
-  document.getElementById("modal-box").innerHTML = `
-    <div class="modal-header">
-      <div>
-        <div class="syne" style="font-size:16px;font-weight:700;color:#E2EBF8;">New Project</div>
-        <div style="font-size:12px;color:#6B87B0;margin-top:2px;">Step ${modalStep} of 3 — ${stepLabels[modalStep-1]}</div>
-      </div>
-      <button class="close-btn" onclick="hideModal()">${SVG.close}</button>
+// ══ OVERVIEW ══════════════════════════════════════════════
+function renderOv(){
+  const p=STATE.proj;
+  const reg=REGS[p.reg];
+  document.getElementById('ov-content').innerHTML=`
+  <!-- Metrics -->
+  <div class="ovc">
+    <div class="ovt">Key Metrics</div>
+    <div class="mgrid">
+      <div class="mcell"><div class="mlbl">Area</div><div class="mval">${p.ha?p.ha.toLocaleString()+' ha':'—'}</div></div>
+      <div class="mcell"><div class="mlbl">Volume</div><div class="mval">${p.m3?p.m3.toLocaleString()+' m³':'—'}</div></div>
+      <div class="mcell"><div class="mlbl">CORCs (base)</div><div class="mval" style="color:var(--teal)">${p.corcs?p.corcs.toLocaleString():'—'}</div></div>
+      <div class="mcell"><div class="mlbl">CORC range</div><div class="mval" style="font-size:12px">${p.cr[0]?p.cr[0].toLocaleString()+' – '+p.cr[1].toLocaleString():'—'}</div></div>
+      <div class="mcell"><div class="mlbl">DM factor</div><div class="mval" style="color:${p.dm?'var(--txt0)':'var(--amber)'}">${p.dm?(p.dm*100).toFixed(0)+'%':'⚠ TBD'}</div></div>
+      <div class="mcell"><div class="mlbl">Registry</div><div class="mval" style="color:${reg.color};font-size:12px">${reg.short}</div></div>
     </div>
-    <div class="step-indicator">${stepDots}</div>
-    <div class="modal-body">${bodyHtml}</div>
-    <div class="modal-footer">
-      ${modalStep>1?`<button class="btn-ghost" onclick="modalBack()">Back</button>`:""}
-      ${modalStep<3
-        ? `<button class="btn-primary" onclick="modalNext()" ${!canNext?"disabled":""} style="${!canNext?"opacity:.4;cursor:not-allowed;":""}">
-            Continue ${SVG.chev}
-           </button>`
-        : `<button class="btn-primary" onclick="startAnalysis()">
-            ${SVG.zap} Start Analysis
-           </button>`}
-    </div>`;
+    <div style="margin-top:12px">
+      <div class="ovt" style="margin-bottom:6px">Species</div>
+      <div>${p.sp.map(s=>`<span class="spchip">${s}</span>`).join('')}</div>
+    </div>
+    <div style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+        <div class="ovt" style="margin:0">Progress</div>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--txt2)">${p.pct}%</span>
+      </div>
+      <div class="kprog" style="height:4px"><div class="kpfill" style="width:${p.pct}%;background:${p.stage==='delivered'?'var(--green)':'var(--teal)'}"></div></div>
+    </div>
+    <div style="margin-top:12px">
+      <div class="ovt" style="margin-bottom:5px">Notes</div>
+      <div class="nfield">${p.notes}</div>
+    </div>
+  </div>
+  <!-- Flags summary -->
+  <div class="ovc">
+    <div class="ovt">Risk Summary</div>
+    ${['technical','legal','financial'].map(cat=>{
+      const cf=FLAGS[cat]||[];
+      const r=cf.filter(f=>f.s==='red').length, a=cf.filter(f=>f.s==='amber').length, g=cf.filter(f=>f.s==='green').length;
+      const topR=cf.find(f=>f.s==='red');
+      return `<div class="fccat">
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:5px">
+          <span class="fccname" style="text-transform:capitalize">${cat}</span>
+          <div class="fcrow">
+            ${r?`<span class="flcount"><span class="fldot" style="background:var(--red)"></span>${r}</span>`:''}
+            ${a?`<span class="flcount"><span class="fldot" style="background:var(--amber)"></span>${a}</span>`:''}
+            ${g?`<span class="flcount"><span class="fldot" style="background:var(--green)"></span>${g}</span>`:''}
+          </div>
+        </div>
+        ${topR?`<div class="fctop">🔴 <strong>${topR.label}</strong> — <a onclick="tab('analysis')">${topR.note.substring(0,55)}… Fix →</a></div>`:
+          '<div class="fctop" style="color:var(--txt3)">No blockers</div>'}
+      </div>`;
+    }).join('')}
+    <div style="border-top:1px solid var(--border1);padding-top:12px;margin-top:4px">
+      <div class="ovt" style="margin-bottom:7px">Timeline</div>
+      <div style="font-family:'DM Mono',monospace;font-size:10.5px;color:var(--txt2)">
+        <div style="display:flex;gap:8px;margin-bottom:3px"><span style="color:var(--txt3)">Created</span><span>${p.id==='marakoa'?'2026-01-15':p.id==='amoedo'?'2026-02-28':'2026-02-03'}</span></div>
+        <div style="display:flex;gap:8px"><span style="color:var(--txt3)">Updated</span><span>2026-03-10</span></div>
+      </div>
+    </div>
+  </div>
+  <!-- HubSpot -->
+  <div class="ovc">
+    <div class="ovt">HubSpot Intel <span style="color:var(--teal);font-weight:400">· auto-pulled</span></div>
+    <div style="margin-bottom:12px">
+      <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--txt0)">${p.hs.co}</div>
+      <div style="font-size:11.5px;color:var(--txt1);margin-top:3px">Contact: ${p.hs.ct}</div>
+    </div>
+    <div class="hsrow"><span class="hslbl">Deal</span><span class="hsval" style="font-size:11px">${p.hs.deal}</span></div>
+    <div class="hsrow"><span class="hslbl">Stage</span><span class="hsdeal">${p.hs.stg}</span></div>
+    <div class="hsrow"><span class="hslbl">Last interaction</span><span class="hsval" style="font-size:11px">${p.hs.last}</span></div>
+    <div class="hsrow" style="border:none"><span class="hslbl">Emails</span><span style="font-size:11px;color:var(--teal);cursor:pointer">View in HubSpot →</span></div>
+    ${p.delvd.length?`<div style="border-top:1px solid var(--border1);margin-top:10px;padding-top:10px">
+      <div class="ovt" style="margin-bottom:7px">Deliverables sent</div>
+      ${p.delvd.map(d=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border0);font-size:11px;color:var(--txt1)"><span style="color:var(--green)">✓</span>${d}</div>`).join('')}
+    </div>`:''}
+  </div>`;
 }
 
-function selectRegistry(id){
-  modalRegistry=id; modalMethod=""; renderModal();
+// ══ DOCUMENTS ═════════════════════════════════════════════
+function renderDocs(){
+  document.getElementById('dtbody').innerHTML=DOCS_DATA.map(d=>{
+    const sbadge = d.st==='ok'?`<span class="sbadge s-ok">✓ Procesado</span>`:d.st==='ocr'?`<span class="sbadge s-ocr">OCR needed</span>`:`<span class="sbadge s-no">Sin texto</span>`;
+    return `<tr>
+      <td><input type="checkbox"></td>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--doc-txt2)">${d.n}</td>
+      <td class="dfname" title="${d.fn}">${d.fn}</td>
+      <td><span class="dtag">${d.cat}</span></td>
+      <td class="dpt">${d.pt}</td>
+      <td style="text-align:center;font-size:12px">${d.txt?`<span style="color:#1A8A4A">✓</span>`:`<span style="color:var(--doc-txt2)">—</span>`}</td>
+      <td style="text-align:right">${sbadge}</td>
+      <td><div style="display:flex;gap:5px;justify-content:flex-end">
+        <button class="icnbtn" title="Re-extract" onclick="alert('Re-extracting ${d.n}')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+        <button class="icnbtn" title="Remove" style="color:var(--red)" onclick="alert('Remove ${d.n}')"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></button>
+      </div></td>
+    </tr>`;
+  }).join('');
 }
-function selectMethod(m){
-  modalMethod=m; renderModal();
+function filterDocs(q){
+  document.querySelectorAll('#dtbody tr').forEach(r=>{
+    r.style.display=r.textContent.toLowerCase().includes(q.toLowerCase())?'':'none';
+  });
 }
-function modalNext(){
-  if(modalStep===1 && (!modalRegistry||!modalMethod)) return;
-  modalStep++; renderModal();
+
+// ══ ANALYSIS ══════════════════════════════════════════════
+function renderAnalysis(){
+  const p=STATE.proj;
+  const cats=['technical','legal','financial'];
+  document.getElementById('an-content').innerHTML=`
+    <div class="ancols">
+      ${cats.map(cat=>{
+        const cf=FLAGS[cat]||[];
+        const r=cf.filter(f=>f.s==='red').length, a=cf.filter(f=>f.s==='amber').length, g=cf.filter(f=>f.s==='green').length;
+        return `<div>
+          <div class="anch">
+            <span class="anct" style="text-transform:capitalize">${cat}</span>
+            <div style="display:flex;gap:5px">
+              ${r?`<span class="flcount"><span class="fldot" style="background:var(--red)"></span>${r}</span>`:''}
+              ${a?`<span class="flcount"><span class="fldot" style="background:var(--amber)"></span>${a}</span>`:''}
+              ${g?`<span class="flcount"><span class="fldot" style="background:var(--green)"></span>${g}</span>`:''}
+            </div>
+          </div>
+          ${cf.map(f=>`<div class="fcard ${f.s}">
+            <div class="flbl">${f.label}</div>
+            <div class="fnote">${f.note}</div>
+            <div class="facts">
+              ${f.s==='red'?`<button class="ffixbtn" onclick="alert('Generating correction for: ${f.label}')">→ Generate correction</button>`:''}
+              ${f.src?`<span class="fsrclink" onclick="tab('documents')">Source: ${f.src} →</span>`:''}
+            </div>
+          </div>`).join('')}
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="chksec">
+      <div class="chktitle">${REGS[p.reg].label} Compliance Checklist — ${p.meth.split('—')[0].trim()}</div>
+      <div class="chkgrid">
+        ${(p.reg==='puro'?[
+          ['pass','Biomass type eligible'],['pass','Lignin confirmed'],['pass','C:N ratio >80'],
+          ['warn','Leaf exclusion protocol'],['warn','DM factor measured'],['warn','Moisture stress GWP₂₀'],
+          ['fail','Burial depth ≥2m clay'],['fail','Soil cap integrity'],
+          ['warn','FSC/PEFC certification'],['fail','Carbon rights clear'],['warn','100-yr easement'],['pend','Environmental permit'],
+        ]:[
+          ['pend','Non-forest 1990'],['fail','Title chain verified'],['pend','Additionality'],['pend','Leakage belt'],
+        ]).map(([s,l])=>`<div class="chkitem ${s}">${s==='pass'?'✓':s==='fail'?'✗':s==='warn'?'⚠':'○'} ${l}</div>`).join('')}
+      </div>
+    </div>
+  `;
 }
-function modalBack(){
-  modalStep--; renderModal();
+
+// ══ DELIVERABLES ══════════════════════════════════════════
+function renderDel(){
+  const p=STATE.proj;
+  document.getElementById('dl-content').innerHTML=`
+    <div class="dlsec">
+      <div class="dlsect">Available now</div>
+      ${[
+        {name:'DD Report / Pre-Feasibility Memo', fmt:'DOCX', sel:true},
+        {name:'Financial Model — 3 Scenarios', fmt:'XLSX', sel:true},
+        ...(p.flg.r>0?[{name:'Correction Letters', fmt:'DOCX×2', sel:false}]:[]),
+      ].map(d=>`<div class="dli ${d.sel?'sel':''}" onclick="this.classList.toggle('sel');this.querySelector('.dlchk').innerHTML=this.classList.contains('sel')?'<svg width=\\'9\\' height=\\'9\\' viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'var(--bg0)\\' stroke-width=\\'3\\'><polyline points=\\'20 6 9 17 4 12\\'/></svg>':''">
+        <div class="dlchk">${d.sel?`<svg width='9' height='9' viewBox='0 0 24 24' fill='none' stroke='var(--bg0)' stroke-width='3'><polyline points='20 6 9 17 4 12'/></svg>`:''}</div>
+        <div style="flex:1"><div class="dliname">${d.name}</div></div>
+        <span class="dlfmt">${d.fmt}</span>
+      </div>`).join('')}
+      <div class="dlgenrow">
+        <button class="btn btn-p" onclick="showGen()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          Generate Selected
+        </button>
+        <span style="font-size:11px;color:var(--txt2)">Stored in R2 · Download when ready</span>
+      </div>
+    </div>
+    <div class="dlsec">
+      <div class="dlsect">Requires more data</div>
+      ${[
+        {name:'PIN — Project Idea Note', fmt:'DOCX', needs:'GPS coordinates, FSC cert status'},
+        {name:'PDD — Project Description Document', fmt:'DOCX', needs:'PIN complete, baseline survey'},
+        {name:'MRV Plan', fmt:'DOCX', needs:'PDD approved'},
+      ].map(d=>`<div class="dli dim">
+        <div class="dlchk"></div>
+        <div style="flex:1"><div class="dliname">${d.name}</div><div class="dlneeds">Needs: ${d.needs}</div></div>
+        <span class="dlfmt">${d.fmt}</span>
+      </div>`).join('')}
+    </div>
+    ${p.delvd.length?`<div class="dlsec">
+      <div class="dlsect">Previously generated</div>
+      ${p.delvd.map(d=>`<div class="dlprev">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span style="flex:1;font-size:12px;font-weight:600;font-family:'Syne',sans-serif">${d}</span>
+        <span style="font-size:11px;color:var(--txt2)">2026-03-10</span>
+        <button class="btn btn-g btn-s" onclick="alert('Download: ${d}')">↓ Download</button>
+      </div>`).join('')}
+    </div>`:''}
+  `;
+}
+
+// ══ AGENTS ════════════════════════════════════════════════
+function renderAgents(){
+  const p=STATE.proj;
+  document.getElementById('ag-content').innerHTML=`
+    <!-- ForestEngineer -->
+    <div class="agpanel" style="flex:1.6">
+      <div class="agph">
+        <div class="agpulse g blinking"></div>
+        <span class="agpname">ForestEngineer</span>
+        <span style="font-family:'DM Mono',monospace;font-size:9.5px;color:var(--txt2)">QGIS 3.44 · Python 3.12 · OSGeo4W · 89 scripts</span>
+      </div>
+      <div class="agpbody">
+        <div class="jlsub">Available scripts for this project</div>
+        ${SCRIPTS.map(([s,d])=>`<div class="agscript">
+          <div style="flex:1"><div class="agsname">${s}</div><div class="agsdesc">${d}</div></div>
+          <button class="runbtn" onclick="dispatch('${s}')">▶ Run</button>
+        </div>`).join('')}
+        <div class="jlog">
+          <div class="jlsub">Recent jobs</div>
+          <div class="jle"><span class="jlt">09:14</span><span class="jlm ok">✓ miteco_gis_analysis.py — Amoedo · 4m 12s · 7 layers · Natura 0.00ha (CRS bug logged)</span></div>
+          <div class="jle"><span class="jlt">08:50</span><span class="jlm ok">✓ generate_maps.py — Amoedo · 7 A4 maps exported</span></div>
+          <div class="jle"><span class="jlt">Yesterday</span><span class="jlm">● species_decision_engine.py — Bosquia · completed · Pinus radiata banda marrón exclusion applied</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- AI + HubSpot -->
+    <div style="display:flex;flex-direction:column;gap:13px;flex:1">
+      <div class="agpanel">
+        <div class="agph">
+          <div class="agpulse g"></div>
+          <span class="agpname">AI Engine</span>
+          <span style="font-family:'DM Mono',monospace;font-size:9.5px;color:var(--txt2)">Worker v47 · claude-sonnet-4</span>
+        </div>
+        <div class="agpbody">
+          <div class="jlsub">Recent calls</div>
+          <div class="jle"><span class="jlt">10:02</span><span class="jlm ok">✓ verify-ai · Amoedo · 6 issues · 1,240 tok</span></div>
+          <div class="jle"><span class="jlt">09:55</span><span class="jlm ok">✓ canonical-extract · 22.27ha · 26/26</span></div>
+          <div class="jle"><span class="jlt">09:40</span><span class="jlm ok">✓ categorize · 69 files → 21 categories</span></div>
+          <div style="margin-top:10px;display:flex;gap:7px">
+            <button class="btn btn-g btn-s" onclick="alert('Running verify-package')">verify-package</button>
+            <button class="btn btn-g btn-s" onclick="alert('Re-extracting canonical data')">re-extract</button>
+          </div>
+        </div>
+      </div>
+      <div class="agpanel">
+        <div class="agph">
+          <div class="agpulse g"></div>
+          <span class="agpname">HubSpot</span>
+          <span style="font-family:'DM Mono',monospace;font-size:9.5px;color:var(--txt2)">synced 4m ago</span>
+        </div>
+        <div class="agpbody">
+          <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--txt0);margin-bottom:4px">${p.hs.co}</div>
+          <div style="font-size:11px;color:var(--txt2);margin-bottom:10px">Contact: ${p.hs.ct}</div>
+          <div class="jlsub">Interaction history</div>
+          <div class="jle"><span class="jlt">${p.hs.last}</span><span class="jlm">Email thread · Pre-feas memo delivered</span></div>
+          <div class="jle"><span class="jlt">8d ago</span><span class="jlm">Call logged · TSB methodology Q&amp;A</span></div>
+          <button class="btn btn-g btn-s" style="margin-top:9px" onclick="alert('Opening HubSpot record for ${p.hs.co}')">Open in HubSpot →</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function dispatch(s){
+  alert(`Dispatching to ForestEngineer:\n\n${s}\n\nJob written to D1 jobs table.\nForestEngineer polls and executes on your Windows PC.`);
+}
+
+// ══ INTEL ═════════════════════════════════════════════════
+function renderIntelDocs(){
+  const el=document.getElementById('intdocs');
+  if(!el) return;
+  el.innerHTML=INTEL_DOCS.map(d=>`<div class="idcard">
+    <div class="idicon">${d.icon}</div>
+    <div style="flex:1">
+      <div class="idname">${d.name}</div>
+      <div class="idmeta">${d.type} · ${d.reg}</div>
+      ${d.rel?`<div class="idrel">${d.rel}</div>`:''}
+    </div>
+    <button class="btn btn-g btn-s">View</button>
+  </div>`).join('');
+  // intfilt clicks
+  document.querySelectorAll('.intfilt').forEach(el=>{
+    el.onclick=function(){document.querySelectorAll('.intfilt').forEach(e=>e.classList.remove('on'));this.classList.add('on')};
+  });
+}
+function renderLibrary(){
+  const el=document.getElementById('lib-docs');
+  if(!el) return;
+  el.innerHTML=INTEL_DOCS.map(d=>`<div class="idcard">
+    <div class="idicon">${d.icon}</div>
+    <div style="flex:1"><div class="idname">${d.name}</div><div class="idmeta">${d.type} · ${d.reg}</div></div>
+    <button class="btn btn-g btn-s">View</button>
+  </div>`).join('');
+}
+function askRAG(){
+  const v=document.getElementById('raginput').value.trim();
+  if(!v) return;
+  alert(`RAG Query:\n"${v}"\n\n→ Routes to /api/pablo/library with project context\n→ Response with source citations appears inline`);
+}
+
+// ══ PLATFORM VIEWS ════════════════════════════════════════
+function renderAnalytics(){
+  const el=document.getElementById('anlytic-tiles');
+  if(!el) return;
+  [['Puro.earth','var(--teal)','3 projects','42,474 CORCs'],
+   ['Verra VCS','var(--blue)','2 projects','— CORCs'],
+   ['MITECO España','var(--amber)','Absorbed into PABLO','—'],
+   ['Isometric','var(--violet)','0 projects','— CORCs']].forEach(([n,c,sub,val])=>{
+    const t=document.createElement('div');
+    t.style.cssText=`background:var(--bg2);border:1px solid var(--border1);border-top:3px solid ${c};border-radius:0 0 7px 7px;padding:15px`;
+    t.innerHTML=`<div style="font-family:'Syne',sans-serif;font-size:12.5px;font-weight:700;color:${c};margin-bottom:6px">${n}</div><div style="font-size:11px;color:var(--txt2)">${sub}</div><div style="font-family:'DM Mono',monospace;font-size:19px;font-weight:500;color:var(--txt0);margin-top:5px">${val.split(' ')[0]}</div><div style="font-size:9.5px;color:var(--txt3)">${val.split(' ').slice(1).join(' ')}</div>`;
+    el.appendChild(t);
+  });
+}
+function showPlatform(v){
+  STATE.proj=null;
+  STATE.view=v;
+  ['pipeline','library','analytics'].forEach(x=>document.getElementById('nav-'+x).classList.remove('on'));
+  document.getElementById('nav-'+v).classList.add('on');
+  renderRail();
+  document.getElementById('ptabs').style.display='none';
+  document.getElementById('crumb').innerHTML=`<span class="crumb-cur">${v==='pipeline'?'Project Pipeline':v==='library'?'Knowledge Library':'Analytics'}</span>`;
+  document.getElementById('crmeta').innerHTML='';
+  document.getElementById('topacts').innerHTML=`<button class="btn btn-g btn-s" onclick="openWiz()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New Project</button><button class="btn btn-p btn-s">Generate</button>`;
+  document.querySelectorAll('#content .view').forEach(x=>x.classList.remove('on'));
+  document.getElementById('v-'+v).classList.add('on');
+}
+function goHome(){ showPlatform('pipeline'); }
+
+// ══ WIZARD ════════════════════════════════════════════════
+function openWiz(){STATE.wizStep=1;STATE.wizReg=null;STATE.wizMeth=null;document.getElementById('wiz-ov').classList.add('on');updWiz();}
+function closeWiz(){document.getElementById('wiz-ov').classList.remove('on');}
+function selReg(id,el){
+  STATE.wizReg=id;
+  document.querySelectorAll('.regtile').forEach(t=>t.style.borderColor='');
+  el.style.borderColor=REGS[id].color;
+  const ml=document.getElementById('mlist');
+  ml.innerHTML=REGS[id].methods.map(m=>`<div class="methitem" onclick="selMeth('${m}',this)">${m}</div>`).join('');
+  document.getElementById('mlist-wrap').style.display='block';
+}
+function selMeth(m,el){
+  STATE.wizMeth=m;
+  document.querySelectorAll('.methitem').forEach(t=>t.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function wizNext(){
+  if(STATE.wizStep===1&&(!STATE.wizReg||!STATE.wizMeth)){alert('Select a registry and methodology');return;}
+  if(STATE.wizStep===2&&!document.getElementById('f-name').value.trim()){alert('Project name required');return;}
+  if(STATE.wizStep<3){STATE.wizStep++;updWiz();}
+  else{closeWiz();alert('ZIP uploaded.\n\nPABLO is processing:\n→ extracting files\n→ OCR\n→ classifying\n→ canonical data\n→ eligibility checks\n\nIn production: routes to /api/pablo/intake');}
+}
+function wizBack(){if(STATE.wizStep>1){STATE.wizStep--;updWiz();}}
+function updWiz(){
+  const s=STATE.wizStep;
+  ['ws-1','ws-2','ws-3'].forEach((id,i)=>document.getElementById(id).style.display=s===i+1?'block':'none');
+  ['Step 1 of 3 — Registry & Methodology','Step 2 of 3 — Project Details','Step 3 of 3 — Upload Data Room'].forEach((t,i)=>{if(s===i+1)document.getElementById('wiz-sub').textContent=t;});
+  document.getElementById('wiz-back').style.display=s>1?'':'none';
+  document.getElementById('wiz-next').textContent=s<3?'Next →':'Start Analysis';
+  for(let i=1;i<=3;i++){
+    const dot=document.getElementById('ws'+i);
+    dot.className='wsdot '+(i<s?'done':i===s?'active':'future');
+    dot.innerHTML=i<s?`<svg width='9' height='9' viewBox='0 0 24 24' fill='none' stroke='var(--bg0)' stroke-width='3'><polyline points='20 6 9 17 4 12'/></svg>`:i;
+    const ln=document.getElementById('wl'+i);
+    if(ln)ln.className='wsline '+(i<s?'done':'');
+  }
+  if(s===2&&STATE.wizReg&&STATE.wizMeth){
+    const reg=REGS[STATE.wizReg];
+    document.getElementById('wizsum').innerHTML=`<span class="badge" style="color:${reg.color};background:color-mix(in srgb,${reg.color} 12%,transparent)">${reg.label}</span><span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--txt1)">${STATE.wizMeth}</span>`;
+  }
 }
 function handleDrop(e){
-  e.preventDefault();
-  document.getElementById("drop-zone")?.classList.remove("dragging");
-  const f = e.dataTransfer.files[0];
-  if(f) document.getElementById("drop-zone").innerHTML = `
-    <div style="color:#00D4AA;font-size:14px;font-weight:600;">${SVG.check} ${f.name}</div>
-    <div style="font-size:12px;color:#6B87B0;margin-top:4px;">${(f.size/1024/1024).toFixed(1)} MB — ready to upload</div>`;
+  e.preventDefault();const dz=document.getElementById('dzone');dz.classList.remove('drag');
+  const f=e.dataTransfer.files[0];
+  if(f){dz.innerHTML=`<div style="color:var(--teal);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-top:8px">✓ ${f.name}</div><div style="font-size:11.5px;color:var(--txt2);margin-top:4px">${(f.size/1024/1024).toFixed(1)} MB · Ready to upload</div>`;}
 }
-function startAnalysis(){
-  hideModal();
-  alert("POST /api/pablo/intake — ZIP intake pipeline will be wired here.");
-}
-function syncR2(){
-  alert("R2 Sync — GET /api/pablo/library will refresh document list.");
+function handleFS(i){
+  const f=i.files[0];
+  if(f){const dz=document.getElementById('dzone');dz.innerHTML=`<div style="color:var(--teal);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-top:8px">✓ ${f.name}</div><div style="font-size:11.5px;color:var(--txt2);margin-top:4px">${(f.size/1024/1024).toFixed(1)} MB · Ready to upload</div>`;}
 }
 
-// ─── BOOT ────────────────────────────────────────────────────────
+// ══ GENERATION SCREEN ═════════════════════════════════════
+function showGen(){
+  const p=STATE.proj;if(!p){alert('Select a project first');return;}
+  document.getElementById('genscr').classList.add('on');
+  document.getElementById('gensub').textContent=`${p.name} · ${REGS[p.reg].label} · ${p.meth}`;
+  const log=document.getElementById('genlog');
+  log.innerHTML='';
+  document.getElementById('gendls').style.display='none';
+  const seq=[
+    {title:'Pre-Feasibility Memo', steps:['Reading canonical data from D1…','Loading Puro TSB Edition 2023 context…','Running financial model (3 scenarios)…','Drafting executive summary…','Writing eligibility section…','Composing flags & mitigants…','Formatting DOCX via BP agent…']},
+    {title:'Financial Model', steps:['Pulling CORC parameters from D1…','Building scenario tabs (Low / Base / High)…','Generating sensitivity analysis…','Formatting XLSX…']},
+  ];
+  let d=0;
+  seq.forEach(sec=>{
+    d+=180;
+    setTimeout(()=>{
+      const h=document.createElement('div');h.className='gensect fadein';h.textContent=sec.title;log.appendChild(h);
+    },d);
+    sec.steps.forEach(step=>{
+      d+=360;
+      setTimeout(()=>{
+        const row=document.createElement('div');row.className='genstep fadein';
+        row.innerHTML=`<span class="gslbl">${step}</span><span class="gsst run blinking">●</span>`;
+        log.appendChild(row);log.scrollTop=9999;
+        setTimeout(()=>{const st=row.querySelector('.gsst');st.className='gsst ok';st.textContent='✓';},340);
+      },d);
+    });
+  });
+  d+=550;
+  setTimeout(()=>{document.getElementById('gendls').style.display='flex';},d);
+}
+function closeGen(){document.getElementById('genscr').classList.remove('on');}
+
 init();
 </script>
 </body>
