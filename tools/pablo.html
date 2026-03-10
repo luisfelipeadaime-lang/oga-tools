@@ -306,6 +306,8 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
 .wizsum{background:var(--bg3);border:1px solid var(--border1);border-radius:5px;padding:9px 13px;margin-bottom:12px;display:flex;align-items:center;gap:9px}
 
 /* ─── GENERATION SCREEN ───────────────────────────────── */
+#intakescr{position:fixed;inset:0;background:var(--bg0);z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px}
+#intakescr.on{display:flex}
 #genscr{position:fixed;inset:0;background:var(--bg0);z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;padding:40px}
 #genscr.on{display:flex}
 .gent{font-family:'Syne',sans-serif;font-size:21px;font-weight:700;color:var(--txt0);margin-bottom:7px}
@@ -623,7 +625,14 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
 </div>
 
 <!-- ═══ GENERATION SCREEN ════════════════════════════════ -->
-<div id="genscr">
+<div id="intakescr">
+  <div class="gent" id="intake-title">Initializing…</div>
+  <div class="gensub" id="intake-sub">PABLO intake pipeline running</div>
+  <div class="genlog" id="intake-log"></div>
+  <div class="gendls" id="intake-cta" style="display:none">
+    <button class="btn btn-p" id="intake-cta-btn">Open project workspace →</button>
+  </div>
+</div>
   <div class="gent">Generating deliverables</div>
   <div class="gensub" id="gensub">loading…</div>
   <div class="genlog" id="genlog"></div>
@@ -718,8 +727,11 @@ const SCRIPTS = [
   ['create_shapefile_from_refcats.py','INSPIRE WFS shapefile from Catastro reference codes'],
 ];
 
+// ══ CONFIG ═════════════════════════════════════════════════
+const API = 'https://api-tools.oga.earth';
+
 // ══ STATE ══════════════════════════════════════════════════
-const STATE = {proj:null, tab:'overview', view:'pipeline', wizStep:1, wizReg:null, wizMeth:null};
+const STATE = {proj:null, tab:'overview', view:'pipeline', wizStep:1, wizReg:null, wizMeth:null, pendingFile:null, intakeProjectId:null};
 
 // ══ INIT ══════════════════════════════════════════════════
 function init(){
@@ -1177,7 +1189,128 @@ function wizNext(){
   if(STATE.wizStep===1&&(!STATE.wizReg||!STATE.wizMeth)){alert('Select a registry and methodology');return;}
   if(STATE.wizStep===2&&!document.getElementById('f-name').value.trim()){alert('Project name required');return;}
   if(STATE.wizStep<3){STATE.wizStep++;updWiz();}
-  else{closeWiz();alert('ZIP uploaded.\n\nPABLO is processing:\n→ extracting files\n→ OCR\n→ classifying\n→ canonical data\n→ eligibility checks\n\nIn production: routes to /api/pablo/intake');}
+  else{ startIntake(); }
+}
+
+async function startIntake(){
+  const name    = document.getElementById('f-name').value.trim();
+  const client  = document.getElementById('f-client').value.trim();
+  const country = document.getElementById('f-country').value.trim();
+  const notes   = document.getElementById('f-notes')?.value.trim()||'';
+  const file    = STATE.pendingFile;
+
+  if(!file){alert('Drop or select a file first');return;}
+
+  // Close wizard, show intake screen
+  closeWiz();
+  showIntakeScreen(name);
+
+  const log = document.getElementById('intake-log');
+  const addLog = (msg, status='run') => {
+    const row = document.createElement('div');
+    row.className='genstep fadein';
+    row.innerHTML=`<span class="gslbl">${msg}</span><span class="gsst ${status==='run'?'run blinking':status==='ok'?'ok':'err'}">${status==='run'?'●':status==='ok'?'✓':'✗'}</span>`;
+    log.appendChild(row); log.scrollTop=9999;
+    return row;
+  };
+  const setStatus = (row, status, msg) => {
+    const st=row.querySelector('.gsst');
+    st.className='gsst '+(status==='ok'?'ok':'err');
+    st.textContent=status==='ok'?'✓':'✗';
+    if(msg) row.querySelector('.gslbl').textContent=msg;
+  };
+
+  // STEP 1: Create project in D1
+  let r1 = addLog('Creating project in D1…');
+  let projectId;
+  try {
+    const res = await fetch(`${API}/api/pablo/projects`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        name, client, country, notes,
+        registry: STATE.wizReg,
+        methodology: STATE.wizMeth,
+        stage: 'intake'
+      })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error||`HTTP ${res.status}`);
+    projectId = data.id || data.project_id;
+    STATE.intakeProjectId = projectId;
+    setStatus(r1,'ok',`Project created · ID: ${projectId}`);
+  } catch(e) {
+    setStatus(r1,'err',`Create failed: ${e.message}`);
+    addLog('Intake aborted — check Worker v49 is deployed','err');
+    return;
+  }
+
+  // STEP 2: Upload file to R2
+  let r2 = addLog(`Uploading ${file.name} (${(file.size/1024/1024).toFixed(1)} MB) to R2…`);
+  try {
+    const fd = new FormData();
+    fd.append('file', file, file.name);
+    fd.append('project_id', projectId);
+    fd.append('filename', file.name);
+    const res = await fetch(`${API}/api/pablo/intake/upload`, {method:'POST', body:fd});
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error||`HTTP ${res.status}`);
+    setStatus(r2,'ok',`Uploaded → R2: ${data.r2_prefix} (${(data.size/1024).toFixed(0)} KB)`);
+  } catch(e) {
+    setStatus(r2,'err',`Upload failed: ${e.message}`);
+    addLog('Intake aborted','err');
+    return;
+  }
+
+  // STEP 3: Trigger processing
+  let r3 = addLog('Extracting files → OCR → classifying documents…');
+  let r4 = addLog('Running eligibility analysis (Claude Sonnet)…');
+  let r5 = addLog('Building canonical project data…');
+  try {
+    const res = await fetch(`${API}/api/pablo/intake/process`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({project_id: projectId})
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error||`HTTP ${res.status}`);
+    setStatus(r3,'ok',`${data.files_processed} files · ${data.files_with_text} with text · ${data.files_ocr_needed||0} OCR needed`);
+    setStatus(r4,'ok',`${data.flags_created||0} flags · ${data.red_flags||0} red`);
+    setStatus(r5,'ok',`${data.canonical?.area_ha ? data.canonical.area_ha+'ha' : 'area pending'} · stage → ${data.stage||'eligibility'}`);
+
+    // Show open project button
+    document.getElementById('intake-cta').style.display='flex';
+    document.getElementById('intake-cta-btn').onclick = () => {
+      closeIntakeScreen();
+      // Add project to local state and open it
+      const newProj = {
+        id: projectId, name, client, country: country||'—', flag:'🌍',
+        reg: STATE.wizReg, meth: STATE.wizMeth,
+        stage: data.stage||'eligibility',
+        ha: data.canonical?.area_ha||null, m3:null,
+        corcs: data.canonical?.corcs_estimate||null,
+        cr:[null,null], flg:{r:data.red_flags||0,a:0,g:0},
+        pct:20, dm:data.canonical?.dm_factor||null,
+        sp: data.canonical?.species||[], notes,
+        hs:{co:client,ct:'—',deal:name,last:'Just now',stg:'Intake'},
+        delvd:[]
+      };
+      PROJECTS.unshift(newProj);
+      renderRail();
+      selectProj(newProj);
+    };
+  } catch(e) {
+    setStatus(r3,'err',`Processing failed: ${e.message}`);
+    setStatus(r4,'err','Skipped');
+    setStatus(r5,'err','Skipped');
+    addLog('Check Worker v49 is deployed with /api/pablo/intake/process','err');
+    document.getElementById('intake-cta').style.display='flex';
+    document.getElementById('intake-cta-btn').textContent='← Back to pipeline';
+    document.getElementById('intake-cta-btn').onclick = () => { closeIntakeScreen(); };
+  }
+
+  // Reset wizard state
+  STATE.pendingFile=null; STATE.wizReg=null; STATE.wizMeth=null; STATE.wizStep=1;
 }
 function wizBack(){if(STATE.wizStep>1){STATE.wizStep--;updWiz();}}
 function updWiz(){
@@ -1201,11 +1334,11 @@ function updWiz(){
 function handleDrop(e){
   e.preventDefault();const dz=document.getElementById('dzone');dz.classList.remove('drag');
   const f=e.dataTransfer.files[0];
-  if(f){dz.innerHTML=`<div style="color:var(--teal);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-top:8px">✓ ${f.name}</div><div style="font-size:11.5px;color:var(--txt2);margin-top:4px">${(f.size/1024/1024).toFixed(1)} MB · Ready to upload</div>`;}
+  if(f){STATE.pendingFile=f;dz.innerHTML=`<div style="color:var(--teal);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-top:8px">✓ ${f.name}</div><div style="font-size:11.5px;color:var(--txt2);margin-top:4px">${(f.size/1024/1024).toFixed(1)} MB · Ready to upload</div>`;document.getElementById('wiz-next').disabled=false;}
 }
 function handleFS(i){
   const f=i.files[0];
-  if(f){const dz=document.getElementById('dzone');dz.innerHTML=`<div style="color:var(--teal);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-top:8px">✓ ${f.name}</div><div style="font-size:11.5px;color:var(--txt2);margin-top:4px">${(f.size/1024/1024).toFixed(1)} MB · Ready to upload</div>`;}
+  if(f){STATE.pendingFile=f;const dz=document.getElementById('dzone');dz.innerHTML=`<div style="color:var(--teal);font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-top:8px">✓ ${f.name}</div><div style="font-size:11.5px;color:var(--txt2);margin-top:4px">${(f.size/1024/1024).toFixed(1)} MB · Ready to upload</div>`;document.getElementById('wiz-next').disabled=false;}
 }
 
 // ══ GENERATION SCREEN ═════════════════════════════════════
@@ -1239,6 +1372,15 @@ function showGen(){
   d+=550;
   setTimeout(()=>{document.getElementById('gendls').style.display='flex';},d);
 }
+function showIntakeScreen(projName){
+  const scr=document.getElementById('intakescr');
+  document.getElementById('intake-title').textContent=`Intake — ${projName}`;
+  document.getElementById('intake-sub').textContent='PABLO pipeline running · '+new Date().toLocaleTimeString();
+  document.getElementById('intake-log').innerHTML='';
+  document.getElementById('intake-cta').style.display='none';
+  scr.classList.add('on');
+}
+function closeIntakeScreen(){document.getElementById('intakescr').classList.remove('on');}
 function closeGen(){document.getElementById('genscr').classList.remove('on');}
 
 init();
