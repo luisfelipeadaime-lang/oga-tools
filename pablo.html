@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PABLO — Carbon Project Developer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+/* ─── RESET ─────────────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#030810;color:#E2EBF8;font-family:'DM Sans',sans-serif;overflow:hidden;height:100vh;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:#070F1E;}
+::-webkit-scrollbar-thumb{background:#243D60;border-radius:2px;}
+
+/* ─── FONTS ──────────────────────────────────────────────────────── */
+.syne{font-family:'Syne',sans-serif;}
+.mono{font-family:'DM Mono',monospace;}
+
+/* ─── ANIMATIONS ─────────────────────────────────────────────────── */
+@keyframes pulse-amber{0%{box-shadow:0 0 0 0 rgba(240,165,0,.4);}70%{box-shadow:0 0 0 6px rgba(240,165,0,0);}100%{box-shadow:0 0 0 0 rgba(240,165,0,0);}}
+@keyframes spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+@keyframes shimmer{0%{background-position:-200% 0;}100%{background-position:200% 0;}}
+@keyframes dotPulse{0%{opacity:1;}50%{opacity:.4;}100%{opacity:1;}}
+
+.fade-in{animation:fadeIn .3s ease forwards;}
+.slide-in{animation:slideIn .25s ease forwards;}
+
+/* ─── LAYOUT ─────────────────────────────────────────────────────── */
+#app{display:flex;height:100vh;overflow:hidden;background:#030810;}
+
+/* SIDEBAR */
+#sidebar{width:220px;background:#070F1E;border-right:1px solid #1C3050;display:flex;flex-direction:column;padding:0 12px;flex-shrink:0;}
+.sidebar-logo{padding:20px 4px 16px;border-bottom:1px solid #1C3050;margin-bottom:8px;}
+.sidebar-logo-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:#00D4AA;letter-spacing:.05em;}
+.sidebar-logo-sub{font-size:10px;color:#3A5070;font-family:'DM Mono',monospace;margin-top:2px;}
+.sidebar-registries{display:flex;flex-direction:column;gap:6px;padding:12px 4px;}
+.registry-badge{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:6px;border:1px solid;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;}
+nav{flex:1;padding-top:8px;}
+.nav-label{display:block;margin:4px 14px 6px;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;color:#3A5070;text-transform:uppercase;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:6px;cursor:pointer;font-size:13px;color:#6B87B0;transition:all .15s ease;font-weight:500;border:1px solid transparent;}
+.nav-item:hover{background:#112034;color:#E2EBF8;}
+.nav-item.active{background:rgba(0,212,170,.08);color:#00D4AA;border-color:rgba(0,212,170,.2);}
+.nav-item svg{flex-shrink:0;}
+.sidebar-stats{padding:12px 4px 20px;border-top:1px solid #1C3050;}
+.sidebar-stat{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.sidebar-stat-label{font-size:11px;color:#3A5070;}
+.sidebar-stat-val{font-family:'DM Mono',monospace;font-size:11px;color:#6B87B0;font-weight:500;}
+
+/* MAIN */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+/* TOP BAR */
+#topbar{height:56px;border-bottom:1px solid #1C3050;background:#070F1E;display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;}
+.topbar-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#E2EBF8;}
+.topbar-meta{display:flex;gap:6px;align-items:center;}
+.topbar-meta span{font-size:12px;font-family:'DM Mono',monospace;}
+.topbar-actions{display:flex;gap:10px;align-items:center;}
+
+/* STATS BAR */
+#statsbar{display:flex;gap:12px;padding:14px 24px;border-bottom:1px solid #1C3050;background:#070F1E;flex-shrink:0;overflow-x:auto;}
+.stat-card{background:#0C1829;border:1px solid #1C3050;border-radius:8px;padding:10px 14px;flex:1;min-width:110px;}
+.stat-card-label{display:block;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;color:#3A5070;text-transform:uppercase;margin-bottom:4px;}
+.stat-card-val{font-family:'DM Mono',monospace;font-size:16px;font-weight:600;}
+
+/* CONTENT AREA */
+#content{flex:1;overflow:hidden;padding:24px;position:relative;}
+
+/* BUTTONS */
+.btn-primary{background:#00D4AA;color:#030810;border:none;border-radius:6px;padding:8px 16px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;cursor:pointer;transition:all .15s ease;display:flex;align-items:center;gap:6px;}
+.btn-primary:hover{background:#00F0C0;box-shadow:0 0 16px rgba(0,212,170,.4);}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+.btn-ghost{background:transparent;color:#6B87B0;border:1px solid #1C3050;border-radius:6px;padding:8px 14px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;transition:all .15s ease;display:flex;align-items:center;gap:6px;}
+.btn-ghost:hover{border-color:#243D60;color:#E2EBF8;}
+
+/* KANBAN */
+#kanban{display:flex;gap:12px;height:100%;overflow-x:auto;padding-bottom:16px;}
+.kanban-col{min-width:240px;max-width:260px;display:flex;flex-direction:column;gap:8px;}
+.kanban-col-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#0C1829;border:1px solid #1C3050;border-radius:0 0 6px 6px;margin-bottom:4px;}
+.kanban-col-label{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.08em;}
+.kanban-col-count{border-radius:4px;padding:1px 7px;font-size:11px;font-family:'DM Mono',monospace;font-weight:600;}
+.kanban-col-body{flex:1;overflow-y:auto;padding-right:2px;}
+.kanban-empty{border:1px dashed #1C3050;border-radius:8px;padding:20px;text-align:center;color:#3A5070;font-size:12px;}
+
+/* PROJECT CARD */
+.project-card{background:#0C1829;border:1px solid #1C3050;border-radius:8px;padding:14px;margin-bottom:8px;position:relative;overflow:hidden;cursor:pointer;transition:all .2s ease;}
+.project-card:hover{border-color:#243D60;transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,0,0,.4);}
+.project-card.delivered-glow{border-color:rgba(46,213,115,.3)!important;}
+.card-accent{position:absolute;top:0;left:0;right:0;height:2px;opacity:.6;}
+.card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;}
+.card-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:#E2EBF8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.card-client{font-size:11px;color:#6B87B0;margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.card-method{font-size:11px;color:#3A5070;margin-bottom:10px;font-family:'DM Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.card-stats{display:flex;gap:12px;margin-bottom:10px;align-items:center;}
+.card-stat-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:#E2EBF8;}
+.card-stat-label{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;color:#3A5070;text-transform:uppercase;}
+.card-teal{color:#00D4AA!important;}
+.spinner{width:20px;height:20px;border-radius:50%;border:1.5px solid #F0A500;border-top-color:transparent;animation:spin 1s linear infinite;flex-shrink:0;}
+
+/* FLAGS */
+.flag-row{display:flex;gap:6px;font-size:11px;font-family:'DM Mono',monospace;align-items:center;}
+.flag-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;}
+
+/* PROGRESS */
+.progress-bar{height:3px;background:#112034;border-radius:2px;overflow:hidden;width:100%;}
+.progress-fill{height:100%;border-radius:2px;transition:width .4s ease;}
+
+/* TAGS */
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:.04em;font-family:'Syne',sans-serif;}
+
+/* DETAIL PANEL */
+#detail-panel{position:fixed;right:0;top:0;bottom:0;width:440px;background:#070F1E;border-left:1px solid #243D60;z-index:50;overflow-y:auto;animation:slideIn .25s ease;box-shadow:-8px 0 32px rgba(0,0,0,.4);}
+.panel-header{padding:20px 24px 16px;border-bottom:1px solid #1C3050;background:#0C1829;position:sticky;top:0;z-index:10;}
+.panel-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.panel-badges{display:flex;gap:8px;flex-wrap:wrap;}
+.tab-bar{display:flex;border-bottom:1px solid #1C3050;margin-top:16px;margin-left:-24px;margin-right:-24px;padding-left:24px;}
+.tab-btn{padding:8px 16px;font-size:12px;font-weight:600;font-family:'Syne',sans-serif;letter-spacing:.05em;border:none;background:none;color:#6B87B0;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s ease;}
+.tab-btn.active{color:#00D4AA;border-bottom-color:#00D4AA;}
+.tab-btn:hover:not(.active){color:#E2EBF8;}
+.panel-body{padding:24px;}
+
+/* METRICS GRID */
+.metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
+.metric-cell{background:#112034;border-radius:6px;padding:10px 12px;border:1px solid #1C3050;}
+
+/* FLAG ITEM */
+.flag-item{display:flex;gap:12px;align-items:flex-start;background:#112034;border:1px solid #1C3050;border-left-width:3px;border-radius:0 6px 6px 0;padding:10px 14px;margin-bottom:8px;}
+.flag-item-label{font-size:13px;color:#E2EBF8;margin-bottom:3px;font-weight:500;}
+.flag-item-note{font-size:11px;color:#6B87B0;}
+.flag-status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:2px;}
+
+/* DELIVERABLE ITEM */
+.deliverable-item{display:flex;align-items:center;justify-content:space-between;background:#112034;border:1px solid #1C3050;border-radius:8px;padding:12px 16px;margin-bottom:8px;}
+.deliverable-empty{border:1.5px dashed #243D60;border-radius:8px;padding:32px;text-align:center;color:#3A5070;font-size:13px;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(3,8,16,.85);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease;}
+.modal-box{background:#070F1E;border:1px solid #243D60;border-radius:12px;width:600px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6);animation:fadeIn .25s ease;}
+.modal-header{padding:20px 24px;border-bottom:1px solid #1C3050;display:flex;align-items:center;justify-content:space-between;}
+.step-indicator{padding:16px 24px 0;display:flex;}
+.step-dot-wrap{display:flex;align-items:center;flex:1;}
+.step-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:'DM Mono',monospace;transition:all .2s ease;flex-shrink:0;}
+.step-line{flex:1;height:1.5px;margin:0 6px;margin-top:0;}
+.modal-body{padding:24px;}
+.modal-footer{display:flex;gap:10px;align-items:center;justify-content:flex-end;margin-top:24px;padding-top:20px;border-top:1px solid #1C3050;}
+
+/* REGISTRY SELECTOR */
+.registry-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;}
+.registry-option{padding:12px 16px;border-radius:8px;cursor:pointer;transition:all .15s ease;border:1.5px solid #1C3050;background:#112034;}
+.registry-option:hover{border-color:#243D60;}
+.registry-option.selected{}
+.method-list{display:flex;flex-direction:column;gap:6px;}
+.method-option{padding:10px 14px;border-radius:6px;cursor:pointer;font-size:13px;transition:all .15s ease;border:1.5px solid #1C3050;background:#112034;font-family:'DM Mono',monospace;}
+.method-option:hover{border-color:#243D60;}
+
+/* DROP ZONE */
+.drop-zone{border:1.5px dashed #243D60;border-radius:8px;padding:32px;text-align:center;cursor:pointer;transition:all .2s ease;}
+.drop-zone:hover,.drop-zone.dragging{border-color:#00D4AA;background:rgba(0,212,170,.03);}
+
+/* INPUT */
+.input-field{background:#112034;border:1px solid #1C3050;border-radius:6px;color:#E2EBF8;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;width:100%;outline:none;transition:border-color .15s ease;}
+.input-field:focus{border-color:#00D4AA;box-shadow:0 0 0 2px rgba(0,212,170,.1);}
+.select-field{background:#112034;border:1px solid #1C3050;border-radius:6px;color:#E2EBF8;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;width:100%;outline:none;cursor:pointer;appearance:none;}
+.select-field:focus{border-color:#00D4AA;}
+
+/* FORM GRID */
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
+.form-group{margin-bottom:16px;}
+.form-label{display:block;margin-bottom:8px;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;color:#3A5070;text-transform:uppercase;}
+
+/* CLOSE BTN */
+.close-btn{background:none;border:none;cursor:pointer;color:#6B87B0;padding:4px;display:flex;align-items:center;justify-content:center;}
+.close-btn:hover{color:#E2EBF8;}
+
+/* LIBRARY */
+.library-wrap{display:flex;gap:20px;}
+.library-sidebar{width:200px;flex-shrink:0;}
+.library-content{flex:1;}
+.lib-nav-item{display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;border:1px solid transparent;margin-bottom:4px;transition:all .15s ease;}
+.doc-item{display:flex;align-items:center;justify-content:space-between;background:#0C1829;border:1px solid #1C3050;border-radius:8px;padding:12px 16px;margin-bottom:6px;}
+.doc-item.pending{opacity:.5;}
+
+/* ANALYTICS */
+.analytics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.analytics-card{background:#0C1829;border:1px solid #1C3050;border-top:3px solid;border-radius:0 0 8px 8px;padding:20px;}
+
+/* SPECIES CHIPS */
+.species-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;}
+.species-chip{background:rgba(0,212,170,.07);color:#00D4AA;padding:3px 10px;border-radius:4px;font-size:12px;border:1px solid rgba(0,212,170,.2);}
+
+/* CONFIG SUMMARY */
+.config-summary{background:#112034;border-radius:8px;padding:14px;border:1px solid #1C3050;}
+
+/* EXPECTED CONTENTS */
+.expected-item{display:flex;align-items:center;gap:10px;font-size:12px;color:#6B87B0;margin-bottom:8px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── SIDEBAR ── -->
+  <div id="sidebar">
+    <div class="sidebar-logo">
+      <div class="syne sidebar-logo-title">CARBON DEV</div>
+      <div class="mono sidebar-logo-sub">tools.oga.earth · PABLO</div>
+    </div>
+
+    <div class="sidebar-registries" id="registry-badges"></div>
+
+    <nav>
+      <span class="nav-label">Platform</span>
+      <div class="nav-item active" onclick="switchView('pipeline')" id="nav-pipeline">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Pipeline
+      </div>
+      <div class="nav-item" onclick="switchView('library')" id="nav-library">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        Knowledge Library
+      </div>
+      <div class="nav-item" onclick="switchView('analytics')" id="nav-analytics">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Analytics
+      </div>
+      <span class="nav-label" style="margin-top:16px;">System</span>
+      <div class="nav-item">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </div>
+    </nav>
+
+    <div class="sidebar-stats" id="sidebar-stats"></div>
+  </div>
+
+  <!-- ── MAIN ── -->
+  <div id="main">
+
+    <!-- TOP BAR -->
+    <div id="topbar">
+      <div style="display:flex;align-items:center;gap:20px;">
+        <div class="syne topbar-title" id="topbar-title">Project Pipeline</div>
+        <div class="topbar-meta" id="topbar-meta"></div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn-ghost" onclick="syncR2()" style="font-size:12px;padding:6px 12px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+          R2 Sync
+        </button>
+        <button class="btn-primary" onclick="showModal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Project
+        </button>
+      </div>
+    </div>
+
+    <!-- STATS BAR -->
+    <div id="statsbar" style="display:none;"></div>
+
+    <!-- CONTENT -->
+    <div id="content">
+      <div id="view-pipeline" class="fade-in" style="height:100%;"></div>
+      <div id="view-library" class="fade-in" style="display:none;height:100%;overflow-y:auto;"></div>
+      <div id="view-analytics" class="fade-in" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- ── DETAIL PANEL ── -->
+  <div id="detail-panel" style="display:none;"></div>
+
+  <!-- ── MODAL ── -->
+  <div id="modal-overlay" class="modal-overlay" style="display:none;" onclick="handleModalBg(event)">
+    <div class="modal-box" id="modal-box"></div>
+  </div>
+
+</div>
+
+<script>
+// ─── API ─────────────────────────────────────────────────────────
+const API_BASE = 'https://api-tools.oga.earth';
+
+async function loadProjects() {
+  try {
+    const r = await fetch(API_BASE + '/api/pablo/projects');
+    const data = await r.json();
+    return (data.projects || []).map(p => ({
+      ...p,
+      country: p.country || '',
+      corcs_range: [p.corcs_low || null, p.corcs_high || null],
+      flags: p.flag_counts || { red: 0, amber: 0, green: 0 },
+      species: p.species ? p.species.split('|') : [],
+      deliverables: [],
+      created: (p.created_at || '').slice(0, 10),
+      updated: (p.updated_at || '').slice(0, 10),
+    }));
+  } catch (e) {
+    console.warn('API failed, using mock data:', e);
+    return null;
+  }
+}
+
+async function loadProjectDetail(id) {
+  try {
+    const r = await fetch(API_BASE + '/api/pablo/projects/' + id);
+    return await r.json();
+  } catch (e) {
+    console.warn('Detail API failed:', e);
+    return null;
+  }
+}
+
+async function createProject(body) {
+  const r = await fetch(API_BASE + '/api/pablo/projects', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return await r.json();
+}
+
+// ─── DATA (mock fallback) ────────────────────────────────────────
+const REGISTRIES = [
+  { id:"puro",      label:"Puro.earth",     color:"#00D4AA", methods:["TSB — Terrestrial Storage of Biomass","Biochar — Enhanced Weathering","Biochar — Permanence Protocol"] },
+  { id:"verra",     label:"Verra VCS",       color:"#3B82F6", methods:["VM0047 — ARR Non-Forest","VM0042 — REDD+","VM0044 — IFM","VM0048 — ARR Restoration"] },
+  { id:"miteco",    label:"MITECO España",   color:"#F0A500", methods:["Sumideros Forestales","Agricultura de Conservación","Gestión Forestal Sostenible"] },
+  { id:"isometric", label:"Isometric",       color:"#A78BFA", methods:["Subsurface Biomass Carbon v1.1","BECCS Protocol","Enhanced Rock Weathering"] },
+];
+
+const STAGES = [
+  { id:"intake",      label:"INTAKE",      color:"#3B82F6" },
+  { id:"analysis",    label:"ANALYSIS",    color:"#F0A500" },
+  { id:"eligibility", label:"ELIGIBILITY", color:"#A78BFA" },
+  { id:"generating",  label:"GENERATING",  color:"#F0A500" },
+  { id:"delivered",   label:"DELIVERED",   color:"#2ED573" },
+];
+
+const PROJECTS = [
+  {
+    id:"marakoa", name:"Proyecto Marakoa", client:"Inforcol / Lignum Resources", country:"🇨🇴",
+    registry:"puro", methodology:"TSB — Terrestrial Storage of Biomass", stage:"delivered",
+    area_ha:1737, volume_m3:158460, corcs_base:32724, corcs_range:[20452,44996],
+    flags:{red:2,amber:2,green:1}, created:"2026-01-15", updated:"2026-03-10",
+    deliverables:["Pre-Feasibility Memo (DOCX)","Financial Model (XLSX)"],
+    progress:100, dm_factor:0.50, species:["Acacia mangium","Eucalyptus pellita"],
+    notes:"Colcex contract resolution pending — go/no-go gate.",
+  },
+  {
+    id:"bosquia", name:"Bosquia Asturias", client:"Bosquia SL", country:"🇪🇸",
+    registry:"puro", methodology:"TSB — Terrestrial Storage of Biomass", stage:"eligibility",
+    area_ha:420, volume_m3:38200, corcs_base:7800, corcs_range:[5100,11400],
+    flags:{red:1,amber:3,green:2}, created:"2026-02-03", updated:"2026-03-08",
+    deliverables:[], progress:62, dm_factor:0.65, species:["Pinus radiata","Eucalyptus globulus"],
+    notes:"Addendum No. 1 accepted. MITECO coordination needed.",
+  },
+  {
+    id:"naturebrain", name:"NatureBrain Sierra Leone", client:"NatureBrain / InfraOceans", country:"🇸🇱",
+    registry:"verra", methodology:"VM0047 — ARR Non-Forest", stage:"analysis",
+    area_ha:12400, volume_m3:null, corcs_base:null, corcs_range:[null,null],
+    flags:{red:3,amber:2,green:0}, created:"2026-02-18", updated:"2026-03-05",
+    deliverables:[], progress:28, dm_factor:null, species:["Mixed tropical"],
+    notes:"LOI $5M, $10M call option. Title chain requires verification.",
+  },
+  {
+    id:"amoedo", name:"Amoedo TSB", client:"CMVMC de Amoedo", country:"🇪🇸",
+    registry:"puro", methodology:"TSB — Terrestrial Storage of Biomass", stage:"generating",
+    area_ha:89, volume_m3:9200, corcs_base:1950, corcs_range:[1400,2600],
+    flags:{red:0,amber:1,green:4}, created:"2026-02-28", updated:"2026-03-09",
+    deliverables:[], progress:78, dm_factor:0.72, species:["Eucalyptus globulus"],
+    notes:"22.27 ha definitiva, 18,507 tCO₂, 3,365 disponibles.",
+  },
+  {
+    id:"elysium", name:"Elysium Cerrado REDD+", client:"Elysium Asset Management", country:"🇧🇷",
+    registry:"verra", methodology:"VM0042 — REDD+", stage:"intake",
+    area_ha:68000, volume_m3:null, corcs_base:null, corcs_range:[null,null],
+    flags:{red:2,amber:1,green:0}, created:"2026-03-08", updated:"2026-03-08",
+    deliverables:[], progress:5, dm_factor:null, species:["Cerrado native"],
+    notes:"VM0047+VM0044 conflation identified. Screening only.",
+  },
+];
+
+const FLAG_DATA = {
+  marakoa: {
+    technical:[
+      {label:"Species eligibility (C:N >80)", status:"green", note:"Woody stems confirmed eligible"},
+      {label:"Leaf exclusion protocol", status:"amber", note:"Protocol not yet documented"},
+      {label:"Dry matter content (DM)", status:"amber", note:"⚠ Lab measurement required"},
+      {label:"Moisture stress test (GWP₂₀)", status:"amber", note:"Pending water activity data"},
+      {label:"Soil cap integrity", status:"red", note:"Haplaquox risk — drainage design needed"},
+    ],
+    legal:[
+      {label:"Carbon rights / Existing contract", status:"red", note:"Colcex contract — must resolve (go/no-go)"},
+      {label:"FSC / PEFC certification", status:"red", note:"Not certified — 3 pathways identified"},
+      {label:"100-year land easement", status:"amber", note:"Notarization required before issuance"},
+      {label:"Environmental permit (Corporinoquía)", status:"amber", note:"6–18 month timeline expected"},
+      {label:"Double-counting boundary (VCS)", status:"green", note:"Distinct carbon flows documented"},
+    ],
+  },
+};
+
+const LIBRARY_DOCS = {
+  puro:[
+    {name:"TSB Ed.2023 v.1 — Terrestrial Storage of Biomass", type:"methodology", size:"2.1 MB", status:"loaded"},
+    {name:"WoodCache Walsenburg — PDD", type:"benchmark", size:"840 KB", status:"loaded"},
+    {name:"WoodCache Walsenburg — DNV Audit 2024", type:"audit", size:"1.2 MB", status:"loaded"},
+    {name:"Fasera TSB Facility 1 — PDD", type:"benchmark", size:"620 KB", status:"loaded"},
+    {name:"Fasera — EnergyLink Audit 2025", type:"audit", size:"950 KB", status:"loaded"},
+    {name:"Marakoa Pre-Feasibility DOCX Template", type:"template", size:"56 KB", status:"loaded"},
+    {name:"Marakoa Financial Model XLSX Template", type:"template", size:"34 KB", status:"loaded"},
+    {name:"TSB Ed.2024 v.2 — DRAFT", type:"methodology", size:"—", status:"pending"},
+  ],
+  verra:[
+    {name:"VM0047 ARR v2.0 — Non-Forest", type:"methodology", size:"3.4 MB", status:"loaded"},
+    {name:"VM0042 REDD+ v4.0", type:"methodology", size:"2.8 MB", status:"loaded"},
+    {name:"VM0044 IFM v3.0", type:"methodology", size:"2.1 MB", status:"loaded"},
+    {name:"VM0048 ARR Restoration", type:"methodology", size:"1.9 MB", status:"loaded"},
+  ],
+  miteco:[
+    {name:"Real Decreto 163/2014 — Sumideros", type:"methodology", size:"1.1 MB", status:"loaded"},
+    {name:"Amoedo Subsanación MITECO", type:"benchmark", size:"320 KB", status:"loaded"},
+  ],
+  isometric:[
+    {name:"Subsurface Biomass Carbon Removal v1.1", type:"methodology", size:"1.8 MB", status:"loaded"},
+  ],
+};
+
+// ─── STATE ───────────────────────────────────────────────────────
+let currentView = "pipeline";
+let selectedProject = null;
+let modalStep = 1;
+let modalRegistry = "";
+let modalMethod = "";
+let libraryRegistry = "puro";
+let liveProjects = null; // set after API load
+
+// ─── ICONS ───────────────────────────────────────────────────────
+const SVG = {
+  check: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>`,
+  file:  `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
+  dl:    `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+  close: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+  zap:   `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+  up:    `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>`,
+  chev:  `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="9 18 15 12 9 6"/></svg>`,
+};
+
+// ─── HELPERS ─────────────────────────────────────────────────────
+function reg(id){ return REGISTRIES.find(r=>r.id===id); }
+function stage(id){ return STAGES.find(s=>s.id===id); }
+function fmt(n){ return n != null ? n.toLocaleString() : "—"; }
+function label(txt, style=""){
+  return `<span class="syne" style="font-size:10px;font-weight:700;letter-spacing:.1em;color:#3A5070;text-transform:uppercase;${style}">${txt}</span>`;
+}
+function badge(registryId){
+  const r = reg(registryId); if(!r) return "";
+  return `<span class="tag" style="background:${r.color}18;color:${r.color};border:1px solid ${r.color}30;">${r.label}</span>`;
+}
+function stageTag(stageId){
+  const s = stage(stageId); if(!s) return "";
+  const dot = stageId==="generating" ? `<span style="width:6px;height:6px;border-radius:50%;background:${s.color};display:inline-block;animation:dotPulse 1s infinite;"></span>` : "";
+  return `<span class="tag" style="background:${s.color}18;color:${s.color};border:1px solid ${s.color}30;">${dot}${s.label}</span>`;
+}
+function flagSummary(flags){
+  let html = `<div class="flag-row">`;
+  if(flags.red>0)   html += `<span style="display:flex;align-items:center;gap:3px;color:#FF4560;"><span class="flag-dot" style="background:#FF4560;"></span>${flags.red}</span>`;
+  if(flags.amber>0) html += `<span style="display:flex;align-items:center;gap:3px;color:#F0A500;"><span class="flag-dot" style="background:#F0A500;"></span>${flags.amber}</span>`;
+  if(flags.green>0) html += `<span style="display:flex;align-items:center;gap:3px;color:#2ED573;"><span class="flag-dot" style="background:#2ED573;"></span>${flags.green}</span>`;
+  return html + `</div>`;
+}
+function progressBar(val, color){
+  return `<div class="progress-bar"><div class="progress-fill" style="width:${val}%;background:${color};"></div></div>`;
+}
+function statusColor(s){ return s==="red"?"#FF4560":s==="amber"?"#F0A500":"#2ED573"; }
+const TYPE_COLOR = {methodology:"#00D4AA", benchmark:"#3B82F6", audit:"#F0A500", template:"#A78BFA"};
+
+// ─── ACTIVE DATA ─────────────────────────────────────────────────
+function getProjects() { return liveProjects || PROJECTS; }
+
+// ─── INIT ────────────────────────────────────────────────────────
+async function init(){
+  renderSidebarBadges();
+  // Load from API first, fall back to mock
+  const apiData = await loadProjects();
+  if (apiData && apiData.length > 0) {
+    liveProjects = apiData;
+    console.log('Loaded ' + apiData.length + ' projects from API');
+  } else {
+    console.log('Using mock PROJECTS data');
+  }
+  renderSidebarStats();
+  renderStatsBar();
+  renderTopbarMeta();
+  renderPipeline();
+  renderLibrary();
+  renderAnalytics();
+}
+
+function renderSidebarBadges(){
+  const el = document.getElementById("registry-badges");
+  el.innerHTML = REGISTRIES.map(r=>`
+    <div class="registry-badge" style="background:${r.color}10;border-color:${r.color}30;color:${r.color};">
+      <span style="width:6px;height:6px;border-radius:50%;background:${r.color};"></span>
+      <span style="font-size:11px;">${r.label}</span>
+    </div>`).join("");
+}
+
+function renderSidebarStats(){
+  const P = getProjects();
+  const totalCORCs = P.reduce((a,p)=>a+(p.corcs_base||0),0);
+  const active = P.filter(p=>!["intake","delivered"].includes(p.stage)).length;
+  const el = document.getElementById("sidebar-stats");
+  el.innerHTML = [
+    ["Total Projects", P.length],
+    ["Active Analysis", active],
+    ["CORCs Modeled", totalCORCs.toLocaleString()],
+  ].map(([l,v])=>`
+    <div class="sidebar-stat">
+      <span class="sidebar-stat-label">${l}</span>
+      <span class="sidebar-stat-val">${v}</span>
+    </div>`).join("");
+}
+
+function renderTopbarMeta(){
+  const P = getProjects();
+  const el = document.getElementById("topbar-meta");
+  if(currentView !== "pipeline"){ el.innerHTML=""; return; }
+  const delivered = P.filter(p=>p.stage==="delivered").length;
+  const active = P.filter(p=>!["intake","delivered"].includes(p.stage)).length;
+  el.innerHTML = [
+    {t:`${P.length} projects`, c:"#6B87B0"},
+    {t:`${delivered} delivered`, c:"#2ED573"},
+    {t:`${active} in progress`, c:"#F0A500"},
+  ].map(x=>`<span style="font-size:12px;color:${x.c};font-family:'DM Mono',monospace;">${x.t} ·</span>`).join("");
+}
+
+function renderStatsBar(){
+  const P = getProjects();
+  const totalCORCs = P.reduce((a,p)=>a+(p.corcs_base||0),0);
+  const totalHa = P.reduce((a,p)=>a+(p.area_ha||0),0);
+  const totalVol = P.reduce((a,p)=>a+(p.volume_m3||0),0);
+  const redFlags = P.reduce((a,p)=>a+(p.flags?.red||0),0);
+  const amberFlags = P.reduce((a,p)=>a+(p.flags?.amber||0),0);
+  const methods = new Set(P.map(p=>p.methodology)).size;
+  const regs = new Set(P.map(p=>p.registry)).size;
+  const el = document.getElementById("statsbar");
+  el.innerHTML = [
+    {l:"Total Area",       v:totalHa.toLocaleString()+" ha",             c:"#E2EBF8"},
+    {l:"Total Volume",     v:totalVol.toLocaleString()+" m³",            c:"#E2EBF8"},
+    {l:"CORCs Modeled",    v:totalCORCs.toLocaleString(),                 c:"#00D4AA"},
+    {l:"Revenue @ $120",   v:"$"+(totalCORCs*120/1e6).toFixed(1)+"M",    c:"#00D4AA"},
+    {l:"Open Red Flags",   v:redFlags,                                    c:"#FF4560"},
+    {l:"Open Amber",       v:amberFlags,                                  c:"#F0A500"},
+    {l:"Methodologies",    v:methods+" active",                           c:"#3B82F6"},
+    {l:"Registries",       v:regs+" active",                              c:"#A78BFA"},
+  ].map(x=>`
+    <div class="stat-card">
+      <span class="stat-card-label">${x.l}</span>
+      <span class="mono stat-card-val" style="color:${x.c};">${x.v}</span>
+    </div>`).join("");
+}
+
+// ─── PIPELINE ────────────────────────────────────────────────────
+function renderPipeline(){
+  const el = document.getElementById("view-pipeline");
+  el.innerHTML = `<div id="kanban"></div>`;
+  document.getElementById("kanban").style.cssText = "display:flex;gap:12px;height:100%;overflow-x:auto;padding-bottom:16px;";
+  const kanban = document.getElementById("kanban");
+  kanban.innerHTML = STAGES.map(s=>{
+    const cards = getProjects().filter(p=>p.stage===s.id);
+    return `
+      <div class="kanban-col">
+        <div class="kanban-col-header" style="border-top:2px solid ${s.color};">
+          <span class="kanban-col-label syne" style="color:${s.color};">${s.label}</span>
+          <span class="kanban-col-count" style="background:${s.color}20;color:${s.color};">${cards.length}</span>
+        </div>
+        <div class="kanban-col-body">
+          ${cards.length ? cards.map(p=>renderCard(p)).join("") : `<div class="kanban-empty">No projects</div>`}
+        </div>
+      </div>`;
+  }).join("");
+}
+
+function renderCard(p){
+  const s = stage(p.stage);
+  const barColor = p.stage==="delivered" ? "#2ED573" : p.stage==="generating" ? "#F0A500" : "#00D4AA";
+  const indicator = p.stage==="generating"
+    ? `<div class="spinner"></div>`
+    : p.stage==="delivered"
+    ? `<span style="color:#2ED573;">${SVG.check}</span>`
+    : "";
+  return `
+    <div class="project-card ${p.stage==="delivered"?"delivered-glow":""}" onclick="openDetail('${p.id}')">
+      <div class="card-accent" style="background:${s?.color||"#00D4AA"};"></div>
+      <div class="card-header">
+        <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">
+          <span style="font-size:16px;">${p.country}</span>
+          <span class="card-name">${p.name}</span>
+        </div>
+        ${indicator}
+      </div>
+      <div class="card-client">${p.client}</div>
+      <div class="card-method">${p.methodology}</div>
+      ${p.area_ha ? `
+      <div class="card-stats">
+        <div>
+          <div class="mono card-stat-val">${fmt(p.area_ha)}</div>
+          <div class="card-stat-label syne">ha</div>
+        </div>
+        ${p.corcs_base ? `
+        <div>
+          <div class="mono card-stat-val card-teal">${fmt(p.corcs_base)}</div>
+          <div class="card-stat-label syne">CORCs base</div>
+        </div>` : ""}
+        <div style="margin-left:auto;">${flagSummary(p.flags)}</div>
+      </div>` : ""}
+      ${progressBar(p.progress, barColor)}
+      <div class="mono" style="font-size:10px;color:#3A5070;margin-top:4px;">${p.progress}%</div>
+    </div>`;
+}
+
+// ─── DETAIL PANEL ────────────────────────────────────────────────
+async function openDetail(id){
+  selectedProject = getProjects().find(p=>p.id===id);
+  // Try loading detailed flags from API
+  const detail = await loadProjectDetail(id);
+  if (detail && detail.flags) {
+    selectedProject._apiFlags = detail.flags;
+    if (detail.deliverables) selectedProject._apiDeliverables = detail.deliverables;
+  }
+  renderDetail("overview");
+  document.getElementById("detail-panel").style.display="block";
+}
+
+function closeDetail(){
+  document.getElementById("detail-panel").style.display="none";
+  selectedProject=null;
+}
+
+function renderDetail(tab){
+  const p = selectedProject; if(!p) return;
+  const r = reg(p.registry);
+  const flags = p._apiFlags || FLAG_DATA[p.id] || {
+    technical:[
+      {label:"Species eligibility (C:N >80)", status:"amber", note:"Lab data required"},
+      {label:"Leaf exclusion protocol", status:"amber", note:"Protocol not yet documented"},
+      {label:"Dry matter content (DM)", status:"amber", note:"Lab measurement required"},
+      {label:"Moisture stress test (GWP₂₀)", status:"amber", note:"Pending water activity data"},
+      {label:"Soil cap integrity", status:"amber", note:"Soil testing pending"},
+    ],
+    legal:[
+      {label:"Carbon rights clear", status:"amber", note:"Legal review pending"},
+      {label:"FSC / PEFC certification", status:"amber", note:"Certification status unknown"},
+      {label:"100-year land easement", status:"amber", note:"Notarization required"},
+      {label:"Environmental permit", status:"amber", note:"Timeline unknown"},
+      {label:"Double-counting boundary", status:"green", note:"No conflicts identified"},
+    ],
+  };
+  const deliverables = p._apiDeliverables || p.deliverables || [];
+
+  const tabContent = {
+    overview:`
+      <div class="fade-in">
+        ${label("Key Metrics","display:block;margin-bottom:12px;")}
+        <div class="metrics-grid">
+          ${[
+            ["Area",        p.area_ha ? fmt(p.area_ha)+" ha" : "—"],
+            ["Volume",      p.volume_m3 ? fmt(p.volume_m3)+" m³" : "—"],
+            ["CORCs (base)",p.corcs_base ? fmt(p.corcs_base) : "—"],
+            ["CORC range",  p.corcs_range[0] ? fmt(p.corcs_range[0])+" – "+fmt(p.corcs_range[1]) : "—"],
+            ["DM factor",   p.dm_factor ? (p.dm_factor*100).toFixed(0)+"%" : "⚠ TBD"],
+            ["Registry",    r?.label||"—"],
+          ].map(([l,v])=>`
+            <div class="metric-cell">
+              ${label(l,"display:block;margin-bottom:4px;")}
+              <span class="mono" style="font-size:13px;color:#E2EBF8;font-weight:500;">${v}</span>
+            </div>`).join("")}
+        </div>
+        ${label("Species","display:block;margin-bottom:8px;")}
+        <div class="species-chips">${p.species.map(s=>`<span class="species-chip">${s}</span>`).join("")}</div>
+        ${label("Notes","display:block;margin-bottom:8px;")}
+        <div style="background:#112034;border-radius:6px;padding:12px;font-size:13px;color:#6B87B0;border:1px solid #1C3050;line-height:1.6;">${p.notes}</div>
+        <div style="margin-top:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            ${label("Progress")}<span class="mono" style="font-size:12px;color:#6B87B0;">${p.progress}%</span>
+          </div>
+          ${progressBar(p.progress, p.stage==="delivered"?"#2ED573":"#00D4AA")}
+        </div>
+        <div style="margin-top:20px;">${label("Timeline","display:block;margin-bottom:8px;")}
+          <div class="mono" style="font-size:12px;color:#6B87B0;">
+            <div style="display:flex;gap:8px;margin-bottom:4px;"><span style="color:#3A5070;">Created:</span><span>${p.created}</span></div>
+            <div style="display:flex;gap:8px;"><span style="color:#3A5070;">Updated:</span><span>${p.updated}</span></div>
+          </div>
+        </div>
+      </div>`,
+
+    technical:`
+      <div class="fade-in">
+        ${label("Technical Eligibility Flags","display:block;margin-bottom:16px;")}
+        ${flags.technical.map(f=>`
+          <div class="flag-item" style="border-left-color:${statusColor(f.status)};">
+            <div style="flex:1;">
+              <div class="flag-item-label">${f.label}</div>
+              <div class="flag-item-note">${f.note}</div>
+            </div>
+            <div class="flag-status-dot" style="background:${statusColor(f.status)};"></div>
+          </div>`).join("")}
+      </div>`,
+
+    legal:`
+      <div class="fade-in">
+        ${label("Legal & Regulatory Flags","display:block;margin-bottom:16px;")}
+        ${flags.legal.map(f=>`
+          <div class="flag-item" style="border-left-color:${statusColor(f.status)};">
+            <div style="flex:1;">
+              <div class="flag-item-label">${f.label}</div>
+              <div class="flag-item-note">${f.note}</div>
+            </div>
+            <div class="flag-status-dot" style="background:${statusColor(f.status)};"></div>
+          </div>`).join("")}
+      </div>`,
+
+    deliverables:`
+      <div class="fade-in">
+        ${label("Generated Deliverables","display:block;margin-bottom:16px;")}
+        ${deliverables.length ? deliverables.map(d=>{
+          const name = typeof d === 'string' ? d : (d.filename || d.name || 'Document');
+          return `
+          <div class="deliverable-item">
+            <div style="display:flex;align-items:center;gap:10px;color:#00D4AA;">${SVG.file}<span style="font-size:13px;color:#E2EBF8;">${name}</span></div>
+            <button class="btn-ghost" style="padding:5px 10px;font-size:12px;">${SVG.dl}</button>
+          </div>`;}).join("") : `
+          <div class="deliverable-empty">
+            <div style="margin-bottom:8px;color:#3A5070;">${SVG.file}</div>
+            No deliverables generated yet
+            <div style="font-size:11px;margin-top:4px;">Complete analysis to generate reports</div>
+          </div>`}
+        ${p.stage !== "delivered" ? `
+          <button class="btn-primary" style="width:100%;margin-top:16px;justify-content:center;" onclick="generateDeliverables('${p.id}')">
+            ${SVG.zap} Generate Deliverables
+          </button>` : ""}
+      </div>`,
+  };
+
+  document.getElementById("detail-panel").innerHTML = `
+    <div class="panel-header">
+      <div class="panel-title-row">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:20px;">${p.country}</span>
+          <span class="syne" style="font-size:16px;font-weight:700;color:#E2EBF8;">${p.name}</span>
+        </div>
+        <button class="close-btn" onclick="closeDetail()">${SVG.close}</button>
+      </div>
+      <div class="panel-badges">${badge(p.registry)} ${stageTag(p.stage)}</div>
+      <div class="tab-bar">
+        ${["overview","technical","legal","deliverables"].map(t=>`
+          <button class="tab-btn ${t===tab?"active":""}" onclick="renderDetail('${t}')">${t.toUpperCase()}</button>`).join("")}
+      </div>
+    </div>
+    <div class="panel-body">${tabContent[tab]||""}</div>`;
+}
+
+function generateDeliverables(id){
+  alert("Generate Deliverables — Worker endpoint POST /api/pablo/generate will be wired here. Project: "+id);
+}
+
+// ─── LIBRARY ─────────────────────────────────────────────────────
+function renderLibrary(){
+  const el = document.getElementById("view-library");
+  renderLibraryContent(el);
+}
+
+function renderLibraryContent(el){
+  const docs = LIBRARY_DOCS[libraryRegistry] || [];
+  el.innerHTML = `
+    <div class="fade-in">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
+        <div>
+          <div class="syne" style="font-size:20px;font-weight:700;color:#E2EBF8;">Knowledge Library</div>
+          <div style="font-size:13px;color:#6B87B0;margin-top:2px;">Canonical methodology docs, benchmarks, and templates stored in R2</div>
+        </div>
+        <button class="btn-primary">${SVG.up} Upload to R2</button>
+      </div>
+      <div class="library-wrap">
+        <div class="library-sidebar">
+          ${label("Registry","display:block;margin-bottom:10px;")}
+          ${REGISTRIES.map(r=>`
+            <div class="lib-nav-item ${r.id===libraryRegistry?"":""}"
+              onclick="setLibraryRegistry('${r.id}')"
+              style="background:${r.id===libraryRegistry?r.color+"12":"transparent"};color:${r.id===libraryRegistry?r.color:"#6B87B0"};border-color:${r.id===libraryRegistry?r.color+"30":"transparent"};">
+              <span style="width:8px;height:8px;border-radius:50%;background:${r.color};flex-shrink:0;"></span>
+              ${r.label}
+            </div>`).join("")}
+        </div>
+        <div class="library-content">
+          ${label("Documents — "+reg(libraryRegistry)?.label,"display:block;margin-bottom:10px;")}
+          ${docs.map(d=>`
+            <div class="doc-item ${d.status==="pending"?"pending":""}">
+              <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;color:${TYPE_COLOR[d.type]||"#6B87B0"};">
+                ${SVG.file}
+                <span style="font-size:13px;color:#E2EBF8;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.name}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+                <span class="tag" style="background:${TYPE_COLOR[d.type]||"#3A5070"}18;color:${TYPE_COLOR[d.type]||"#3A5070"};">${d.type}</span>
+                <span class="mono" style="font-size:11px;color:#3A5070;min-width:50px;text-align:right;">${d.size}</span>
+                ${d.status==="loaded"
+                  ? `<span style="color:#2ED573;">${SVG.check}</span>`
+                  : `<span style="font-size:11px;color:#F0A500;">PENDING</span>`}
+              </div>
+            </div>`).join("")}
+        </div>
+      </div>
+    </div>`;
+}
+
+function setLibraryRegistry(id){
+  libraryRegistry = id;
+  renderLibraryContent(document.getElementById("view-library"));
+}
+
+// ─── ANALYTICS ───────────────────────────────────────────────────
+function renderAnalytics(){
+  const el = document.getElementById("view-analytics");
+  el.innerHTML = `
+    <div class="fade-in">
+      <div class="syne" style="font-size:20px;font-weight:700;color:#E2EBF8;margin-bottom:20px;">Analytics</div>
+      <div class="analytics-grid" style="margin-bottom:20px;">
+        ${[
+          ["Puro.earth","3 projects","42,474 CORCs","#00D4AA"],
+          ["Verra VCS","2 projects","—","#3B82F6"],
+          ["MITECO","0 projects","—","#F0A500"],
+          ["Isometric","0 projects","—","#A78BFA"],
+        ].map(([r,c,corcs,color])=>`
+          <div class="analytics-card" style="border-top-color:${color};">
+            <div class="syne" style="font-size:14px;font-weight:700;color:${color};margin-bottom:8px;">${r}</div>
+            <div style="font-size:12px;color:#6B87B0;">${c}</div>
+            <div class="mono" style="font-size:18px;font-weight:600;color:#E2EBF8;margin-top:6px;">${corcs}</div>
+            ${label("CORCs modeled","display:block;margin-top:4px;")}
+          </div>`).join("")}
+      </div>
+      <div style="background:#0C1829;border:1px solid #1C3050;border-radius:8px;padding:20px;color:#3A5070;text-align:center;font-size:13px;">
+        Full analytics dashboard — CORC curves, timeline charts, methodology comparison — coming next sprint.
+      </div>
+    </div>`;
+}
+
+// ─── VIEW SWITCHER ───────────────────────────────────────────────
+function switchView(v){
+  currentView = v;
+  ["pipeline","library","analytics"].forEach(id=>{
+    document.getElementById("view-"+id).style.display = id===v ? "block" : "none";
+    document.getElementById("nav-"+id)?.classList.toggle("active", id===v);
+  });
+  if(v==="pipeline") document.getElementById("view-pipeline").style.height="100%";
+  document.getElementById("topbar-title").textContent =
+    v==="pipeline" ? "Project Pipeline" : v==="library" ? "Knowledge Library" : "Analytics";
+  document.getElementById("statsbar").style.display = v==="pipeline" ? "flex" : "none";
+  renderTopbarMeta();
+}
+
+// ─── MODAL (NEW PROJECT) ─────────────────────────────────────────
+function showModal(){
+  modalStep=1; modalRegistry=""; modalMethod="";
+  renderModal();
+  document.getElementById("modal-overlay").style.display="flex";
+}
+function hideModal(){
+  document.getElementById("modal-overlay").style.display="none";
+}
+function handleModalBg(e){
+  if(e.target===document.getElementById("modal-overlay")) hideModal();
+}
+
+function renderModal(){
+  const stepLabels = ["Registry & Methodology","Project Details","Upload Data"];
+  const canNext = modalStep===1 ? (modalRegistry&&modalMethod) : true;
+
+  const stepDots = [1,2,3].map(s=>{
+    const done = s < modalStep;
+    const active = s <= modalStep;
+    return `
+      <div class="step-dot-wrap">
+        <div class="step-dot" style="background:${active?"#00D4AA":"#112034"};border:1.5px solid ${active?"#00D4AA":"#1C3050"};color:${active?"#030810":"#3A5070"};">
+          ${done ? SVG.check.replace("14","12") : s}
+        </div>
+        ${s<3?`<div class="step-line" style="background:${s<modalStep?"#00D4AA":"#1C3050"};"></div>`:""}
+      </div>`;
+  }).join("");
+
+  let bodyHtml = "";
+  if(modalStep===1){
+    bodyHtml = `
+      <div class="fade-in">
+        ${label("Select Registry","display:block;margin-bottom:12px;")}
+        <div class="registry-grid">
+          ${REGISTRIES.map(r=>`
+            <div class="registry-option ${modalRegistry===r.id?"selected":""}"
+              onclick="selectRegistry('${r.id}')"
+              style="border-color:${modalRegistry===r.id?r.color:"#1C3050"};background:${modalRegistry===r.id?r.color+"10":"#112034"};">
+              <div class="syne" style="font-size:13px;font-weight:600;color:${modalRegistry===r.id?r.color:"#E2EBF8"};margin-bottom:4px;">${r.label}</div>
+              <div style="font-size:11px;color:#3A5070;">${r.methods.length} methodologies</div>
+            </div>`).join("")}
+        </div>
+        ${modalRegistry ? `
+          <div class="fade-in">
+            ${label("Select Methodology","display:block;margin-bottom:10px;")}
+            <div class="method-list">
+              ${(reg(modalRegistry)?.methods||[]).map(m=>`
+                <div class="method-option"
+                  onclick="selectMethod('${m.replace(/'/g,"\\'")}')"
+                  style="border-color:${modalMethod===m?reg(modalRegistry)?.color||"#00D4AA":"#1C3050"};background:${modalMethod===m?(reg(modalRegistry)?.color||"#00D4AA")+"10":"#112034"};color:${modalMethod===m?reg(modalRegistry)?.color||"#00D4AA":"#6B87B0"};">
+                  ${m}
+                </div>`).join("")}
+            </div>
+          </div>` : ""}
+      </div>`;
+  } else if(modalStep===2){
+    bodyHtml = `
+      <div class="fade-in">
+        <div class="form-group">
+          ${label("Project Name","display:block;margin-bottom:8px;")}
+          <input class="input-field" placeholder="e.g. Proyecto Marakoa" id="inp-name">
+        </div>
+        <div class="form-grid-2">
+          <div>
+            ${label("Client / Originator","display:block;margin-bottom:8px;")}
+            <input class="input-field" placeholder="Client name" id="inp-client">
+          </div>
+          <div>
+            ${label("Country","display:block;margin-bottom:8px;")}
+            <input class="input-field" placeholder="e.g. Colombia" id="inp-country">
+          </div>
+        </div>
+        <div class="form-group">
+          ${label("Notes / Context","display:block;margin-bottom:8px;")}
+          <textarea class="input-field" rows="3" placeholder="Any context, contacts, constraints..." style="resize:vertical;" id="inp-notes"></textarea>
+        </div>
+        <div class="config-summary">
+          ${label("Selected Configuration","display:block;margin-bottom:8px;")}
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+            ${badge(modalRegistry)}
+            <span class="mono" style="font-size:11px;color:#6B87B0;">${modalMethod}</span>
+          </div>
+        </div>
+      </div>`;
+  } else {
+    bodyHtml = `
+      <div class="fade-in">
+        ${label("Upload Project Data","display:block;margin-bottom:12px;")}
+        <div class="drop-zone" id="drop-zone"
+          ondragover="event.preventDefault();this.classList.add('dragging')"
+          ondragleave="this.classList.remove('dragging')"
+          ondrop="handleDrop(event)">
+          ${SVG.up.replace("14","28")}
+          <div style="margin-top:10px;font-size:14px;color:#6B87B0;">Drop your ZIP file here</div>
+          <div style="font-size:12px;color:#3A5070;margin-top:4px;">Inventory Excel, soil reports, shapefiles, contracts, maps</div>
+        </div>
+        ${label("Expected Contents","display:block;margin:16px 0 10px;")}
+        ${[
+          ["Inventory data",".xlsx — biomass by plot/finca",true],
+          ["Lithogeology / soil",".docx or .pdf",true],
+          ["Plantation maps",".shp, .geojson, or .rar",false],
+          ["Legal documents","Contracts, titles, certifications",false],
+          ["Methodology docs",".md or .pdf (loaded from library if absent)",false],
+        ].map(([n,e,req])=>`
+          <div class="expected-item">
+            <span class="flag-dot" style="background:${req?"#00D4AA":"#3A5070"};flex-shrink:0;"></span>
+            <span style="color:${req?"#E2EBF8":"#6B87B0"};min-width:140px;">${n}</span>
+            <span class="mono" style="color:#3A5070;">${e}</span>
+          </div>`).join("")}
+      </div>`;
+  }
+
+  document.getElementById("modal-box").innerHTML = `
+    <div class="modal-header">
+      <div>
+        <div class="syne" style="font-size:16px;font-weight:700;color:#E2EBF8;">New Project</div>
+        <div style="font-size:12px;color:#6B87B0;margin-top:2px;">Step ${modalStep} of 3 — ${stepLabels[modalStep-1]}</div>
+      </div>
+      <button class="close-btn" onclick="hideModal()">${SVG.close}</button>
+    </div>
+    <div class="step-indicator">${stepDots}</div>
+    <div class="modal-body">${bodyHtml}</div>
+    <div class="modal-footer">
+      ${modalStep>1?`<button class="btn-ghost" onclick="modalBack()">Back</button>`:""}
+      ${modalStep<3
+        ? `<button class="btn-primary" onclick="modalNext()" ${!canNext?"disabled":""} style="${!canNext?"opacity:.4;cursor:not-allowed;":""}">
+            Continue ${SVG.chev}
+           </button>`
+        : `<button class="btn-primary" onclick="startAnalysis()">
+            ${SVG.zap} Start Analysis
+           </button>`}
+    </div>`;
+}
+
+function selectRegistry(id){
+  modalRegistry=id; modalMethod=""; renderModal();
+}
+function selectMethod(m){
+  modalMethod=m; renderModal();
+}
+function modalNext(){
+  if(modalStep===1 && (!modalRegistry||!modalMethod)) return;
+  modalStep++; renderModal();
+}
+function modalBack(){
+  modalStep--; renderModal();
+}
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById("drop-zone")?.classList.remove("dragging");
+  const f = e.dataTransfer.files[0];
+  if(f) document.getElementById("drop-zone").innerHTML = `
+    <div style="color:#00D4AA;font-size:14px;font-weight:600;">${SVG.check} ${f.name}</div>
+    <div style="font-size:12px;color:#6B87B0;margin-top:4px;">${(f.size/1024/1024).toFixed(1)} MB — ready to upload</div>`;
+}
+async function startAnalysis(){
+  const name = document.getElementById('inp-name')?.value?.trim();
+  const client = document.getElementById('inp-client')?.value?.trim();
+  const country = document.getElementById('inp-country')?.value?.trim();
+  const notes = document.getElementById('inp-notes')?.value?.trim();
+  if(!name){ alert('Project name is required.'); return; }
+  // Build a slug-style id from the name
+  const id = name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40);
+  const body = {
+    id, name, client: client||'', country: country||'',
+    registry: modalRegistry, methodology: modalMethod,
+    stage: 'intake', progress: 0, notes: notes||''
+  };
+  try {
+    const result = await createProject(body);
+    if(result.error){ alert('Error: ' + result.error); return; }
+    hideModal();
+    // Reload projects from API and re-render
+    const fresh = await loadProjects();
+    if(fresh && fresh.length > 0) liveProjects = fresh;
+    renderSidebarStats(); renderStatsBar(); renderTopbarMeta(); renderPipeline();
+  } catch(e){
+    console.error('Create project failed:', e);
+    alert('Failed to create project. Check console.');
+  }
+}
+function syncR2(){
+  alert("R2 Sync — GET /api/pablo/library will refresh document list.");
+}
+
+// ─── BOOT ────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
