@@ -1275,30 +1275,48 @@ async function startIntake(){
     });
     const data = await res.json();
     if(!res.ok) throw new Error(data.error||`HTTP ${res.status}`);
-    setStatus(r3,'ok',`${data.files_processed} files · ${data.files_with_text} with text · ${data.files_ocr_needed||0} OCR needed`);
+    setStatus(r3,'ok',`${data.files_processed||0} files · ${data.files_with_text||0} with text · ${data.files_ocr_needed||0} OCR needed`);
     setStatus(r4,'ok',`${data.flags_created||0} flags · ${data.red_flags||0} red`);
-    setStatus(r5,'ok',`${data.canonical?.area_ha ? data.canonical.area_ha+'ha' : 'area pending'} · stage → ${data.stage||'eligibility'}`);
+    setStatus(r5,'ok',`${data.canonical?.area_ha ? data.canonical.area_ha+'ha' : 'area pending'} · stage → ${data.stage||'intake'}`);
 
-    // Show open project button
+    const newProj = {
+      id: projectId,
+      name: name,
+      client: client||'—',
+      country: country||'—',
+      flag: '🌍',
+      reg: STATE.wizReg,
+      meth: STATE.wizMeth||'—',
+      stage: data.stage||'intake',
+      ha: data.canonical?.area_ha||null,
+      m3: null,
+      corcs: data.canonical?.corcs_estimate||null,
+      cr: [null, null],
+      flg: {
+        r: data.red_flags||0,
+        a: (data.flags_created||0) - (data.red_flags||0),
+        g: 0
+      },
+      pct: 10,
+      dm: data.canonical?.dm_factor||null,
+      sp: data.canonical?.species||[],
+      notes: notes||'',
+      hs: {co: client||'—', ct:'—', deal: name, last:'Just now', stg:'Intake'},
+      delvd: []
+    };
+
+    // Remove any existing entry with same id to avoid duplicates
+    const existingIdx = PROJECTS.findIndex(p => p.id === projectId);
+    if(existingIdx !== -1) PROJECTS.splice(existingIdx, 1);
+
+    console.log('PABLO intake success — adding project:', newProj.id, 'stage:', newProj.stage, 'STAGES ids:', STAGES.map(s=>s.id));
+    PROJECTS.unshift(newProj);
+    renderRail();
+    renderKanban();
+
     document.getElementById('intake-cta').style.display='flex';
+    document.getElementById('intake-cta-btn').textContent = 'Open project workspace →';
     document.getElementById('intake-cta-btn').onclick = () => {
-      closeIntakeScreen();
-      // Add project to local state and open it
-      const newProj = {
-        id: projectId, name, client, country: country||'—', flag:'🌍',
-        reg: STATE.wizReg, meth: STATE.wizMeth,
-        stage: data.stage||'eligibility',
-        ha: data.canonical?.area_ha||null, m3:null,
-        corcs: data.canonical?.corcs_estimate||null,
-        cr:[null,null], flg:{r:data.red_flags||0,a:0,g:0},
-        pct:20, dm:data.canonical?.dm_factor||null,
-        sp: data.canonical?.species||[], notes,
-        hs:{co:client,ct:'—',deal:name,last:'Just now',stg:'Intake'},
-        delvd:[]
-      };
-      PROJECTS.unshift(newProj);
-      renderRail();
-      renderKanban();
       closeIntakeScreen();
       openProject(newProj.id);
     };
