@@ -1446,16 +1446,23 @@ async function deleteLibDoc(id, btn){
 }
 
 async function downloadLibOriginal(docId, title){
-  // knowledge_docs.source_id = fileId → GET /api/files/download/{fileId}
+  // GET /api/knowledge/docs/:id now returns file_id (resolved from source chain)
+  // Then GET /api/files/download/{file_id} streams the R2 original
   try {
     const res = await fetch(`${API}/api/knowledge/docs/${docId}`);
     const data = await res.json();
-    const sourceId = data.source_id;
-    if(sourceId){
-      const dlUrl = `${API}/api/files/download/${sourceId}`;
-      const head = await fetch(dlUrl, {method:'HEAD'});
-      if(head.ok){
-        const a = document.createElement('a'); a.href = dlUrl; a.download = (title||'document').replace(/[<>:"/\\|?*]/g,'_'); a.click();
+    const fid = data.file_id;
+    if(fid){
+      const dlUrl = `${API}/api/files/download/${fid}`;
+      // Stream download via blob to handle CORS
+      const dlRes = await fetch(dlUrl);
+      if(dlRes.ok){
+        const blob = await dlRes.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = (title||'document').replace(/[<>:"\/\\|?*]/g,'_') + (data.source_type==='direct_upload'?'':'.pdf');
+        a.click();
+        URL.revokeObjectURL(a.href);
         return;
       }
     }
