@@ -613,6 +613,9 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
             <div class="fgrp"><label class="flabel">Display Name</label>
               <input class="finput" id="lib-dname" placeholder="e.g. TSB Methodology Edition 2023" oninput="checkLibUploadReady()">
             </div>
+            <div class="fgrp"><label class="flabel">Tags <span style="font-weight:400;color:var(--txt3)">(comma-separated)</span></label>
+              <input class="finput" id="lib-tags" placeholder="e.g. miteco, spain, forestry">
+            </div>
             <div class="fgrp">
               <div class="lib-dzone" id="lib-dropzone" onclick="document.getElementById('lib-file-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="libHandleDrop(event)">
                 <span>Drop file or ZIP here, or click to browse</span>
@@ -1377,7 +1380,7 @@ function filterIntel(q){
 function renderLibrary(){ loadLibraryDocs(); }
 
 function libFilter(reg, el){
-  STATE.libRegFilter = (reg==='all') ? '' : reg;
+  STATE.libRegFilter = (reg==='all') ? '' : reg.toLowerCase();
   document.querySelectorAll('.lib-browse-hdr .intfilt').forEach(e=>e.classList.remove('on'));
   el.classList.add('on');
   loadLibraryDocs();
@@ -1433,7 +1436,7 @@ async function updateLibraryStats(){
 }
 
 function regColorFromTags(tags){
-  const vals = tags.map(t=>(t.value||'').toLowerCase()).join(' ');
+  const vals = tags.map(t=>(t.value||'').toLowerCase().replace(/_/g,' ')).join(' ');
   if(vals.includes('puro')) return 'var(--teal)';
   if(vals.includes('vcs')||vals.includes('verra')) return 'var(--blue)';
   if(vals.includes('miteco')) return 'var(--amber)';
@@ -1456,15 +1459,11 @@ async function loadLibraryDocs(){
   const searchText = document.getElementById('lib-search-input')?.value.trim() || '';
   const regFilter = STATE.libRegFilter || '';
 
-  // Build query: combine search text + registry filter using q= (LIKE search)
-  // ?tag= uses exact match which fails because tag values are inconsistent
-  let qParts = [];
-  if(searchText) qParts.push(searchText);
-  if(regFilter) qParts.push(regFilter);
-  const q = qParts.join(' ');
-
+  // Registry filter uses ?tag= (exact match on normalized tag_value)
+  // Text search uses ?q= (LIKE on title+summary)
   let url = `${API}/api/wiki/docs?limit=100`;
-  if(q) url += `&q=${encodeURIComponent(q)}`;
+  if(regFilter) url += `&tag=${encodeURIComponent(regFilter)}`;
+  if(searchText) url += `&q=${encodeURIComponent(searchText)}`;
 
   try {
     const res = await fetch(url);
@@ -1681,6 +1680,7 @@ async function uploadLibraryDoc(){
   const zipFiles = STATE.libraryFiles || [];
   const files = singleFile ? [singleFile] : zipFiles;
   const dname = document.getElementById('lib-dname').value.trim();
+  const userTags = (document.getElementById('lib-tags')?.value || '').trim();
   if(!files.length||!dname){ alert('Fill all fields and select a file'); return; }
 
   const log = document.getElementById('lib-log');
@@ -1705,6 +1705,7 @@ async function uploadLibraryDoc(){
       fd.append('owner', 'clearsky');
       fd.append('uploaded_by', 'pablo_library');
       if (dname) fd.append('title', dname);
+      if (userTags) fd.append('tags', userTags);
       const res = await fetch(`${API}/api/knowledge/ingest`, {method:'POST', body:fd});
       const data = await res.json();
       if(!res.ok) throw new Error(data.error||`HTTP ${res.status}`);
