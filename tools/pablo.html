@@ -344,6 +344,7 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
 .gsst{font-family:'DM Mono',monospace;font-size:10.5px}
 .gsst.ok{color:var(--green)}
 .gsst.run{color:var(--amber)}
+.gsst.warn{color:var(--amber)}
 .gsst.wait{color:var(--txt3)}
 .gendls{margin-top:26px;display:flex;flex-direction:column;gap:9px;width:100%;max-width:540px}
 .gendl{display:flex;align-items:center;gap:11px;padding:13px 16px;border-radius:7px;background:var(--bg2);border:1px solid var(--teal);cursor:pointer;transition:all .13s;text-decoration:none;color:var(--teal)}
@@ -1687,7 +1688,7 @@ async function uploadLibraryDoc(){
   const addRow = (msg, st='run') => {
     const row = document.createElement('div');
     row.className='genstep fadein';
-    row.innerHTML=`<span class="gslbl">${msg}</span><span class="gsst ${st==='run'?'run blinking':st==='ok'?'ok':'err'}">${st==='run'?'●':st==='ok'?'✓':'✗'}</span>`;
+    row.innerHTML=`<span class="gslbl">${msg}</span><span class="gsst ${st==='run'?'run blinking':st==='ok'?'ok':st==='warn'?'warn':'err'}">${st==='run'?'●':st==='ok'?'✓':st==='warn'?'⚠':'✗'}</span>`;
     log.appendChild(row); log.scrollTop=9999;
     return row;
   };
@@ -1703,6 +1704,7 @@ async function uploadLibraryDoc(){
       fd.append('file', file, file.name);
       fd.append('owner', 'clearsky');
       fd.append('uploaded_by', 'pablo_library');
+      if (dname) fd.append('title', dname);
       const res = await fetch(`${API}/api/knowledge/ingest`, {method:'POST', body:fd});
       const data = await res.json();
       if(!res.ok) throw new Error(data.error||`HTTP ${res.status}`);
@@ -1710,7 +1712,11 @@ async function uploadLibraryDoc(){
       r1.querySelector('.gslbl').textContent=`Uploaded · ${data.extraction?.word_count||0} words extracted`;
       if(data.knowledge_doc?.id) addRow('AI enrichment complete — tags + summary generated', 'ok');
       else if(data.file_id) addRow('File stored · AI extraction processing', 'ok');
-      addRow(`${dname} ready in library`, 'ok');
+      if(data.extraction_warning){
+        addRow(`${dname||file.name} — ${data.extraction_warning}`, 'warn');
+      } else {
+        addRow(`${dname||file.name} ready in library · ${data.extraction?.word_count||0} words extracted`, 'ok');
+      }
     } catch(e){
       const ws=r1.querySelector('.gsst'); ws.className='gsst err'; ws.textContent='✗';
       r1.querySelector('.gslbl').textContent=`Upload failed: ${e.message}`;
