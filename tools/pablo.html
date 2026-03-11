@@ -100,6 +100,8 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
 #content{flex:1;overflow:hidden;position:relative}
 .view{display:none;height:100%;overflow-y:auto}
 .view.on{display:block}
+.view.on#v-documents{display:flex;flex-direction:column}
+.view.on#v-intel{display:flex}
 .view.docmode{background:var(--doc-bg)}
 
 /* ─── BUTTONS ─────────────────────────────────────────── */
@@ -469,7 +471,7 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
     </div>
 
     <!-- Documents -->
-    <div id="v-documents" class="view docmode" style="display:flex;flex-direction:column">
+    <div id="v-documents" class="view docmode">
       <div class="dochead" id="dochead">
         <span class="docstat"><strong id="dcount">69</strong> files</span>
         <span class="docstat"><strong>21</strong> categories</span>
@@ -535,7 +537,7 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
     </div>
 
     <!-- Intel -->
-    <div id="v-intel" class="view" style="display:flex;height:100%">
+    <div id="v-intel" class="view">
       <div class="intsidebar">
         <div class="intfiltlbl">Registry</div>
         <div class="intfilt on" onclick="filterIntel('')">All</div>
