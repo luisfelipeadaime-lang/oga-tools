@@ -432,14 +432,14 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
 
   <!-- Stat bar -->
   <div id="statbar">
-    <div class="stile"><div class="stlbl">Projects</div><div class="stval" style="color:var(--txt0)">5</div></div>
-    <div class="stile"><div class="stlbl">Total Area</div><div class="stval" style="color:var(--txt0)">82,580 ha</div></div>
-    <div class="stile"><div class="stlbl">CORCs Modeled</div><div class="stval" style="color:var(--teal)">42,474</div></div>
-    <div class="stile"><div class="stlbl">Revenue @$120</div><div class="stval" style="color:var(--teal)">$5.1M</div></div>
-    <div class="stile"><div class="stlbl">Red Flags</div><div class="stval" style="color:var(--red)">9</div></div>
-    <div class="stile"><div class="stlbl">Amber Flags</div><div class="stval" style="color:var(--amber)">11</div></div>
-    <div class="stile"><div class="stlbl">Registries</div><div class="stval" style="color:var(--blue)">3</div></div>
-    <div class="stile"><div class="stlbl">Agents Active</div><div class="stval" style="color:var(--green)">3</div></div>
+    <div class="stile"><div class="stlbl" id="st0l">Projects</div><div class="stval" id="st0v" style="color:var(--txt0)">5</div></div>
+    <div class="stile"><div class="stlbl" id="st1l">Total Area</div><div class="stval" id="st1v" style="color:var(--txt0)">82,580 ha</div></div>
+    <div class="stile"><div class="stlbl" id="st2l">CORCs Modeled</div><div class="stval" id="st2v" style="color:var(--teal)">42,474</div></div>
+    <div class="stile"><div class="stlbl" id="st3l">Revenue @$120</div><div class="stval" id="st3v" style="color:var(--teal)">$5.1M</div></div>
+    <div class="stile"><div class="stlbl" id="st4l">Red Flags</div><div class="stval" id="st4v" style="color:var(--red)">9</div></div>
+    <div class="stile"><div class="stlbl" id="st5l">Amber Flags</div><div class="stval" id="st5v" style="color:var(--amber)">11</div></div>
+    <div class="stile"><div class="stlbl" id="st6l">Registries</div><div class="stval" id="st6v" style="color:var(--blue)">3</div></div>
+    <div class="stile"><div class="stlbl" id="st7l">Agents Active</div><div class="stval" id="st7v" style="color:var(--green)">3</div></div>
   </div>
 
   <!-- Project tabs (hidden when on pipeline/platform) -->
@@ -606,9 +606,16 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
           </div>
           <!-- Browse panel -->
           <div class="lib-browse">
-            <div class="lib-browse-hdr">
-              <input class="dsearch" id="lib-search-input" placeholder="Search documents…" oninput="clearTimeout(STATE.libSearchTimer);STATE.libSearchTimer=setTimeout(loadLibraryDocs,300)" style="max-width:none;flex:1;background:var(--bg3);border-color:var(--border1);color:var(--txt0)">
-              <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--txt2)" id="lib-doc-count"></span>
+            <div class="lib-browse-hdr" style="flex-wrap:wrap">
+              <div style="display:flex;gap:5px;align-items:center;flex-shrink:0">
+                <span class="intfilt on" onclick="libFilter('all',this)" style="padding:4px 8px;font-size:10px;border-radius:4px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700">All</span>
+                <span class="intfilt" onclick="libFilter('Puro',this)" style="padding:4px 8px;font-size:10px;border-radius:4px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;color:var(--teal)">Puro</span>
+                <span class="intfilt" onclick="libFilter('Verra',this)" style="padding:4px 8px;font-size:10px;border-radius:4px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;color:var(--blue)">Verra</span>
+                <span class="intfilt" onclick="libFilter('MITECO',this)" style="padding:4px 8px;font-size:10px;border-radius:4px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;color:var(--amber)">MITECO</span>
+                <span class="intfilt" onclick="libFilter('Isometric',this)" style="padding:4px 8px;font-size:10px;border-radius:4px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;color:var(--violet)">Isometric</span>
+              </div>
+              <input class="dsearch" id="lib-search-input" placeholder="Search documents…" oninput="clearTimeout(STATE.libSearchTimer);STATE.libSearchTimer=setTimeout(()=>loadLibraryDocs(),300)" style="max-width:none;flex:1;min-width:160px;background:var(--bg3);border-color:var(--border1);color:var(--txt0)">
+              <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--txt2);flex-shrink:0" id="lib-doc-count"></span>
             </div>
             <div class="lib-browse-list" id="lib-docs"></div>
           </div>
@@ -797,7 +804,7 @@ const SCRIPTS = [
 const API = 'https://api-tools.oga.earth';
 
 // ══ STATE ══════════════════════════════════════════════════
-const STATE = {proj:null, tab:'overview', view:'pipeline', wizStep:1, wizReg:null, wizMeth:null, pendingFile:null, intakeProjectId:null, libraryFile:null, libSearchTimer:null, intelFilter:''};
+const STATE = {proj:null, tab:'overview', view:'pipeline', wizStep:1, wizReg:null, wizMeth:null, pendingFile:null, intakeProjectId:null, libraryFile:null, libSearchTimer:null, intelFilter:'', libRegFilter:''};
 
 // ══ DB→FRONTEND MAPPER ═══════════════════════════════════
 const COUNTRY_FLAGS = {colombia:'🇨🇴',spain:'🇪🇸',españa:'🇪🇸',sierra_leone:'🇸🇱','sierra leone':'🇸🇱',brazil:'🇧🇷',brasil:'🇧🇷',bolivia:'🇧🇴',peru:'🇵🇪',chile:'🇨🇱',argentina:'🇦🇷',mexico:'🇲🇽',uk:'🇬🇧',portugal:'🇵🇹',usa:'🇺🇸',ghana:'🇬🇭',kenya:'🇰🇪',india:'🇮🇳',indonesia:'🇮🇩',australia:'🇦🇺',canada:'🇨🇦',germany:'🇩🇪',france:'🇫🇷',italy:'🇮🇹',japan:'🇯🇵',china:'🇨🇳',uruguay:'🇺🇾',paraguay:'🇵🇾',ecuador:'🇪🇨',mozambique:'🇲🇿',tanzania:'🇹🇿',costa_rica:'🇨🇷','costa rica':'🇨🇷'};
@@ -919,10 +926,12 @@ function renderCard(p,sc){
 function openProject(id){
   STATE.proj = PROJECTS.find(p=>p.id===id);
   if(!STATE.proj) return;
+  STATE.view='project';
   ['pipeline','library','analytics'].forEach(v=>document.getElementById('nav-'+v).classList.remove('on'));
   renderRail();
   document.getElementById('ptabs').style.display='flex';
   updateTopbar();
+  setProjectStats();
   tab('overview');
 }
 function updateTopbar(){
@@ -1288,12 +1297,94 @@ function filterIntel(q){
 // ══ KNOWLEDGE LIBRARY ════════════════════════════════════
 function renderLibrary(){ loadLibraryDocs(); }
 
+function libFilter(reg, el){
+  STATE.libRegFilter = (reg==='all') ? '' : reg;
+  document.querySelectorAll('.lib-browse-hdr .intfilt').forEach(e=>e.classList.remove('on'));
+  el.classList.add('on');
+  loadLibraryDocs();
+}
+
+function setProjectStats(){
+  const s = (id,l,v,c) => { document.getElementById(id+'l').textContent=l; const ve=document.getElementById(id+'v'); ve.textContent=v; ve.style.color=c||'var(--txt0)'; };
+  const totalHa = PROJECTS.reduce((a,p)=>a+(p.ha||0),0);
+  const totalCorcs = PROJECTS.reduce((a,p)=>a+(p.corcs||0),0);
+  const rF = PROJECTS.reduce((a,p)=>a+(p.flg?.r||0),0);
+  const aF = PROJECTS.reduce((a,p)=>a+(p.flg?.a||0),0);
+  const regs = new Set(PROJECTS.map(p=>p.reg)).size;
+  s('st0','Projects',PROJECTS.length,'var(--txt0)');
+  s('st1','Total Area',totalHa.toLocaleString()+' ha','var(--txt0)');
+  s('st2','CORCs Modeled',totalCorcs.toLocaleString(),'var(--teal)');
+  s('st3','Revenue @$120','$'+(totalCorcs*120/1e6).toFixed(1)+'M','var(--teal)');
+  s('st4','Red Flags',rF,'var(--red)');
+  s('st5','Amber Flags',aF,'var(--amber)');
+  s('st6','Registries',regs,'var(--blue)');
+  s('st7','Agents Active','3','var(--green)');
+}
+
+async function updateLibraryStats(){
+  const s = (id,l,v,c) => { document.getElementById(id+'l').textContent=l; const ve=document.getElementById(id+'v'); ve.textContent=v; ve.style.color=c||'var(--txt0)'; };
+  s('st0','Docs','…','var(--txt0)');
+  s('st1','With Text','…','var(--txt0)');
+  s('st2','Standards','…','var(--teal)');
+  s('st3','Methodologies','…','var(--blue)');
+  s('st4','Countries','…','var(--amber)');
+  s('st5','Themes','…','var(--violet)');
+  s('st6','Sources','…','var(--txt1)');
+  s('st7','Last Upload','…','var(--green)');
+  try {
+    const [docsRes, tagsRes] = await Promise.all([
+      fetch(`${API}/api/wiki/docs?limit=1`).then(r=>r.json()),
+      fetch(`${API}/api/knowledge/tags`).then(r=>r.json())
+    ]);
+    const total = docsRes.total || 0;
+    const tags = tagsRes.tags || [];
+    const byType = {};
+    tags.forEach(t=>{ byType[t.tag_type] = (byType[t.tag_type]||0) + 1; });
+    const latest = (docsRes.docs||[])[0]?.created_at;
+    const latestStr = latest ? new Date(latest).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : '—';
+    s('st0','Docs',total,'var(--txt0)');
+    s('st1','With Text',total,'var(--txt0)');
+    s('st2','Standards',byType.standard||0,'var(--teal)');
+    s('st3','Methodologies',byType.methodology||0,'var(--blue)');
+    s('st4','Countries',byType.country||0,'var(--amber)');
+    s('st5','Themes',byType.theme||0,'var(--violet)');
+    s('st6','Sources',(byType.standard||0)+(byType.methodology||0),'var(--txt1)');
+    s('st7','Last Upload',latestStr,'var(--green)');
+  } catch(e){ console.warn('Stats fetch failed', e); }
+}
+
+function regColorFromTags(tags){
+  const vals = tags.map(t=>(t.value||'').toLowerCase()).join(' ');
+  if(vals.includes('puro')) return 'var(--teal)';
+  if(vals.includes('vcs')||vals.includes('verra')) return 'var(--blue)';
+  if(vals.includes('miteco')) return 'var(--amber)';
+  if(vals.includes('isometric')) return 'var(--violet)';
+  if(vals.includes('gold standard')) return 'var(--green)';
+  if(vals.includes('climate action')) return 'var(--green)';
+  return 'var(--txt1)';
+}
+
+function regLabelFromTags(tags){
+  const std = tags.filter(t=>t.type==='standard');
+  if(std.length) return std[0].value;
+  return '';
+}
+
 async function loadLibraryDocs(){
   const panel = document.getElementById('lib-docs');
   if(!panel) return;
   panel.innerHTML='<div style="color:var(--txt2);font-size:11px;padding:8px">Loading…</div>';
-  const q = document.getElementById('lib-search-input')?.value.trim() || '';
-  let url = `${API}/api/wiki/docs?limit=50`;
+  const searchText = document.getElementById('lib-search-input')?.value.trim() || '';
+  const regFilter = STATE.libRegFilter || '';
+
+  // Build query: combine search text + registry filter using q= (LIKE search)
+  // ?tag= uses exact match which fails because tag values are inconsistent
+  let qParts = [];
+  if(searchText) qParts.push(searchText);
+  if(regFilter) qParts.push(regFilter);
+  const q = qParts.join(' ');
+
+  let url = `${API}/api/wiki/docs?limit=100`;
   if(q) url += `&q=${encodeURIComponent(q)}`;
 
   try {
@@ -1304,34 +1395,47 @@ async function loadLibraryDocs(){
     if(countEl) countEl.textContent = (data.total||docs.length)+' docs';
 
     if(!docs.length){
-      panel.innerHTML='<div style="color:var(--txt2);font-size:11px;padding:12px">No documents yet — upload your first one.</div>';
+      panel.innerHTML='<div style="color:var(--txt2);font-size:11px;padding:12px">No documents found.'+(regFilter?' Try a different filter.':' Upload your first document on the left.')+'</div>';
       return;
     }
 
     panel.innerHTML = docs.map(d=>{
       const tags = d.tags || [];
-      const regTag  = tags.find(t=>t.type==='registry'||t.type==='standard');
       const methTag = tags.find(t=>t.type==='methodology');
       const typeVal = d.document_type || 'other';
-      const reg = regTag?.value || '';
-      const regColors = {'puro':'var(--teal)','puro.earth':'var(--teal)','verra':'var(--blue)','verra vcs':'var(--blue)','miteco':'var(--amber)','miteco españa':'var(--amber)','isometric':'var(--violet)'};
-      const regColor = regColors[reg.toLowerCase()] || 'var(--txt1)';
+      const regLabel = regLabelFromTags(tags);
+      const regColor = regColorFromTags(tags);
+      const title = d.title || 'Untitled';
+      const safeTitle = title.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
       return `<div class="lib-doc-row">
         <div class="lib-doc-icon">${docIcon(typeVal)}</div>
         <div class="lib-doc-info">
-          <div class="lib-doc-name" title="${(d.title||'').replace(/"/g,'&quot;')}">${d.title||'Untitled'}</div>
+          <div class="lib-doc-name" title="${safeTitle}">${title}</div>
           <div class="lib-doc-meta">
-            ${reg?`<span class="badge" style="color:${regColor};background:color-mix(in srgb,${regColor} 10%,transparent);font-size:9px;padding:1px 6px">${reg.toUpperCase()}</span>`:''}
-            ${methTag?`<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--txt2)">${methTag.value.toUpperCase()}</span>`:''}
+            ${regLabel?`<span class="badge" style="color:${regColor};background:color-mix(in srgb,${regColor} 10%,transparent);font-size:9px;padding:1px 6px">${regLabel}</span>`:''}
+            ${methTag?`<span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--txt2)">${methTag.value}</span>`:''}
             <span style="font-size:10px;color:var(--txt2)">${typeVal.replace(/_/g,' ')}</span>
             ${d.word_count?`<span style="font-family:'DM Mono',monospace;font-size:9px;color:var(--txt3)">${d.word_count.toLocaleString()}w</span>`:''}
           </div>
         </div>
+        <a href="${API}/api/knowledge/docs/${d.id}" target="_blank" title="View details" style="color:var(--teal);font-size:11px;text-decoration:none;padding:4px 8px;border:1px solid var(--border1);border-radius:4px;flex-shrink:0;font-family:'Syne',sans-serif;font-weight:700">↓</a>
+        <button onclick="deleteLibDoc('${d.id}',this)" title="Delete" style="background:none;border:1px solid var(--border1);border-radius:4px;color:var(--txt2);cursor:pointer;padding:4px 7px;font-size:11px;flex-shrink:0;transition:all .12s" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border1)';this.style.color='var(--txt2)'">🗑</button>
       </div>`;
     }).join('');
   } catch(e){
     panel.innerHTML=`<div style="color:var(--red);font-size:11px;padding:8px">Failed to load: ${e.message}</div>`;
   }
+}
+
+async function deleteLibDoc(id, btn){
+  if(!confirm('Delete this document from the knowledge library?')) return;
+  btn.disabled=true; btn.textContent='…';
+  try {
+    const res = await fetch(`${API}/api/wiki/docs/${id}`,{method:'DELETE'});
+    if(!res.ok) throw new Error('Delete failed');
+    loadLibraryDocs();
+    updateLibraryStats();
+  } catch(e){ alert('Delete failed: '+e.message); btn.disabled=false; btn.textContent='🗑'; }
 }
 
 // Library upload helpers
@@ -1487,8 +1591,10 @@ function showPlatform(v){
   document.getElementById('topacts').innerHTML=`<button class="btn btn-g btn-s" onclick="openWiz()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New Project</button><button class="btn btn-p btn-s">Generate</button>`;
   document.querySelectorAll('#content .view').forEach(x=>x.classList.remove('on'));
   document.getElementById('v-'+v).classList.add('on');
+  if(v==='library'){ loadLibraryDocs(); updateLibraryStats(); }
+  if(v==='pipeline') setProjectStats();
 }
-function goHome(){ showPlatform('pipeline'); }
+function goHome(){ showPlatform('pipeline'); setProjectStats(); }
 
 // ══ WIZARD ════════════════════════════════════════════════
 function openWiz(){STATE.wizStep=1;STATE.wizReg=null;STATE.wizMeth=null;document.getElementById('wiz-ov').classList.add('on');updWiz();}
