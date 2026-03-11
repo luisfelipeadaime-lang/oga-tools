@@ -223,6 +223,7 @@ SHORTLIST: Week of 2 March | DD: Week of 6 April | VERPA: June 2026</pre></div>
       <div class="fr fr2"><div class="f"><label>Your name</label><input id="ff-who" placeholder="Ana / Carolina / Luis"></div><div class="f"><label>Target RFP<span class="rq">*</span></label><select id="ff-rfp" onchange="onRfpChange()"><option value="">Select...</option><option value="ARR">ARR (Reforestation)</option><option value="Biochar">Biochar</option><option value="Soil Carbon">Soil Carbon</option></select></div></div>
       <div class="fr fr2"><div class="f"><label>Project name<span class="rq">*</span></label><input id="ff-name" placeholder="e.g. Fasera Reforestation"></div><div class="f"><label>Developer<span class="rq">*</span></label><input id="ff-dev" placeholder="Developer company"></div></div>
       <div class="fr fr2"><div class="f"><label>Country<span class="rq">*</span></label><input id="ff-country" placeholder="e.g. Mozambique"></div><div class="f"><label>Developer contact</label><input id="ff-contact" placeholder="Name, email, phone"></div></div>
+      <div class="f"><label>PABLO Project</label><select id="ff-pablo"><option value="">None (standalone)</option></select><p class="ht">Link to a PABLO pipeline project</p></div>
     </div>
     <div class="sp-sec"><div class="sp-sec-t">Technical</div>
       <div class="fr fr2"><div class="f"><label>Methodology<span class="rq">*</span></label><select id="ff-meth"><option value="">Select RFP first...</option></select></div><div class="f"><label>Standard<span class="rq">*</span></label><select id="ff-std"><option value="">Select RFP first...</option></select></div></div>
@@ -504,10 +505,12 @@ async function saveProject(){
   try{
     var pid;
     if(editId){
-      await api('/api/'+TOOL+'/projects/'+editId,{method:'PUT',body:JSON.stringify({data:d,skipScreening:true})});
+      var pbl=$('ff-pablo').value||null;
+      await api('/api/'+TOOL+'/projects/'+editId,{method:'PUT',body:JSON.stringify({data:d,skipScreening:true,pablo_project_id:pbl})});
       pid=editId;
     }else{
-      var r=await api('/api/'+TOOL+'/projects',{method:'POST',body:JSON.stringify({data:d,submitted_by:d.submittedBy||'unknown',skipScreening:true})});
+      var pbl=$('ff-pablo').value||null;
+      var r=await api('/api/'+TOOL+'/projects',{method:'POST',body:JSON.stringify({data:d,submitted_by:d.submittedBy||'unknown',skipScreening:true,pablo_project_id:pbl})});
       pid=r.id;
     }
     // Upload files
@@ -560,6 +563,7 @@ function editProject(pid){
   var p=projects.find(function(x){return x.id===pid});if(!p)return;
   editId=pid;
   setFormData(p.data);
+  $('ff-pablo').value=p.pablo_project_id||'';
   // Clear file input and preview to prevent cross-project file contamination
   $('ff-files').value='';$('file-list').innerHTML='';$('existing-files').innerHTML='';
   $('sp-loading').classList.remove('show');
@@ -663,8 +667,20 @@ var a=document.createElement("a");a.href=URL.createObjectURL(buf);a.download=fn;
 toast("Report downloaded!");
 }catch(e){console.error("Report generation error:",e);toast("Report failed: "+e.message,false)}}
 
+// ═══ PABLO SELECTOR ═══
+async function loadPabloSelector(){
+  try{
+    var r=await fetch(API_BASE+'/api/pablo/projects/selector');
+    if(!r.ok)return;
+    var d=await r.json();
+    var sel=$('ff-pablo');
+    (d.projects||[]).forEach(function(p){var o=document.createElement('option');o.value=p.id;o.textContent=p.name;sel.appendChild(o)});
+  }catch(e){console.warn('Pablo selector load failed',e)}
+}
+
 // ═══ INIT ═══
 loadProjects();
+loadPabloSelector();
 </script>
 </body>
 </html>

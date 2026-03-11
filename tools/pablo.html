@@ -453,6 +453,7 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
     <div class="ptab on" onclick="tab('overview')">Overview</div>
     <div class="ptab" onclick="tab('documents')">Documents</div>
     <div class="ptab" onclick="tab('analysis')">Analysis</div>
+    <div class="ptab" onclick="tab('links')">Links</div>
     <div class="ptab" onclick="tab('deliverables')">Deliverables</div>
     <div class="ptab" onclick="tab('agents')">Agents</div>
     <div class="ptab" onclick="tab('intel')">Intel</div>
@@ -525,6 +526,17 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
     <!-- Analysis -->
     <div id="v-analysis" class="view">
       <div class="anwrap" id="an-content"></div>
+    </div>
+
+    <!-- Links -->
+    <div id="v-links" class="view">
+      <div style="padding:20px;max-width:900px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <h3 style="margin:0;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;letter-spacing:.08em;color:var(--fg)">LINKED TOOLS</h3>
+          <span id="links-count" style="font-size:11px;color:var(--txt2)"></span>
+        </div>
+        <div id="links-content" style="display:flex;flex-direction:column;gap:12px"></div>
+      </div>
     </div>
 
     <!-- Deliverables -->
@@ -959,7 +971,7 @@ function updateTopbar(){
 function tab(t){
   STATE.tab=t;
   document.querySelectorAll('.ptab').forEach((el,i)=>{
-    const tabs=['overview','documents','analysis','deliverables','agents','intel'];
+    const tabs=['overview','documents','analysis','links','deliverables','agents','intel'];
     el.classList.toggle('on', tabs[i]===t);
   });
   document.querySelectorAll('#content .view').forEach(v=>v.classList.remove('on'));
@@ -968,6 +980,7 @@ function tab(t){
   if(t==='overview') renderOv();
   if(t==='documents') renderDocs();
   if(t==='analysis') renderAnalysis();
+  if(t==='links') renderLinks();
   if(t==='deliverables') renderDel();
   if(t==='agents') renderAgents();
   if(t==='intel') loadIntelDocs(STATE.proj);
@@ -1119,6 +1132,65 @@ function renderAnalysis(){
       </div>
     </div>
   `;
+}
+
+// ══ LINKS ═══════════════════════════════════════════════
+async function renderLinks(){
+  const p=STATE.proj;
+  const cnt=document.getElementById('links-content');
+  const countEl=document.getElementById('links-count');
+  if(!p){cnt.innerHTML='<div style="color:var(--txt2);font-size:12px">Select a project first.</div>';return;}
+  cnt.innerHTML='<div style="color:var(--txt2);font-size:12px">Loading linked tools…</div>';
+  try{
+    const res=await fetch(API+'/api/pablo/projects/'+p.id+'/linked');
+    if(!res.ok) throw new Error('Failed to load');
+    const d=await res.json();
+    const all=[...d.linked_projects,...d.miteco_projects,...d.miteco_documents];
+    countEl.textContent=all.length?all.length+' linked':'No links yet';
+    if(!all.length){
+      cnt.innerHTML=`<div style="color:var(--txt2);font-size:12px;line-height:1.6">
+        No tools are linked to this project yet.<br>
+        Link from RFP Screener, Good Carbon, or MITECO-DD by selecting this project in their dropdown.
+      </div>`;
+      return;
+    }
+    let html='';
+    if(d.linked_projects.length){
+      html+=`<div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--txt2);margin-bottom:4px">RFP / SCREENER PROJECTS</div>`;
+      for(const lp of d.linked_projects){
+        const tool=lp.tool==='ey-rfp'?'RFP Screener':lp.tool==='goodcarbon'?'Good Carbon':lp.tool;
+        html+=`<div style="background:var(--card);border:1px solid var(--bdr);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px">
+          <span style="font-size:10px;background:var(--pri);color:#fff;padding:2px 8px;border-radius:4px;font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.06em">${tool}</span>
+          <span style="font-size:13px;font-weight:600;color:var(--fg)">${lp.name}</span>
+          <span style="margin-left:auto;font-size:10px;color:var(--txt2)">${lp.created_at?lp.created_at.slice(0,10):''}</span>
+        </div>`;
+      }
+    }
+    if(d.miteco_projects.length){
+      html+=`<div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--txt2);margin-top:12px;margin-bottom:4px">MITECO PROJECTS</div>`;
+      for(const mp of d.miteco_projects){
+        html+=`<div style="background:var(--card);border:1px solid var(--bdr);border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:12px">
+          <span style="font-size:10px;background:#E67E22;color:#fff;padding:2px 8px;border-radius:4px;font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.06em">MITECO</span>
+          <span style="font-size:13px;font-weight:600;color:var(--fg)">${mp.name}</span>
+          <span style="font-size:10px;background:rgba(255,255,255,.08);padding:2px 6px;border-radius:4px;color:var(--txt2)">${mp.status||'draft'}</span>
+          <span style="margin-left:auto;font-size:10px;color:var(--txt2)">${mp.created_at?mp.created_at.slice(0,10):''}</span>
+        </div>`;
+      }
+    }
+    if(d.miteco_documents.length){
+      html+=`<div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--txt2);margin-top:12px;margin-bottom:4px">MITECO DOCUMENTS (${d.miteco_documents.length})</div>`;
+      for(const md of d.miteco_documents){
+        html+=`<div style="background:var(--card);border:1px solid var(--bdr);border-radius:8px;padding:10px 16px;display:flex;align-items:center;gap:12px">
+          <span style="font-size:10px;color:var(--txt2);font-family:'JetBrains Mono',monospace">${md.category||md.doc_type||'—'}</span>
+          <span style="font-size:12px;color:var(--fg)">${md.filename||'—'}</span>
+          <span style="font-size:10px;background:rgba(255,255,255,.08);padding:2px 6px;border-radius:4px;color:var(--txt2)">${md.status||''}</span>
+        </div>`;
+      }
+    }
+    cnt.innerHTML=html;
+  }catch(e){
+    cnt.innerHTML='<div style="color:var(--red);font-size:12px">Error loading links: '+e.message+'</div>';
+  }
 }
 
 // ══ DELIVERABLES ══════════════════════════════════════════
