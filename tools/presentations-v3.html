@@ -659,7 +659,7 @@ async function loadProjects() {
   list.innerHTML='<div style="text-align:center;padding:32px;color:var(--midGray);"><div class="spinner" style="width:28px;height:28px;margin:0 auto 10px;"></div>Loading...</div>';
   var docs=MOCK_PROJECTS; // fallback
   try {
-    var r=await fetch(API+'/api/wiki/docs?type=project_dossier&owner=clearsky001');
+    var r=await fetch(API+'/api/wiki/docs?type=project_dossier&owner=clearsky');
     if(r.ok){var d=await r.json();if(Array.isArray(d.docs)&&d.docs.length)docs=d.docs;}
   } catch(e){}
   renderProjects(docs);
@@ -728,7 +728,7 @@ async function quickUpload(file){
   dz.style.pointerEvents='none';dz.style.opacity='.7';
   var e=document.getElementById('e-proj');e.style.display='none';
   try{
-    var fd=new FormData();fd.append('file',file);fd.append('owner','clearsky001');fd.append('document_type','project_dossier');
+    var fd=new FormData();fd.append('file',file);fd.append('owner','clearsky');fd.append('document_type','project_dossier');
     var r=await fetch(API+'/api/presentations/v2/ingest-pds',{method:'POST',body:fd});
     if(!r.ok){var ed=await r.json().catch(function(){return{};});throw new Error(ed.error||ed.extraction_error||'Upload failed ('+r.status+')');}
     var d=await r.json();
@@ -781,14 +781,14 @@ async function doUpload(){
   btn.disabled=true;btn.innerHTML='<span class="isp"></span> Uploading...';
   try{
     for(var i=0;i<state.officialFiles.length;i++){
-      var fd=new FormData();fd.append('file',state.officialFiles[i]);fd.append('owner','clearsky001');fd.append('document_type','project_dossier');
+      var fd=new FormData();fd.append('file',state.officialFiles[i]);fd.append('owner','clearsky');fd.append('document_type','project_dossier');
       var r=await fetch(API+'/api/presentations/v2/ingest-pds',{method:'POST',body:fd});
       if(!r.ok)throw new Error('Upload failed '+r.status);
       var d=await r.json();
       if(d.project_id)state.projects.push({id:d.project_id,title:state.officialFiles[i].name.replace('.pdf',''),registry:'Uploaded'});
     }
     for(var i=0;i<state.supportFiles.length;i++){
-      var fd=new FormData();fd.append('file',state.supportFiles[i]);fd.append('owner','clearsky001');fd.append('document_type','project_supporting');
+      var fd=new FormData();fd.append('file',state.supportFiles[i]);fd.append('owner','clearsky');fd.append('document_type','project_supporting');
       await fetch(API+'/api/presentations/v2/ingest-pds',{method:'POST',body:fd});
     }
     await loadProjects();goTo('s1');
