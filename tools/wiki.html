@@ -210,6 +210,7 @@ body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xm
         <span class="lib-search-icon">&#x1F50D;</span>
         <input class="lib-search" id="lib-search" placeholder="Search documents..." oninput="onSearchInput()">
       </div>
+      <div class="lib-tags" id="wiki-registry-filter" style="margin-bottom:4px"></div>
       <div class="lib-tags" id="lib-tags"></div>
     </div>
     <div class="lib-list" id="lib-list">
@@ -298,7 +299,20 @@ async function init(){
       if(d.user){user=d.user;document.getElementById('user-name').textContent=user.name}
     }catch(e){}
   }
-  loadDocs();loadTags();
+  loadDocs();loadTags();loadWikiRegistries();
+}
+async function loadWikiRegistries(){
+  try{
+    var r=await api('/api/knowledge/registries');
+    var regs=r.registries||[];
+    var el=document.getElementById('wiki-registry-filter');
+    if(!el||!regs.length)return;
+    el.innerHTML='<span class="tag-chip'+(activeTag?'':' active')+'" onclick="toggleTag(\'\')">All</span>'+
+      regs.map(function(reg){
+        var isActive=activeTag===reg.registry;
+        return '<span class="tag-chip'+(isActive?' active':'')+'" onclick="toggleTag(\''+reg.registry.replace(/'/g,"\\'")+'\')">'+reg.registry+' <span style="opacity:.5;font-size:8px">'+reg.doc_count+'</span></span>';
+      }).join('');
+  }catch(e){}
 }
 function logout(){localStorage.removeItem('cs_token');window.location.href='/'}
 

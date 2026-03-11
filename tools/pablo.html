@@ -558,11 +558,9 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
     <div id="v-intel" class="view">
       <div class="intsidebar">
         <div class="intfiltlbl">Registry</div>
-        <div class="intfilt on" onclick="filterIntel('')">All</div>
-        <div class="intfilt" onclick="filterIntel('Puro.earth')">Puro.earth</div>
-        <div class="intfilt" onclick="filterIntel('Verra')">Verra VCS</div>
-        <div class="intfilt" onclick="filterIntel('MITECO')">MITECO</div>
-        <div class="intfilt" onclick="filterIntel('Isometric')">Isometric</div>
+        <div id="intel-registry-filter">
+          <div class="intfilt on" onclick="filterIntel('')">All</div>
+        </div>
         <div class="intfiltlbl" style="margin-top:12px">Type</div>
         <div class="intfilt" onclick="filterIntel('methodology')">Methodologies</div>
         <div class="intfilt" onclick="filterIntel('benchmark')">Benchmarks</div>
@@ -633,12 +631,8 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
           <!-- Browse panel -->
           <div class="lib-browse">
             <div class="lib-browse-hdr" style="flex-wrap:wrap">
-              <div style="display:flex;gap:5px;align-items:center;flex-shrink:0">
+              <div id="kb-registry-filter" style="display:flex;gap:5px;align-items:center;flex-shrink:0;flex-wrap:wrap">
                 <span class="intfilt on" onclick="libFilter('all',this)" style="padding:4px 8px;font-size:10px;border-radius:4px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700">All</span>
-                <span class="intfilt" onclick="libFilter('Puro',this)" style="padding:4px 8px;font-size:10px;border-radius:4px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;color:var(--teal)">Puro</span>
-                <span class="intfilt" onclick="libFilter('Verra',this)" style="padding:4px 8px;font-size:10px;border-radius:4px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;color:var(--blue)">Verra</span>
-                <span class="intfilt" onclick="libFilter('MITECO',this)" style="padding:4px 8px;font-size:10px;border-radius:4px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;color:var(--amber)">MITECO</span>
-                <span class="intfilt" onclick="libFilter('Isometric',this)" style="padding:4px 8px;font-size:10px;border-radius:4px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;color:var(--violet)">Isometric</span>
               </div>
               <input class="dsearch" id="lib-search-input" placeholder="Search documents…" oninput="clearTimeout(STATE.libSearchTimer);STATE.libSearchTimer=setTimeout(()=>loadLibraryDocs(),300)" style="max-width:none;flex:1;min-width:160px;background:var(--bg3);border-color:var(--border1);color:var(--txt0)">
               <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--txt2);flex-shrink:0" id="lib-doc-count"></span>
@@ -1448,7 +1442,32 @@ function filterIntel(q){
 }
 
 // ══ KNOWLEDGE LIBRARY ════════════════════════════════════
-function renderLibrary(){ loadLibraryDocs(); }
+function renderLibrary(){ loadLibraryDocs(); loadKBRegistries(); }
+
+async function loadKBRegistries(){
+  try {
+    const res = await fetch(`${API}/api/knowledge/registries`);
+    const data = await res.json();
+    const registries = data.registries || [];
+    const container = document.getElementById('kb-registry-filter');
+    if (!container || !registries.length) return;
+    const REG_COLORS = {puro_earth:'var(--teal)',verra:'var(--blue)',miteco:'var(--amber)',isometric:'var(--violet)',gold_standard:'var(--amber)'};
+    const allBtn = `<span class="intfilt${STATE.libRegFilter?'':' on'}" onclick="libFilter('all',this)" style="padding:4px 8px;font-size:10px;border-radius:4px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700">All</span>`;
+    const regBtns = registries.map(r => {
+      const c = REG_COLORS[r.registry] || 'var(--txt2)';
+      const active = STATE.libRegFilter === r.registry;
+      return `<span class="intfilt${active?' on':''}" onclick="libFilter('${r.registry}',this)" style="padding:4px 8px;font-size:10px;border-radius:4px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;color:${c}">${r.registry} <span style="opacity:0.5;font-size:8px">${r.doc_count}</span></span>`;
+    }).join('');
+    container.innerHTML = allBtn + regBtns;
+    // Also populate Intel sidebar registry filter
+    const intelFilter = document.getElementById('intel-registry-filter');
+    if (intelFilter) {
+      const iAll = `<div class="intfilt on" onclick="filterIntel('')">All</div>`;
+      const iBtns = registries.map(r => `<div class="intfilt" onclick="filterIntel('${r.registry}')">${r.registry}</div>`).join('');
+      intelFilter.innerHTML = iAll + iBtns;
+    }
+  } catch(e) { /* fallback: keep existing buttons */ }
+}
 
 function libFilter(reg, el){
   STATE.libRegFilter = (reg==='all') ? '' : reg.toLowerCase();
@@ -1912,7 +1931,7 @@ function showPlatform(v){
   document.getElementById('topacts').innerHTML=`<button class="btn btn-g btn-s" onclick="openWiz()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New Project</button><button class="btn btn-p btn-s">Generate</button>`;
   document.querySelectorAll('#content .view').forEach(x=>x.classList.remove('on'));
   document.getElementById('v-'+v).classList.add('on');
-  if(v==='library'){ loadLibraryDocs(); updateLibraryStats(); }
+  if(v==='library'){ loadLibraryDocs(); updateLibraryStats(); loadKBRegistries(); }
   if(v==='pipeline') setProjectStats();
   if(v==='workflows') loadWorkflowHistory();
 }
