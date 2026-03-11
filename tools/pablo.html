@@ -385,6 +385,10 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       Pipeline
     </div>
+    <div class="rnavitem" id="nav-workflows" onclick="showPlatform('workflows')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      Workflows
+    </div>
     <div class="rnavitem" id="nav-library" onclick="showPlatform('library')">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
       Knowledge Library
@@ -646,6 +650,62 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
     </div>
 
     <!-- Platform: Analytics -->
+    <div id="v-workflows" class="view">
+      <div style="padding:22px">
+        <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--txt0);margin-bottom:4px">Workflows</div>
+        <div style="font-size:11px;color:var(--txt2);margin-bottom:18px">Drop documents — PABLO identifies and runs the workflow</div>
+
+        <div id="wf-dropzone" style="border:2px dashed var(--border1);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:border-color 0.2s,background 0.2s"
+          ondrop="handleWorkflowDrop(event)" ondragover="event.preventDefault()"
+          ondragleave="wfDropzoneReset()" ondragenter="wfDropzoneHighlight()">
+          <div style="font-size:28px;margin-bottom:8px">📂</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--txt0)">Drop a ZIP file or any document</div>
+          <div style="font-size:11px;color:var(--txt2);margin-top:4px">PDF, DOCX, XLSX, ZIP — PABLO detects the workflow automatically</div>
+          <input type="file" id="wf-file-input" style="display:none" accept=".zip,.pdf,.docx,.xlsx,.txt" onchange="handleWorkflowFileSelect(event)">
+          <button onclick="document.getElementById('wf-file-input').click()" style="margin-top:12px;padding:6px 16px;background:var(--teal);color:#000;border:none;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer">Browse Files</button>
+        </div>
+
+        <div id="wf-confirm-card" style="display:none;margin-top:16px">
+          <div style="border:1px solid var(--border1);border-radius:10px;padding:16px">
+            <div id="wf-intent-header" style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--txt0);margin-bottom:8px"></div>
+            <div id="wf-intent-detail" style="font-size:11px;color:var(--txt2);margin-bottom:12px"></div>
+            <div style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Files detected</div>
+            <div id="wf-file-list" style="margin-bottom:12px"></div>
+            <div style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Output format</div>
+            <div id="wf-format-selector" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"></div>
+            <div style="display:flex;gap:8px">
+              <button id="wf-run-btn" onclick="runWorkflow()" style="flex:1;padding:10px;background:var(--teal);color:#000;border:none;border-radius:6px;font-family:'Syne',sans-serif;font-weight:700;font-size:12px;cursor:pointer">▶ Run Workflow</button>
+              <button onclick="wfReset()" style="padding:10px 16px;background:transparent;color:var(--txt2);border:1px solid var(--border1);border-radius:6px;font-size:11px;cursor:pointer">Cancel</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="wf-progress" style="display:none;margin-top:16px;padding:16px;border:1px solid var(--border1);border-radius:10px">
+          <div id="wf-progress-status" style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--txt0);margin-bottom:8px">Running analysis…</div>
+          <div style="height:3px;background:var(--border0);border-radius:2px;overflow:hidden">
+            <div id="wf-progress-bar" style="height:100%;background:var(--teal);width:0%;transition:width 0.5s;border-radius:2px"></div>
+          </div>
+        </div>
+
+        <div id="wf-result" style="display:none;margin-top:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--txt0)">Workflow Complete</div>
+            <div style="display:flex;gap:8px">
+              <button onclick="downloadWorkflowResult()" style="padding:5px 12px;background:var(--teal);color:#000;border:none;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer">↓ Download</button>
+              <button onclick="saveWorkflowAsTemplate()" style="padding:5px 12px;background:transparent;color:var(--txt2);border:1px solid var(--border1);border-radius:5px;font-size:11px;cursor:pointer">Save as Template</button>
+              <button onclick="wfReset()" style="padding:5px 12px;background:transparent;color:var(--txt2);border:1px solid var(--border1);border-radius:5px;font-size:11px;cursor:pointer">New Workflow</button>
+            </div>
+          </div>
+          <div id="wf-result-content" style="background:var(--bg1);border:1px solid var(--border0);border-radius:8px;padding:16px;font-size:11px;line-height:1.7;max-height:600px;overflow-y:auto;white-space:pre-wrap;font-family:monospace;color:var(--txt1)"></div>
+        </div>
+
+        <div style="margin-top:20px">
+          <div style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Recent Runs</div>
+          <div id="wf-history-list"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="v-analytics" class="view">
       <div style="padding:22px">
         <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--txt0);margin-bottom:18px">Analytics</div>
@@ -1831,17 +1891,19 @@ function renderAnalytics(){
 function showPlatform(v){
   STATE.proj=null;
   STATE.view=v;
-  ['pipeline','library','analytics'].forEach(x=>document.getElementById('nav-'+x).classList.remove('on'));
+  ['pipeline','workflows','library','analytics'].forEach(x=>document.getElementById('nav-'+x).classList.remove('on'));
   document.getElementById('nav-'+v).classList.add('on');
   renderRail();
   document.getElementById('ptabs').style.display='none';
-  document.getElementById('crumb').innerHTML=`<span class="crumb-cur">${v==='pipeline'?'Project Pipeline':v==='library'?'Knowledge Library':'Analytics'}</span>`;
+  const labels={pipeline:'Project Pipeline',workflows:'Workflows',library:'Knowledge Library',analytics:'Analytics'};
+  document.getElementById('crumb').innerHTML=`<span class="crumb-cur">${labels[v]||v}</span>`;
   document.getElementById('crmeta').innerHTML='';
   document.getElementById('topacts').innerHTML=`<button class="btn btn-g btn-s" onclick="openWiz()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New Project</button><button class="btn btn-p btn-s">Generate</button>`;
   document.querySelectorAll('#content .view').forEach(x=>x.classList.remove('on'));
   document.getElementById('v-'+v).classList.add('on');
   if(v==='library'){ loadLibraryDocs(); updateLibraryStats(); }
   if(v==='pipeline') setProjectStats();
+  if(v==='workflows') loadWorkflowHistory();
 }
 function goHome(){ showPlatform('pipeline'); setProjectStats(); }
 
@@ -2136,6 +2198,181 @@ async function deleteProject(){
     STATE.proj=null;
     goHome();
   } catch(e){ alert('Delete failed: '+e.message); }
+}
+
+// ══ WORKFLOW ENGINE ════════════════════════════════════════════
+const WF = { runId: null, selectedFormat: null, result: null };
+const WF_FORMATS = {
+  dd_report:            { label: 'DD Report',            desc: 'Full due diligence analysis' },
+  screening_memo:       { label: 'Screening Memo',       desc: 'Quick pass/fail assessment' },
+  compliance_checklist: { label: 'Compliance Checklist',  desc: 'Requirement-by-requirement table' },
+  submission_package:   { label: 'Submission Package',    desc: 'Draft answers for buyer/registry' },
+  prefeasibility_memo:  { label: 'Pre-Feasibility',      desc: 'Is this worth pursuing?' },
+  scorecard:            { label: 'Scorecard',             desc: 'Weighted scoring table' }
+};
+
+function wfDropzoneHighlight() {
+  const dz = document.getElementById('wf-dropzone');
+  dz.style.borderColor = 'var(--teal)';
+  dz.style.background = 'rgba(0,200,180,0.04)';
+}
+function wfDropzoneReset() {
+  const dz = document.getElementById('wf-dropzone');
+  if (!dz) return;
+  dz.style.borderColor = 'var(--border1)';
+  dz.style.background = 'transparent';
+}
+function wfToast(msg, type) {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:20px;right:20px;padding:10px 18px;border-radius:8px;font-size:12px;font-weight:600;z-index:9999;color:#fff;background:${type==='error'?'#e44':'var(--teal)'};box-shadow:0 4px 12px rgba(0,0,0,0.3);transition:opacity 0.3s`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3500);
+}
+async function handleWorkflowDrop(e) {
+  e.preventDefault(); wfDropzoneReset();
+  const file = e.dataTransfer.files[0];
+  if (file) await ingestWorkflowFile(file);
+}
+async function handleWorkflowFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) await ingestWorkflowFile(file);
+}
+
+async function ingestWorkflowFile(file) {
+  document.getElementById('wf-dropzone').innerHTML = `<div style="color:var(--txt2);font-size:12px"><div style="font-size:20px;margin-bottom:8px">⏳</div>Analyzing ${file.name}…<br><span style="font-size:10px">Extracting documents and detecting workflow intent</span></div>`;
+  try {
+    const fd = new FormData();
+    fd.append('file', file);
+    if (STATE.proj?.id) fd.append('pablo_project_id', STATE.proj.id);
+    const res = await fetch(`${API}/api/pablo/workflows/ingest`, { method: 'POST', body: fd });
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    WF.runId = data.run_id;
+    renderConfirmCard(data);
+  } catch(e) {
+    document.getElementById('wf-dropzone').innerHTML = `<div style="color:var(--red,#e44);font-size:12px">Error: ${e.message}</div><button onclick="wfReset()" style="margin-top:8px;padding:4px 12px;font-size:11px;cursor:pointer;border:1px solid var(--border1);background:transparent;color:var(--txt2);border-radius:4px">Try again</button>`;
+  }
+}
+
+function renderConfirmCard(data) {
+  document.getElementById('wf-dropzone').style.display = 'none';
+  document.getElementById('wf-intent-header').textContent = `PABLO detected: ${data.intent}`;
+  const confPct = Math.round(data.confidence * 100);
+  document.getElementById('wf-intent-detail').innerHTML =
+    `${data.file_count} file(s) · Confidence: ${confPct}%` +
+    (data.registry_context ? ` · Registry: ${data.registry_context}` : '') +
+    (data.methodology_context ? ` · ${data.methodology_context}` : '') +
+    (data.key_questions?.length ? `<br><br><strong>Key questions:</strong><br>` + data.key_questions.map(q => `• ${q}`).join('<br>') : '');
+  document.getElementById('wf-file-list').innerHTML = data.inputs.map(f =>
+    `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border0);font-size:10px"><span style="color:var(--txt1)">${f.filename}</span><span style="color:var(--teal)">${f.classified_as}</span></div>`).join('');
+  const suggested = data.suggested_output_formats?.[0] || 'dd_report';
+  WF.selectedFormat = suggested;
+  const fmts = data.suggested_output_formats?.length ? data.suggested_output_formats : ['dd_report'];
+  document.getElementById('wf-format-selector').innerHTML = fmts.map(fmt => {
+    const info = WF_FORMATS[fmt] || { label: fmt, desc: '' };
+    const sel = fmt === suggested;
+    return `<button onclick="selectWFFormat('${fmt}',this)" data-fmt="${fmt}" style="padding:6px 10px;border:1px solid ${sel?'var(--teal)':'var(--border1)'};background:${sel?'rgba(0,200,180,0.1)':'transparent'};color:${sel?'var(--teal)':'var(--txt2)'};border-radius:5px;font-size:10px;cursor:pointer;text-align:left"><div style="font-weight:700">${info.label}</div><div style="font-size:9px;opacity:0.7">${info.desc}</div></button>`;
+  }).join('');
+  document.getElementById('wf-confirm-card').style.display = 'block';
+  loadWorkflowHistory();
+}
+
+function selectWFFormat(fmt) {
+  WF.selectedFormat = fmt;
+  document.querySelectorAll('#wf-format-selector button').forEach(b => {
+    const s = b.dataset.fmt === fmt;
+    b.style.borderColor = s ? 'var(--teal)' : 'var(--border1)';
+    b.style.background = s ? 'rgba(0,200,180,0.1)' : 'transparent';
+    b.style.color = s ? 'var(--teal)' : 'var(--txt2)';
+  });
+}
+
+async function runWorkflow() {
+  if (!WF.runId) return;
+  document.getElementById('wf-confirm-card').style.display = 'none';
+  document.getElementById('wf-progress').style.display = 'block';
+  const statusEl = document.getElementById('wf-progress-status');
+  const barEl = document.getElementById('wf-progress-bar');
+  let pct = 0;
+  const progressInterval = setInterval(() => { pct = Math.min(pct + 2, 85); barEl.style.width = pct + '%'; }, 1000);
+  statusEl.textContent = 'Pulling knowledge base context…';
+  setTimeout(() => { statusEl.textContent = 'Running analysis (30–60s)…'; }, 5000);
+  try {
+    const res = await fetch(`${API}/api/pablo/workflows/run`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ run_id: WF.runId, output_format: WF.selectedFormat })
+    });
+    clearInterval(progressInterval); barEl.style.width = '100%';
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    WF.result = data.result;
+    setTimeout(() => { document.getElementById('wf-progress').style.display = 'none'; renderWorkflowResult(data); }, 400);
+  } catch(e) {
+    clearInterval(progressInterval);
+    document.getElementById('wf-progress').style.display = 'none';
+    wfToast('Workflow failed: ' + e.message, 'error');
+    wfReset();
+  }
+}
+
+function renderWorkflowResult(data) {
+  document.getElementById('wf-result-content').textContent = data.result || '';
+  document.getElementById('wf-result').style.display = 'block';
+  loadWorkflowHistory();
+  wfToast('Workflow complete — result saved to Knowledge Library');
+}
+
+function downloadWorkflowResult() {
+  if (!WF.result) return;
+  const blob = new Blob([WF.result], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url;
+  a.download = `workflow-result-${WF.selectedFormat}-${Date.now()}.md`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+async function saveWorkflowAsTemplate() {
+  const name = prompt('Name for this workflow template:');
+  if (!name) return;
+  try {
+    await fetch(`${API}/api/pablo/workflows/save`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ run_id: WF.runId, name }) });
+    wfToast('Saved as reusable workflow template');
+    loadWorkflowHistory();
+  } catch(e) { wfToast('Save failed: ' + e.message, 'error'); }
+}
+
+async function loadWorkflowHistory() {
+  const el = document.getElementById('wf-history-list');
+  if (!el) return;
+  try {
+    const res = await fetch(`${API}/api/pablo/workflows/runs?limit=8`);
+    const data = await res.json();
+    const runs = data.runs || [];
+    if (!runs.length) { el.innerHTML = '<div style="font-size:10px;color:var(--txt2)">No runs yet</div>'; return; }
+    el.innerHTML = runs.map(r => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border0)">
+        <div>
+          <div style="font-size:11px;color:var(--txt1)">${(r.detected_intent||'Workflow run').substring(0,55)}</div>
+          <div style="font-size:9px;color:var(--txt2);margin-top:1px">${r.output_format||r.detected_type||''} · ${(r.started_at||'').substring(0,10)}</div>
+        </div>
+        <span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${r.status==='complete'?'rgba(0,200,180,0.15)':r.status==='failed'?'rgba(255,80,80,0.15)':'rgba(255,200,0,0.15)'};color:${r.status==='complete'?'var(--teal)':r.status==='failed'?'#e44':'#ffcc00'}">${r.status}</span>
+      </div>`).join('');
+  } catch(e) { el.innerHTML = '<div style="font-size:10px;color:var(--txt2)">Error loading history</div>'; }
+}
+
+function wfReset() {
+  WF.runId = null; WF.selectedFormat = null; WF.result = null;
+  document.getElementById('wf-confirm-card').style.display = 'none';
+  document.getElementById('wf-progress').style.display = 'none';
+  document.getElementById('wf-result').style.display = 'none';
+  const dz = document.getElementById('wf-dropzone');
+  dz.style.display = 'block';
+  dz.innerHTML = `<div style="font-size:28px;margin-bottom:8px">📂</div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--txt0)">Drop a ZIP file or any document</div><div style="font-size:11px;color:var(--txt2);margin-top:4px">PDF, DOCX, XLSX, ZIP — PABLO detects the workflow automatically</div><input type="file" id="wf-file-input" style="display:none" accept=".zip,.pdf,.docx,.xlsx,.txt" onchange="handleWorkflowFileSelect(event)"><button onclick="document.getElementById('wf-file-input').click()" style="margin-top:12px;padding:6px 16px;background:var(--teal);color:#000;border:none;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer">Browse Files</button>`;
+  wfDropzoneReset();
+  loadWorkflowHistory();
 }
 
 init();
