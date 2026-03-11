@@ -675,7 +675,7 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
             <div id="wf-format-selector" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"></div>
             <div style="display:flex;gap:8px">
               <button id="wf-run-btn" onclick="runWorkflow()" style="flex:1;padding:10px;background:var(--teal);color:#000;border:none;border-radius:6px;font-family:'Syne',sans-serif;font-weight:700;font-size:12px;cursor:pointer">▶ Run Workflow</button>
-              <button onclick="wfReset()" style="padding:10px 16px;background:transparent;color:var(--txt2);border:1px solid var(--border1);border-radius:6px;font-size:11px;cursor:pointer">Cancel</button>
+              <button onclick="wfReset()" style="padding:10px 16px;background:transparent;color:var(--txt2);border:1px solid var(--border1);border-radius:6px;font-size:11px;cursor:pointer">Reset</button>
             </div>
           </div>
         </div>
@@ -692,11 +692,22 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
             <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--txt0)">Workflow Complete</div>
             <div style="display:flex;gap:8px">
               <button onclick="downloadWorkflowResult()" style="padding:5px 12px;background:var(--teal);color:#000;border:none;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer">↓ Download</button>
+              <button onclick="wfRetryFormat()" style="padding:5px 12px;background:transparent;color:var(--amber,#ffcc00);border:1px solid var(--amber,#ffcc00);border-radius:5px;font-size:11px;cursor:pointer">Try Different Format</button>
               <button onclick="saveWorkflowAsTemplate()" style="padding:5px 12px;background:transparent;color:var(--txt2);border:1px solid var(--border1);border-radius:5px;font-size:11px;cursor:pointer">Save as Template</button>
               <button onclick="wfReset()" style="padding:5px 12px;background:transparent;color:var(--txt2);border:1px solid var(--border1);border-radius:5px;font-size:11px;cursor:pointer">New Workflow</button>
             </div>
           </div>
           <div id="wf-result-content" style="background:var(--bg1);border:1px solid var(--border0);border-radius:8px;padding:16px;font-size:11px;line-height:1.7;max-height:600px;overflow-y:auto;white-space:pre-wrap;font-family:monospace;color:var(--txt1)"></div>
+        </div>
+
+        <div id="wf-inputs-panel" style="display:none;margin-top:16px">
+          <div style="border:1px solid var(--border1);border-radius:10px;padding:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--txt0)">Source Documents</div>
+              <button id="wf-promote-btn" onclick="promoteAllInputs()" style="padding:5px 12px;background:var(--teal);color:#000;border:none;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer">Add All to Knowledge Library</button>
+            </div>
+            <div id="wf-inputs-list"></div>
+          </div>
         </div>
 
         <div style="margin-top:20px">
@@ -2201,7 +2212,7 @@ async function deleteProject(){
 }
 
 // ══ WORKFLOW ENGINE ════════════════════════════════════════════
-const WF = { runId: null, selectedFormat: null, result: null };
+const WF = { runId: null, selectedFormat: null, result: null, lastIngestData: null };
 const WF_FORMATS = {
   dd_report:            { label: 'DD Report',            desc: 'Full due diligence analysis' },
   screening_memo:       { label: 'Screening Memo',       desc: 'Quick pass/fail assessment' },
@@ -2240,19 +2251,34 @@ async function handleWorkflowFileSelect(e) {
 }
 
 async function ingestWorkflowFile(file) {
-  document.getElementById('wf-dropzone').innerHTML = `<div style="color:var(--txt2);font-size:12px"><div style="font-size:20px;margin-bottom:8px">⏳</div>Analyzing ${file.name}…<br><span style="font-size:10px">Extracting documents and detecting workflow intent</span></div>`;
+  const dz = document.getElementById('wf-dropzone');
+  const steps = ['Uploading file…','Extracting text…','Classifying documents…','Detecting workflow intent…'];
+  let stepIdx = 0;
+  dz.innerHTML = `<div style="padding:8px 0"><div id="wf-ingest-status" style="font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--txt0);margin-bottom:8px">${steps[0]}</div><div style="font-size:10px;color:var(--txt2);margin-bottom:10px">${file.name} (${(file.size/1024).toFixed(0)} KB)</div><div style="height:3px;background:var(--border0);border-radius:2px;overflow:hidden"><div id="wf-ingest-bar" style="height:100%;background:var(--teal);width:5%;transition:width 0.4s;border-radius:2px"></div></div></div>`;
+  const stepTimer = setInterval(() => {
+    stepIdx = Math.min(stepIdx + 1, steps.length - 1);
+    const el = document.getElementById('wf-ingest-status');
+    const bar = document.getElementById('wf-ingest-bar');
+    if (el) el.textContent = steps[stepIdx];
+    if (bar) bar.style.width = (15 + stepIdx * 25) + '%';
+  }, 3000);
   try {
     const fd = new FormData();
     fd.append('file', file);
     if (STATE.proj?.id) fd.append('pablo_project_id', STATE.proj.id);
     const res = await fetch(`${API}/api/pablo/workflows/ingest`, { method: 'POST', body: fd });
+    clearInterval(stepTimer);
+    const bar = document.getElementById('wf-ingest-bar');
+    if (bar) bar.style.width = '100%';
     if (!res.ok) throw new Error(`Server error: ${res.status}`);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
     WF.runId = data.run_id;
+    WF.lastIngestData = data;
     renderConfirmCard(data);
   } catch(e) {
-    document.getElementById('wf-dropzone').innerHTML = `<div style="color:var(--red,#e44);font-size:12px">Error: ${e.message}</div><button onclick="wfReset()" style="margin-top:8px;padding:4px 12px;font-size:11px;cursor:pointer;border:1px solid var(--border1);background:transparent;color:var(--txt2);border-radius:4px">Try again</button>`;
+    clearInterval(stepTimer);
+    dz.innerHTML = `<div style="color:var(--red,#e44);font-size:12px">Error: ${e.message}</div><button onclick="wfReset()" style="margin-top:8px;padding:4px 12px;font-size:11px;cursor:pointer;border:1px solid var(--border1);background:transparent;color:var(--txt2);border-radius:4px">Try again</button>`;
   }
 }
 
@@ -2321,8 +2347,45 @@ async function runWorkflow() {
 function renderWorkflowResult(data) {
   document.getElementById('wf-result-content').textContent = data.result || '';
   document.getElementById('wf-result').style.display = 'block';
+  loadRunInputs();
   loadWorkflowHistory();
   wfToast('Workflow complete — result saved to Knowledge Library');
+}
+
+async function loadRunInputs() {
+  if (!WF.runId) return;
+  const panel = document.getElementById('wf-inputs-panel');
+  const list = document.getElementById('wf-inputs-list');
+  try {
+    const res = await fetch(`${API}/api/pablo/workflows/runs/${WF.runId}`);
+    const data = await res.json();
+    const inputs = data.inputs || [];
+    if (!inputs.length) { panel.style.display = 'none'; return; }
+    list.innerHTML = inputs.map(f =>
+      `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border0);font-size:10px"><span style="color:var(--txt1)">${f.file_name || f.filename}</span><span style="color:var(--teal)">${f.classified_as} · ${f.word_count}w</span></div>`
+    ).join('');
+    panel.style.display = 'block';
+  } catch(e) { panel.style.display = 'none'; }
+}
+
+async function promoteAllInputs() {
+  if (!WF.runId) return;
+  const btn = document.getElementById('wf-promote-btn');
+  btn.textContent = 'Promoting…'; btn.disabled = true;
+  try {
+    const res = await fetch(`${API}/api/pablo/workflows/promote-inputs`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ run_id: WF.runId })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    btn.textContent = `Added ${data.promoted} doc(s)`;
+    btn.style.background = 'var(--border1)';
+    wfToast(`${data.promoted} document(s) added to Knowledge Library`);
+  } catch(e) {
+    btn.textContent = 'Add All to Knowledge Library'; btn.disabled = false;
+    wfToast('Promote failed: ' + e.message, 'error');
+  }
 }
 
 function downloadWorkflowResult() {
@@ -2342,6 +2405,14 @@ async function saveWorkflowAsTemplate() {
     wfToast('Saved as reusable workflow template');
     loadWorkflowHistory();
   } catch(e) { wfToast('Save failed: ' + e.message, 'error'); }
+}
+
+function wfRetryFormat() {
+  if (!WF.runId || !WF.lastIngestData) { wfReset(); return; }
+  document.getElementById('wf-result').style.display = 'none';
+  document.getElementById('wf-inputs-panel') && (document.getElementById('wf-inputs-panel').style.display = 'none');
+  WF.result = null;
+  renderConfirmCard(WF.lastIngestData);
 }
 
 async function loadWorkflowHistory() {
@@ -2364,10 +2435,11 @@ async function loadWorkflowHistory() {
 }
 
 function wfReset() {
-  WF.runId = null; WF.selectedFormat = null; WF.result = null;
+  WF.runId = null; WF.selectedFormat = null; WF.result = null; WF.lastIngestData = null;
   document.getElementById('wf-confirm-card').style.display = 'none';
   document.getElementById('wf-progress').style.display = 'none';
   document.getElementById('wf-result').style.display = 'none';
+  const ip = document.getElementById('wf-inputs-panel'); if (ip) ip.style.display = 'none';
   const dz = document.getElementById('wf-dropzone');
   dz.style.display = 'block';
   dz.innerHTML = `<div style="font-size:28px;margin-bottom:8px">📂</div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--txt0)">Drop a ZIP file or any document</div><div style="font-size:11px;color:var(--txt2);margin-top:4px">PDF, DOCX, XLSX, ZIP — PABLO detects the workflow automatically</div><input type="file" id="wf-file-input" style="display:none" accept=".zip,.pdf,.docx,.xlsx,.txt" onchange="handleWorkflowFileSelect(event)"><button onclick="document.getElementById('wf-file-input').click()" style="margin-top:12px;padding:6px 16px;background:var(--teal);color:#000;border:none;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer">Browse Files</button>`;
