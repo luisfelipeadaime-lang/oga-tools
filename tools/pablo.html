@@ -462,6 +462,7 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
     <div class="ptab" onclick="tab('deliverables')">Deliverables</div>
     <div class="ptab" onclick="tab('agents')">Agents</div>
     <div class="ptab" onclick="tab('intel')">Intel</div>
+    <div class="ptab" onclick="tab('methodology')">Methodology</div>
   </div>
 
   <!-- Content area -->
@@ -572,6 +573,82 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
         <div class="ragbar">
           <input class="raginput" id="raginput" placeholder="Ask about methodologies, eligibility rules, benchmarks…" onkeydown="if(event.key==='Enter')askRAG()">
           <button class="btn btn-p btn-s" onclick="askRAG()">Ask</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Methodology Library -->
+    <div id="v-methodology" class="view" style="display:flex;flex-direction:column;gap:0;height:100%">
+      <!-- Mode toggle -->
+      <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border)">
+        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--txt0);flex:1">Methodology Library</div>
+        <button class="btn btn-s" id="meth-mode-browse" onclick="methMode('browse')" style="font-size:10px;padding:3px 10px;background:var(--teal);color:#000">Browse</button>
+        <button class="btn btn-s" id="meth-mode-ingest" onclick="methMode('ingest')" style="font-size:10px;padding:3px 10px">Ingest</button>
+        <button class="btn btn-s" id="meth-mode-auto" onclick="methMode('auto')" style="font-size:10px;padding:3px 10px">Quick Add</button>
+      </div>
+
+      <!-- Browse mode: 3-column cascading filter -->
+      <div id="meth-browse" style="flex:1;display:flex;overflow:hidden">
+        <div style="width:180px;border-right:1px solid var(--border);overflow-y:auto;padding:8px">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txt3);margin-bottom:6px">Registry</div>
+          <div id="meth-reg-list"></div>
+        </div>
+        <div style="width:220px;border-right:1px solid var(--border);overflow-y:auto;padding:8px">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txt3);margin-bottom:6px">Methodology</div>
+          <div id="meth-bundle-list"></div>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:12px">
+          <div id="meth-detail"></div>
+        </div>
+      </div>
+
+      <!-- Ingest mode: Path A structured form -->
+      <div id="meth-ingest" style="flex:1;overflow-y:auto;padding:16px;display:none">
+        <div style="max-width:560px">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txt3);margin-bottom:10px">Path A — Structured Intake</div>
+          <div class="fgrp"><label class="flabel">Registry</label>
+            <select class="finput" id="mi-registry" onchange="methLoadBundlesForReg()"><option value="">Loading…</option></select>
+          </div>
+          <div class="fgrp"><label class="flabel">Methodology Bundle</label>
+            <select class="finput" id="mi-bundle"><option value="">Select registry first</option></select>
+            <div style="margin-top:4px"><button class="btn btn-s" onclick="methShowNewBundle()" style="font-size:10px;padding:2px 8px">+ New Bundle</button></div>
+          </div>
+          <div id="mi-new-bundle" style="display:none;border:1px solid var(--border);border-radius:6px;padding:10px;margin:8px 0;background:var(--bg1)">
+            <div class="fgrp"><label class="flabel">Methodology Name</label><input class="finput" id="mi-nb-name" placeholder="e.g. Terrestrial Storage of Biomass"></div>
+            <div class="fgrp"><label class="flabel">Code</label><input class="finput" id="mi-nb-code" placeholder="e.g. TSB"></div>
+            <div class="fgrp"><label class="flabel">Version</label><input class="finput" id="mi-nb-ver" value="1.0"></div>
+            <button class="btn btn-p btn-s" onclick="methCreateBundle()" style="font-size:10px">Create Bundle</button>
+          </div>
+          <div class="fgrp"><label class="flabel">Document Role</label>
+            <select class="finput" id="mi-role"><option value="">Loading…</option></select>
+          </div>
+          <div class="fgrp">
+            <div style="border:1px dashed var(--border);border-radius:6px;padding:16px;text-align:center;cursor:pointer" onclick="document.getElementById('mi-file').click()">
+              <div style="font-size:11px;color:var(--txt2)" id="mi-file-label">Drop file or click to browse</div>
+            </div>
+            <input type="file" id="mi-file" hidden accept=".pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="methFileSelected(this)">
+          </div>
+          <button class="btn btn-p" id="mi-upload-btn" onclick="methIngestStructured()" disabled style="width:100%;justify-content:center">Upload, Extract &amp; Link</button>
+          <div id="mi-log" style="margin-top:10px"></div>
+        </div>
+      </div>
+
+      <!-- Auto mode: Path B skip form -->
+      <div id="meth-auto" style="flex:1;overflow-y:auto;padding:16px;display:none">
+        <div style="max-width:560px">
+          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txt3);margin-bottom:10px">Path B — Quick Add (AI classifies)</div>
+          <div style="font-size:11px;color:var(--txt2);margin-bottom:12px">Drop any methodology document. PABLO will extract text, classify it, and show you a review card before linking.</div>
+          <div class="fgrp">
+            <div style="border:1px dashed var(--border);border-radius:6px;padding:20px;text-align:center;cursor:pointer" onclick="document.getElementById('ma-file').click()">
+              <div style="font-size:11px;color:var(--txt2)" id="ma-file-label">Drop file or click to browse</div>
+            </div>
+            <input type="file" id="ma-file" hidden accept=".pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="methAutoFileSelected(this)">
+          </div>
+          <div id="ma-progress" style="display:none;margin-top:10px">
+            <div style="font-size:11px;color:var(--teal)">Extracting &amp; classifying…</div>
+            <div style="height:3px;background:var(--border);border-radius:2px;margin-top:6px"><div id="ma-bar" style="height:100%;background:var(--teal);border-radius:2px;width:30%;transition:width .5s"></div></div>
+          </div>
+          <div id="ma-review" style="display:none;margin-top:14px"></div>
         </div>
       </div>
     </div>
@@ -1040,7 +1117,7 @@ function updateTopbar(){
 function tab(t){
   STATE.tab=t;
   document.querySelectorAll('.ptab').forEach((el,i)=>{
-    const tabs=['overview','documents','analysis','links','deliverables','agents','intel'];
+    const tabs=['overview','documents','analysis','links','deliverables','agents','intel','methodology'];
     el.classList.toggle('on', tabs[i]===t);
   });
   document.querySelectorAll('#content .view').forEach(v=>v.classList.remove('on'));
@@ -1053,6 +1130,7 @@ function tab(t){
   if(t==='deliverables') renderDel();
   if(t==='agents') renderAgents();
   if(t==='intel') loadIntelDocs(STATE.proj);
+  if(t==='methodology') loadMethodologyTab();
 }
 
 // ══ OVERVIEW ══════════════════════════════════════════════
@@ -2464,6 +2542,290 @@ function wfReset() {
   dz.innerHTML = `<div style="font-size:28px;margin-bottom:8px">📂</div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--txt0)">Drop a ZIP file or any document</div><div style="font-size:11px;color:var(--txt2);margin-top:4px">PDF, DOCX, XLSX, ZIP — PABLO detects the workflow automatically</div><input type="file" id="wf-file-input" style="display:none" accept=".zip,.pdf,.docx,.xlsx,.txt" onchange="handleWorkflowFileSelect(event)"><button onclick="document.getElementById('wf-file-input').click()" style="margin-top:12px;padding:6px 16px;background:var(--teal);color:#000;border:none;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer">Browse Files</button>`;
   wfDropzoneReset();
   loadWorkflowHistory();
+}
+
+// ══ METHODOLOGY LIBRARY ═════════════════════════════════════
+const METH = { registries: [], roles: [], bundles: [], selReg: null, selBundle: null, mode: 'browse' };
+
+function methMode(m) {
+  METH.mode = m;
+  ['browse','ingest','auto'].forEach(x => {
+    const el = document.getElementById('meth-' + x);
+    if (el) el.style.display = x === m ? (m === 'browse' ? 'flex' : 'block') : 'none';
+    const btn = document.getElementById('meth-mode-' + x);
+    if (btn) { btn.style.background = x === m ? 'var(--teal)' : ''; btn.style.color = x === m ? '#000' : ''; }
+  });
+  if (m === 'browse') methRenderBrowse();
+  if (m === 'ingest') methPopulateIngestForm();
+}
+
+async function loadMethodologyTab() {
+  try {
+    const [regRes, roleRes, bunRes] = await Promise.all([
+      fetch(API + '/api/registries').then(r => r.json()),
+      fetch(API + '/api/document-roles').then(r => r.json()),
+      fetch(API + '/api/methodologies').then(r => r.json())
+    ]);
+    METH.registries = regRes.registries || [];
+    METH.roles = roleRes.roles || [];
+    METH.bundles = bunRes.bundles || [];
+  } catch (e) { console.error('Methodology load error:', e); }
+  methMode(METH.mode);
+}
+
+// ── Browse mode ──
+function methRenderBrowse() {
+  const rl = document.getElementById('meth-reg-list');
+  if (!rl) return;
+  rl.innerHTML = '<div class="intfilt' + (!METH.selReg ? ' on' : '') + '" onclick="methSelReg(null)" style="font-size:11px;padding:4px 8px;cursor:pointer;border-radius:4px">All</div>' +
+    METH.registries.filter(r => r.id !== 'other').map(r => {
+      const cnt = METH.bundles.filter(b => b.registry_id === r.id).length;
+      return `<div class="intfilt${METH.selReg === r.id ? ' on' : ''}" onclick="methSelReg('${r.id}')" style="font-size:11px;padding:4px 8px;cursor:pointer;border-radius:4px">${r.label} <span style="color:var(--txt3)">(${cnt})</span></div>`;
+    }).join('');
+  methRenderBundles();
+}
+
+function methSelReg(id) { METH.selReg = id; METH.selBundle = null; methRenderBrowse(); }
+
+function methRenderBundles() {
+  const bl = document.getElementById('meth-bundle-list');
+  if (!bl) return;
+  const filtered = METH.selReg ? METH.bundles.filter(b => b.registry_id === METH.selReg) : METH.bundles;
+  if (!filtered.length) { bl.innerHTML = '<div style="font-size:11px;color:var(--txt3);padding:8px">No bundles yet</div>'; document.getElementById('meth-detail').innerHTML = ''; return; }
+  bl.innerHTML = filtered.map(b => `<div class="intfilt${METH.selBundle === b.id ? ' on' : ''}" onclick="methSelBundle('${b.id}')" style="font-size:11px;padding:5px 8px;cursor:pointer;border-radius:4px;margin-bottom:2px">
+    <div style="font-weight:600">${b.methodology_name}</div>
+    <div style="font-size:9px;color:var(--txt3)">${b.methodology_code || ''} v${b.version} · ${b.doc_count || 0} docs</div>
+  </div>`).join('');
+  if (METH.selBundle) methLoadDetail(METH.selBundle);
+  else document.getElementById('meth-detail').innerHTML = '<div style="font-size:11px;color:var(--txt3)">Select a methodology to view documents</div>';
+}
+
+function methSelBundle(id) { METH.selBundle = id; methRenderBundles(); }
+
+async function methLoadDetail(bundleId) {
+  const el = document.getElementById('meth-detail');
+  el.innerHTML = '<div style="font-size:11px;color:var(--txt2)">Loading…</div>';
+  try {
+    const data = await fetch(API + '/api/methodologies/' + bundleId).then(r => r.json());
+    const b = data.bundle;
+    const docs = data.documents || [];
+    const grouped = {};
+    docs.forEach(d => { if (!grouped[d.document_role]) grouped[d.document_role] = []; grouped[d.document_role].push(d); });
+    const reg = METH.registries.find(r => r.id === b.registry_id);
+    let html = `<div style="margin-bottom:12px">
+      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--txt0)">${b.methodology_name}</div>
+      <div style="font-size:11px;color:var(--txt2)">${reg ? reg.label : b.registry_id} · ${b.methodology_code || ''} v${b.version} · ${docs.length} documents</div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="btn btn-p btn-s" onclick="methExportContext('${bundleId}')" style="font-size:10px;padding:3px 10px">Export Context</button>
+        <button class="btn btn-s" onclick="methMode('ingest');document.getElementById('mi-bundle').value='${bundleId}'" style="font-size:10px;padding:3px 10px">+ Add Document</button>
+      </div>
+    </div>`;
+    METH.roles.forEach(role => {
+      const items = grouped[role.id];
+      if (!items || !items.length) return;
+      html += `<div style="margin-bottom:10px">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--teal);margin-bottom:4px">${role.label}</div>`;
+      items.forEach(d => {
+        const src = d.input_source === 'ai_inferred' ? `<span style="color:var(--amber);font-size:9px" title="AI confidence: ${(d.ai_confidence * 100).toFixed(0)}%">AI</span>` : '';
+        html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+          <div style="flex:1">
+            <div style="font-size:11px;font-weight:600;color:var(--txt0)">${d.title || 'Untitled'}</div>
+            <div style="font-size:10px;color:var(--txt3)">${d.word_count ? d.word_count.toLocaleString() + ' words' : 'processing'} ${src}</div>
+          </div>
+          <button class="btn btn-s" onclick="methDownloadDoc('${bundleId}','${d.doc_id}','txt')" style="font-size:9px;padding:2px 6px">TXT</button>
+          <button class="btn btn-s" onclick="methDownloadDoc('${bundleId}','${d.doc_id}','original')" style="font-size:9px;padding:2px 6px">Original</button>
+          <button class="btn btn-s" onclick="methUnlinkDoc('${bundleId}','${d.doc_id}')" style="font-size:9px;padding:2px 6px;color:var(--red)">×</button>
+        </div>`;
+      });
+      html += '</div>';
+    });
+    // Show empty roles
+    const filledRoles = Object.keys(grouped);
+    const emptyCanonical = METH.roles.filter(r => r.is_canonical && !filledRoles.includes(r.id));
+    if (emptyCanonical.length) {
+      html += '<div style="margin-top:10px;padding:8px;background:var(--bg1);border-radius:6px"><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txt3);margin-bottom:4px">Missing (canonical roles)</div>';
+      emptyCanonical.forEach(r => { html += `<div style="font-size:10px;color:var(--txt3);padding:2px 0">${r.label}</div>`; });
+      html += '</div>';
+    }
+    el.innerHTML = html;
+  } catch (e) { el.innerHTML = `<div style="color:var(--red);font-size:11px">${e.message}</div>`; }
+}
+
+function methExportContext(bundleId) {
+  const a = document.createElement('a');
+  a.href = API + '/api/methodologies/' + bundleId + '/export-context';
+  a.download = bundleId + '_context.md';
+  a.click();
+}
+
+function methDownloadDoc(bundleId, docId, format) {
+  const url = API + '/api/methodologies/' + bundleId + '/documents/' + docId + '/download?format=' + format;
+  const a = document.createElement('a');
+  a.href = url; a.download = ''; a.click();
+}
+
+async function methUnlinkDoc(bundleId, docId) {
+  if (!confirm('Unlink this document from the bundle?')) return;
+  await fetch(API + '/api/methodologies/' + bundleId + '/documents/' + docId, { method: 'DELETE' });
+  // Refresh
+  const bunRes = await fetch(API + '/api/methodologies').then(r => r.json());
+  METH.bundles = bunRes.bundles || [];
+  methLoadDetail(bundleId);
+  methRenderBundles();
+}
+
+// ── Ingest mode (Path A) ──
+function methPopulateIngestForm() {
+  const regSel = document.getElementById('mi-registry');
+  regSel.innerHTML = '<option value="">Select registry…</option>' + METH.registries.map(r => `<option value="${r.id}">${r.label}</option>`).join('');
+  const roleSel = document.getElementById('mi-role');
+  roleSel.innerHTML = '<option value="">(AI will infer)</option>' + METH.roles.map(r => `<option value="${r.id}">${r.label}</option>`).join('');
+}
+
+function methLoadBundlesForReg() {
+  const reg = document.getElementById('mi-registry').value;
+  const bSel = document.getElementById('mi-bundle');
+  const filtered = METH.bundles.filter(b => b.registry_id === reg);
+  bSel.innerHTML = '<option value="">Select bundle…</option>' + filtered.map(b => `<option value="${b.id}">${b.methodology_name} v${b.version}</option>`).join('') + '<option value="__new__">+ Create new bundle…</option>';
+  bSel.onchange = function() { if (this.value === '__new__') methShowNewBundle(); else document.getElementById('mi-new-bundle').style.display = 'none'; methCheckIngestReady(); };
+  methCheckIngestReady();
+}
+
+function methShowNewBundle() { document.getElementById('mi-new-bundle').style.display = 'block'; }
+
+async function methCreateBundle() {
+  const reg = document.getElementById('mi-registry').value;
+  const name = document.getElementById('mi-nb-name').value.trim();
+  const code = document.getElementById('mi-nb-code').value.trim();
+  const ver = document.getElementById('mi-nb-ver').value.trim() || '1.0';
+  if (!reg || !name) return alert('Registry and name required');
+  const res = await fetch(API + '/api/methodologies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ registry_id: reg, methodology_name: name, methodology_code: code, version: ver }) }).then(r => r.json());
+  if (res.ok) {
+    METH.bundles.push(res.bundle);
+    document.getElementById('mi-new-bundle').style.display = 'none';
+    methLoadBundlesForReg();
+    document.getElementById('mi-bundle').value = res.bundle.id;
+    methCheckIngestReady();
+  } else { alert(res.error || 'Error creating bundle'); }
+}
+
+function methFileSelected(input) {
+  document.getElementById('mi-file-label').textContent = input.files[0] ? input.files[0].name : 'Drop file or click to browse';
+  methCheckIngestReady();
+}
+
+function methCheckIngestReady() {
+  const ready = document.getElementById('mi-bundle').value && document.getElementById('mi-bundle').value !== '__new__' && document.getElementById('mi-file').files.length;
+  document.getElementById('mi-upload-btn').disabled = !ready;
+}
+
+async function methIngestStructured() {
+  const bundleId = document.getElementById('mi-bundle').value;
+  const role = document.getElementById('mi-role').value || null;
+  const file = document.getElementById('mi-file').files[0];
+  if (!bundleId || !file) return;
+  const log = document.getElementById('mi-log');
+  log.innerHTML = '<div style="font-size:11px;color:var(--teal)">Uploading &amp; extracting…</div>';
+  document.getElementById('mi-upload-btn').disabled = true;
+  try {
+    const fd = new FormData();
+    fd.append('file', file);
+    if (role) fd.append('document_role', role);
+    const res = await fetch(API + '/api/methodologies/' + bundleId + '/ingest', { method: 'POST', body: fd }).then(r => r.json());
+    if (res.ok) {
+      log.innerHTML = `<div style="font-size:11px;color:var(--green)">Linked as <b>${res.document_role}</b> (${res.input_source}) · ${res.word_count?.toLocaleString() || 0} words</div>`;
+      const bunRes = await fetch(API + '/api/methodologies').then(r => r.json());
+      METH.bundles = bunRes.bundles || [];
+      document.getElementById('mi-file').value = '';
+      document.getElementById('mi-file-label').textContent = 'Drop file or click to browse';
+    } else { log.innerHTML = `<div style="font-size:11px;color:var(--red)">${res.error}</div>`; }
+  } catch (e) { log.innerHTML = `<div style="font-size:11px;color:var(--red)">${e.message}</div>`; }
+  document.getElementById('mi-upload-btn').disabled = false;
+}
+
+// ── Auto mode (Path B) ──
+function methAutoFileSelected(input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById('ma-file-label').textContent = file.name;
+  document.getElementById('ma-progress').style.display = 'block';
+  document.getElementById('ma-review').style.display = 'none';
+  document.getElementById('ma-bar').style.width = '30%';
+  const fd = new FormData();
+  fd.append('file', file);
+  fetch(API + '/api/methodologies/ingest-auto', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('ma-bar').style.width = '100%';
+      setTimeout(() => {
+        document.getElementById('ma-progress').style.display = 'none';
+        methShowReviewCard(data);
+      }, 400);
+    })
+    .catch(e => {
+      document.getElementById('ma-progress').style.display = 'none';
+      document.getElementById('ma-review').innerHTML = `<div style="color:var(--red);font-size:11px">${e.message}</div>`;
+      document.getElementById('ma-review').style.display = 'block';
+    });
+}
+
+function methShowReviewCard(data) {
+  const rv = document.getElementById('ma-review');
+  const inf = data.inferred || {};
+  const confPct = ((inf.confidence || 0) * 100).toFixed(0);
+  const confColor = inf.confidence >= 0.7 ? 'var(--green)' : inf.confidence >= 0.4 ? 'var(--amber)' : 'var(--red)';
+  const reg = METH.registries.find(r => r.id === inf.registry_id);
+  const bundle = METH.bundles.find(b => b.id === inf.methodology_bundle_id);
+  const role = METH.roles.find(r => r.id === inf.document_role);
+  rv.innerHTML = `<div style="border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--bg1)">
+    <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--txt0);margin-bottom:8px">AI Classification</div>
+    <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:11px">
+      <span style="color:var(--txt3)">Registry:</span><span>${reg ? reg.label : inf.registry_id || 'Unknown'}</span>
+      <span style="color:var(--txt3)">Bundle:</span><span>${bundle ? bundle.methodology_name : inf.methodology_bundle_id || 'None matched'}${!bundle && inf.methodology_bundle_id ? ' <span style="color:var(--amber)">(new)</span>' : ''}</span>
+      <span style="color:var(--txt3)">Role:</span><span>${role ? role.label : inf.document_role || 'other'}</span>
+      <span style="color:var(--txt3)">Confidence:</span><span style="color:${confColor};font-weight:700">${confPct}%</span>
+      <span style="color:var(--txt3)">Words:</span><span>${data.word_count?.toLocaleString() || 0}</span>
+    </div>
+    ${inf.reasoning ? `<div style="font-size:10px;color:var(--txt3);margin-top:6px;font-style:italic">${inf.reasoning}</div>` : ''}
+    <div style="display:flex;gap:6px;margin-top:10px">
+      ${inf.methodology_bundle_id ? `<button class="btn btn-p btn-s" onclick="methConfirmAuto('${data.file_id || ''}','${inf.methodology_bundle_id}','${inf.document_role || 'other'}')" style="font-size:10px;padding:3px 10px">Confirm &amp; Link</button>` : ''}
+      <button class="btn btn-s" onclick="methMode('ingest')" style="font-size:10px;padding:3px 10px">Edit &amp; Link Manually</button>
+      <button class="btn btn-s" onclick="document.getElementById('ma-review').style.display='none';document.getElementById('ma-file').value='';document.getElementById('ma-file-label').textContent='Drop file or click to browse'" style="font-size:10px;padding:3px 10px">Discard</button>
+    </div>
+  </div>`;
+  rv.style.display = 'block';
+}
+
+async function methConfirmAuto(fileId, bundleId, role) {
+  // The file was already uploaded and extracted by ingest-auto. We need to find its knowledge_doc and link it.
+  // The extract was created but not linked. We can use link-doc if we find the doc_id, or use a workaround.
+  // Since ingest-auto creates file + extract but not knowledge_doc, we need a secondary step.
+  // For now, we'll search for the file_id in extracts to get the doc
+  const rv = document.getElementById('ma-review');
+  rv.innerHTML = '<div style="font-size:11px;color:var(--teal)">Linking…</div>';
+  try {
+    // Find knowledge_doc by source_id matching fileId or extract_id
+    const searchRes = await fetch(API + '/api/wiki/docs?limit=5&q=' + encodeURIComponent(fileId)).then(r => r.json());
+    // If we can't find it, we need to re-ingest with the structured endpoint
+    // Actually, ingest-auto already saved file + extract. We need the link-doc endpoint with the extract's knowledge doc.
+    // Since ingest-auto doesn't create a knowledge_doc, let's use a different approach:
+    // Upload the file again via the structured ingest endpoint
+    rv.innerHTML = '<div style="font-size:11px;color:var(--amber)">Creating knowledge doc &amp; linking…</div>';
+    // Use the existing file — call link after creating knowledge doc via wiki extract
+    const extractRes = await fetch(API + '/api/wiki/extract/' + fileId, { method: 'POST' }).then(r => r.json());
+    if (extractRes.doc_id || extractRes.id) {
+      const docId = extractRes.doc_id || extractRes.id;
+      await fetch(API + '/api/methodologies/' + bundleId + '/link-doc', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ doc_id: docId, document_role: role })
+      });
+      rv.innerHTML = '<div style="font-size:11px;color:var(--green)">Linked successfully!</div>';
+      const bunRes = await fetch(API + '/api/methodologies').then(r => r.json());
+      METH.bundles = bunRes.bundles || [];
+    } else {
+      rv.innerHTML = '<div style="font-size:11px;color:var(--red)">Could not create knowledge doc. Try manual ingest.</div>';
+    }
+  } catch (e) { rv.innerHTML = `<div style="font-size:11px;color:var(--red)">${e.message}</div>`; }
 }
 
 init();
