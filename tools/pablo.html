@@ -1533,8 +1533,33 @@ function dispatch(s){
 
 // ══ INTEL ═════════════════════════════════════════════════
 function docIcon(type){
-  const icons={methodology:'📋',pdd:'📄',pdd_example:'📄',mrv_plan:'📊',audit_report:'🔍',verification_report:'🔍',benchmark:'📈',heuristic:'💡',guidance:'📝',technical_report:'📊',other:'📄'};
+  const icons={
+    methodology:'📋',pdd:'📄',pdd_example:'📄',mrv_plan:'📊',audit_report:'🔍',
+    benchmark:'📈',heuristic:'💡',guidance:'📝',
+    core_methodology:'📋',project_description:'📄',verification_report:'🔍',
+    registry_spec:'📑',financial_model:'💰',example_pd:'📄',
+    legal_agreement:'⚖️',market_intelligence:'📈',policy_document:'🏛️',
+    technical_report:'📊',presentation:'🖥️',correspondence:'✉️',other:'📄'
+  };
   return icons[type]||'📄';
+}
+
+async function methDownloadTaxDoc(docId, type) {
+  try {
+    const meta = await fetch(API + '/api/knowledge/docs/' + docId).then(r => r.json());
+    if (type === 'txt') {
+      const md = meta.markdown || meta.content || '';
+      if (!md) { alert('No extracted text available for this document.'); return; }
+      const blob = new Blob([md], {type:'text/plain'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = (meta.title || docId) + '.txt';
+      a.click();
+    } else {
+      if (meta.file_id) window.open(API + '/api/files/download/' + meta.file_id, '_blank');
+      else alert('No original file available for this document.');
+    }
+  } catch(e) { alert('Download error: ' + e.message); }
 }
 
 function renderIntelDocs(){ loadIntelDocs(STATE.proj); }
@@ -2641,15 +2666,17 @@ function methMode(m) {
 
 async function loadMethodologyTab() {
   try {
-    const [regRes, roleRes, bunRes] = await Promise.all([
+    const [regRes, roleRes, bunRes, taxRes] = await Promise.all([
       fetch(API + '/api/registries').then(r => r.json()),
       fetch(API + '/api/document-roles').then(r => r.json()),
-      fetch(API + '/api/methodologies').then(r => r.json())
+      fetch(API + '/api/methodologies').then(r => r.json()),
+      fetch(API + '/api/primitives/taxonomy/search?limit=500').then(r => r.json())
     ]);
     METH.registries = regRes.registries || [];
     METH.roles = roleRes.roles || [];
     METH.bundles = bunRes.bundles || [];
-    console.log('[Browse] loaded', METH.registries.length, 'registries,', METH.bundles.length, 'bundles from API');
+    METH.docs = taxRes.docs || [];
+    console.log('[Browse] loaded', METH.registries.length, 'registries,', METH.bundles.length, 'bundles,', METH.docs.length, 'taxonomy docs');
   } catch (e) { console.error('Methodology load error:', e); }
   methMode(METH.mode);
 }
@@ -2660,7 +2687,7 @@ function methRenderBrowse() {
   if (!rl) return;
   rl.innerHTML = '<div class="intfilt' + (!METH.selReg ? ' on' : '') + '" onclick="methSelReg(null)" style="font-size:11px;padding:4px 8px;cursor:pointer;border-radius:4px">All</div>' +
     METH.registries.filter(r => r.id !== 'other').map(r => {
-      const cnt = METH.bundles.filter(b => b.registry_id === r.id).length;
+      const cnt = METH.docs.filter(d => d.registry === r.id).length;
       return `<div class="intfilt${METH.selReg === r.id ? ' on' : ''}" onclick="methSelReg('${r.id}')" style="font-size:11px;padding:4px 8px;cursor:pointer;border-radius:4px">${r.label} <span style="color:var(--txt3)">(${cnt})</span></div>`;
     }).join('');
   methRenderBundles();
@@ -2671,14 +2698,27 @@ function methSelReg(id) { METH.selReg = id; METH.selBundle = null; methRenderBro
 function methRenderBundles() {
   const bl = document.getElementById('meth-bundle-list');
   if (!bl) return;
-  const filtered = METH.selReg ? METH.bundles.filter(b => b.registry_id === METH.selReg) : METH.bundles;
-  if (!filtered.length) { bl.innerHTML = '<div style="font-size:11px;color:var(--txt3);padding:8px">No bundles yet</div>'; document.getElementById('meth-detail').innerHTML = ''; return; }
-  bl.innerHTML = filtered.map(b => `<div class="intfilt${METH.selBundle === b.id ? ' on' : ''}" onclick="methSelBundle('${b.id}')" style="font-size:11px;padding:5px 8px;cursor:pointer;border-radius:4px;margin-bottom:2px">
-    <div style="font-weight:600">${b.methodology_name}</div>
-    <div style="font-size:9px;color:var(--txt3)">${b.methodology_code || ''} v${b.version} · ${b.doc_count || 0} docs</div>
+  const filteredDocs = METH.selReg ? METH.docs.filter(d => d.registry === METH.selReg) : METH.docs;
+  const projectCounts = {};
+  filteredDocs.forEach(d => { const p = d.project || 'unassociated'; projectCounts[p] = (projectCounts[p] || 0) + 1; });
+  const projects = Object.entries(projectCounts).sort((a, b) => b[1] - a[1]);
+  const PROJECT_LABELS = {
+    marakoa:'Marakoa', bosquia:'Bosquia Asturias', amoedo:'Amoedo TSB',
+    puro_tsb:'Puro TSB', isometric_subsurface:'Isometric Subsurface',
+    clearsky_internal:'ClearSky Internal', registry_reference:'Registry Reference',
+    unassociated:'Unassociated'
+  };
+  if (!projects.length) {
+    bl.innerHTML = '<div style="font-size:11px;color:var(--txt3);padding:8px">No documents found</div>';
+    document.getElementById('meth-detail').innerHTML = '';
+    return;
+  }
+  bl.innerHTML = projects.map(([p, cnt]) => `<div class="intfilt${METH.selBundle === p ? ' on' : ''}" onclick="methSelBundle('${p}')" style="font-size:11px;padding:5px 8px;cursor:pointer;border-radius:4px;margin-bottom:2px">
+    <div style="font-weight:600">${PROJECT_LABELS[p] || p}</div>
+    <div style="font-size:9px;color:var(--txt3)">${cnt} doc${cnt !== 1 ? 's' : ''}</div>
   </div>`).join('');
   if (METH.selBundle) methLoadDetail(METH.selBundle);
-  else document.getElementById('meth-detail').innerHTML = '<div style="font-size:11px;color:var(--txt3)">Select a methodology to view documents</div>';
+  else document.getElementById('meth-detail').innerHTML = '<div style="font-size:11px;color:var(--txt3)">Select a project to view documents</div>';
 }
 
 function methSelBundle(id) { METH.selBundle = id; methRenderBundles(); }
@@ -2686,50 +2726,56 @@ function methSelBundle(id) { METH.selBundle = id; methRenderBundles(); }
 async function methLoadDetail(bundleId) {
   const el = document.getElementById('meth-detail');
   el.innerHTML = '<div style="font-size:11px;color:var(--txt2)">Loading…</div>';
+  const DOC_TYPE_LABELS = {
+    core_methodology:'Core Methodology', project_description:'Project Description',
+    verification_report:'Verification Report', registry_spec:'Registry Specification',
+    financial_model:'Financial Model', example_pd:'Example PD',
+    legal_agreement:'Legal Agreement', market_intelligence:'Market Intelligence',
+    policy_document:'Policy Document', technical_report:'Technical Report',
+    presentation:'Presentation', correspondence:'Correspondence', other:'Other'
+  };
+  const PROJECT_LABELS = {
+    marakoa:'Marakoa', bosquia:'Bosquia Asturias', amoedo:'Amoedo TSB',
+    puro_tsb:'Puro TSB', isometric_subsurface:'Isometric Subsurface',
+    clearsky_internal:'ClearSky Internal', registry_reference:'Registry Reference',
+    unassociated:'Unassociated'
+  };
+  const TYPE_ORDER = ['core_methodology','project_description','verification_report','registry_spec',
+    'financial_model','example_pd','legal_agreement','technical_report','market_intelligence',
+    'policy_document','presentation','correspondence','other'];
   try {
-    const data = await fetch(API + '/api/methodologies/' + bundleId).then(r => r.json());
-    const b = data.bundle;
-    const docs = data.documents || [];
+    let docs = METH.docs.filter(d => d.project === bundleId);
+    if (METH.selReg) docs = docs.filter(d => d.registry === METH.selReg);
     const grouped = {};
-    docs.forEach(d => { if (!grouped[d.document_role]) grouped[d.document_role] = []; grouped[d.document_role].push(d); });
-    const reg = METH.registries.find(r => r.id === b.registry_id);
+    docs.forEach(d => { const t = d.doc_type || 'other'; if (!grouped[t]) grouped[t] = []; grouped[t].push(d); });
+    const reg = METH.registries.find(r => r.id === METH.selReg) || METH.registries.find(r => r.id === docs[0]?.registry);
     let html = `<div style="margin-bottom:12px">
-      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--txt0)">${b.methodology_name}</div>
-      <div style="font-size:11px;color:var(--txt2)">${reg ? reg.label : b.registry_id} · ${b.methodology_code || ''} v${b.version} · ${docs.length} documents</div>
-      <div style="display:flex;gap:6px;margin-top:8px">
-        <button class="btn btn-p btn-s" onclick="methExportContext('${bundleId}')" style="font-size:10px;padding:3px 10px">Export Context</button>
-        <button class="btn btn-s" onclick="methMode('ingest');document.getElementById('mi-bundle').value='${bundleId}'" style="font-size:10px;padding:3px 10px">+ Add Document</button>
-      </div>
+      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--txt0)">${PROJECT_LABELS[bundleId] || bundleId}</div>
+      <div style="font-size:11px;color:var(--txt2)">${reg ? reg.label : (METH.selReg || 'All registries')} · ${docs.length} document${docs.length !== 1 ? 's' : ''}</div>
     </div>`;
-    METH.roles.forEach(role => {
-      const items = grouped[role.id];
+    if (!docs.length) { el.innerHTML = html + '<div style="font-size:11px;color:var(--txt3);padding:8px">No documents in this project</div>'; return; }
+    TYPE_ORDER.forEach(type => {
+      const items = grouped[type];
       if (!items || !items.length) return;
       html += `<div style="margin-bottom:10px">
-        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--teal);margin-bottom:4px">${role.label}</div>`;
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--teal);margin-bottom:4px">${DOC_TYPE_LABELS[type] || type}</div>`;
       items.forEach(d => {
-        const src = d.input_source === 'ai_inferred' ? `<span style="color:var(--amber);font-size:9px" title="AI confidence: ${(d.ai_confidence * 100).toFixed(0)}%">AI</span>` : '';
+        const src = d.taxonomy_source === 'manual' ? '' :
+          d.taxonomy_source === 'ai' ? `<span style="color:var(--amber);font-size:9px" title="AI classified">AI</span>` :
+          `<span style="color:var(--txt3);font-size:9px">auto</span>`;
         html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
           <div style="flex:1">
             <div style="font-size:11px;font-weight:600;color:var(--txt0)">${d.title || 'Untitled'}</div>
             <div style="font-size:10px;color:var(--txt3)">${d.word_count ? d.word_count.toLocaleString() + ' words' : 'processing'} ${src}</div>
           </div>
-          <button class="btn btn-s" onclick="methDownloadDoc('${bundleId}','${d.doc_id}','txt')" style="font-size:9px;padding:2px 6px">TXT</button>
-          <button class="btn btn-s" onclick="methDownloadDoc('${bundleId}','${d.doc_id}','original')" style="font-size:9px;padding:2px 6px">Original</button>
-          <button class="btn btn-s" onclick="methUnlinkDoc('${bundleId}','${d.doc_id}')" style="font-size:9px;padding:2px 6px;color:var(--red)">×</button>
+          <button class="btn btn-s" onclick="methDownloadTaxDoc('${d.id}','txt')" style="font-size:9px;padding:2px 6px">TXT</button>
+          <button class="btn btn-s" onclick="methDownloadTaxDoc('${d.id}','original')" style="font-size:9px;padding:2px 6px">Original</button>
         </div>`;
       });
       html += '</div>';
     });
-    // Show empty roles
-    const filledRoles = Object.keys(grouped);
-    const emptyCanonical = METH.roles.filter(r => r.is_canonical && !filledRoles.includes(r.id));
-    if (emptyCanonical.length) {
-      html += '<div style="margin-top:10px;padding:8px;background:var(--bg1);border-radius:6px"><div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txt3);margin-bottom:4px">Missing (canonical roles)</div>';
-      emptyCanonical.forEach(r => { html += `<div style="font-size:10px;color:var(--txt3);padding:2px 0">${r.label}</div>`; });
-      html += '</div>';
-    }
     el.innerHTML = html;
-  } catch (e) { el.innerHTML = `<div style="color:var(--red);font-size:11px">${e.message}</div>`; }
+  } catch(e) { el.innerHTML = '<div style="color:var(--red);font-size:11px">Error loading detail: ' + e.message + '</div>'; }
 }
 
 function methExportContext(bundleId) {
