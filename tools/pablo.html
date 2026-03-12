@@ -402,6 +402,10 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
       Methodology
     </div>
+    <div class="rnavitem" id="nav-hubspot" onclick="showPlatform('hubspot')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      HubSpot
+    </div>
   </div>
 
   <!-- Agent bar always visible -->
@@ -799,6 +803,71 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:18px" id="anlytic-tiles"></div>
         <div style="background:var(--bg2);border:1px solid var(--border1);border-radius:7px;padding:22px;color:var(--txt3);text-align:center;font-size:12px">
           CORC projection curves · timeline analysis · scenario overlays · methodology comparison — <span style="color:var(--teal)">next sprint</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ HUBSPOT INBOX ═══ -->
+    <div id="v-hubspot" class="view">
+      <!-- Stats strip -->
+      <div style="display:flex;gap:18px;align-items:center;padding:10px 22px;background:var(--bg2);border-bottom:1px solid var(--border1);font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em">
+        <span>Emails Synced: <b id="hs-stat-emails" style="color:var(--txt0)">—</b></span>
+        <span>Threads: <b id="hs-stat-threads" style="color:var(--txt0)">—</b></span>
+        <span>Unread: <b id="hs-stat-unread" style="color:var(--amber)">—</b></span>
+        <span>Tasks Open: <b id="hs-stat-tasks" style="color:var(--teal)">—</b></span>
+        <span>Waiting: <b id="hs-stat-waiting" style="color:var(--txt3)">—</b></span>
+        <span>Last Sync: <b id="hs-stat-sync" style="color:var(--txt3)">—</b></span>
+      </div>
+      <!-- Three columns -->
+      <div style="display:flex;height:calc(100vh - 110px);overflow:hidden">
+        <!-- Col 1: Thread List (280px) -->
+        <div style="width:280px;min-width:280px;border-right:1px solid var(--border1);display:flex;flex-direction:column;background:var(--bg1)">
+          <div style="padding:12px 12px 8px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <div>
+                <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--txt0)">INBOX</div>
+                <div style="font-size:10px;color:var(--txt3)">ClearSky · HubSpot</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span id="hs-sync-ago" style="font-size:9px;color:var(--txt3)"></span>
+                <button class="btn btn-g btn-s" style="padding:3px 7px;font-size:10px" onclick="hsSync()" title="Sync with HubSpot">&#x21BB;</button>
+              </div>
+            </div>
+            <input type="text" id="hs-search" placeholder="Search threads..." style="width:100%;padding:5px 8px;font-size:11px;background:var(--bg2);border:1px solid var(--border1);border-radius:4px;color:var(--txt0);outline:none;box-sizing:border-box;margin-bottom:6px" oninput="hsFilterThreads()">
+            <div style="display:flex;gap:4px">
+              <select id="hs-filter-contact" style="flex:1;padding:3px 5px;font-size:10px;background:var(--bg2);border:1px solid var(--border1);border-radius:3px;color:var(--txt1)" onchange="hsFilterThreads()"><option value="">All contacts</option></select>
+              <select id="hs-filter-project" style="flex:1;padding:3px 5px;font-size:10px;background:var(--bg2);border:1px solid var(--border1);border-radius:3px;color:var(--txt1)" onchange="hsFilterThreads()"><option value="">All projects</option></select>
+            </div>
+          </div>
+          <div id="hs-thread-list" style="flex:1;overflow-y:auto;padding:0 6px 6px"></div>
+        </div>
+        <!-- Col 2: Thread Detail (flex) -->
+        <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+          <div id="hs-thread-header" style="padding:12px 18px;border-bottom:1px solid var(--border1);background:var(--bg1)">
+            <div id="hs-thread-subject" style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--txt0)">Select a thread</div>
+            <div id="hs-thread-meta" style="font-size:11px;color:var(--txt3);margin-top:3px"></div>
+          </div>
+          <div id="hs-thread-emails" style="flex:1;overflow-y:auto;padding:18px"></div>
+          <div id="hs-thread-actions" style="padding:10px 18px;border-top:1px solid var(--border1);display:none;gap:8px;background:var(--bg1)">
+            <button class="btn btn-g btn-s" onclick="hsCreateTaskFromThread()">+ Create Task from Thread</button>
+            <a id="hs-hubspot-link" href="#" target="_blank" class="btn btn-g btn-s" style="text-decoration:none">&#x2197; Open in HubSpot</a>
+          </div>
+        </div>
+        <!-- Col 3: Task Panel (300px) -->
+        <div style="width:300px;min-width:300px;border-left:1px solid var(--border1);display:flex;flex-direction:column;background:var(--bg1)">
+          <div style="padding:12px 12px 8px;border-bottom:1px solid var(--border1)">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--txt0)">Open Tasks (<span id="hs-task-count">0</span>)</div>
+              <div style="display:flex;gap:4px">
+                <button class="btn btn-g btn-s" style="padding:2px 6px;font-size:9px" id="hs-view-list" onclick="hsTaskView='list';hsRenderTasks()">List</button>
+                <button class="btn btn-g btn-s" style="padding:2px 6px;font-size:9px" id="hs-view-kanban" onclick="hsTaskView='kanban';hsRenderTasks()">Kanban</button>
+              </div>
+            </div>
+          </div>
+          <div id="hs-task-panel" style="flex:1;overflow-y:auto;padding:8px"></div>
+          <div style="padding:8px 12px;border-top:1px solid var(--border1)">
+            <button class="btn btn-g btn-s" style="width:100%;font-size:10px" onclick="hsShowAddTask()">+ Add Task</button>
+          </div>
         </div>
       </div>
     </div>
@@ -2004,11 +2073,11 @@ function renderAnalytics(){
 function showPlatform(v){
   STATE.proj=null;
   STATE.view=v;
-  ['pipeline','workflows','library','analytics','methodology'].forEach(x=>document.getElementById('nav-'+x).classList.remove('on'));
+  ['pipeline','workflows','library','analytics','methodology','hubspot'].forEach(x=>document.getElementById('nav-'+x).classList.remove('on'));
   document.getElementById('nav-'+v).classList.add('on');
   renderRail();
   document.getElementById('ptabs').style.display='none';
-  const labels={pipeline:'Project Pipeline',workflows:'Workflows',library:'Knowledge Library',analytics:'Analytics',methodology:'Methodology Library'};
+  const labels={pipeline:'Project Pipeline',workflows:'Workflows',library:'Knowledge Library',analytics:'Analytics',methodology:'Methodology Library',hubspot:'HubSpot Inbox'};
   document.getElementById('crumb').innerHTML=`<span class="crumb-cur">${labels[v]||v}</span>`;
   document.getElementById('crmeta').innerHTML='';
   document.getElementById('topacts').innerHTML=`<button class="btn btn-g btn-s" onclick="openWiz()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New Project</button><button class="btn btn-p btn-s">Generate</button>`;
@@ -2018,6 +2087,7 @@ function showPlatform(v){
   if(v==='pipeline') setProjectStats();
   if(v==='workflows') loadWorkflowHistory();
   if(v==='methodology') loadMethodologyTab();
+  if(v==='hubspot') hsLoadInbox();
 }
 function goHome(){ showPlatform('pipeline'); setProjectStats(); }
 
@@ -2834,6 +2904,246 @@ async function methConfirmAuto(fileId, bundleId, role) {
     }
   } catch (e) { rv.innerHTML = `<div style="font-size:11px;color:var(--red)">${e.message}</div>`; }
 }
+
+// ══ HUBSPOT INBOX ═════════════════════════════════════════
+let hsThreads = [], hsTasks = [], hsActiveThread = null, hsTaskView = 'list', hsSyncedAt = null;
+
+async function hsLoadInbox() {
+  const list = document.getElementById('hs-thread-list');
+  list.innerHTML = '<div style="padding:18px;text-align:center;color:var(--txt3);font-size:11px">Syncing with HubSpot...</div>';
+  try {
+    const [inboxRes, taskRes] = await Promise.all([
+      fetch(API + '/api/hubspot/inbox').then(r => r.json()),
+      fetch(API + '/api/hubspot/tasks?status=open').then(r => r.json())
+    ]);
+    if (inboxRes.error && !inboxRes.threads) {
+      list.innerHTML = `<div style="padding:18px;color:var(--amber);font-size:11px">${inboxRes.error}</div>`;
+      return;
+    }
+    hsThreads = inboxRes.threads || [];
+    hsTasks = taskRes.tasks || [];
+    hsSyncedAt = inboxRes.synced_at;
+    hsUpdateStats();
+    hsPopulateFilters();
+    hsRenderThreadList();
+    hsRenderTasks();
+    if (hsThreads.length > 0) hsSelectThread(hsThreads[0].id);
+  } catch (e) {
+    list.innerHTML = `<div style="padding:18px;color:var(--red);font-size:11px">Error: ${e.message}</div>`;
+  }
+}
+
+function hsUpdateStats() {
+  const totalEmails = hsThreads.reduce((s, t) => s + (t.email_count || 0), 0);
+  const unread = hsThreads.filter(t => t.has_unread).length;
+  const open = hsTasks.filter(t => t.status === 'open').length;
+  const waiting = hsTasks.filter(t => t.horizon === 'waiting').length;
+  document.getElementById('hs-stat-emails').textContent = totalEmails;
+  document.getElementById('hs-stat-threads').textContent = hsThreads.length;
+  document.getElementById('hs-stat-unread').textContent = unread;
+  document.getElementById('hs-stat-tasks').textContent = open;
+  document.getElementById('hs-stat-waiting').textContent = waiting;
+  document.getElementById('hs-stat-sync').textContent = hsSyncedAt ? hsTimeAgo(hsSyncedAt) : '—';
+  document.getElementById('hs-sync-ago').textContent = hsSyncedAt ? 'synced ' + hsTimeAgo(hsSyncedAt) : '';
+}
+
+function hsTimeAgo(iso) {
+  const d = new Date(iso); const now = new Date(); const m = Math.round((now - d) / 60000);
+  if (m < 1) return 'just now'; if (m < 60) return m + 'm ago'; if (m < 1440) return Math.round(m / 60) + 'h ago';
+  return Math.round(m / 1440) + 'd ago';
+}
+
+function hsPopulateFilters() {
+  const cf = document.getElementById('hs-filter-contact');
+  const pf = document.getElementById('hs-filter-project');
+  const contacts = [...new Set(hsThreads.map(t => t.contact_name).filter(Boolean))].sort();
+  const projects = [...new Set(hsThreads.map(t => t.pablo_project_id).filter(Boolean))];
+  cf.innerHTML = '<option value="">All contacts</option>' + contacts.map(c => `<option value="${c}">${c.length > 25 ? c.substring(0, 25) + '...' : c}</option>`).join('');
+  pf.innerHTML = '<option value="">All projects</option>' + projects.map(p => `<option value="${p}">${p.substring(0, 8)}...</option>`).join('');
+}
+
+function hsFilterThreads() {
+  const q = (document.getElementById('hs-search').value || '').toLowerCase();
+  const cf = document.getElementById('hs-filter-contact').value;
+  const pf = document.getElementById('hs-filter-project').value;
+  hsRenderThreadList(hsThreads.filter(t => {
+    if (q && !(t.subject || '').toLowerCase().includes(q) && !(t.contact_name || '').toLowerCase().includes(q) && !(t.preview || '').toLowerCase().includes(q)) return false;
+    if (cf && t.contact_name !== cf) return false;
+    if (pf && t.pablo_project_id !== pf) return false;
+    return true;
+  }));
+}
+
+function hsRenderThreadList(threads) {
+  threads = threads || hsThreads;
+  const list = document.getElementById('hs-thread-list');
+  if (!threads.length) { list.innerHTML = '<div style="padding:18px;text-align:center;color:var(--txt3);font-size:11px">No threads found</div>'; return; }
+  list.innerHTML = threads.map(t => {
+    const active = hsActiveThread === t.id ? 'background:var(--teal-glow);border-color:rgba(0,200,150,.18)' : '';
+    const dot = t.has_unread ? '<div style="width:6px;height:6px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:4px"></div>' : '<div style="width:6px;flex-shrink:0"></div>';
+    const dt = t.last_email_at ? new Date(t.last_email_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+    const name = t.contact_name || 'Unknown';
+    const dispName = name.includes('@') ? name.split('@')[0] : name;
+    const bold = t.has_unread ? 'font-weight:700' : '';
+    const projBadge = t.pablo_project_id ? `<span style="font-size:8px;background:var(--teal-glow);color:var(--teal);padding:1px 4px;border-radius:2px;margin-left:4px">linked</span>` : '';
+    return `<div onclick="hsSelectThread('${t.id}')" style="display:flex;gap:6px;padding:8px;border:1px solid var(--border1);border-radius:5px;margin-bottom:3px;cursor:pointer;${active}">
+      ${dot}
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+          <span style="font-size:11px;color:var(--txt0);${bold};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${hsEsc(dispName)}</span>
+          <span style="font-size:9px;color:var(--txt3);flex-shrink:0;margin-left:4px">${dt}</span>
+        </div>
+        <div style="font-size:10px;color:var(--txt1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${hsEsc(t.subject || '(no subject)')}${projBadge}</div>
+        <div style="font-size:9.5px;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px">${hsEsc((t.preview || '').substring(0, 80))}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function hsEsc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+async function hsSelectThread(threadId) {
+  hsActiveThread = threadId;
+  hsRenderThreadList();
+  const subj = document.getElementById('hs-thread-subject');
+  const meta = document.getElementById('hs-thread-meta');
+  const body = document.getElementById('hs-thread-emails');
+  const acts = document.getElementById('hs-thread-actions');
+  subj.textContent = 'Loading...';
+  meta.innerHTML = '';
+  body.innerHTML = '<div style="text-align:center;color:var(--txt3);font-size:11px;padding:30px">Loading thread...</div>';
+  try {
+    const res = await fetch(API + '/api/hubspot/thread/' + encodeURIComponent(threadId));
+    const data = await res.json();
+    if (data.error) { body.innerHTML = `<div style="color:var(--amber);font-size:11px;padding:18px">${data.error}</div>`; return; }
+    subj.textContent = data.subject || '(no subject)';
+    const contact = data.contact_name || data.contact_email || 'Unknown';
+    const company = data.company ? ' \u00b7 ' + data.company : '';
+    const projLink = data.pablo_project_id ? ' \u00b7 <span style="color:var(--teal);cursor:pointer" onclick="openProject(\'' + data.pablo_project_id + '\')">Project \u25b8</span>' : '';
+    meta.innerHTML = hsEsc(contact) + hsEsc(company) + ' \u00b7 ' + hsEsc(data.contact_email || '') + projLink;
+    const emails = data.emails || [];
+    if (!emails.length) { body.innerHTML = '<div style="text-align:center;color:var(--txt3);font-size:11px;padding:30px">No emails in thread</div>'; return; }
+    body.innerHTML = emails.map(e => {
+      const isOut = e.direction === 'outbound';
+      const bg = isOut ? 'var(--bg2)' : 'var(--bg1)';
+      const border = isOut ? 'border-left:3px solid var(--teal)' : 'border-left:3px solid var(--blue)';
+      const align = isOut ? 'margin-left:30px' : 'margin-right:30px';
+      const dt = e.timestamp ? new Date(e.timestamp).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+      const fromLabel = isOut ? 'You \u2192 ' + hsEsc(e.to?.[0] || '') : hsEsc(e.fromName || e.from || 'Unknown');
+      const cc = e.cc?.length ? '<div style="font-size:9.5px;color:var(--txt3)">CC: ' + hsEsc(e.cc.join(', ')) + '</div>' : '';
+      return '<div style="background:' + bg + ';' + border + ';' + align + ';border-radius:5px;padding:12px;margin-bottom:10px;border:1px solid var(--border1)">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+        '<span style="font-size:11px;font-weight:600;color:var(--txt0)">' + fromLabel + '</span>' +
+        '<span style="font-size:9.5px;color:var(--txt3)">' + dt + '</span></div>' +
+        (e.to?.length ? '<div style="font-size:9.5px;color:var(--txt3)">To: ' + hsEsc(e.to.join(', ')) + '</div>' : '') +
+        cc +
+        '<div style="font-size:11.5px;color:var(--txt1);line-height:1.55;margin-top:8px;white-space:pre-wrap;word-break:break-word">' + hsEsc(e.body || '(empty)') + '</div>' +
+        '</div>';
+    }).join('');
+    acts.style.display = 'flex';
+    const hsLink = document.getElementById('hs-hubspot-link');
+    if (data.contact_email) {
+      hsLink.href = 'https://app.hubspot.com/contacts/8691825/contacts?query=' + encodeURIComponent(data.contact_email);
+    }
+  } catch (e) { body.innerHTML = '<div style="color:var(--red);font-size:11px;padding:18px">' + e.message + '</div>'; }
+}
+
+async function hsSync() {
+  const btn = document.querySelector('#v-hubspot button[onclick="hsSync()"]');
+  if (btn) btn.textContent = '...';
+  try {
+    await fetch(API + '/api/hubspot/sync-inbox', { method: 'POST' });
+    await hsLoadInbox();
+  } catch (e) { console.error('Sync error:', e); }
+  if (btn) btn.innerHTML = '&#x21BB;';
+}
+
+function hsRenderTasks() {
+  const panel = document.getElementById('hs-task-panel');
+  document.getElementById('hs-task-count').textContent = hsTasks.length;
+  if (hsTaskView === 'kanban') { hsRenderKanban(panel); return; }
+  if (!hsTasks.length) { panel.innerHTML = '<div style="padding:18px;text-align:center;color:var(--txt3);font-size:11px">No open tasks</div>'; return; }
+  panel.innerHTML = hsTasks.map(t => {
+    const pc = { critical: 'var(--red)', high: 'var(--amber)', medium: 'var(--teal)', low: 'var(--txt3)' }[t.priority] || 'var(--txt3)';
+    const src = t.thread_subject ? '<div style="font-size:9px;color:var(--txt3);margin-top:2px;cursor:pointer" onclick="hsSelectThread(\'' + t.thread_id + '\')">' + hsEsc(t.thread_subject) + '</div>' : '';
+    const cp = t.counterparty ? '<span style="font-size:9px;color:var(--txt3)">' + hsEsc(t.counterparty) + '</span>' : '';
+    return '<div style="display:flex;gap:6px;align-items:flex-start;padding:6px 8px;border:1px solid var(--border1);border-radius:4px;margin-bottom:3px;background:var(--bg2)">' +
+      '<div style="width:5px;height:5px;border-radius:50%;background:' + pc + ';flex-shrink:0;margin-top:5px"></div>' +
+      '<div style="flex:1;min-width:0"><div style="font-size:10.5px;color:var(--txt0)">' + hsEsc(t.task_text) + '</div>' + cp + src + '</div>' +
+      '<select style="font-size:9px;background:var(--bg1);border:1px solid var(--border1);border-radius:3px;color:var(--txt1);padding:1px 3px" onchange="hsUpdateTask(' + t.id + ',\'horizon\',this.value)">' +
+      ['today','week','waiting','parked'].map(h => '<option value="' + h + '"' + (t.horizon === h ? ' selected' : '') + '>' + h.charAt(0).toUpperCase() + h.slice(1) + '</option>').join('') +
+      '</select>' +
+      '<button style="background:none;border:none;color:var(--teal);cursor:pointer;font-size:12px;padding:0" onclick="hsCompleteTask(' + t.id + ')" title="Mark done">&#x2713;</button>' +
+      '</div>';
+  }).join('');
+}
+
+function hsRenderKanban(panel) {
+  const horizons = ['today', 'week', 'waiting', 'parked'];
+  const colors = { today: 'var(--red)', week: 'var(--amber)', waiting: 'var(--teal)', parked: 'var(--txt3)' };
+  panel.innerHTML = horizons.map(h => {
+    const items = hsTasks.filter(t => t.horizon === h);
+    return '<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:700;color:' + colors[h] + ';text-transform:uppercase;margin-bottom:4px;padding:0 4px">' + h + ' (' + items.length + ')</div>' +
+      (items.length ? items.map(t => '<div style="font-size:10px;padding:5px 6px;background:var(--bg2);border:1px solid var(--border1);border-radius:3px;margin-bottom:2px;color:var(--txt0);display:flex;align-items:center;gap:4px"><span style="flex:1">' + hsEsc(t.task_text) + '</span><button style="background:none;border:none;color:var(--teal);cursor:pointer;font-size:11px" onclick="hsCompleteTask(' + t.id + ')">&#x2713;</button></div>').join('') : '<div style="font-size:9px;color:var(--txt3);padding:4px">empty</div>') +
+      '</div>';
+  }).join('');
+}
+
+function hsShowAddTask() {
+  const panel = document.getElementById('hs-task-panel');
+  const existing = document.getElementById('hs-add-form');
+  if (existing) { existing.remove(); return; }
+  const thread = hsThreads.find(t => t.id === hsActiveThread);
+  const cp = thread?.contact_name || '';
+  const div = document.createElement('div');
+  div.id = 'hs-add-form';
+  div.style.cssText = 'padding:8px;border:1px solid var(--teal);border-radius:5px;margin-bottom:8px;background:var(--bg2)';
+  div.innerHTML = '<input id="hs-new-text" placeholder="Task description..." style="width:100%;padding:4px 6px;font-size:11px;background:var(--bg1);border:1px solid var(--border1);border-radius:3px;color:var(--txt0);margin-bottom:4px;box-sizing:border-box">' +
+    '<input id="hs-new-cp" placeholder="Counterparty" value="' + hsEsc(cp) + '" style="width:100%;padding:4px 6px;font-size:10px;background:var(--bg1);border:1px solid var(--border1);border-radius:3px;color:var(--txt1);margin-bottom:4px;box-sizing:border-box">' +
+    '<div style="display:flex;gap:4px">' +
+    '<select id="hs-new-prio" style="flex:1;font-size:10px;padding:3px;background:var(--bg1);border:1px solid var(--border1);border-radius:3px;color:var(--txt1)"><option value="medium">Medium</option><option value="critical">Critical</option><option value="high">High</option><option value="low">Low</option></select>' +
+    '<select id="hs-new-horizon" style="flex:1;font-size:10px;padding:3px;background:var(--bg1);border:1px solid var(--border1);border-radius:3px;color:var(--txt1)"><option value="week">Week</option><option value="today">Today</option><option value="waiting">Waiting</option><option value="parked">Parked</option></select>' +
+    '<button class="btn btn-p btn-s" style="font-size:10px;padding:3px 8px" onclick="hsSaveNewTask()">Save</button></div>';
+  panel.prepend(div);
+  document.getElementById('hs-new-text').focus();
+}
+
+async function hsSaveNewTask() {
+  const text = document.getElementById('hs-new-text').value.trim();
+  if (!text) return;
+  const body = {
+    task_text: text,
+    counterparty: document.getElementById('hs-new-cp').value.trim() || null,
+    priority: document.getElementById('hs-new-prio').value,
+    horizon: document.getElementById('hs-new-horizon').value,
+    thread_id: hsActiveThread || null
+  };
+  await fetch(API + '/api/hubspot/tasks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const taskRes = await fetch(API + '/api/hubspot/tasks?status=open').then(r => r.json());
+  hsTasks = taskRes.tasks || [];
+  const form = document.getElementById('hs-add-form');
+  if (form) form.remove();
+  hsRenderTasks();
+  hsUpdateStats();
+}
+
+async function hsUpdateTask(id, field, value) {
+  await fetch(API + '/api/hubspot/tasks/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ [field]: value }) });
+  const taskRes = await fetch(API + '/api/hubspot/tasks?status=open').then(r => r.json());
+  hsTasks = taskRes.tasks || [];
+  hsRenderTasks();
+  hsUpdateStats();
+}
+
+async function hsCompleteTask(id) {
+  await fetch(API + '/api/hubspot/tasks/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'done' }) });
+  const taskRes = await fetch(API + '/api/hubspot/tasks?status=open').then(r => r.json());
+  hsTasks = taskRes.tasks || [];
+  hsRenderTasks();
+  hsUpdateStats();
+}
+
+function hsCreateTaskFromThread() { hsShowAddTask(); }
 
 init();
 </script>
