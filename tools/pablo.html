@@ -103,6 +103,7 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
 .view.on{display:block}
 .view.on#v-documents{display:flex;flex-direction:column}
 .view.on#v-intel{display:flex}
+.view.on#v-methodology{display:flex;flex-direction:column}
 .view.docmode{background:var(--doc-bg)}
 
 /* ─── BUTTONS ─────────────────────────────────────────── */
@@ -578,7 +579,7 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
     </div>
 
     <!-- Methodology Library -->
-    <div id="v-methodology" class="view" style="display:flex;flex-direction:column;gap:0;height:100%">
+    <div id="v-methodology" class="view">
       <!-- Mode toggle -->
       <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border)">
         <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--txt0);flex:1">Methodology Library</div>
@@ -2569,6 +2570,7 @@ async function loadMethodologyTab() {
     METH.registries = regRes.registries || [];
     METH.roles = roleRes.roles || [];
     METH.bundles = bunRes.bundles || [];
+    console.log('[Browse] loaded', METH.registries.length, 'registries,', METH.bundles.length, 'bundles from API');
   } catch (e) { console.error('Methodology load error:', e); }
   methMode(METH.mode);
 }
