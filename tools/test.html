@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Extraction Tester — PABLO Primitives</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0a0a0a; color: #e0e0e0;
+  font-family: 'Inter', system-ui, sans-serif;
+  padding: 32px; min-height: 100vh;
+}
+.header { margin-bottom: 28px; }
+.header h1 { font-size: 20px; font-weight: 700; color: #fff; }
+.header p { font-size: 12px; color: #555; margin-top: 4px; }
+
+/* Drop zone */
+.drop-zone {
+  border: 2px dashed #2a2a2a; border-radius: 10px;
+  padding: 48px 32px; text-align: center; cursor: pointer;
+  transition: all 0.2s; margin-bottom: 20px; background: #0f0f0f;
+}
+.drop-zone:hover, .drop-zone.dragover {
+  border-color: #00d4aa; background: #0f1f1d;
+}
+.drop-zone input { display: none; }
+.drop-zone .icon { font-size: 32px; margin-bottom: 12px; }
+.drop-zone .label { font-size: 15px; color: #aaa; }
+.drop-zone .hint { font-size: 11px; color: #444; margin-top: 6px; }
+.drop-zone .file-selected { font-size: 13px; color: #00d4aa; margin-top: 8px; font-weight: 500; }
+
+/* Controls */
+.controls {
+  display: flex; gap: 12px; margin-bottom: 20px;
+  align-items: center; flex-wrap: wrap;
+}
+.control-group { display: flex; align-items: center; gap: 8px; }
+.control-group label { font-size: 12px; color: #666; white-space: nowrap; }
+select {
+  background: #151515; border: 1px solid #2a2a2a; color: #e0e0e0;
+  padding: 7px 12px; border-radius: 6px; font-size: 13px;
+}
+.btn {
+  padding: 8px 20px; border-radius: 6px; font-size: 13px;
+  font-weight: 600; cursor: pointer; border: none; transition: all 0.15s;
+}
+.btn-primary { background: #00d4aa; color: #000; }
+.btn-primary:hover { background: #00bfa0; }
+.btn-primary:disabled { background: #1a3530; color: #2a5550; cursor: not-allowed; }
+.btn-secondary { background: #1a1a1a; color: #888; border: 1px solid #2a2a2a; }
+.btn-secondary:hover { color: #ccc; border-color: #444; }
+
+/* Meta grid */
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px; margin-bottom: 20px;
+}
+.meta-card {
+  background: #111; border: 1px solid #1e1e1e;
+  border-radius: 8px; padding: 14px;
+}
+.meta-card .label {
+  font-size: 10px; color: #555;
+  text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;
+}
+.meta-card .value {
+  font-size: 20px; font-weight: 700; color: #fff;
+}
+.meta-card .value.pass { color: #00d4aa; }
+.meta-card .value.warn { color: #ffaa00; }
+.meta-card .value.fail { color: #ff4d4d; }
+.meta-card .sub {
+  font-size: 11px; color: #555; margin-top: 4px;
+}
+
+/* Quality checks */
+.quality-section {
+  background: #111; border: 1px solid #1e1e1e;
+  border-radius: 8px; padding: 16px; margin-bottom: 20px;
+}
+.quality-section h3 {
+  font-size: 12px; color: #555; text-transform: uppercase;
+  letter-spacing: 0.06em; margin-bottom: 12px;
+}
+.checks-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+}
+.check-item {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; padding: 6px 8px;
+  border-radius: 5px; background: #0d0d0d;
+}
+.check-item .icon { font-size: 13px; flex-shrink: 0; }
+.check-item.pass { color: #00d4aa; }
+.check-item.warn { color: #ffaa00; }
+.check-item.fail { color: #ff4d4d; }
+
+/* Text output */
+.output-header {
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: 8px;
+}
+.output-header h3 { font-size: 13px; color: #666; }
+.output-actions { display: flex; gap: 8px; }
+.text-output {
+  background: #080808; border: 1px solid #1e1e1e; border-radius: 8px;
+  padding: 20px; height: 520px; overflow-y: auto;
+  font-family: 'Courier New', monospace; font-size: 12px;
+  line-height: 1.7; white-space: pre-wrap; word-break: break-word;
+  color: #c8c8c8;
+}
+.placeholder { color: #333; text-align: center; padding-top: 60px; font-size: 14px; }
+
+/* Loading */
+.loading {
+  display: none; text-align: center; padding: 32px;
+  font-size: 13px; color: #00d4aa;
+}
+.spinner {
+  display: inline-block; width: 18px; height: 18px;
+  border: 2px solid #1a3530; border-top-color: #00d4aa;
+  border-radius: 50%; animation: spin 0.75s linear infinite;
+  vertical-align: middle; margin-right: 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-detail { font-size: 11px; color: #446; margin-top: 6px; }
+
+/* Status bar */
+.status-bar {
+  font-size: 11px; color: #444; margin-top: 10px;
+  display: flex; justify-content: space-between;
+}
+
+/* Garbage highlight */
+.garbage { background: #3a1010; color: #ff6b6b; border-radius: 2px; padding: 0 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Extraction Tester</h1>
+  <p>PABLO Primitive 1 — Document AI QA tool &middot; v60</p>
+</div>
+
+<!-- Drop zone -->
+<div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+  <input type="file" id="fileInput"
+    accept=".pdf,.docx,.xlsx,.xls,.txt,.odt,.rtf,.png,.jpg,.jpeg,.tiff,.gif">
+  <div class="icon">&#x1F4C4;</div>
+  <div class="label">Drop any file here or click to select</div>
+  <div class="hint">PDF &middot; DOCX &middot; XLSX &middot; TXT &middot; Images &middot; Large PDFs auto-chunked (15pp)</div>
+  <div class="file-selected" id="fileLabel"></div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <div class="control-group">
+    <label>Mode</label>
+    <select id="modeSelect">
+      <option value="full" selected>full &mdash; no cap</option>
+      <option value="classify">classify &mdash; 50K cap</option>
+      <option value="preview">preview &mdash; 5K cap</option>
+    </select>
+  </div>
+  <div class="control-group">
+    <label>Highlight garbage</label>
+    <select id="highlightSelect">
+      <option value="1" selected>on</option>
+      <option value="0">off</option>
+    </select>
+  </div>
+  <button class="btn btn-primary" id="extractBtn" onclick="runExtraction()" disabled>
+    Extract
+  </button>
+  <button class="btn btn-secondary" onclick="clearAll()">Clear</button>
+</div>
+
+<!-- Loading -->
+<div class="loading" id="loading">
+  <div><span class="spinner"></span><span id="loadingMsg">Sending to Document AI...</span></div>
+  <div class="loading-detail" id="loadingDetail"></div>
+</div>
+
+<!-- Meta cards -->
+<div class="meta-grid" id="metaGrid" style="display:none">
+  <div class="meta-card">
+    <div class="label">Method</div>
+    <div class="value" id="m-method">&mdash;</div>
+    <div class="sub" id="m-model"></div>
+  </div>
+  <div class="meta-card">
+    <div class="label">Words</div>
+    <div class="value" id="m-words">&mdash;</div>
+    <div class="sub" id="m-chars"></div>
+  </div>
+  <div class="meta-card">
+    <div class="label">File Size</div>
+    <div class="value" id="m-filesize">&mdash;</div>
+    <div class="sub" id="m-contenttype"></div>
+  </div>
+  <div class="meta-card">
+    <div class="label">Time</div>
+    <div class="value" id="m-time">&mdash;</div>
+    <div class="sub" id="m-truncated"></div>
+  </div>
+</div>
+
+<!-- Quality checks -->
+<div class="quality-section" id="qualitySection" style="display:none">
+  <h3>Quality Checks</h3>
+  <div class="checks-grid" id="checksGrid"></div>
+</div>
+
+<!-- Text output -->
+<div class="output-header">
+  <h3>Extracted Text</h3>
+  <div class="output-actions">
+    <button class="btn btn-secondary" id="btnCopy" onclick="copyText()" style="display:none">
+      Copy
+    </button>
+    <button class="btn btn-secondary" id="btnDownload" onclick="downloadTxt()" style="display:none">
+      Download .txt
+    </button>
+  </div>
+</div>
+<div class="text-output" id="textOutput">
+  <div class="placeholder">Drop a file to begin extraction</div>
+</div>
+<div class="status-bar">
+  <span id="statusLeft"></span>
+  <span id="statusRight">api-tools.oga.earth</span>
+</div>
+
+<script>
+const API = 'https://api-tools.oga.earth';
+const GARBAGE_PATTERNS = [
+  'RuleCounter', 'Hfootnote', 'cite.0@', 'glo:',
+  'CIDInit', 'CIDDict', 'TeX Live', 'TeX-px',
+  'begin{document}', '\\usepackage', 'pdflatex'
+];
+
+let currentFile = null;
+let currentText = '';
+let currentFilename = '';
+
+// File selection
+document.getElementById('fileInput').addEventListener('change', function(e) {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+var dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', function() { dz.classList.remove('dragover'); });
+dz.addEventListener('drop', function(e) {
+  e.preventDefault(); dz.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+
+function handleFile(file) {
+  currentFile = file;
+  currentFilename = file.name;
+  var kb = (file.size / 1024).toFixed(0);
+  var mb = (file.size / 1024 / 1024).toFixed(1);
+  document.getElementById('fileLabel').textContent =
+    '\u2713 ' + file.name + '  (' + mb + ' MB / ' + kb + ' KB)';
+  document.getElementById('extractBtn').disabled = false;
+  document.getElementById('dropZone').querySelector('.icon').textContent = '\uD83D\uDCCE';
+}
+
+async function runExtraction() {
+  if (!currentFile) return;
+
+  var btn = document.getElementById('extractBtn');
+  btn.disabled = true;
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('metaGrid').style.display = 'none';
+  document.getElementById('qualitySection').style.display = 'none';
+  document.getElementById('textOutput').innerHTML = '';
+  document.getElementById('btnCopy').style.display = 'none';
+  document.getElementById('btnDownload').style.display = 'none';
+  document.getElementById('statusLeft').textContent = '';
+
+  var mode = document.getElementById('modeSelect').value;
+  var fileMB = currentFile.size / 1024 / 1024;
+
+  document.getElementById('loadingMsg').textContent =
+    fileMB > 10 ? 'Processing ' + fileMB.toFixed(1) + 'MB file \u2014 auto-chunking...'
+                : 'Sending to Document AI...';
+  document.getElementById('loadingDetail').textContent =
+    fileMB > 50 ? 'Large file detected. This may take 30\u201390 seconds.' :
+    fileMB > 10 ? 'File will be chunked into 15-page batches.' : '';
+
+  var fd = new FormData();
+  fd.append('file', currentFile);
+  fd.append('mode', mode);
+
+  var t0 = Date.now();
+  try {
+    var res = await fetch(API + '/api/primitives/extract', { method: 'POST', body: fd });
+    var data = await res.json();
+    var elapsed = ((Date.now() - t0) / 1000).toFixed(1);
+
+    if (!res.ok || data.error) {
+      document.getElementById('textOutput').innerHTML =
+        '<span style="color:#ff4d4d">Error: ' + escHtml(data.error || 'Unknown') + '</span>';
+      document.getElementById('statusLeft').textContent = 'Failed after ' + elapsed + 's';
+      return;
+    }
+
+    currentText = data.markdown || '';
+    renderMeta(data, elapsed);
+    renderQuality(data);
+    renderText(data);
+
+    document.getElementById('btnCopy').style.display = 'inline';
+    document.getElementById('btnDownload').style.display = 'inline';
+    document.getElementById('statusLeft').textContent =
+      (data.word_count || 0).toLocaleString() + ' words \u00B7 ' + elapsed + 's \u00B7 ' + mode + ' mode';
+
+  } catch (e) {
+    document.getElementById('textOutput').innerHTML =
+      '<span style="color:#ff4d4d">Request failed: ' + escHtml(e.message) + '</span>';
+  } finally {
+    btn.disabled = false;
+    document.getElementById('loading').style.display = 'none';
+  }
+}
+
+function renderMeta(data, elapsed) {
+  document.getElementById('metaGrid').style.display = 'grid';
+
+  var method = data.method || '\u2014';
+  var mEl = document.getElementById('m-method');
+  mEl.textContent = method.replace(/_/g, ' ');
+  mEl.className = 'value ' + (method === 'google_document_ai' ? 'pass' :
+    method.includes('native') ? 'warn' : 'pass');
+  document.getElementById('m-model').textContent = data.model_used || '';
+
+  var wEl = document.getElementById('m-words');
+  wEl.textContent = (data.word_count || 0).toLocaleString();
+  wEl.className = 'value ' + (data.word_count > 1000 ? 'pass' : data.word_count > 100 ? 'warn' : 'fail');
+  document.getElementById('m-chars').textContent =
+    (data.markdown_length || 0).toLocaleString() + ' chars';
+
+  var mb = currentFile ? (currentFile.size / 1024 / 1024).toFixed(1) + ' MB' : '\u2014';
+  document.getElementById('m-filesize').textContent = mb;
+  document.getElementById('m-contenttype').textContent = data.content_type || '';
+
+  document.getElementById('m-time').textContent = elapsed + 's';
+  var truncEl = document.getElementById('m-truncated');
+  if (data.truncated) {
+    truncEl.textContent = '\u26A0 truncated';
+    truncEl.style.color = '#ffaa00';
+  } else {
+    truncEl.textContent = 'complete';
+    truncEl.style.color = '#446';
+  }
+}
+
+function renderQuality(data) {
+  document.getElementById('qualitySection').style.display = 'block';
+  var text = data.markdown || '';
+
+  var checks = [
+    {
+      label: 'Document AI used',
+      status: data.method === 'google_document_ai' ? 'pass' :
+              (data.method || '').includes('native') ? 'warn' : 'pass',
+      detail: data.method || 'unknown'
+    },
+    {
+      label: 'Substantial content',
+      status: data.word_count > 1000 ? 'pass' : data.word_count > 100 ? 'warn' : 'fail',
+      detail: (data.word_count || 0).toLocaleString() + ' words'
+    },
+    {
+      label: 'No RuleCounter garbage',
+      status: !text.includes('RuleCounter') ? 'pass' : 'fail',
+      detail: text.includes('RuleCounter') ? 'FOUND' : 'clean'
+    },
+    {
+      label: 'No CIDInit/TeX garbage',
+      status: !text.includes('CIDInit') && !text.includes('TeX Live') ? 'pass' : 'fail',
+      detail: (text.includes('CIDInit') || text.includes('TeX Live')) ? 'FOUND' : 'clean'
+    },
+    {
+      label: 'No footnote garbage',
+      status: !text.includes('Hfootnote') ? 'pass' : 'fail',
+      detail: text.includes('Hfootnote') ? 'FOUND' : 'clean'
+    },
+    {
+      label: 'No cite reference garbage',
+      status: !text.includes('cite.0@') ? 'pass' : 'fail',
+      detail: text.includes('cite.0@') ? 'FOUND' : 'clean'
+    },
+    {
+      label: 'Not truncated',
+      status: !data.truncated ? 'pass' : 'warn',
+      detail: data.truncated ? 'capped by mode' : 'full content'
+    },
+    {
+      label: 'Extraction succeeded',
+      status: data.word_count > 0 ? 'pass' : 'fail',
+      detail: data.word_count > 0 ? (data.method || '') : 'no text returned'
+    }
+  ];
+
+  var icon = function(s) { return s === 'pass' ? '\u2705' : s === 'warn' ? '\u26A0\uFE0F' : '\u274C'; };
+  document.getElementById('checksGrid').innerHTML = checks.map(function(c) {
+    return '<div class="check-item ' + c.status + '">' +
+      '<span class="icon">' + icon(c.status) + '</span>' +
+      '<span>' + escHtml(c.label) + ' <span style="opacity:0.5;font-size:10px">' + escHtml(c.detail) + '</span></span>' +
+      '</div>';
+  }).join('');
+}
+
+function renderText(data) {
+  var highlight = document.getElementById('highlightSelect').value === '1';
+  var text = data.markdown || '';
+  var el = document.getElementById('textOutput');
+
+  if (highlight) {
+    var hasGarbage = false;
+    var safeText = escHtml(text);
+    GARBAGE_PATTERNS.forEach(function(p) {
+      var escaped = escHtml(p);
+      if (safeText.includes(escaped)) {
+        hasGarbage = true;
+        // Use split/join for global replace (no regex special char issues)
+        safeText = safeText.split(escaped).join('<span class="garbage">' + escaped + '</span>');
+      }
+    });
+    el.innerHTML = safeText;
+  } else {
+    el.textContent = text;
+  }
+}
+
+function escHtml(s) {
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function copyText() {
+  navigator.clipboard.writeText(currentText);
+  var btn = document.getElementById('btnCopy');
+  btn.textContent = 'Copied!';
+  setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+}
+
+function downloadTxt() {
+  var blob = new Blob([currentText], { type: 'text/plain' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = currentFilename.replace(/\.[^.]+$/, '') + '_extracted.txt';
+  a.click();
+}
+
+function clearAll() {
+  currentFile = null; currentText = ''; currentFilename = '';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileLabel').textContent = '';
+  document.getElementById('dropZone').querySelector('.icon').textContent = '\uD83D\uDCC4';
+  document.getElementById('extractBtn').disabled = true;
+  document.getElementById('metaGrid').style.display = 'none';
+  document.getElementById('qualitySection').style.display = 'none';
+  document.getElementById('textOutput').innerHTML =
+    '<div class="placeholder">Drop a file to begin extraction</div>';
+  document.getElementById('statusLeft').textContent = '';
+  document.getElementById('btnCopy').style.display = 'none';
+  document.getElementById('btnDownload').style.display = 'none';
+}
+</script>
+</body>
+</html>
