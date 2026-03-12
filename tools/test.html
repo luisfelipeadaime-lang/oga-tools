@@ -141,7 +141,7 @@ select {
 
 <div class="header">
   <h1>Extraction Tester</h1>
-  <p>PABLO Primitive 1 — Document AI QA tool &middot; v60</p>
+  <p>PABLO Primitive 1 — Document AI QA tool &middot; v62b</p>
 </div>
 
 <!-- Drop zone -->
@@ -181,6 +181,28 @@ select {
 <div class="loading" id="loading">
   <div><span class="spinner"></span><span id="loadingMsg">Sending to Document AI...</span></div>
   <div class="loading-detail" id="loadingDetail"></div>
+</div>
+
+<!-- Async job progress (large files) -->
+<div id="asyncProgress" style="display:none; margin-bottom:16px;">
+  <div style="background:#111; border:1px solid #1e1e1e; border-radius:8px; padding:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <span style="font-size:13px; color:#00d4aa; font-weight:600;">
+        &#x26A1; Processing large file asynchronously...
+      </span>
+      <button onclick="cancelPolling()" class="btn btn-secondary" style="font-size:11px; padding:4px 10px;">
+        Cancel
+      </button>
+    </div>
+    <div style="background:#0a0a0a; border-radius:4px; height:6px; overflow:hidden; margin-bottom:8px;">
+      <div id="progressBar" style="height:100%; background:#00d4aa; width:0%; transition:width 0.5s;"></div>
+    </div>
+    <div style="display:flex; justify-content:space-between;">
+      <span id="progressStatus" style="font-size:11px; color:#555;">Queued...</span>
+      <span id="progressPoll" style="font-size:11px; color:#333;">Poll 0</span>
+    </div>
+    <div id="progressJobId" style="font-size:10px; color:#333; margin-top:4px; font-family:monospace;"></div>
+  </div>
 </div>
 
 <!-- Meta cards -->
@@ -245,6 +267,14 @@ let currentFile = null;
 let currentText = '';
 let currentFilename = '';
 
+// Async job state
+let pollTimer = null;
+let currentJobId = null;
+let pollCount = 0;
+var pollStartTime = 0;
+const MAX_POLLS = 120; // 10 minutes max (120 x 5s)
+const POLL_INTERVAL = 5000; // 5 seconds
+
 // File selection
 document.getElementById('fileInput').addEventListener('change', function(e) {
   if (e.target.files[0]) handleFile(e.target.files[0]);
@@ -272,11 +302,13 @@ function handleFile(file) {
 async function runExtraction() {
   if (!currentFile) return;
 
+  cancelPolling();
   var btn = document.getElementById('extractBtn');
   btn.disabled = true;
   document.getElementById('loading').style.display = 'block';
   document.getElementById('metaGrid').style.display = 'none';
   document.getElementById('qualitySection').style.display = 'none';
+  document.getElementById('asyncProgress').style.display = 'none';
   document.getElementById('textOutput').innerHTML = '';
   document.getElementById('btnCopy').style.display = 'none';
   document.getElementById('btnDownload').style.display = 'none';
@@ -306,9 +338,26 @@ async function runExtraction() {
       document.getElementById('textOutput').innerHTML =
         '<span style="color:#ff4d4d">Error: ' + escHtml(data.error || 'Unknown') + '</span>';
       document.getElementById('statusLeft').textContent = 'Failed after ' + elapsed + 's';
+      btn.disabled = false;
+      document.getElementById('loading').style.display = 'none';
       return;
     }
 
+    // ASYNC PATH: large file queued for background processing
+    if (data.async && data.job_id) {
+      currentJobId = data.job_id;
+      pollCount = 0;
+      pollStartTime = Date.now();
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('asyncProgress').style.display = 'block';
+      document.getElementById('progressJobId').textContent = 'Job: ' + data.job_id;
+      document.getElementById('statusLeft').textContent =
+        'Large file (' + data.file_size_mb + 'MB) \u2014 processing async. Est. ' + data.estimated_seconds + 's';
+      startPolling(data.job_id, data.estimated_seconds || 60);
+      return;
+    }
+
+    // SYNC PATH: immediate result
     currentText = data.markdown || '';
     renderMeta(data, elapsed);
     renderQuality(data);
@@ -323,8 +372,10 @@ async function runExtraction() {
     document.getElementById('textOutput').innerHTML =
       '<span style="color:#ff4d4d">Request failed: ' + escHtml(e.message) + '</span>';
   } finally {
-    btn.disabled = false;
-    document.getElementById('loading').style.display = 'none';
+    if (!currentJobId) {
+      btn.disabled = false;
+      document.getElementById('loading').style.display = 'none';
+    }
   }
 }
 
@@ -459,7 +510,90 @@ function downloadTxt() {
   a.click();
 }
 
+function startPolling(jobId, estimatedSeconds) {
+  pollCount = 0;
+  var mode = document.getElementById('modeSelect').value;
+
+  pollTimer = setInterval(async function() {
+    pollCount++;
+    var elapsed = ((Date.now() - pollStartTime) / 1000).toFixed(0);
+    var progress = Math.min(95, (elapsed / estimatedSeconds) * 100);
+
+    document.getElementById('progressBar').style.width = progress + '%';
+    document.getElementById('progressPoll').textContent = 'Poll ' + pollCount + ' \u00B7 ' + elapsed + 's';
+
+    if (pollCount > MAX_POLLS) {
+      cancelPolling();
+      document.getElementById('textOutput').innerHTML =
+        '<span style="color:#ff4d4d">Timeout: job took too long. Check /api/primitives/jobs/' + escHtml(jobId) + '</span>';
+      return;
+    }
+
+    try {
+      var res = await fetch(API + '/api/primitives/jobs/' + jobId + '?text=1');
+      var data = await res.json();
+
+      document.getElementById('progressStatus').textContent =
+        'Status: ' + (data.status || 'unknown') +
+        (data.word_count ? ' \u00B7 ' + data.word_count.toLocaleString() + ' words' : '');
+
+      if (data.status === 'complete') {
+        cancelPolling();
+        document.getElementById('asyncProgress').style.display = 'none';
+        document.getElementById('progressBar').style.width = '100%';
+
+        currentText = data.text || '';
+
+        // Normalize async poll fields to sync field names for render functions
+        var normalized = {
+          method: data.extraction_method || 'unknown',
+          model_used: data.extraction_method || '',
+          word_count: data.word_count || 0,
+          markdown_length: data.char_count || (data.text || '').length,
+          markdown: data.text || '',
+          content_type: 'application/pdf',
+          truncated: false,
+          page_count: data.page_count,
+          chunks_used: data.chunks_used
+        };
+
+        renderMeta(normalized, elapsed);
+        renderQuality(normalized);
+        renderText(normalized);
+
+        document.getElementById('btnCopy').style.display = 'inline';
+        document.getElementById('btnDownload').style.display = 'inline';
+        document.getElementById('statusLeft').textContent =
+          (data.word_count || 0).toLocaleString() + ' words \u00B7 ' + elapsed + 's async \u00B7 ' +
+          (data.chunks_used || 1) + ' chunk(s)';
+
+      } else if (data.status === 'error') {
+        cancelPolling();
+        document.getElementById('asyncProgress').style.display = 'none';
+        document.getElementById('textOutput').innerHTML =
+          '<span style="color:#ff4d4d">Extraction error: ' + escHtml(data.error || 'Unknown error') + '</span>';
+        document.getElementById('statusLeft').textContent = 'Failed after ' + elapsed + 's';
+      }
+
+    } catch (e) {
+      document.getElementById('progressStatus').textContent = 'Poll failed: ' + e.message;
+    }
+  }, POLL_INTERVAL);
+}
+
+function cancelPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+  currentJobId = null;
+  document.getElementById('asyncProgress').style.display = 'none';
+  document.getElementById('extractBtn').disabled = false;
+  document.getElementById('loading').style.display = 'none';
+}
+
 function clearAll() {
+  cancelPolling();
   currentFile = null; currentText = ''; currentFilename = '';
   document.getElementById('fileInput').value = '';
   document.getElementById('fileLabel').textContent = '';
