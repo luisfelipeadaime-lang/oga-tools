@@ -2910,7 +2910,7 @@ async function methConfirmAuto(fileId, bundleId, role) {
 }
 
 // ══ HUBSPOT INBOX ═════════════════════════════════════════
-const LUIS_EMAILS = ['luis@clearsky.com', 'luis.adaime@clearsky.com', 'luis@oga.earth', 'luis@clearskyltd.com'];
+const LUIS_EMAILS = ['luis.adaime@clearskyltd.com', 'luis.adaime@clearsky.com', 'luis@oga.earth', 'luis@clearsky.com'];
 const CLEARSKY_CONTACTS = {
   'brian.katz': 'Brian Katz', 'brian': 'Brian Katz',
   'ana.avramovic': 'Ana Avramovic', 'ana': 'Ana Avramovic',
@@ -2925,6 +2925,10 @@ function hsDisplayName(raw) {
   if (!raw) return 'Unknown';
   const key = raw.toLowerCase().split('@')[0].replace(/[._]/g, '.').split('.').slice(0, 2).join('.');
   return CLEARSKY_CONTACTS[key] || CLEARSKY_CONTACTS[key.split('.')[0]] || raw;
+}
+function isLuisEmail(email) {
+  if (!email) return false;
+  return LUIS_EMAILS.some(e => email.toLowerCase().trim() === e.toLowerCase());
 }
 function isLuisThread(thread) {
   const str = JSON.stringify(thread).toLowerCase();
@@ -3037,8 +3041,8 @@ function hsRenderThreadList(threads) {
     const active = hsActiveThread === t.id ? 'background:var(--teal-glow);border-color:rgba(0,200,150,.18)' : '';
     const dot = t.has_unread ? '<div style="width:6px;height:6px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:4px"></div>' : '<div style="width:6px;flex-shrink:0"></div>';
     const dt = t.last_email_at ? new Date(t.last_email_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
-    const name = t.contact_name || 'Unknown';
-    const dispName = hsDisplayName(name);
+    const rawName = t.contact_name || 'Unknown';
+    const dispName = isLuisEmail(rawName) || hsDisplayName(rawName) === 'Luis Adaime' ? (t.subject || 'Unknown') : hsDisplayName(rawName);
     const bold = t.has_unread ? 'font-weight:700' : '';
     const projBadge = t.pablo_project_id ? `<span style="font-size:8px;background:var(--teal-glow);color:var(--teal);padding:1px 4px;border-radius:2px;margin-left:4px">linked</span>` : '';
     return `<div onclick="hsSelectThread('${t.id}')" style="display:flex;gap:6px;padding:8px;border:1px solid var(--border1);border-radius:5px;margin-bottom:3px;cursor:pointer;${active}">
@@ -3079,12 +3083,12 @@ async function hsSelectThread(threadId) {
     const emails = data.emails || [];
     if (!emails.length) { body.innerHTML = '<div style="text-align:center;color:var(--txt3);font-size:11px;padding:30px">No emails in thread</div>'; return; }
     body.innerHTML = emails.map(e => {
-      const isOut = e.direction === 'outbound';
-      const bg = isOut ? 'var(--bg2)' : 'var(--bg1)';
-      const border = isOut ? 'border-left:3px solid var(--teal)' : 'border-left:3px solid var(--blue)';
-      const align = isOut ? 'margin-left:30px' : 'margin-right:30px';
+      const isLuis = isLuisEmail(e.from);
+      const bg = isLuis ? 'var(--bg2)' : 'var(--bg1)';
+      const border = isLuis ? 'border-left:3px solid var(--teal)' : 'border-left:3px solid var(--blue)';
+      const align = isLuis ? 'margin-left:30px' : 'margin-right:30px';
       const dt = e.timestamp ? new Date(e.timestamp).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
-      const fromLabel = isOut ? 'You \u2192 ' + hsEsc(hsDisplayName(e.to?.[0] || '')) : hsEsc(hsDisplayName(e.fromName || e.from || 'Unknown'));
+      const fromLabel = isLuis ? 'You \u2192 ' + hsEsc(hsDisplayName(e.to?.[0] || '')) : hsEsc(hsDisplayName(e.fromName || e.from || 'Unknown'));
       const cc = e.cc?.length ? '<div style="font-size:9.5px;color:var(--txt3)">CC: ' + hsEsc(e.cc.join(', ')) + '</div>' : '';
       return '<div style="background:' + bg + ';' + border + ';' + align + ';border-radius:5px;padding:12px;margin-bottom:10px;border:1px solid var(--border1)">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
