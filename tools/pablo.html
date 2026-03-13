@@ -586,80 +586,13 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
       </div>
     </div>
 
-    <!-- Methodology Library -->
+    <!-- Methodology Library (v73) -->
     <div id="v-methodology" class="view">
-      <!-- Mode toggle -->
       <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border)">
         <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--txt0);flex:1">Methodology Library</div>
-        <button class="btn btn-s" id="meth-mode-browse" onclick="methMode('browse')" style="font-size:10px;padding:3px 10px;background:var(--teal);color:#000">Browse</button>
-        <button class="btn btn-s" id="meth-mode-ingest" onclick="methMode('ingest')" style="font-size:10px;padding:3px 10px">Ingest</button>
-        <button class="btn btn-s" id="meth-mode-auto" onclick="methMode('auto')" style="font-size:10px;padding:3px 10px">Quick Add</button>
+        <span style="font-size:10px;color:var(--txt3)" id="meth-count"></span>
       </div>
-
-      <!-- Browse mode: 3-column cascading filter -->
-      <div id="meth-browse" style="flex:1;display:flex;overflow:hidden">
-        <div style="width:180px;border-right:1px solid var(--border);overflow-y:auto;padding:8px">
-          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txt3);margin-bottom:6px">Registry</div>
-          <div id="meth-reg-list"></div>
-        </div>
-        <div style="width:220px;border-right:1px solid var(--border);overflow-y:auto;padding:8px">
-          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txt3);margin-bottom:6px">Methodology</div>
-          <div id="meth-bundle-list"></div>
-        </div>
-        <div style="flex:1;overflow-y:auto;padding:12px">
-          <div id="meth-detail"></div>
-        </div>
-      </div>
-
-      <!-- Ingest mode: Path A structured form -->
-      <div id="meth-ingest" style="flex:1;overflow-y:auto;padding:16px;display:none">
-        <div style="max-width:560px">
-          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txt3);margin-bottom:10px">Path A — Structured Intake</div>
-          <div class="fgrp"><label class="flabel">Registry</label>
-            <select class="finput" id="mi-registry" onchange="methLoadBundlesForReg()"><option value="">Loading…</option></select>
-          </div>
-          <div class="fgrp"><label class="flabel">Methodology Bundle</label>
-            <select class="finput" id="mi-bundle"><option value="">Select registry first</option></select>
-            <div style="margin-top:4px"><button class="btn btn-s" onclick="methShowNewBundle()" style="font-size:10px;padding:2px 8px">+ New Bundle</button></div>
-          </div>
-          <div id="mi-new-bundle" style="display:none;border:1px solid var(--border);border-radius:6px;padding:10px;margin:8px 0;background:var(--bg1)">
-            <div class="fgrp"><label class="flabel">Methodology Name</label><input class="finput" id="mi-nb-name" placeholder="e.g. Terrestrial Storage of Biomass"></div>
-            <div class="fgrp"><label class="flabel">Code</label><input class="finput" id="mi-nb-code" placeholder="e.g. TSB"></div>
-            <div class="fgrp"><label class="flabel">Version</label><input class="finput" id="mi-nb-ver" value="1.0"></div>
-            <button class="btn btn-p btn-s" onclick="methCreateBundle()" style="font-size:10px">Create Bundle</button>
-          </div>
-          <div class="fgrp"><label class="flabel">Document Role</label>
-            <select class="finput" id="mi-role"><option value="">Loading…</option></select>
-          </div>
-          <div class="fgrp">
-            <div style="border:1px dashed var(--border);border-radius:6px;padding:16px;text-align:center;cursor:pointer" onclick="document.getElementById('mi-file').click()">
-              <div style="font-size:11px;color:var(--txt2)" id="mi-file-label">Drop file or click to browse</div>
-            </div>
-            <input type="file" id="mi-file" hidden accept=".pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="methFileSelected(this)">
-          </div>
-          <button class="btn btn-p" id="mi-upload-btn" onclick="methIngestStructured()" disabled style="width:100%;justify-content:center">Upload, Extract &amp; Link</button>
-          <div id="mi-log" style="margin-top:10px"></div>
-        </div>
-      </div>
-
-      <!-- Auto mode: Path B skip form -->
-      <div id="meth-auto" style="flex:1;overflow-y:auto;padding:16px;display:none">
-        <div style="max-width:560px">
-          <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--txt3);margin-bottom:10px">Path B — Quick Add (AI classifies)</div>
-          <div style="font-size:11px;color:var(--txt2);margin-bottom:12px">Drop any methodology document. PABLO will extract text, classify it, and show you a review card before linking.</div>
-          <div class="fgrp">
-            <div style="border:1px dashed var(--border);border-radius:6px;padding:20px;text-align:center;cursor:pointer" onclick="document.getElementById('ma-file').click()">
-              <div style="font-size:11px;color:var(--txt2)" id="ma-file-label">Drop file or click to browse</div>
-            </div>
-            <input type="file" id="ma-file" hidden accept=".pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="methAutoFileSelected(this)">
-          </div>
-          <div id="ma-progress" style="display:none;margin-top:10px">
-            <div style="font-size:11px;color:var(--teal)">Extracting &amp; classifying…</div>
-            <div style="height:3px;background:var(--border);border-radius:2px;margin-top:6px"><div id="ma-bar" style="height:100%;background:var(--teal);border-radius:2px;width:30%;transition:width .5s"></div></div>
-          </div>
-          <div id="ma-review" style="display:none;margin-top:14px"></div>
-        </div>
-      </div>
+      <div id="meth-container" style="padding:16px;flex:1;overflow:hidden"></div>
     </div>
 
     <!-- Platform: Library -->
@@ -719,16 +652,9 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
             <button class="btn btn-p" id="lib-upload-btn" onclick="uploadLibraryDoc()" disabled style="width:100%;justify-content:center;margin-bottom:10px">Upload &amp; Extract</button>
             <div id="lib-log"></div>
           </div>
-          <!-- Browse panel -->
+          <!-- Browse panel (v73) -->
           <div class="lib-browse">
-            <div class="lib-browse-hdr" style="flex-wrap:wrap">
-              <div id="kb-registry-filter" style="display:flex;gap:5px;align-items:center;flex-shrink:0;flex-wrap:wrap">
-                <span class="intfilt on" onclick="libFilter('all',this)" style="padding:4px 8px;font-size:10px;border-radius:4px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700">All</span>
-              </div>
-              <input class="dsearch" id="lib-search-input" placeholder="Search documents…" oninput="clearTimeout(STATE.libSearchTimer);STATE.libSearchTimer=setTimeout(()=>loadLibraryDocs(),300)" style="max-width:none;flex:1;min-width:160px;background:var(--bg3);border-color:var(--border1);color:var(--txt0)">
-              <span style="font-family:'DM Mono',monospace;font-size:10px;color:var(--txt2);flex-shrink:0" id="lib-doc-count"></span>
-            </div>
-            <div class="lib-browse-list" id="lib-docs"></div>
+            <div id="klib-container"></div>
           </div>
         </div>
       </div>
@@ -1627,39 +1553,82 @@ function filterIntel(q){
   loadIntelDocs(STATE.proj);
 }
 
-// ══ KNOWLEDGE LIBRARY ════════════════════════════════════
-function renderLibrary(){ loadLibraryDocs(); loadKBRegistries(); }
+// ══ KNOWLEDGE LIBRARY (v73) ════════════════════════════════════
+const KLIB = { docs: [], q: '', filterCanonical: false, sortCol: 'created_at', sortDir: 'desc' };
 
-async function loadKBRegistries(){
-  try {
-    const res = await fetch(`${API}/api/knowledge/registries`);
-    const data = await res.json();
-    const registries = data.registries || [];
-    const container = document.getElementById('kb-registry-filter');
-    if (!container || !registries.length) return;
-    const REG_COLORS = {puro_earth:'var(--teal)',verra:'var(--blue)',miteco:'var(--amber)',isometric:'var(--violet)',gold_standard:'var(--amber)'};
-    const allBtn = `<span class="intfilt${STATE.libRegFilter?'':' on'}" onclick="libFilter('all',this)" style="padding:4px 8px;font-size:10px;border-radius:4px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700">All</span>`;
-    const regBtns = registries.map(r => {
-      const c = REG_COLORS[r.registry] || 'var(--txt2)';
-      const active = STATE.libRegFilter === r.registry;
-      return `<span class="intfilt${active?' on':''}" onclick="libFilter('${r.registry}',this)" style="padding:4px 8px;font-size:10px;border-radius:4px;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;color:${c}">${r.registry} <span style="opacity:0.5;font-size:8px">${r.doc_count}</span></span>`;
-    }).join('');
-    container.innerHTML = allBtn + regBtns;
-    // Also populate Intel sidebar registry filter
-    const intelFilter = document.getElementById('intel-registry-filter');
-    if (intelFilter) {
-      const iAll = `<div class="intfilt on" onclick="filterIntel('')">All</div>`;
-      const iBtns = registries.map(r => `<div class="intfilt" onclick="filterIntel('${r.registry}')">${r.registry}</div>`).join('');
-      intelFilter.innerHTML = iAll + iBtns;
-    }
-  } catch(e) { /* fallback: keep existing buttons */ }
+function renderLibrary(){ loadKnowledgeLibrary(); }
+
+async function loadKnowledgeLibrary() {
+  const res = await fetch(`${API}/api/primitives/taxonomy/search?limit=500`);
+  const data = await res.json();
+  KLIB.docs = data.docs || [];
+  klibRender();
 }
 
-function libFilter(reg, el){
-  STATE.libRegFilter = (reg==='all') ? '' : reg.toLowerCase();
-  document.querySelectorAll('.lib-browse-hdr .intfilt').forEach(e=>e.classList.remove('on'));
-  el.classList.add('on');
-  loadLibraryDocs();
+function klibFilteredDocs() {
+  let docs = KLIB.docs;
+  if (KLIB.q) {
+    const q = KLIB.q.toLowerCase();
+    docs = docs.filter(d =>
+      (d.title||'').toLowerCase().includes(q) ||
+      (d.registry_doc_type||'').toLowerCase().includes(q) ||
+      (d.registry||'').toLowerCase().includes(q)
+    );
+  }
+  if (KLIB.filterCanonical) docs = docs.filter(d => d.is_canonical == 1);
+  return docs;
+}
+
+function klibSort(col) {
+  if (KLIB.sortCol === col) { KLIB.sortDir = KLIB.sortDir === 'asc' ? 'desc' : 'asc'; }
+  else { KLIB.sortCol = col; KLIB.sortDir = 'desc'; }
+  KLIB.docs.sort((a, b) => {
+    const va = a[col] ?? '';
+    const vb = b[col] ?? '';
+    const cmp = typeof va === 'number' && typeof vb === 'number' ? va - vb : String(va).localeCompare(String(vb), undefined, {numeric: true});
+    return KLIB.sortDir === 'asc' ? cmp : -cmp;
+  });
+  klibRender();
+}
+
+function klibRender() {
+  const container = document.getElementById('klib-container');
+  if (!container) return;
+  const docs = klibFilteredDocs();
+
+  container.innerHTML = `
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+      <input type="text" placeholder="Search title, type, registry…" value="${escHtml(KLIB.q)}" oninput="KLIB.q=this.value;klibRender()"
+        style="flex:1;min-width:200px;max-width:300px;padding:6px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:var(--txt1);font-size:11px">
+      <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:5px;cursor:pointer">
+        <input type="checkbox" ${KLIB.filterCanonical?'checked':''} onchange="KLIB.filterCanonical=this.checked;klibRender()"> ★ Canonical only
+      </label>
+      <span style="font-size:10px;color:var(--txt3)">${docs.length} documents</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.08)">
+          ${[['title','Title'],['registry_doc_type','Type'],['registry','Registry'],['version','Ver'],['word_count','Words'],['is_canonical','★']].map(([col,label])=>`
+            <th onclick="klibSort('${col}')" style="text-align:left;padding:6px 8px;color:var(--txt3);font-weight:500;cursor:pointer;white-space:nowrap;font-size:9px;text-transform:uppercase;letter-spacing:.06em">${label}${KLIB.sortCol===col?(KLIB.sortDir==='asc'?' ↑':' ↓'):''}</th>`).join('')}
+          <th style="padding:6px 8px"></th>
+        </tr></thead>
+        <tbody>
+          ${!docs.length ? '<tr><td colspan="7" style="padding:20px;color:var(--txt3);text-align:center">No documents found</td></tr>' :
+            docs.map(d=>`
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background .1s" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
+                <td style="padding:7px 8px;color:var(--txt1);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(d.title||'')}">${escHtml(d.title||'—')}</td>
+                <td style="padding:7px 8px">${(d.registry_doc_type||d.doc_type)?`<span style="font-size:9px;background:rgba(180,100,255,0.2);color:#B464FF;padding:2px 5px;border-radius:3px;white-space:nowrap">${REGISTRY_DOC_TYPE_LABELS[d.registry_doc_type||d.doc_type]||(d.registry_doc_type||d.doc_type)}</span>`:'<span style="color:var(--txt3)">—</span>'}</td>
+                <td style="padding:7px 8px;color:var(--txt2);white-space:nowrap">${REG_LABELS[d.registry]||d.registry||'—'}</td>
+                <td style="padding:7px 8px;color:var(--txt3);white-space:nowrap">${d.version||'—'}</td>
+                <td style="padding:7px 8px;color:var(--txt3);text-align:right;white-space:nowrap">${d.word_count?Number(d.word_count).toLocaleString():'—'}</td>
+                <td style="padding:7px 8px;text-align:center">${d.is_canonical==1?'<span style="color:#E8A020">★</span>':''}</td>
+                <td style="padding:7px 8px">
+                  <button onclick="viewLibText('${d.id}','${escHtml(d.title||'doc').replace(/'/g,"\\'")}')" style="font-size:9px;padding:3px 8px;border-radius:3px;border:none;background:rgba(255,255,255,0.07);color:var(--txt2);cursor:pointer">Preview</button>
+                </td>
+              </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
 }
 
 function setProjectStats(){
@@ -1788,7 +1757,7 @@ async function deleteLibDoc(id, btn){
   try {
     const res = await fetch(`${API}/api/wiki/docs/${id}`,{method:'DELETE'});
     if(!res.ok) throw new Error('Delete failed');
-    loadLibraryDocs();
+    loadKnowledgeLibrary();
     updateLibraryStats();
   } catch(e){ alert('Delete failed: '+e.message); btn.disabled=false; btn.textContent='🗑'; }
 }
@@ -2049,7 +2018,7 @@ async function uploadLibraryDoc(){
   STATE.libraryFiles=[];
   document.getElementById('lib-dropzone').innerHTML='<span>Drop file or ZIP here, or click to browse</span><div style="font-size:10px;color:var(--txt3);margin-top:4px">PDF, DOCX, XLSX, TXT, ZIP</div>';
   document.getElementById('lib-upload-btn').disabled=true;
-  loadLibraryDocs();
+  loadKnowledgeLibrary();
   updateLibraryStats();
 }
 
@@ -2119,7 +2088,7 @@ function showPlatform(v){
   document.getElementById('topacts').innerHTML=`<button class="btn btn-g btn-s" onclick="openWiz()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New Project</button><button class="btn btn-p btn-s">Generate</button>`;
   document.querySelectorAll('#content .view').forEach(x=>x.classList.remove('on'));
   document.getElementById('v-'+v).classList.add('on');
-  if(v==='library'){ loadLibraryDocs(); updateLibraryStats(); loadKBRegistries(); }
+  if(v==='library'){ loadKnowledgeLibrary(); updateLibraryStats(); }
   if(v==='pipeline') setProjectStats();
   if(v==='workflows') loadWorkflowHistory();
   if(v==='methodology') loadMethodologyTab();
@@ -2656,304 +2625,100 @@ function wfReset() {
   loadWorkflowHistory();
 }
 
-// ══ METHODOLOGY LIBRARY ═════════════════════════════════════
-const METH = { registries: [], roles: [], bundles: [], selReg: null, selBundle: null, mode: 'browse' };
+// ══ METHODOLOGY LIBRARY (v73) ═════════════════════════════════════
 
-function methMode(m) {
-  METH.mode = m;
-  ['browse','ingest','auto'].forEach(x => {
-    const el = document.getElementById('meth-' + x);
-    if (el) el.style.display = x === m ? (m === 'browse' ? 'flex' : 'block') : 'none';
-    const btn = document.getElementById('meth-mode-' + x);
-    if (btn) { btn.style.background = x === m ? 'var(--teal)' : ''; btn.style.color = x === m ? '#000' : ''; }
-  });
-  if (m === 'browse') methRenderBrowse();
-  if (m === 'ingest') methPopulateIngestForm();
-}
+const REGISTRY_DOC_TYPE_LABELS = {
+  VM_methodology:'VM Methodology', VMD_module:'VMD Module', VT_tool:'VT Tool',
+  AFOLU_tool:'AFOLU Tool', CDM_tool:'CDM Tool', CCP_label_document:'CCP Label',
+  CCP_document:'CCP Document', JNR_document:'JNR Document',
+  VCS_program_document:'VCS Program Doc', project_description:'Project Description',
+  monitoring_report:'Monitoring Report', verification_report:'Verification Report',
+  validation_report:'Validation Report', puro_document:'Puro Document',
+  isometric_document:'Isometric Document', GS_document:'Gold Standard Doc',
+  listing_representation:'Listing Rep', communications_agreement:'Comms Agreement',
+  risk_assessment:'Risk Assessment', issuance_document:'Issuance Document',
+  core_methodology:'Core Methodology', example_pd:'Example PD',
+  financial_model:'Financial Model', registry_spec:'Registry Spec',
+};
+
+const REG_LABELS = {
+  verra:'Verra VCS', puro_earth:'Puro.earth', isometric:'Isometric',
+  gold_standard:'Gold Standard', american_carbon:'ACR', climate_action:'CAR',
+  plan_vivo:'Plan Vivo', miteco:'MITECO', art_trees:'ART TREES',
+  eu_ets:'EU ETS', unspecified:'Unspecified',
+};
+
+const METH = { docs: [], selReg: null, selType: null };
 
 async function loadMethodologyTab() {
   try {
-    const [regRes, roleRes, bunRes, taxRes] = await Promise.all([
-      fetch(API + '/api/registries').then(r => r.json()),
-      fetch(API + '/api/document-roles').then(r => r.json()),
-      fetch(API + '/api/methodologies').then(r => r.json()),
-      fetch(API + '/api/primitives/taxonomy/search?limit=500&canonical=1').then(r => r.json())
-    ]);
-    METH.registries = regRes.registries || [];
-    METH.roles = roleRes.roles || [];
-    METH.bundles = bunRes.bundles || [];
-    METH.docs = taxRes.docs || [];
-    console.log('[Browse] loaded', METH.registries.length, 'registries,', METH.bundles.length, 'bundles,', METH.docs.length, 'taxonomy docs');
+    const res = await fetch(`${API}/api/primitives/taxonomy/search?canonical=1&limit=500`);
+    const data = await res.json();
+    METH.docs = data.docs || [];
+    const cnt = document.getElementById('meth-count');
+    if (cnt) cnt.textContent = METH.docs.length + ' canonical docs';
+    console.log('[Meth] loaded', METH.docs.length, 'canonical docs');
   } catch (e) { console.error('Methodology load error:', e); }
-  methMode(METH.mode);
+  methRender();
 }
 
-// ── Browse mode ──
-function methRenderBrowse() {
-  const rl = document.getElementById('meth-reg-list');
-  if (!rl) return;
-  rl.innerHTML = '<div class="intfilt' + (!METH.selReg ? ' on' : '') + '" onclick="methSelReg(null)" style="font-size:11px;padding:4px 8px;cursor:pointer;border-radius:4px">All</div>' +
-    METH.registries.filter(r => r.id !== 'other').map(r => {
-      const cnt = METH.docs.filter(d => d.registry === r.id).length;
-      return `<div class="intfilt${METH.selReg === r.id ? ' on' : ''}" onclick="methSelReg('${r.id}')" style="font-size:11px;padding:4px 8px;cursor:pointer;border-radius:4px">${r.label} <span style="color:var(--txt3)">(${cnt})</span></div>`;
-    }).join('');
-  methRenderBundles();
+function methRender() {
+  const container = document.getElementById('meth-container');
+  if (!container) return;
+
+  const regCounts = {};
+  METH.docs.forEach(d => { const r = d.registry || 'unspecified'; regCounts[r] = (regCounts[r] || 0) + 1; });
+
+  const regFiltered = METH.selReg ? METH.docs.filter(d => d.registry === METH.selReg) : METH.docs;
+  const typeCounts = {};
+  regFiltered.forEach(d => { const t = d.registry_doc_type || d.doc_type || 'unclassified'; typeCounts[t] = (typeCounts[t] || 0) + 1; });
+
+  const finalDocs = METH.docs.filter(d => {
+    if (METH.selReg && d.registry !== METH.selReg) return false;
+    if (METH.selType !== null && (d.registry_doc_type || d.doc_type || 'unclassified') !== METH.selType) return false;
+    return true;
+  });
+
+  container.innerHTML = `
+    <div style="display:flex;gap:16px;height:100%">
+      <div style="width:220px;flex-shrink:0;overflow-y:auto">
+        <div style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Registry</div>
+        <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:20px">
+          <button onclick="methSelReg('__all__')" style="text-align:left;padding:5px 10px;border-radius:4px;border:none;font-size:11px;cursor:pointer;background:${!METH.selReg?'rgba(0,212,170,0.15)':'rgba(255,255,255,0.04)'};color:${!METH.selReg?'#00D4AA':'var(--txt2)'}">All (${METH.docs.length})</button>
+          ${Object.entries(regCounts).sort((a,b)=>b[1]-a[1]).map(([r,n])=>`
+            <button onclick="methSelReg('${r}')" style="text-align:left;padding:5px 10px;border-radius:4px;border:none;font-size:11px;cursor:pointer;background:${METH.selReg===r?'rgba(0,212,170,0.15)':'rgba(255,255,255,0.04)'};color:${METH.selReg===r?'#00D4AA':'var(--txt2)'}">${REG_LABELS[r]||r} (${n})</button>`).join('')}
+        </div>
+        <div style="font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Document Type</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <button onclick="methSelType('__all__')" style="text-align:left;padding:5px 10px;border-radius:4px;border:none;font-size:11px;cursor:pointer;background:${METH.selType===null?'rgba(180,100,255,0.15)':'rgba(255,255,255,0.04)'};color:${METH.selType===null?'#B464FF':'var(--txt2)'}">All Types (${regFiltered.length})</button>
+          ${Object.entries(typeCounts).sort((a,b)=>b[1]-a[1]).map(([t,n])=>`
+            <button onclick="methSelType('${t}')" style="text-align:left;padding:5px 10px;border-radius:4px;border:none;font-size:11px;cursor:pointer;background:${METH.selType===t?'rgba(180,100,255,0.15)':'rgba(255,255,255,0.04)'};color:${METH.selType===t?'#B464FF':'var(--txt2)'}">${REGISTRY_DOC_TYPE_LABELS[t]||t} (${n})</button>`).join('')}
+        </div>
+      </div>
+      <div style="flex:1;overflow-y:auto">
+        ${!finalDocs.length ? '<div style="color:var(--txt3);font-size:12px;padding:20px">No documents match the selected filters.</div>' :
+          finalDocs.map(d=>`
+            <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:6px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;color:var(--txt1);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px" title="${escHtml(d.title||'')}">${escHtml(d.title||'—')}</div>
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                  ${(d.registry_doc_type||d.doc_type)?`<span style="font-size:9px;background:rgba(180,100,255,0.2);color:#B464FF;padding:2px 6px;border-radius:3px">${REGISTRY_DOC_TYPE_LABELS[d.registry_doc_type||d.doc_type]||(d.registry_doc_type||d.doc_type)}</span>`:''}
+                  ${d.version?`<span style="font-size:9px;background:rgba(255,255,255,0.07);color:var(--txt3);padding:2px 6px;border-radius:3px">${escHtml(d.version)}</span>`:''}
+                  ${d.is_canonical==1?'<span style="font-size:9px;color:#E8A020">★ Library</span>':''}
+                  ${d.word_count?`<span style="font-size:9px;color:var(--txt3)">${Number(d.word_count).toLocaleString()}w</span>`:''}
+                </div>
+              </div>
+              <div style="display:flex;gap:6px;flex-shrink:0">
+                <button onclick="viewLibText('${d.id}','${escHtml(d.title||'doc').replace(/'/g,"\\'")}')" style="font-size:10px;padding:4px 10px;border-radius:4px;border:none;background:rgba(255,255,255,0.07);color:var(--txt2);cursor:pointer">Preview</button>
+                <button onclick="methDownloadTaxDoc('${d.id}','original')" style="font-size:10px;padding:4px 10px;border-radius:4px;border:none;background:rgba(255,255,255,0.07);color:var(--txt2);cursor:pointer">↓</button>
+              </div>
+            </div>`).join('')}
+      </div>
+    </div>`;
 }
 
-function methSelReg(id) { METH.selReg = id; METH.selBundle = null; methRenderBrowse(); }
-
-function methRenderBundles() {
-      const bl = document.getElementById('meth-bundle-list');
-      if (!bl) return;
-      const filteredDocs = METH.selReg ? METH.docs.filter(d => d.registry === METH.selReg) : METH.docs;
-      const TYPE_ORDER = ['core_methodology','project_description','verification_report','registry_spec',
-        'financial_model','example_pd','legal_agreement','technical_report','market_intelligence',
-        'policy_document','presentation','correspondence','other'];
-      const DOC_TYPE_LABELS = {
-        core_methodology:'Core Methodology', project_description:'Project Description',
-        verification_report:'Verification Report', registry_spec:'Registry Specification',
-        financial_model:'Financial Model', example_pd:'Example PD',
-        legal_agreement:'Legal Agreement', market_intelligence:'Market Intelligence',
-        policy_document:'Policy Document', technical_report:'Technical Report',
-        presentation:'Presentation', correspondence:'Correspondence', other:'Other'
-      };
-      const typeCounts = {};
-      filteredDocs.forEach(d => { const t = d.doc_type || 'other'; typeCounts[t] = (typeCounts[t] || 0) + 1; });
-      const activeTypes = TYPE_ORDER.filter(t => typeCounts[t]);
-      if (!activeTypes.length) {
-        bl.innerHTML = '<div style="font-size:11px;color:var(--txt3);padding:8px">No documents found</div>';
-        document.getElementById('meth-detail').innerHTML = '';
-        return;
-      }
-      bl.innerHTML = activeTypes.map(t => `<div class="intfilt${METH.selBundle === t ? ' on' : ''}" onclick="methSelBundle('${t}')" style="font-size:11px;padding:5px 8px;cursor:pointer;border-radius:4px;margin-bottom:2px">
-        <div style="font-weight:600">${DOC_TYPE_LABELS[t] || t}</div>
-        <div style="font-size:9px;color:var(--txt3)">${typeCounts[t]} doc${typeCounts[t] !== 1 ? 's' : ''}</div>
-      </div>`).join('');
-      if (METH.selBundle) methLoadDetail(METH.selBundle);
-      else document.getElementById('meth-detail').innerHTML = '<div style="font-size:11px;color:var(--txt3)">Select a document type to view documents</div>';
-    }
-
-function methSelBundle(id) { METH.selBundle = id; methRenderBundles(); }
-
-async function methLoadDetail(bundleId) {
-      const el = document.getElementById('meth-detail');
-      el.innerHTML = '<div style="font-size:11px;color:var(--txt2)">Loading…</div>';
-      const DOC_TYPE_LABELS = {
-        core_methodology:'Core Methodology', project_description:'Project Description',
-        verification_report:'Verification Report', registry_spec:'Registry Specification',
-        financial_model:'Financial Model', example_pd:'Example PD',
-        legal_agreement:'Legal Agreement', market_intelligence:'Market Intelligence',
-        policy_document:'Policy Document', technical_report:'Technical Report',
-        presentation:'Presentation', correspondence:'Correspondence', other:'Other'
-      };
-      try {
-        let docs = METH.docs.filter(d => (d.doc_type || 'other') === bundleId);
-        if (METH.selReg) docs = docs.filter(d => d.registry === METH.selReg);
-        const label = DOC_TYPE_LABELS[bundleId] || bundleId;
-        let html = `<div style="margin-bottom:12px">
-          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--txt0)">${label}</div>
-          <div style="font-size:11px;color:var(--txt2)">${docs.length} document${docs.length !== 1 ? 's' : ''}</div>
-        </div>`;
-        if (!docs.length) {
-          el.innerHTML = html + '<div style="font-size:11px;color:var(--txt3);padding:8px">No documents in this category</div>';
-          return;
-        }
-        docs.forEach(d => {
-          const badge = d.is_canonical ? `<span style="color:var(--teal);font-size:9px;margin-left:4px">★ Library</span>` : '';
-          const src = d.taxonomy_source === 'manual' ? '' :
-            d.taxonomy_source === 'ai' ? `<span style="color:var(--amber);font-size:9px" title="AI classified"> AI</span>` :
-            `<span style="color:var(--txt3);font-size:9px"> auto</span>`;
-          html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
-            <div style="flex:1">
-              <div style="font-size:11px;font-weight:600;color:var(--txt0)">${d.title || 'Untitled'}${badge}</div>
-              <div style="font-size:10px;color:var(--txt3)">${d.word_count ? d.word_count.toLocaleString() + ' words' : 'processing'}${src}</div>
-            </div>
-            <button class="btn btn-s" onclick="methDownloadTaxDoc('${d.id}','txt')" style="font-size:9px;padding:2px 6px">TXT</button>
-            <button class="btn btn-s" onclick="methDownloadTaxDoc('${d.id}','original')" style="font-size:9px;padding:2px 6px">Original</button>
-          </div>`;
-        });
-        el.innerHTML = html;
-      } catch(e) {
-        el.innerHTML = '<div style="color:var(--red);font-size:11px">Error: ' + e.message + '</div>';
-      }
-    }
-
-function methExportContext(bundleId) {
-  const a = document.createElement('a');
-  a.href = API + '/api/methodologies/' + bundleId + '/export-context';
-  a.download = bundleId + '_context.md';
-  a.click();
-}
-
-function methDownloadDoc(bundleId, docId, format) {
-  const url = API + '/api/methodologies/' + bundleId + '/documents/' + docId + '/download?format=' + format;
-  const a = document.createElement('a');
-  a.href = url; a.download = ''; a.click();
-}
-
-async function methUnlinkDoc(bundleId, docId) {
-  if (!confirm('Unlink this document from the bundle?')) return;
-  await fetch(API + '/api/methodologies/' + bundleId + '/documents/' + docId, { method: 'DELETE' });
-  // Refresh
-  const bunRes = await fetch(API + '/api/methodologies').then(r => r.json());
-  METH.bundles = bunRes.bundles || [];
-  methLoadDetail(bundleId);
-  methRenderBundles();
-}
-
-// ── Ingest mode (Path A) ──
-function methPopulateIngestForm() {
-  const regSel = document.getElementById('mi-registry');
-  regSel.innerHTML = '<option value="">Select registry…</option>' + METH.registries.map(r => `<option value="${r.id}">${r.label}</option>`).join('');
-  const roleSel = document.getElementById('mi-role');
-  roleSel.innerHTML = '<option value="">(AI will infer)</option>' + METH.roles.map(r => `<option value="${r.id}">${r.label}</option>`).join('');
-}
-
-function methLoadBundlesForReg() {
-  const reg = document.getElementById('mi-registry').value;
-  const bSel = document.getElementById('mi-bundle');
-  const filtered = METH.bundles.filter(b => b.registry_id === reg);
-  bSel.innerHTML = '<option value="">Select bundle…</option>' + filtered.map(b => `<option value="${b.id}">${b.methodology_name} v${b.version}</option>`).join('') + '<option value="__new__">+ Create new bundle…</option>';
-  bSel.onchange = function() { if (this.value === '__new__') methShowNewBundle(); else document.getElementById('mi-new-bundle').style.display = 'none'; methCheckIngestReady(); };
-  methCheckIngestReady();
-}
-
-function methShowNewBundle() { document.getElementById('mi-new-bundle').style.display = 'block'; }
-
-async function methCreateBundle() {
-  const reg = document.getElementById('mi-registry').value;
-  const name = document.getElementById('mi-nb-name').value.trim();
-  const code = document.getElementById('mi-nb-code').value.trim();
-  const ver = document.getElementById('mi-nb-ver').value.trim() || '1.0';
-  if (!reg || !name) return alert('Registry and name required');
-  const res = await fetch(API + '/api/methodologies', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ registry_id: reg, methodology_name: name, methodology_code: code, version: ver }) }).then(r => r.json());
-  if (res.ok) {
-    METH.bundles.push(res.bundle);
-    document.getElementById('mi-new-bundle').style.display = 'none';
-    methLoadBundlesForReg();
-    document.getElementById('mi-bundle').value = res.bundle.id;
-    methCheckIngestReady();
-  } else { alert(res.error || 'Error creating bundle'); }
-}
-
-function methFileSelected(input) {
-  document.getElementById('mi-file-label').textContent = input.files[0] ? input.files[0].name : 'Drop file or click to browse';
-  methCheckIngestReady();
-}
-
-function methCheckIngestReady() {
-  const ready = document.getElementById('mi-bundle').value && document.getElementById('mi-bundle').value !== '__new__' && document.getElementById('mi-file').files.length;
-  document.getElementById('mi-upload-btn').disabled = !ready;
-}
-
-async function methIngestStructured() {
-  const bundleId = document.getElementById('mi-bundle').value;
-  const role = document.getElementById('mi-role').value || null;
-  const file = document.getElementById('mi-file').files[0];
-  if (!bundleId || !file) return;
-  const log = document.getElementById('mi-log');
-  log.innerHTML = '<div style="font-size:11px;color:var(--teal)">Uploading &amp; extracting…</div>';
-  document.getElementById('mi-upload-btn').disabled = true;
-  try {
-    const fd = new FormData();
-    fd.append('file', file);
-    if (role) fd.append('document_role', role);
-    const res = await fetch(API + '/api/methodologies/' + bundleId + '/ingest', { method: 'POST', body: fd }).then(r => r.json());
-    if (res.ok) {
-      log.innerHTML = `<div style="font-size:11px;color:var(--green)">Linked as <b>${res.document_role}</b> (${res.input_source}) · ${res.word_count?.toLocaleString() || 0} words</div>`;
-      const bunRes = await fetch(API + '/api/methodologies').then(r => r.json());
-      METH.bundles = bunRes.bundles || [];
-      document.getElementById('mi-file').value = '';
-      document.getElementById('mi-file-label').textContent = 'Drop file or click to browse';
-    } else { log.innerHTML = `<div style="font-size:11px;color:var(--red)">${res.error}</div>`; }
-  } catch (e) { log.innerHTML = `<div style="font-size:11px;color:var(--red)">${e.message}</div>`; }
-  document.getElementById('mi-upload-btn').disabled = false;
-}
-
-// ── Auto mode (Path B) ──
-function methAutoFileSelected(input) {
-  const file = input.files[0];
-  if (!file) return;
-  document.getElementById('ma-file-label').textContent = file.name;
-  document.getElementById('ma-progress').style.display = 'block';
-  document.getElementById('ma-review').style.display = 'none';
-  document.getElementById('ma-bar').style.width = '30%';
-  const fd = new FormData();
-  fd.append('file', file);
-  fetch(API + '/api/methodologies/ingest-auto', { method: 'POST', body: fd })
-    .then(r => r.json())
-    .then(data => {
-      document.getElementById('ma-bar').style.width = '100%';
-      setTimeout(() => {
-        document.getElementById('ma-progress').style.display = 'none';
-        methShowReviewCard(data);
-      }, 400);
-    })
-    .catch(e => {
-      document.getElementById('ma-progress').style.display = 'none';
-      document.getElementById('ma-review').innerHTML = `<div style="color:var(--red);font-size:11px">${e.message}</div>`;
-      document.getElementById('ma-review').style.display = 'block';
-    });
-}
-
-function methShowReviewCard(data) {
-  const rv = document.getElementById('ma-review');
-  const inf = data.inferred || {};
-  const confPct = ((inf.confidence || 0) * 100).toFixed(0);
-  const confColor = inf.confidence >= 0.7 ? 'var(--green)' : inf.confidence >= 0.4 ? 'var(--amber)' : 'var(--red)';
-  const reg = METH.registries.find(r => r.id === inf.registry_id);
-  const bundle = METH.bundles.find(b => b.id === inf.methodology_bundle_id);
-  const role = METH.roles.find(r => r.id === inf.document_role);
-  rv.innerHTML = `<div style="border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--bg1)">
-    <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--txt0);margin-bottom:8px">AI Classification</div>
-    <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:11px">
-      <span style="color:var(--txt3)">Registry:</span><span>${reg ? reg.label : inf.registry_id || 'Unknown'}</span>
-      <span style="color:var(--txt3)">Bundle:</span><span>${bundle ? bundle.methodology_name : inf.methodology_bundle_id || 'None matched'}${!bundle && inf.methodology_bundle_id ? ' <span style="color:var(--amber)">(new)</span>' : ''}</span>
-      <span style="color:var(--txt3)">Role:</span><span>${role ? role.label : inf.document_role || 'other'}</span>
-      <span style="color:var(--txt3)">Confidence:</span><span style="color:${confColor};font-weight:700">${confPct}%</span>
-      <span style="color:var(--txt3)">Words:</span><span>${data.word_count?.toLocaleString() || 0}</span>
-    </div>
-    ${inf.reasoning ? `<div style="font-size:10px;color:var(--txt3);margin-top:6px;font-style:italic">${inf.reasoning}</div>` : ''}
-    <div style="display:flex;gap:6px;margin-top:10px">
-      ${inf.methodology_bundle_id ? `<button class="btn btn-p btn-s" onclick="methConfirmAuto('${data.file_id || ''}','${inf.methodology_bundle_id}','${inf.document_role || 'other'}')" style="font-size:10px;padding:3px 10px">Confirm &amp; Link</button>` : ''}
-      <button class="btn btn-s" onclick="methMode('ingest')" style="font-size:10px;padding:3px 10px">Edit &amp; Link Manually</button>
-      <button class="btn btn-s" onclick="document.getElementById('ma-review').style.display='none';document.getElementById('ma-file').value='';document.getElementById('ma-file-label').textContent='Drop file or click to browse'" style="font-size:10px;padding:3px 10px">Discard</button>
-    </div>
-  </div>`;
-  rv.style.display = 'block';
-}
-
-async function methConfirmAuto(fileId, bundleId, role) {
-  // The file was already uploaded and extracted by ingest-auto. We need to find its knowledge_doc and link it.
-  // The extract was created but not linked. We can use link-doc if we find the doc_id, or use a workaround.
-  // Since ingest-auto creates file + extract but not knowledge_doc, we need a secondary step.
-  // For now, we'll search for the file_id in extracts to get the doc
-  const rv = document.getElementById('ma-review');
-  rv.innerHTML = '<div style="font-size:11px;color:var(--teal)">Linking…</div>';
-  try {
-    // Find knowledge_doc by source_id matching fileId or extract_id
-    const searchRes = await fetch(API + '/api/wiki/docs?limit=5&q=' + encodeURIComponent(fileId)).then(r => r.json());
-    // If we can't find it, we need to re-ingest with the structured endpoint
-    // Actually, ingest-auto already saved file + extract. We need the link-doc endpoint with the extract's knowledge doc.
-    // Since ingest-auto doesn't create a knowledge_doc, let's use a different approach:
-    // Upload the file again via the structured ingest endpoint
-    rv.innerHTML = '<div style="font-size:11px;color:var(--amber)">Creating knowledge doc &amp; linking…</div>';
-    // Use the existing file — call link after creating knowledge doc via wiki extract
-    const extractRes = await fetch(API + '/api/wiki/extract/' + fileId, { method: 'POST' }).then(r => r.json());
-    if (extractRes.doc_id || extractRes.id) {
-      const docId = extractRes.doc_id || extractRes.id;
-      await fetch(API + '/api/methodologies/' + bundleId + '/link-doc', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ doc_id: docId, document_role: role })
-      });
-      rv.innerHTML = '<div style="font-size:11px;color:var(--green)">Linked successfully!</div>';
-      const bunRes = await fetch(API + '/api/methodologies').then(r => r.json());
-      METH.bundles = bunRes.bundles || [];
-    } else {
-      rv.innerHTML = '<div style="font-size:11px;color:var(--red)">Could not create knowledge doc. Try manual ingest.</div>';
-    }
-  } catch (e) { rv.innerHTML = `<div style="font-size:11px;color:var(--red)">${e.message}</div>`; }
-}
+function methSelReg(id) { METH.selReg = id === '__all__' ? null : id; METH.selType = null; methRender(); }
+function methSelType(id) { METH.selType = id === '__all__' ? null : id; methRender(); }
 
 // ══ HUBSPOT INBOX ═════════════════════════════════════════
 const CLEARSKY_CONTACTS = {
