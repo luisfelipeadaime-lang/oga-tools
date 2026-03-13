@@ -2703,88 +2703,80 @@ function methRenderBrowse() {
 function methSelReg(id) { METH.selReg = id; METH.selBundle = null; methRenderBrowse(); }
 
 function methRenderBundles() {
-  const bl = document.getElementById('meth-bundle-list');
-  if (!bl) return;
-  const filteredDocs = METH.selReg ? METH.docs.filter(d => d.registry === METH.selReg) : METH.docs;
-  const projectCounts = {};
-  filteredDocs.forEach(d => { const p = d.project || 'unassociated'; projectCounts[p] = (projectCounts[p] || 0) + 1; });
-  const projects = Object.entries(projectCounts).sort((a, b) => b[1] - a[1]);
-  const PROJECT_LABELS = {
-    marakoa:'Marakoa', bosquia:'Bosquia Asturias', amoedo:'Amoedo TSB',
-    puro_tsb:'Puro TSB', isometric_subsurface:'Isometric Subsurface',
-    clearsky_internal:'ClearSky Internal', registry_reference:'Registry Reference',
-    unassociated:'Unassociated'
-  };
-  if (!projects.length) {
-    bl.innerHTML = '<div style="font-size:11px;color:var(--txt3);padding:8px">No documents found</div>';
-    document.getElementById('meth-detail').innerHTML = '';
-    return;
-  }
-  bl.innerHTML = projects.map(([p, cnt]) => `<div class="intfilt${METH.selBundle === p ? ' on' : ''}" onclick="methSelBundle('${p}')" style="font-size:11px;padding:5px 8px;cursor:pointer;border-radius:4px;margin-bottom:2px">
-    <div style="font-weight:600">${PROJECT_LABELS[p] || p}</div>
-    <div style="font-size:9px;color:var(--txt3)">${cnt} doc${cnt !== 1 ? 's' : ''}</div>
-  </div>`).join('');
-  if (METH.selBundle) methLoadDetail(METH.selBundle);
-  else document.getElementById('meth-detail').innerHTML = '<div style="font-size:11px;color:var(--txt3)">Select a project to view documents</div>';
-}
+      const bl = document.getElementById('meth-bundle-list');
+      if (!bl) return;
+      const filteredDocs = METH.selReg ? METH.docs.filter(d => d.registry === METH.selReg) : METH.docs;
+      const TYPE_ORDER = ['core_methodology','project_description','verification_report','registry_spec',
+        'financial_model','example_pd','legal_agreement','technical_report','market_intelligence',
+        'policy_document','presentation','correspondence','other'];
+      const DOC_TYPE_LABELS = {
+        core_methodology:'Core Methodology', project_description:'Project Description',
+        verification_report:'Verification Report', registry_spec:'Registry Specification',
+        financial_model:'Financial Model', example_pd:'Example PD',
+        legal_agreement:'Legal Agreement', market_intelligence:'Market Intelligence',
+        policy_document:'Policy Document', technical_report:'Technical Report',
+        presentation:'Presentation', correspondence:'Correspondence', other:'Other'
+      };
+      const typeCounts = {};
+      filteredDocs.forEach(d => { const t = d.doc_type || 'other'; typeCounts[t] = (typeCounts[t] || 0) + 1; });
+      const activeTypes = TYPE_ORDER.filter(t => typeCounts[t]);
+      if (!activeTypes.length) {
+        bl.innerHTML = '<div style="font-size:11px;color:var(--txt3);padding:8px">No documents found</div>';
+        document.getElementById('meth-detail').innerHTML = '';
+        return;
+      }
+      bl.innerHTML = activeTypes.map(t => `<div class="intfilt${METH.selBundle === t ? ' on' : ''}" onclick="methSelBundle('${t}')" style="font-size:11px;padding:5px 8px;cursor:pointer;border-radius:4px;margin-bottom:2px">
+        <div style="font-weight:600">${DOC_TYPE_LABELS[t] || t}</div>
+        <div style="font-size:9px;color:var(--txt3)">${typeCounts[t]} doc${typeCounts[t] !== 1 ? 's' : ''}</div>
+      </div>`).join('');
+      if (METH.selBundle) methLoadDetail(METH.selBundle);
+      else document.getElementById('meth-detail').innerHTML = '<div style="font-size:11px;color:var(--txt3)">Select a document type to view documents</div>';
+    }
 
 function methSelBundle(id) { METH.selBundle = id; methRenderBundles(); }
 
 async function methLoadDetail(bundleId) {
-  const el = document.getElementById('meth-detail');
-  el.innerHTML = '<div style="font-size:11px;color:var(--txt2)">Loading…</div>';
-  const DOC_TYPE_LABELS = {
-    core_methodology:'Core Methodology', project_description:'Project Description',
-    verification_report:'Verification Report', registry_spec:'Registry Specification',
-    financial_model:'Financial Model', example_pd:'Example PD',
-    legal_agreement:'Legal Agreement', market_intelligence:'Market Intelligence',
-    policy_document:'Policy Document', technical_report:'Technical Report',
-    presentation:'Presentation', correspondence:'Correspondence', other:'Other'
-  };
-  const PROJECT_LABELS = {
-    marakoa:'Marakoa', bosquia:'Bosquia Asturias', amoedo:'Amoedo TSB',
-    puro_tsb:'Puro TSB', isometric_subsurface:'Isometric Subsurface',
-    clearsky_internal:'ClearSky Internal', registry_reference:'Registry Reference',
-    unassociated:'Unassociated'
-  };
-  const TYPE_ORDER = ['core_methodology','project_description','verification_report','registry_spec',
-    'financial_model','example_pd','legal_agreement','technical_report','market_intelligence',
-    'policy_document','presentation','correspondence','other'];
-  try {
-    let docs = METH.docs.filter(d => d.project === bundleId);
-    if (METH.selReg) docs = docs.filter(d => d.registry === METH.selReg);
-    const grouped = {};
-    docs.forEach(d => { const t = d.doc_type || 'other'; if (!grouped[t]) grouped[t] = []; grouped[t].push(d); });
-    const reg = METH.registries.find(r => r.id === METH.selReg) || METH.registries.find(r => r.id === docs[0]?.registry);
-    let html = `<div style="margin-bottom:12px">
-      <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--txt0)">${PROJECT_LABELS[bundleId] || bundleId}</div>
-      <div style="font-size:11px;color:var(--txt2)">${reg ? reg.label : (METH.selReg || 'All registries')} · ${docs.length} document${docs.length !== 1 ? 's' : ''}</div>
-    </div>`;
-    if (!docs.length) { el.innerHTML = html + '<div style="font-size:11px;color:var(--txt3);padding:8px">No documents in this project</div>'; return; }
-    TYPE_ORDER.forEach(type => {
-      const items = grouped[type];
-      if (!items || !items.length) return;
-      html += `<div style="margin-bottom:10px">
-        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--teal);margin-bottom:4px">${DOC_TYPE_LABELS[type] || type}</div>`;
-      items.forEach(d => {
-        const src = d.taxonomy_source === 'manual' ? '' :
-          d.taxonomy_source === 'ai' ? `<span style="color:var(--amber);font-size:9px" title="AI classified">AI</span>` :
-          `<span style="color:var(--txt3);font-size:9px">auto</span>`;
-        const canonBadge = d.is_canonical ? '<span style="color:var(--teal);font-size:9px;font-weight:700" title="Methodology Library">★ Library</span> ' : '';
-        html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
-          <div style="flex:1">
-            <div style="font-size:11px;font-weight:600;color:var(--txt0)">${d.title || 'Untitled'}</div>
-            <div style="font-size:10px;color:var(--txt3)">${canonBadge}${d.word_count ? d.word_count.toLocaleString() + ' words' : 'processing'} ${src}</div>
-          </div>
-          <button class="btn btn-s" onclick="methDownloadTaxDoc('${d.id}','txt')" style="font-size:9px;padding:2px 6px">TXT</button>
-          <button class="btn btn-s" onclick="methDownloadTaxDoc('${d.id}','original')" style="font-size:9px;padding:2px 6px">Original</button>
+      const el = document.getElementById('meth-detail');
+      el.innerHTML = '<div style="font-size:11px;color:var(--txt2)">Loading…</div>';
+      const DOC_TYPE_LABELS = {
+        core_methodology:'Core Methodology', project_description:'Project Description',
+        verification_report:'Verification Report', registry_spec:'Registry Specification',
+        financial_model:'Financial Model', example_pd:'Example PD',
+        legal_agreement:'Legal Agreement', market_intelligence:'Market Intelligence',
+        policy_document:'Policy Document', technical_report:'Technical Report',
+        presentation:'Presentation', correspondence:'Correspondence', other:'Other'
+      };
+      try {
+        let docs = METH.docs.filter(d => (d.doc_type || 'other') === bundleId);
+        if (METH.selReg) docs = docs.filter(d => d.registry === METH.selReg);
+        const label = DOC_TYPE_LABELS[bundleId] || bundleId;
+        let html = `<div style="margin-bottom:12px">
+          <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--txt0)">${label}</div>
+          <div style="font-size:11px;color:var(--txt2)">${docs.length} document${docs.length !== 1 ? 's' : ''}</div>
         </div>`;
-      });
-      html += '</div>';
-    });
-    el.innerHTML = html;
-  } catch(e) { el.innerHTML = '<div style="color:var(--red);font-size:11px">Error loading detail: ' + e.message + '</div>'; }
-}
+        if (!docs.length) {
+          el.innerHTML = html + '<div style="font-size:11px;color:var(--txt3);padding:8px">No documents in this category</div>';
+          return;
+        }
+        docs.forEach(d => {
+          const badge = d.is_canonical ? `<span style="color:var(--teal);font-size:9px;margin-left:4px">★ Library</span>` : '';
+          const src = d.taxonomy_source === 'manual' ? '' :
+            d.taxonomy_source === 'ai' ? `<span style="color:var(--amber);font-size:9px" title="AI classified"> AI</span>` :
+            `<span style="color:var(--txt3);font-size:9px"> auto</span>`;
+          html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+            <div style="flex:1">
+              <div style="font-size:11px;font-weight:600;color:var(--txt0)">${d.title || 'Untitled'}${badge}</div>
+              <div style="font-size:10px;color:var(--txt3)">${d.word_count ? d.word_count.toLocaleString() + ' words' : 'processing'}${src}</div>
+            </div>
+            <button class="btn btn-s" onclick="methDownloadTaxDoc('${d.id}','txt')" style="font-size:9px;padding:2px 6px">TXT</button>
+            <button class="btn btn-s" onclick="methDownloadTaxDoc('${d.id}','original')" style="font-size:9px;padding:2px 6px">Original</button>
+          </div>`;
+        });
+        el.innerHTML = html;
+      } catch(e) {
+        el.innerHTML = '<div style="color:var(--red);font-size:11px">Error: ' + e.message + '</div>';
+      }
+    }
 
 function methExportContext(bundleId) {
   const a = document.createElement('a');
