@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RFP Tracker — PABLO</title>
+  <link rel="stylesheet" href="pablo-system.css">
+  <style>
+    /* -- RFP-specific overrides -- */
+    .rfp-status-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(255,204,0,0.08);
+      border-bottom: 1px solid rgba(255,204,0,0.20);
+      font-size: var(--text-sm);
+      color: #8A6E00;
+    }
+    .rfp-status-bar .deadline { font-weight: 600; }
+
+    .project-group-label {
+      font-size: var(--text-xs);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-tertiary);
+      padding: 12px 16px 4px;
+    }
+
+    .project-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      margin: 0 16px 8px;
+      cursor: pointer;
+      transition: box-shadow var(--duration-fast), border-color var(--duration-fast);
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .project-card:hover { border-color: rgba(0,0,0,0.12); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .project-card.selected { border-color: var(--color-accent); box-shadow: 0 0 0 2px rgba(0,122,255,0.15); }
+    .project-card-body { flex: 1; min-width: 0; }
+    .project-card-name { font-size: var(--text-md); font-weight: 600; margin-bottom: 4px; }
+    .project-card-meta { font-size: var(--text-sm); color: var(--text-secondary); display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* -- Evaluation panel -- */
+    .eval-section { margin-bottom: 24px; }
+    .eval-section-title {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-tertiary);
+      padding: 0 0 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 12px;
+    }
+    .hard-filter-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: var(--text-sm);
+    }
+    .hard-filter-row:last-child { border-bottom: none; }
+
+    .summary-bar {
+      display: flex;
+      gap: 16px;
+      padding: 12px 14px;
+      background: var(--surface-sidebar);
+      border-radius: var(--radius-lg);
+      margin-bottom: 16px;
+    }
+    .summary-stat { text-align: center; flex: 1; }
+    .summary-stat .num { font-size: var(--text-xl); font-weight: 700; }
+    .summary-stat .lbl { font-size: var(--text-xs); color: var(--text-secondary); }
+
+    .drop-zone {
+      border: 1.5px dashed var(--border-panel);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: var(--text-sm);
+      cursor: pointer;
+      transition: border-color var(--duration-fast), background var(--duration-fast);
+    }
+    .drop-zone:hover { border-color: var(--color-accent); background: var(--surface-selected); }
+    .drop-zone.dragging { border-color: var(--color-accent); background: var(--surface-selected); }
+
+    .supply-doc-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: var(--text-sm);
+    }
+    .supply-doc-row:last-child { border-bottom: none; }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(0,122,255,0.2);
+      border-top-color: var(--color-accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .add-project-form {
+      display: none;
+      padding: 16px;
+      border-bottom: 1px solid var(--border-divider);
+      background: var(--surface-sidebar);
+    }
+    .add-project-form.open { display: block; }
+    .form-row { margin-bottom: 10px; }
+    .form-label { font-size: var(--text-sm); font-weight: 500; color: var(--text-secondary); margin-bottom: 4px; display: block; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  </style>
+</head>
+<body>
+<div class="pablo-shell" id="app">
+
+  <!-- LEFT: RFP List -->
+  <aside class="pablo-sidebar">
+    <div class="pablo-toolbar">
+      <span class="pablo-toolbar-title">RFP Tracker</span>
+    </div>
+    <div style="padding:8px 6px 4px">
+      <div class="sidebar-section-label">Active RFPs</div>
+    </div>
+    <div class="pablo-list" id="rfpList">
+      <div style="padding:12px;font-size:12px;color:var(--text-tertiary)">Loading...</div>
+    </div>
+    <div style="padding:8px;border-top:1px solid var(--border-divider)">
+      <button class="btn btn-secondary w-full btn-sm" onclick="showAddRfp()">+ Add RFP</button>
+    </div>
+  </aside>
+
+  <!-- CENTER: Projects -->
+  <main class="pablo-main">
+    <div class="pablo-toolbar">
+      <span class="pablo-toolbar-title" id="centerTitle">Select an RFP</span>
+      <button class="btn btn-primary btn-sm" id="addProjectBtn" style="display:none" onclick="toggleAddProject()">+ Add Project</button>
+    </div>
+
+    <!-- Q&A deadline warning -->
+    <div class="rfp-status-bar" id="qaDeadlineBar" style="display:none">
+      <span>Supplier Q&amp;A deadline:</span>
+      <span class="deadline" id="qaDeadlineText"></span>
+    </div>
+
+    <!-- Add project form -->
+    <div class="add-project-form" id="addProjectForm">
+      <div class="form-grid">
+        <div class="form-row">
+          <label class="form-label">Project Name *</label>
+          <input class="pablo-input" id="np_name" placeholder="e.g. GreenCarbon Biochar">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Project Type</label>
+          <select class="pablo-select" id="np_type">
+            <option value="">Select type...</option>
+            <option value="biochar">Biochar</option>
+            <option value="beccs">BECCS</option>
+            <option value="arr">ARR (Reforestation)</option>
+            <option value="ifm">Improved Forest Management</option>
+            <option value="redd">REDD+</option>
+            <option value="regen_ag">Regenerative Agriculture</option>
+            <option value="blue_carbon">Blue Carbon</option>
+            <option value="super_pollutant">Super Pollutant</option>
+            <option value="dac">Direct Air Capture</option>
+            <option value="bio_oil">Bio-oil Sequestration</option>
+            <option value="other">Other CDR</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Registry</label>
+          <select class="pablo-select" id="np_registry">
+            <option value="">Select...</option>
+            <option value="verra">Verra</option>
+            <option value="puro_earth">Puro.earth</option>
+            <option value="gold_standard">Gold Standard</option>
+            <option value="isometric">Isometric</option>
+            <option value="american_carbon">American Carbon Registry</option>
+            <option value="climate_action">Climate Action Reserve</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Issuance Date</label>
+          <input class="pablo-input" id="np_issuance" type="date">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Volume (tonnes)</label>
+          <input class="pablo-input" id="np_volume" type="number" placeholder="e.g. 50000">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Vintage Start</label>
+          <input class="pablo-input" id="np_vintage" type="number" placeholder="e.g. 2022" min="2020" max="2030">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-primary btn-sm" onclick="submitAddProject()">Add Project</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleAddProject()">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Project list -->
+    <div style="flex:1;overflow-y:auto" id="projectList">
+      <div style="padding:32px;text-align:center;color:var(--text-tertiary);font-size:13px">
+        Select an RFP from the sidebar to view projects
+      </div>
+    </div>
+  </main>
+
+  <!-- RIGHT: Project Detail Panel -->
+  <aside class="pablo-panel" id="detailPanel">
+    <div class="panel-header">
+      <div class="panel-close" onclick="closePanel()">&times;</div>
+      <span class="pablo-toolbar-title truncate" id="panelProjectName">Project</span>
+      <button class="btn btn-primary btn-sm" id="evaluateBtn" onclick="runEvaluation()" style="display:none">
+        Evaluate
+      </button>
+    </div>
+    <div class="panel-body" id="panelBody">
+    </div>
+  </aside>
+
+</div>
+
+<script>
+const API = 'https://api-tools.oga.earth';
+const state = {
+  rfps: [],
+  selectedRfpId: null,
+  selectedRfp: null,
+  selectedProjectId: null,
+};
+
+// -- Init --
+async function init() {
+  await loadRfps();
+  if (state.rfps.length) selectRfp(state.rfps[0].id);
+}
+
+// -- Load RFPs --
+async function loadRfps() {
+  try {
+    const res = await fetch(API + '/api/primitives/rfp/list');
+    const data = await res.json();
+    state.rfps = data.rfps || [];
+  } catch(e) { state.rfps = []; }
+  renderRfpList();
+}
+
+function renderRfpList() {
+  const el = document.getElementById('rfpList');
+  if (!state.rfps.length) {
+    el.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--text-tertiary)">No RFPs yet</div>';
+    return;
+  }
+  el.innerHTML = state.rfps.map(function(rfp) {
+    const daysLeft = rfp.deadline ? Math.ceil((new Date(rfp.deadline) - new Date()) / 86400000) : null;
+    const deadlineBadge = daysLeft !== null
+      ? '<span class="badge ' + (daysLeft < 7 ? 'badge-red' : daysLeft < 21 ? 'badge-orange' : 'badge-gray') + '">' + daysLeft + 'd</span>'
+      : '';
+    return '<div class="sidebar-item ' + (state.selectedRfpId === rfp.id ? 'active' : '') + '"'
+      + ' onclick="selectRfp(\'' + rfp.id + '\')">'
+      + '<div>'
+      + '<div style="font-size:var(--text-base);font-weight:500">' + esc(rfp.buyer_name) + '</div>'
+      + '<div style="font-size:var(--text-xs);color:var(--text-secondary)">' + esc(rfp.title.replace(rfp.buyer_name, '').trim()) + '</div>'
+      + '</div>'
+      + '<div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:3px">'
+      + deadlineBadge
+      + '<span style="font-size:11px;color:var(--text-tertiary)">' + (rfp.project_count || 0) + ' projects</span>'
+      + '</div></div>';
+  }).join('');
+}
+
+// -- Select RFP --
+async function selectRfp(rfpId) {
+  state.selectedRfpId = rfpId;
+  state.selectedProjectId = null;
+  renderRfpList();
+  closePanel();
+
+  const res = await fetch(API + '/api/primitives/rfp/' + rfpId);
+  const data = await res.json();
+  state.selectedRfp = data;
+
+  document.getElementById('centerTitle').textContent = data.title;
+  document.getElementById('addProjectBtn').style.display = '';
+
+  // Q&A deadline bar
+  if (data.q_and_a_deadline) {
+    const qaDate = new Date(data.q_and_a_deadline + 'T23:59:59');
+    if (qaDate > new Date()) {
+      document.getElementById('qaDeadlineBar').style.display = '';
+      document.getElementById('qaDeadlineText').textContent =
+        qaDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    } else {
+      document.getElementById('qaDeadlineBar').style.display = 'none';
+    }
+  }
+
+  renderProjects(data.projects || []);
+}
+
+// -- Render Projects --
+function renderProjects(projects) {
+  const el = document.getElementById('projectList');
+  if (!projects.length) {
+    el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-tertiary)">'
+      + '<div style="font-size:32px;margin-bottom:8px">&#128203;</div>'
+      + '<div style="font-weight:500;margin-bottom:4px">No projects yet</div>'
+      + '<div style="font-size:12px">Add a project to start evaluating</div></div>';
+    return;
+  }
+
+  const groups = {
+    'draft':      { label: 'Draft', projects: [] },
+    'evaluating': { label: 'Evaluating', projects: [] },
+    'ready':      { label: 'Ready to Submit', projects: [] },
+    'submitted':  { label: 'Submitted', projects: [] },
+    'shortlisted':{ label: 'Shortlisted', projects: [] },
+    'awarded':    { label: 'Awarded', projects: [] },
+    'rejected':   { label: 'Not Shortlisted', projects: [] },
+  };
+
+  projects.forEach(function(p) {
+    var g = groups[p.submission_status] || groups['draft'];
+    g.projects.push(p);
+  });
+
+  var html = '';
+  for (var key in groups) {
+    var group = groups[key];
+    if (!group.projects.length) continue;
+    html += '<div class="project-group-label">' + group.label + ' (' + group.projects.length + ')</div>';
+    group.projects.forEach(function(p) {
+      html += renderProjectCard(p);
+    });
+  }
+
+  el.innerHTML = html;
+}
+
+function renderProjectCard(p) {
+  var score = p.fit_score;
+  var scoreClass = !score ? 'none' : score >= 70 ? 'high' : score >= 45 ? 'medium' : 'low';
+  var scoreLabel = score ? score : '--';
+
+  var typeBadge = p.project_type
+    ? '<span class="badge badge-blue">' + p.project_type.replace(/_/g, ' ') + '</span>' : '';
+  var registryBadge = p.registry
+    ? '<span class="badge badge-gray">' + registryLabel(p.registry) + '</span>' : '';
+
+  var supplyCount = p.supply_doc_count || 0;
+  var supplyIndicator = supplyCount
+    ? '<span style="font-size:11px;color:var(--text-tertiary)">' + supplyCount + ' doc' + (supplyCount > 1 ? 's' : '') + '</span>'
+    : '<span style="font-size:11px;color:var(--color-orange)">No docs</span>';
+
+  return '<div class="project-card ' + (state.selectedProjectId === p.id ? 'selected' : '') + '"'
+    + ' onclick="selectProject(\'' + p.id + '\')">'
+    + '<div class="fit-score ' + scoreClass + '">' + scoreLabel + '</div>'
+    + '<div class="project-card-body">'
+    + '<div class="project-card-name">' + esc(p.project_name) + '</div>'
+    + '<div class="project-card-meta">' + typeBadge + registryBadge
+    + (p.issuance_date ? '<span style="font-size:11px;color:var(--text-tertiary)">Issues ' + p.issuance_date + '</span>' : '')
+    + supplyIndicator + '</div>'
+    + '</div></div>';
+}
+
+// -- Select Project --
+async function selectProject(projectId) {
+  state.selectedProjectId = projectId;
+  renderProjects(state.selectedRfp.projects);
+
+  var res = await fetch(API + '/api/primitives/rfp/' + state.selectedRfpId + '/project/' + projectId);
+  var project = await res.json();
+
+  document.getElementById('panelProjectName').textContent = project.project_name;
+  document.getElementById('evaluateBtn').style.display = project.supply_docs && project.supply_docs.length ? '' : 'none';
+  document.getElementById('evaluateBtn').textContent = project.evaluation ? 'Re-evaluate' : 'Evaluate';
+  document.getElementById('panelBody').innerHTML = renderPanelBody(project);
+  openPanel();
+
+  // Wire drop zone
+  var dz = document.getElementById('dropZone');
+  if (dz) wireDropZone(dz, projectId);
+}
+
+function renderPanelBody(project) {
+  var metaParts = [];
+  if (project.project_type) metaParts.push('<span class="badge badge-blue">' + project.project_type.replace(/_/g, ' ') + '</span>');
+  if (project.registry) metaParts.push('<span class="badge badge-gray">' + registryLabel(project.registry) + '</span>');
+  if (project.available_volume_tonnes) metaParts.push('<span class="badge badge-teal">' + (project.available_volume_tonnes / 1000).toFixed(0) + 'K t</span>');
+  if (project.issuance_date) metaParts.push('<span style="font-size:12px;color:var(--text-secondary)">Issuance: ' + project.issuance_date + '</span>');
+
+  var html = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">' + metaParts.join(' ') + '</div>';
+
+  // Supply docs section
+  html += '<div class="eval-section">'
+    + '<div class="eval-section-title">Supply Documents</div>'
+    + renderSupplyDocs(project.supply_docs || [])
+    + '<div id="dropZone" class="drop-zone" style="margin-top:8px">'
+    + '<input type="file" id="fileInput" style="display:none" accept=".pdf,.docx,.pptx,.xlsx" multiple'
+    + ' onchange="handleFileSelect(event)">'
+    + '<div onclick="document.getElementById(\'fileInput\').click()">'
+    + 'Drop files here or click to upload<br>'
+    + '<span style="font-size:11px;color:var(--text-tertiary)">PDF, DOCX, PPTX -- PDD, marketing deck, commercial terms</span>'
+    + '</div></div></div>';
+
+  // Evaluation section
+  if (project.evaluation) {
+    html += renderEvaluationResults(project.evaluation);
+  } else if (project.supply_docs && project.supply_docs.length) {
+    html += '<div class="eval-section">'
+      + '<div class="eval-section-title">Evaluation</div>'
+      + '<div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:13px">'
+      + project.supply_docs.length + ' document' + (project.supply_docs.length > 1 ? 's' : '') + ' ready.<br>'
+      + 'Click <strong>Evaluate</strong> to run AI criterion analysis.'
+      + '</div></div>';
+  }
+
+  return html;
+}
+
+function renderSupplyDocs(docs) {
+  if (!docs.length) {
+    return '<div style="font-size:12px;color:var(--text-tertiary);padding:4px 0">No documents uploaded yet</div>';
+  }
+  return docs.map(function(d) {
+    return '<div class="supply-doc-row">'
+      + '<span style="font-size:18px;flex-shrink:0">&#128196;</span>'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-size:13px;font-weight:500" class="truncate">' + esc(d.title) + '</div>'
+      + '<div style="font-size:11px;color:var(--text-tertiary)">' + esc(d.doc_label || 'Document') + ' &middot; ' + (d.word_count ? d.word_count.toLocaleString() : '0') + ' words</div>'
+      + '</div></div>';
+  }).join('');
+}
+
+function renderEvaluationResults(evaluation) {
+  var hf = evaluation.hard_filter_summary || {};
+  var qs = evaluation.quality_summary || {};
+  var hfTotal = (hf.pass || 0) + (hf.fail || 0) + (hf.unknown || 0);
+  var qsTotal = (qs.pass || 0) + (qs.partial || 0) + (qs.fail || 0) + (qs.unknown || 0);
+
+  var html = '<div class="eval-section">';
+  html += '<div class="eval-section-title">Evaluation Results</div>';
+
+  // Summary bar
+  html += '<div class="summary-bar">'
+    + '<div class="summary-stat"><div class="num" style="color:' + (evaluation.fit_score >= 70 ? 'var(--color-green)' : evaluation.fit_score >= 45 ? 'var(--color-orange)' : 'var(--color-red)') + '">' + evaluation.fit_score + '</div><div class="lbl">Fit Score</div></div>'
+    + '<div class="summary-stat"><div class="num" style="color:' + (hf.fail ? 'var(--color-red)' : 'var(--color-green)') + '">' + (hf.pass || 0) + '/' + hfTotal + '</div><div class="lbl">Hard Filters</div></div>'
+    + '<div class="summary-stat"><div class="num">' + (qs.pass || 0) + '/' + qsTotal + '</div><div class="lbl">Quality Met</div></div>'
+    + '<div class="summary-stat"><div class="num"><span class="badge ' + (evaluation.submission_readiness === 'ready' ? 'badge-green' : evaluation.submission_readiness === 'needs_work' ? 'badge-orange' : 'badge-red') + '">' + (evaluation.submission_readiness || '').replace(/_/g, ' ') + '</span></div><div class="lbl">Readiness</div></div>'
+    + '</div>';
+
+  // Critical gaps
+  if (evaluation.critical_gaps && evaluation.critical_gaps.length) {
+    html += '<div style="background:rgba(255,59,48,0.06);border:1px solid rgba(255,59,48,0.15);border-radius:var(--radius-lg);padding:12px;margin-bottom:12px">'
+      + '<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--color-red);margin-bottom:8px">Critical Gaps</div>';
+    evaluation.critical_gaps.forEach(function(g) {
+      html += '<div style="font-size:12px;margin-bottom:4px;padding-left:12px;border-left:2px solid var(--color-red);color:var(--text-primary)">' + esc(g) + '</div>';
+    });
+    html += '</div>';
+  }
+
+  // Top strengths
+  if (evaluation.top_strengths && evaluation.top_strengths.length) {
+    html += '<div style="background:rgba(52,199,89,0.06);border:1px solid rgba(52,199,89,0.15);border-radius:var(--radius-lg);padding:12px;margin-bottom:12px">'
+      + '<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--color-green);margin-bottom:8px">Strengths</div>';
+    evaluation.top_strengths.forEach(function(s) {
+      html += '<div style="font-size:12px;margin-bottom:4px;padding-left:12px;border-left:2px solid var(--color-green);color:var(--text-primary)">' + esc(s) + '</div>';
+    });
+    html += '</div>';
+  }
+
+  html += '</div>';
+
+  // Hard filters
+  var hardFilters = (evaluation.criteria_results || []).filter(function(c) { return c.category === 'hard_filter'; });
+  if (hardFilters.length) {
+    html += '<div class="eval-section"><div class="eval-section-title">Hard Filters -- Pass/Fail</div>';
+    hardFilters.forEach(function(c) { html += renderHardFilterRow(c); });
+    html += '</div>';
+  }
+
+  // Quality criteria
+  var qualityCriteria = (evaluation.criteria_results || []).filter(function(c) { return c.category === 'quality'; });
+  if (qualityCriteria.length) {
+    html += '<div class="eval-section"><div class="eval-section-title">Quality Criteria</div>';
+    qualityCriteria.forEach(function(c) { html += renderCriterionCard(c); });
+    html += '</div>';
+  }
+
+  // Project-type criteria
+  var typeCriteria = (evaluation.criteria_results || []).filter(function(c) { return c.category && c.category.indexOf('project_type') === 0; });
+  if (typeCriteria.length) {
+    html += '<div class="eval-section"><div class="eval-section-title">Project-Type Specific</div>';
+    typeCriteria.forEach(function(c) { html += renderCriterionCard(c); });
+    html += '</div>';
+  }
+
+  return html;
+}
+
+function renderHardFilterRow(c) {
+  var icons = { pass: '&#10003;', fail: '&#10007;', partial: '&#9681;', unknown: '?' };
+  var colors = { pass: 'var(--color-green)', fail: 'var(--color-red)', partial: 'var(--color-orange)', unknown: 'var(--color-gray)' };
+  return '<div class="hard-filter-row">'
+    + '<span style="color:' + (colors[c.status] || colors.unknown) + ';font-weight:700;width:16px">' + (icons[c.status] || '?') + '</span>'
+    + '<span style="flex:1;font-weight:500">' + esc(c.label) + '</span>'
+    + (c.gap ? '<span style="font-size:11px;color:var(--color-orange)" title="' + esc(c.gap) + '">&#9888;</span>' : '')
+    + '</div>';
+}
+
+function renderCriterionCard(c) {
+  var isOpen = c.status !== 'pass';
+  return '<div class="criterion-card ' + c.status + '">'
+    + '<div class="criterion-label" style="cursor:pointer" onclick="var d=this.parentNode.querySelector(\'.criterion-detail\');d.style.display=d.style.display===\'none\'?\'block\':\'none\'">'
+    + '<span class="badge ' + (c.status === 'pass' ? 'badge-green' : c.status === 'fail' ? 'badge-red' : c.status === 'partial' ? 'badge-orange' : 'badge-gray') + '">' + c.status + '</span>'
+    + '<span>' + esc(c.label) + '</span>'
+    + '</div>'
+    + '<div class="criterion-detail" style="display:' + (isOpen ? 'block' : 'none') + '">'
+    + '<div class="criterion-text">"' + esc(c.criterion_text || '') + '"</div>'
+    + (c.evidence ? '<div class="criterion-evidence"><strong style="font-size:11px;color:var(--text-secondary)">EVIDENCE:</strong><br>' + esc(c.evidence) + '</div>' : '')
+    + (c.gap ? '<div class="criterion-gap"><strong>Gap:</strong> ' + esc(c.gap) + '</div>' : '')
+    + (c.recommendation ? '<div style="font-size:12px;color:var(--color-accent);margin-top:6px">' + esc(c.recommendation) + '</div>' : '')
+    + '</div></div>';
+}
+
+// -- File upload --
+async function handleFileSelect(event) {
+  var files = Array.from(event.target.files);
+  if (!files.length || !state.selectedProjectId) return;
+
+  var btn = document.getElementById('evaluateBtn');
+
+  for (var i = 0; i < files.length; i++) {
+    var file = files[i];
+    var label = guessDocLabel(file.name);
+    var formData = new FormData();
+    formData.append('file', file);
+    formData.append('doc_label', label);
+    formData.append('uploaded_by', 'team');
+
+    if (btn) { btn.textContent = 'Uploading...'; btn.disabled = true; }
+
+    try {
+      var res = await fetch(API + '/api/primitives/rfp/' + state.selectedRfpId + '/project/' + state.selectedProjectId + '/supply', {
+        method: 'POST',
+        body: formData
+      });
+      await res.json();
+    } catch(e) {
+      alert('Upload failed: ' + e.message);
+    }
+  }
+
+  // Refresh
+  event.target.value = '';
+  await selectProject(state.selectedProjectId);
+}
+
+function wireDropZone(dz, projectId) {
+  dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('dragging'); });
+  dz.addEventListener('dragleave', function() { dz.classList.remove('dragging'); });
+  dz.addEventListener('drop', function(e) {
+    e.preventDefault();
+    dz.classList.remove('dragging');
+    var files = Array.from(e.dataTransfer.files);
+    if (files.length) {
+      // Create a fake event for handleFileSelect
+      var input = document.getElementById('fileInput');
+      // Use DataTransfer to set files on the input
+      var dt = new DataTransfer();
+      files.forEach(function(f) { dt.items.add(f); });
+      input.files = dt.files;
+      handleFileSelect({ target: input });
+    }
+  });
+}
+
+// -- Run Evaluation --
+async function runEvaluation() {
+  var btn = document.getElementById('evaluateBtn');
+  if (!btn || !state.selectedProjectId) return;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading-spinner"></span> Evaluating...';
+
+  try {
+    var res = await fetch(API + '/api/primitives/rfp/' + state.selectedRfpId + '/project/' + state.selectedProjectId + '/evaluate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    var data = await res.json();
+    if (!res.ok) {
+      alert('Evaluation error: ' + (data.error || 'Unknown'));
+      return;
+    }
+    // Refresh panel and RFP
+    await selectRfp(state.selectedRfpId);
+    // Re-select the project to show results
+    setTimeout(function() { selectProject(state.selectedProjectId); }, 300);
+  } catch(e) {
+    alert('Evaluation failed: ' + e.message);
+  } finally {
+    var b = document.getElementById('evaluateBtn');
+    if (b) { b.disabled = false; b.textContent = 'Re-evaluate'; }
+  }
+}
+
+// -- Add Project --
+function toggleAddProject() {
+  document.getElementById('addProjectForm').classList.toggle('open');
+}
+
+async function submitAddProject() {
+  var name = document.getElementById('np_name').value.trim();
+  if (!name) { alert('Project name required'); return; }
+
+  var body = {
+    project_name: name,
+    project_type: document.getElementById('np_type').value || null,
+    registry: document.getElementById('np_registry').value || null,
+    issuance_date: document.getElementById('np_issuance').value || null,
+    available_volume_tonnes: parseInt(document.getElementById('np_volume').value) || null,
+    vintage_start: parseInt(document.getElementById('np_vintage').value) || null,
+  };
+
+  var res = await fetch(API + '/api/primitives/rfp/' + state.selectedRfpId + '/project', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  var data = await res.json();
+  if (data.status === 'created') {
+    toggleAddProject();
+    ['np_name','np_type','np_registry','np_issuance','np_volume','np_vintage'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    await selectRfp(state.selectedRfpId);
+  }
+}
+
+// -- Panel helpers --
+function openPanel() { document.getElementById('detailPanel').classList.add('open'); }
+function closePanel() {
+  document.getElementById('detailPanel').classList.remove('open');
+  state.selectedProjectId = null;
+}
+
+// -- Utilities --
+function registryLabel(r) {
+  var labels = { verra:'Verra', puro_earth:'Puro.earth', gold_standard:'Gold Standard',
+    isometric:'Isometric', american_carbon:'ACR', climate_action:'CAR' };
+  return labels[r] || r || '';
+}
+
+function guessDocLabel(filename) {
+  var lower = filename.toLowerCase();
+  if (lower.indexOf('pdd') >= 0 || lower.indexOf('project description') >= 0) return 'PDD';
+  if (lower.indexOf('marketing') >= 0 || lower.indexOf('deck') >= 0) return 'Marketing Deck';
+  if (lower.indexOf('commercial') >= 0 || lower.indexOf('term') >= 0) return 'Commercial Terms';
+  if (lower.indexOf('verification') >= 0 || lower.indexOf('audit') >= 0) return 'Verification Report';
+  if (lower.indexOf('feasibility') >= 0) return 'Feasibility Study';
+  if (lower.indexOf('monitor') >= 0) return 'Monitoring Report';
+  return 'Supply Document';
+}
+
+function esc(str) {
+  if (!str) return '';
+  var d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function showAddRfp() {
+  alert('Add RFP: Coming in v76 -- paste RFP PDF URL or upload directly');
+}
+
+// -- Boot --
+init();
+</script>
+</body>
+</html>

@@ -1554,7 +1554,7 @@ function filterIntel(q){
 }
 
 // ══ KNOWLEDGE LIBRARY (v73) ════════════════════════════════════
-const KLIB = { docs: [], q: '', filterCanonical: false, sortCol: 'created_at', sortDir: 'desc' };
+const KLIB = { docs: [], q: '', filterCanonical: false, filterSupply: false, sortCol: 'created_at', sortDir: 'desc' };
 
 function renderLibrary(){ loadKnowledgeLibrary(); }
 
@@ -1576,6 +1576,7 @@ function klibFilteredDocs() {
     );
   }
   if (KLIB.filterCanonical) docs = docs.filter(d => d.is_canonical == 1);
+  if (KLIB.filterSupply) docs = docs.filter(d => d.source_type === 'rfp_supply');
   return docs;
 }
 
@@ -1602,6 +1603,9 @@ function klibRender() {
         style="flex:1;min-width:200px;max-width:300px;padding:6px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:var(--txt1);font-size:11px">
       <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:5px;cursor:pointer">
         <input type="checkbox" ${KLIB.filterCanonical?'checked':''} onchange="KLIB.filterCanonical=this.checked;klibRender()"> ★ Canonical only
+      </label>
+      <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:5px;cursor:pointer">
+        <input type="checkbox" ${KLIB.filterSupply?'checked':''} onchange="KLIB.filterSupply=this.checked;klibRender()"> Supply Docs
       </label>
       <span style="font-size:10px;color:var(--txt3)">${docs.length} documents</span>
     </div>
