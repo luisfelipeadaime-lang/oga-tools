@@ -497,11 +497,13 @@ dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-ove
 dropZone.addEventListener('drop', e => {
   e.preventDefault();
   dropZone.classList.remove('drag-over');
-  handleLocalUpload(e.dataTransfer.files);
+  const fileArray = Array.from(e.dataTransfer.files);  // snapshot before event ends
+  if (fileArray.length) handleLocalUpload(fileArray);
 });
 fileInput.addEventListener('change', () => {
-  if (fileInput.files.length) handleLocalUpload(fileInput.files);
-  fileInput.value = '';
+  const fileArray = Array.from(fileInput.files);  // snapshot before reset
+  fileInput.value = '';                            // reset BEFORE async work
+  if (fileArray.length) handleLocalUpload(fileArray);
 });
 
 async function handleLocalUpload(files) {
