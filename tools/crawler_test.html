@@ -338,6 +338,7 @@ body{background:var(--bg0);color:var(--txt0);font-family:'DM Sans',sans-serif;fo
           <th>Quality</th>
           <th style="width:55px">Words</th>
           <th>Registry Doc Type</th>
+          <th style="width:85px">Methodology</th>
           <th style="width:70px">Version</th>
           <th>Doc Role</th>
           <th style="width:45px">Canon</th>
@@ -715,7 +716,7 @@ function renderCrawlFields() {
     el.innerHTML =
       '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-top:12px">' +
         '<div>' +
-          '<div style="font-size:9px;color:var(--txt2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em">Country</div>' +
+          '<div style="font-size:9px;color:var(--txt2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em">Country <span style="opacity:.5;font-style:italic;text-transform:none">(optional)</span></div>' +
           '<input id="cf-country" type="text" placeholder="e.g. Brazil, Colombia" style="width:100%;background:var(--bg3);border:1px solid var(--border1);color:var(--txt0);border-radius:4px;padding:6px 8px;font-size:12px;font-family:\'DM Sans\',sans-serif;outline:none">' +
         '</div>' +
         '<div>' +
@@ -1075,6 +1076,7 @@ function addToStaging(data) {
     knowledgeDocId: data.knowledgeDocId || null,
     _jobId: data._jobId || null,
     registryDocType: data.registryDocType || classifyVerraDoc(data.filename || '') || '',
+    methodologyCode: data.methodologyCode || '',
     documentRole: data.documentRole || inferDocumentRole(data.filename || ''),
     version: data.version || extractVersion(data.filename || ''),
     registry: data.registry || '',
@@ -1203,6 +1205,7 @@ function renderStaging() {
       '<td class="mono">' + (row.wordCount > 0 ? row.wordCount.toLocaleString() : '&mdash;') + '</td>' +
       // Patch I: registry_doc_type replaces old doc_type + registry + project columns
       '<td>' + (committed ? esc(row.registryDocType) : '<input class="edit-cell" value="' + esc(row.registryDocType) + '" onchange="editRow(' + idx + ',\'registryDocType\',this.value)" placeholder="VM_methodology\u2026" list="dl-regdoctype">') + '</td>' +
+      '<td>' + (committed ? esc(row.methodologyCode) : '<input class="edit-cell" value="' + esc(row.methodologyCode) + '" onchange="editRow(' + idx + ',\'methodologyCode\',this.value)" placeholder="VM0047" style="width:75px">') + '</td>' +
       '<td>' + (committed ? esc(row.version) : '<input class="edit-cell" value="' + esc(row.version) + '" onchange="editRow(' + idx + ',\'version\',this.value)" placeholder="v1.0" style="width:55px">') + '</td>' +
       '<td>' + (committed ? esc(row.documentRole) : '<input class="edit-cell" value="' + esc(row.documentRole) + '" onchange="editRow(' + idx + ',\'documentRole\',this.value)" placeholder="primary\u2026" list="dl-docrole">') + '</td>' +
       '<td style="text-align:center">' + (committed ? (row.isCanonical ? '\u2605' : '') : '<input type="checkbox" class="stg-chk" ' + (row.isCanonical ? 'checked' : '') + ' onchange="editRow(' + idx + ',\'isCanonical\',this.checked)">') + '</td>' +
@@ -1210,7 +1213,7 @@ function renderStaging() {
         ' <button onclick="toggleInlinePreview(' + idx + ')" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);font-size:9px;padding:2px 6px;border-radius:3px;cursor:pointer;margin-left:4px">Preview</button></td>' +
       '<td>' + (committed ? '' : '<button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px" onclick="removeRow(' + idx + ')" title="Remove">&times;</button>') + '</td>' +
       '</tr>';
-    const previewTr = '<tr id="inline-preview-' + idx + '" style="display:none"><td colspan="11" style="padding:0">' +
+    const previewTr = '<tr id="inline-preview-' + idx + '" style="display:none"><td colspan="12" style="padding:0">' +
       '<div style="background:#020609;border:1px solid rgba(255,255,255,0.06);border-radius:6px;margin:4px 8px;padding:12px;font-family:\'DM Mono\',monospace;font-size:11px;line-height:1.6;color:rgba(255,255,255,0.7);max-height:300px;overflow-y:auto;white-space:pre-wrap">' + previewText(row) + '</div>' +
       '</td></tr>';
     return dataRow + previewTr;
@@ -1353,6 +1356,7 @@ async function commitSelected() {
         // Case A: Already in knowledge_docs — assign taxonomy
         const body = { doc_id: row.knowledgeDocId };
         if (row.registryDocType) body.registry_doc_type = row.registryDocType;
+        if (row.methodologyCode) body.methodology_code = row.methodologyCode;
         if (row.version) body.version = row.version;
         if (row.registry) body.registry = row.registry;
         body.is_canonical = row.isCanonical ? true : false;
@@ -1375,6 +1379,7 @@ async function commitSelected() {
         fd.append('owner', 'clearsky');
         fd.append('uploaded_by', 'bulk-intake');
         if (row.registryDocType) fd.append('registry_doc_type', row.registryDocType);
+        if (row.methodologyCode) fd.append('methodology_code', row.methodologyCode);
         if (row.version) fd.append('version', row.version);
         if (row.documentRole) fd.append('document_role', row.documentRole);
         if (row.registry) fd.append('registry', row.registry);
@@ -1395,6 +1400,7 @@ async function commitSelected() {
 
         const body = { crawl_doc_id: row.crawlerDocId };
         if (row.registryDocType) body.registry_doc_type = row.registryDocType;
+        if (row.methodologyCode) body.methodology_code = row.methodologyCode;
         if (row.documentRole) body.document_role = row.documentRole;
         if (row.version) body.version = row.version;
         body.is_canonical = row.isCanonical ? 1 : 0;
