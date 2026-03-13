@@ -551,14 +551,34 @@ async function handleLocalUpload(files) {
     el.innerHTML = '<span class="fname">' + esc(file.name) + '</span><span class="ustat extracting">extracting&hellip;</span>';
     progBox.prepend(el);
 
+    // Add staging row immediately with extracting status
+    const stagingIdx = STAGING.length;
+    addToStaging({
+      filename: file.name,
+      word_count: 0,
+      markdown: '',
+      method: '',
+      source: 'local',
+      fileBlob: fileBlob,
+      extractionStatus: 'extracting'
+    });
+
     // Fire off extraction (don't await -- allow parallel)
-    extractFile(fileBlob, file.name, rowId);
+    processSingleFile(stagingIdx, fileBlob, file.name, rowId);
   }
 }
 
-async function extractFile(fileBlob, filename, rowId) {
+function updateStagingRow(idx, updates) {
+  if (idx < 0 || idx >= STAGING.length) return;
+  Object.assign(STAGING[idx], updates);
+  if (updates.wordCount !== undefined || updates.quality !== undefined || updates.extractionStatus !== undefined) {
+    renderStaging();
+  }
+}
+
+async function processSingleFile(idx, fileBlob, filename, rowId) {
   const el = document.getElementById(rowId);
-  const statEl = el.querySelector('.ustat');
+  const statEl = el ? el.querySelector('.ustat') : null;
 
   try {
     const fd = new FormData();
@@ -569,63 +589,52 @@ async function extractFile(fileBlob, filename, rowId) {
     const d = await r.json();
 
     if (d.async) {
-      statEl.textContent = 'polling\u2026';
-      statEl.className = 'ustat polling';
-      const result = await pollJob(d.job_id, 120, statEl);
-      addToStaging({
-        filename: filename,
-        word_count: result.word_count || 0,
+      if (statEl) { statEl.textContent = 'polling\u2026'; statEl.className = 'ustat polling'; }
+      updateStagingRow(idx, { extractionStatus: 'polling' });
+      const result = await pollJobForStaging(idx, d.job_id, 120, statEl);
+      updateStagingRow(idx, {
+        wordCount: result.word_count || 0,
         markdown: result.markdown || result.text || '',
         method: result.extraction_method || 'async',
-        source: 'local',
-        fileBlob: fileBlob
+        extractionStatus: 'done'
       });
-      statEl.textContent = (result.word_count || 0).toLocaleString() + 'w';
-      statEl.className = 'ustat done';
+      assignQuality(STAGING[idx]);
+      renderStaging();
+      if (statEl) { statEl.textContent = (result.word_count || 0).toLocaleString() + 'w'; statEl.className = 'ustat done'; }
     } else if (d.error) {
-      statEl.textContent = 'error';
-      statEl.className = 'ustat error';
-      statEl.title = d.error;
-      addToStaging({
-        filename: filename,
-        word_count: 0,
-        markdown: '',
-        method: 'error',
-        source: 'local',
-        fileBlob: fileBlob,
-        forceQuality: 'error',
+      if (statEl) { statEl.textContent = 'error'; statEl.className = 'ustat error'; statEl.title = d.error; }
+      updateStagingRow(idx, {
+        extractionStatus: 'error',
+        extractionDetail: d.error,
+        quality: 'error',
+        qualityReason: d.error,
         errorMsg: d.error
       });
     } else {
-      addToStaging({
-        filename: filename,
-        word_count: d.word_count || 0,
+      const wc = d.word_count || 0;
+      updateStagingRow(idx, {
+        wordCount: wc,
         markdown: d.markdown || '',
         method: d.method || d.extraction_method || 'sync',
-        source: 'local',
-        fileBlob: fileBlob
+        extractionStatus: 'done'
       });
-      statEl.textContent = (d.word_count || 0).toLocaleString() + 'w';
-      statEl.className = 'ustat done';
+      assignQuality(STAGING[idx]);
+      renderStaging();
+      if (statEl) { statEl.textContent = wc.toLocaleString() + 'w'; statEl.className = 'ustat done'; }
     }
   } catch(e) {
-    statEl.textContent = 'error';
-    statEl.className = 'ustat error';
-    statEl.title = e.message;
-    addToStaging({
-      filename: filename,
-      word_count: 0,
-      markdown: '',
-      method: 'error',
-      source: 'local',
-      fileBlob: fileBlob,
-      forceQuality: 'error',
+    if (statEl) { statEl.textContent = 'error'; statEl.className = 'ustat error'; statEl.title = e.message; }
+    updateStagingRow(idx, {
+      extractionStatus: 'error',
+      extractionDetail: e.message,
+      quality: 'error',
+      qualityReason: e.message,
       errorMsg: e.message
     });
   }
 }
 
-async function pollJob(jobId, maxAttempts, statEl) {
+async function pollJobForStaging(stagingIdx, jobId, maxAttempts, statEl) {
   maxAttempts = maxAttempts || 60;
   for (let i = 0; i < maxAttempts; i++) {
     await sleep(3000);
@@ -639,16 +648,22 @@ async function pollJob(jobId, maxAttempts, statEl) {
         throw new Error(d.error || 'Extraction failed');
       }
       // Show chunk progress for multi-chunk jobs
-      if (statEl && d.total_chunks > 1 && d.status === 'processing') {
-        const pct = d.progress_pct || 0;
+      if (d.total_chunks > 1 && d.status === 'processing') {
         const done = d.completed_chunks || 0;
         const total = d.total_chunks;
-        statEl.innerHTML =
-          '<span style="font-size:9px">' + done + '/' + total + ' chunks</span> ' +
-          '<span style="display:inline-block;width:50px;height:3px;background:rgba(255,255,255,0.1);border-radius:2px;vertical-align:middle">' +
-            '<span style="display:block;width:' + pct + '%;height:100%;background:#00D4AA;border-radius:2px;transition:width .5s"></span>' +
-          '</span>';
-        statEl.className = 'ustat polling';
+        const pct = d.progress_pct || 0;
+        const detail = done + '/' + total + ' chunks';
+        // Update staging row
+        updateStagingRow(stagingIdx, { extractionStatus: 'chunks', extractionDetail: detail });
+        // Update upload progress bar
+        if (statEl) {
+          statEl.innerHTML =
+            '<span style="font-size:9px">' + detail + '</span> ' +
+            '<span style="display:inline-block;width:50px;height:3px;background:rgba(255,255,255,0.1);border-radius:2px;vertical-align:middle">' +
+              '<span style="display:block;width:' + pct + '%;height:100%;background:#00D4AA;border-radius:2px;transition:width .5s"></span>' +
+            '</span>';
+          statEl.className = 'ustat polling';
+        }
       }
     } catch(e) {
       if (i === maxAttempts - 1) throw e;
@@ -1038,6 +1053,8 @@ function addToStaging(data) {
     project: data.project || '',
     isCanonical: false,
     selected: false,
+    extractionStatus: data.extractionStatus || 'done',   // extracting|polling|chunks|done|error
+    extractionDetail: data.extractionDetail || '',       // e.g. "3/90 chunks"
     commitStatus: 'pending',
     commitError: '',
     quality: 'green',
@@ -1066,6 +1083,13 @@ function addToStaging(data) {
 function assignQuality(row) {
   const wc = row.wordCount;
   const text = (row.markdown || '').substring(0, 2000);
+
+  // Still extracting — don't judge quality yet
+  if (row.extractionStatus && row.extractionStatus !== 'done' && row.extractionStatus !== 'error') {
+    row.quality = 'pending';
+    row.qualityReason = 'Extraction in progress';
+    return;
+  }
 
   // Patch H: crawler docs that haven't been extracted yet get 'pending'
   if (row.source === 'crawler' && row._extractionAttempted === false && wc === 0) {
@@ -1150,10 +1174,10 @@ function renderStaging() {
       '<td class="mono">' + (row.wordCount > 0 ? row.wordCount.toLocaleString() : '&mdash;') + '</td>' +
       // Patch I: registry_doc_type replaces old doc_type + registry + project columns
       '<td>' + (committed ? esc(row.registryDocType) : '<input class="edit-cell" value="' + esc(row.registryDocType) + '" onchange="editRow(' + idx + ',\'registryDocType\',this.value)" placeholder="VM_methodology\u2026" list="dl-regdoctype">') + '</td>' +
-      '<td>' + (committed ? esc(row.version) : '<input class="edit-cell" value="' + esc(row.version) + '" onchange="editRow(' + idx + ',\'version\',this.value)" placeholder="v2.0" style="width:55px">') + '</td>' +
+      '<td>' + (committed ? esc(row.version) : '<input class="edit-cell" value="' + esc(row.version) + '" onchange="editRow(' + idx + ',\'version\',this.value)" placeholder="v1.0" style="width:55px">') + '</td>' +
       '<td>' + (committed ? esc(row.documentRole) : '<input class="edit-cell" value="' + esc(row.documentRole) + '" onchange="editRow(' + idx + ',\'documentRole\',this.value)" placeholder="primary\u2026" list="dl-docrole">') + '</td>' +
       '<td style="text-align:center">' + (committed ? (row.isCanonical ? '\u2605' : '') : '<input type="checkbox" class="stg-chk" ' + (row.isCanonical ? 'checked' : '') + ' onchange="editRow(' + idx + ',\'isCanonical\',this.checked)">') + '</td>' +
-      '<td><span class="commit-status ' + row.commitStatus + '">' + commitLabel(row) + '</span>' +
+      '<td>' + statusCell(row) +
         ' <button onclick="toggleInlinePreview(' + idx + ')" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);font-size:9px;padding:2px 6px;border-radius:3px;cursor:pointer;margin-left:4px">Preview</button></td>' +
       '<td>' + (committed ? '' : '<button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px" onclick="removeRow(' + idx + ')" title="Remove">&times;</button>') + '</td>' +
       '</tr>';
@@ -1174,6 +1198,16 @@ function commitLabel(row) {
   if (row.commitStatus === 'committing') return 'saving\u2026';
   if (row.commitStatus === 'error') return '\u2717 ' + (row.commitError || 'error');
   return '\u2014';
+}
+
+function statusCell(row) {
+  // Extraction in progress takes priority over commit status
+  if (row.extractionStatus === 'extracting') return '<span class="commit-status" style="color:var(--amber)">extracting\u2026</span>';
+  if (row.extractionStatus === 'polling') return '<span class="commit-status" style="color:var(--amber)">polling\u2026</span>';
+  if (row.extractionStatus === 'chunks') return '<span class="commit-status" style="color:var(--teal)">' + esc(row.extractionDetail) + '</span>';
+  if (row.extractionStatus === 'error') return '<span class="commit-status error">\u2717 extract fail</span>';
+  // Extraction done — show commit status
+  return '<span class="commit-status ' + row.commitStatus + '">' + commitLabel(row) + '</span>';
 }
 
 function toggleRow(idx, checked) {
