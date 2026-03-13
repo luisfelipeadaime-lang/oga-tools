@@ -93,9 +93,10 @@ body{background:var(--bg0);color:var(--txt0);font-family:'DM Sans',sans-serif;fo
 .pipe-stage .ps-arrow{position:absolute;right:-8px;top:50%;transform:translateY(-50%);color:var(--border2);font-size:14px;z-index:1}
 
 /* Crawl log */
-#crawl-log{max-height:120px;overflow-y:auto;font-family:'DM Mono',monospace;font-size:11px;color:var(--txt2);background:var(--bg0);border:1px solid var(--border0);border-radius:4px;padding:8px 10px;margin-top:12px;line-height:1.6}
+#crawl-log{height:180px;overflow-y:auto;background:#020609;border:1px solid rgba(255,255,255,0.06);border-radius:6px;padding:8px 12px;margin-top:12px}
 #crawl-log::-webkit-scrollbar{width:3px}
 #crawl-log::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+#crawl-log .log-line{padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:11px;font-family:'DM Mono',monospace}
 
 /* Past runs table */
 #past-runs-table{width:100%;border-collapse:collapse}
@@ -232,15 +233,11 @@ body{background:var(--bg0);color:var(--txt0);font-family:'DM Sans',sans-serif;fo
     <div class="form-row">
       <div class="form-group">
         <label>Registry</label>
-        <select id="cr-registry">
+        <select id="cr-registry" onchange="renderCrawlFields()">
           <option value="verra">Verra VCS</option>
           <option value="puro">Puro.earth</option>
           <option value="isometric">Isometric</option>
         </select>
-      </div>
-      <div class="form-group">
-        <label>Search Query</label>
-        <input type="text" id="cr-query" placeholder="e.g. REDD+, reforestation" style="width:220px">
       </div>
       <div class="form-group">
         <label>Max Projects</label>
@@ -255,6 +252,7 @@ body{background:var(--bg0);color:var(--txt0);font-family:'DM Sans',sans-serif;fo
       </div>
       <button class="stg-btn primary" id="btn-crawl" onclick="startCrawl()">Start Crawl</button>
     </div>
+    <div id="crawl-fields"></div>
 
     <!-- Pipeline visualization -->
     <div id="pipeline" style="display:none">
@@ -510,11 +508,80 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 let _crawlPollTimer = null;
 
+function renderCrawlFields() {
+  const reg = document.getElementById('cr-registry').value;
+  const el = document.getElementById('crawl-fields');
+  if (reg === 'verra') {
+    el.innerHTML =
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-top:12px">' +
+        '<div>' +
+          '<div style="font-size:9px;color:var(--txt2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em">Country</div>' +
+          '<input id="cf-country" type="text" placeholder="e.g. Brazil, Colombia" style="width:100%;background:var(--bg3);border:1px solid var(--border1);color:var(--txt0);border-radius:4px;padding:6px 8px;font-size:12px;font-family:\'DM Sans\',sans-serif;outline:none">' +
+        '</div>' +
+        '<div>' +
+          '<div style="font-size:9px;color:var(--txt2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em">Project Type</div>' +
+          '<select id="cf-type" style="width:100%;background:var(--bg3);border:1px solid var(--border1);color:var(--txt0);border-radius:4px;padding:6px 8px;font-size:12px;font-family:\'DM Sans\',sans-serif;outline:none">' +
+            '<option value="">Any</option>' +
+            '<option value="REDD">REDD+</option>' +
+            '<option value="ARR">ARR (Afforestation)</option>' +
+            '<option value="IFM">IFM (Forest Mgmt)</option>' +
+            '<option value="ALM">ALM (Agriculture)</option>' +
+            '<option value="Blue Carbon">Blue Carbon</option>' +
+            '<option value="Renewable Energy">Renewable Energy</option>' +
+          '</select>' +
+        '</div>' +
+        '<div>' +
+          '<div style="font-size:9px;color:var(--txt2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em">Status</div>' +
+          '<select id="cf-status" style="width:100%;background:var(--bg3);border:1px solid var(--border1);color:var(--txt0);border-radius:4px;padding:6px 8px;font-size:12px;font-family:\'DM Sans\',sans-serif;outline:none">' +
+            '<option value="">Any</option>' +
+            '<option value="Under development">Under development</option>' +
+            '<option value="Under validation">Under validation</option>' +
+            '<option value="Registration and verification approval requested">Registration requested</option>' +
+            '<option value="Registered">Registered</option>' +
+          '</select>' +
+        '</div>' +
+        '<div>' +
+          '<div style="font-size:9px;color:var(--txt2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em">Name contains</div>' +
+          '<input id="cf-query" type="text" placeholder="optional keyword" style="width:100%;background:var(--bg3);border:1px solid var(--border1);color:var(--txt0);border-radius:4px;padding:6px 8px;font-size:12px;font-family:\'DM Sans\',sans-serif;outline:none">' +
+        '</div>' +
+      '</div>';
+  } else {
+    el.innerHTML =
+      '<div style="margin-top:12px">' +
+        '<div style="font-size:9px;color:var(--txt2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em">Search Query</div>' +
+        '<input id="cf-query" type="text" placeholder="e.g. TSB Spain" style="width:300px;background:var(--bg3);border:1px solid var(--border1);color:var(--txt0);border-radius:4px;padding:6px 8px;font-size:12px;font-family:\'DM Sans\',sans-serif;outline:none">' +
+      '</div>';
+  }
+}
+
+function getCrawlParams() {
+  const reg = document.getElementById('cr-registry').value;
+  const params = {
+    registry: reg,
+    max_projects: parseInt(document.getElementById('cr-max').value) || 10,
+    download_documents: document.getElementById('cr-download').value === 'true'
+  };
+  if (reg === 'verra') {
+    const country = document.getElementById('cf-country');
+    const ptype = document.getElementById('cf-type');
+    const status = document.getElementById('cf-status');
+    const query = document.getElementById('cf-query');
+    if (country && country.value.trim()) params.country = country.value.trim();
+    if (ptype && ptype.value) params.projectType = ptype.value;
+    if (status && status.value) params.status = status.value;
+    if (query && query.value.trim()) params.query = query.value.trim();
+  } else {
+    const query = document.getElementById('cf-query');
+    if (query && query.value.trim()) params.query = query.value.trim();
+  }
+  return params;
+}
+
+// Render on load
+renderCrawlFields();
+
 async function startCrawl() {
-  const registry = document.getElementById('cr-registry').value;
-  const query = document.getElementById('cr-query').value.trim();
-  const maxProjects = parseInt(document.getElementById('cr-max').value) || 10;
-  const downloadDocs = document.getElementById('cr-download').value === 'true';
+  const params = getCrawlParams();
 
   const btn = document.getElementById('btn-crawl');
   btn.disabled = true;
@@ -527,32 +594,39 @@ async function startCrawl() {
   logBox.innerHTML = '';
   resetPipeline();
 
-  crawlLog('Starting ' + registry + ' crawl\u2026');
+  const registry = params.registry;
+  crawlLog('Starting ' + registry + ' crawl\u2026', 'info');
+  if (params.country) crawlLog('  Country: ' + params.country, 'info');
+  if (params.projectType) crawlLog('  Type: ' + params.projectType, 'info');
+  if (params.query) crawlLog('  Query: ' + params.query, 'info');
 
   try {
-    const config = { max_projects: maxProjects, download_documents: downloadDocs };
-    if (query) config.query = query;
+    const body = { registry: params.registry, async: true, max_projects: params.max_projects, download_documents: params.download_documents };
+    if (params.country) body.country = params.country;
+    if (params.projectType) body.projectType = params.projectType;
+    if (params.status) body.status = params.status;
+    if (params.query) body.query = params.query;
 
     const r = await fetch(API + '/api/primitives/crawler/run', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ registry, config, async: true })
+      body: JSON.stringify(body)
     });
     const d = await r.json();
 
     if (d.error) {
-      crawlLog('ERROR: ' + d.error);
+      crawlLog('ERROR: ' + d.error, 'error');
       btn.disabled = false;
       btn.textContent = 'Start Crawl';
       return;
     }
 
     const runId = d.run_id;
-    crawlLog('Run ' + runId.slice(0,8) + ' queued \u2014 polling\u2026');
+    crawlLog('Run ' + runId.slice(0,8) + ' queued \u2014 polling\u2026', 'info');
 
     // If sync response (no async queue), load results immediately
     if (!d.async && d.status === 'complete') {
-      crawlLog('Crawl completed (sync). Loading documents\u2026');
+      crawlLog('Crawl completed (sync). Loading documents\u2026', 'success');
       await loadCrawlDocs(runId);
       btn.disabled = false;
       btn.textContent = 'Start Crawl';
@@ -562,7 +636,7 @@ async function startCrawl() {
     // Poll for async completion
     pollCrawlRun(runId);
   } catch(e) {
-    crawlLog('ERROR: ' + e.message);
+    crawlLog('ERROR: ' + e.message, 'error');
     btn.disabled = false;
     btn.textContent = 'Start Crawl';
   }
@@ -577,7 +651,7 @@ async function pollCrawlRun(runId) {
     attempts++;
     if (attempts > maxAttempts) {
       clearInterval(_crawlPollTimer);
-      crawlLog('Polling timed out after 10 minutes.');
+      crawlLog('Polling timed out after 10 minutes.', 'error');
       btn.disabled = false;
       btn.textContent = 'Start Crawl';
       return;
@@ -592,20 +666,20 @@ async function pollCrawlRun(runId) {
 
       if (d.status === 'complete') {
         clearInterval(_crawlPollTimer);
-        crawlLog('Crawl complete! Loading documents into staging\u2026');
+        crawlLog('Crawl complete! Loading documents into staging\u2026', 'success');
         await loadCrawlDocs(runId);
         btn.disabled = false;
         btn.textContent = 'Start Crawl';
       } else if (d.status === 'failed') {
         clearInterval(_crawlPollTimer);
-        crawlLog('Crawl FAILED: ' + (d.error || 'Unknown error'));
+        crawlLog('Crawl FAILED: ' + (d.error || 'Unknown error'), 'error');
         btn.disabled = false;
         btn.textContent = 'Start Crawl';
       } else {
-        crawlLog('Status: ' + d.status + ' | projects: ' + (d.projectsFound || 0));
+        crawlLog('Status: ' + d.status + ' | projects: ' + (d.projectsFound || 0), 'info');
       }
     } catch(e) {
-      crawlLog('Poll error: ' + e.message);
+      crawlLog('Poll error: ' + e.message, 'error');
     }
   }, 5000);
 }
@@ -644,10 +718,17 @@ function setPipeStage(stage, count, active) {
   }
 }
 
-function crawlLog(msg) {
+function crawlLog(msg, level) {
+  level = level || 'info';
   const box = document.getElementById('crawl-log');
-  const ts = new Date().toLocaleTimeString();
-  box.innerHTML += ts + '  ' + esc(msg) + '\n';
+  if (!box) return;
+  const colors = { info: 'rgba(255,255,255,0.6)', success: '#00D4AA', error: '#E8485A', warn: '#E8A020' };
+  const time = new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.style.color = colors[level] || colors.info;
+  line.textContent = time + '  ' + msg;
+  box.appendChild(line);
   box.scrollTop = box.scrollHeight;
 }
 
@@ -658,7 +739,7 @@ async function loadCrawlDocs(runId) {
     const docs = d.documents || [];
 
     if (docs.length === 0) {
-      crawlLog('No documents found for this run.');
+      crawlLog('No documents found for this run.', 'warn');
       return;
     }
 
@@ -683,10 +764,10 @@ async function loadCrawlDocs(runId) {
       });
       added++;
     }
-    crawlLog('Added ' + added + ' documents to staging.');
+    crawlLog('Added ' + added + ' documents to staging.', 'success');
     toast(added + ' documents staged from crawl', 'success');
   } catch(e) {
-    crawlLog('Error loading documents: ' + e.message);
+    crawlLog('Error loading documents: ' + e.message, 'error');
   }
 }
 
@@ -772,6 +853,13 @@ function addToStaging(data) {
     sizeBytes: data.sizeBytes || 0
   };
 
+  // Auto-set project for registry reference doc types
+  const REGISTRY_REF_TYPES = ['core_methodology','registry_spec','technical_report',
+    'policy_document','example_pd','market_intelligence','methodology'];
+  if (REGISTRY_REF_TYPES.includes(row.docType)) {
+    if (!row.project) row.project = 'registry_reference';
+  }
+
   assignQuality(row);
   STAGING.push(row);
   renderStaging();
@@ -845,7 +933,7 @@ function renderStaging() {
 
   tbody.innerHTML = STAGING.map((row, idx) => {
     const committed = row.commitStatus === 'committed';
-    return '<tr class="' + (committed ? 'committed' : '') + '" data-idx="' + idx + '">' +
+    const dataRow = '<tr class="' + (committed ? 'committed' : '') + '" data-idx="' + idx + '">' +
       '<td><input type="checkbox" class="stg-chk" ' + (row.selected ? 'checked' : '') + ' ' + (committed ? 'disabled' : '') + ' onchange="toggleRow(' + idx + ',this.checked)"></td>' +
       '<td><a href="#" onclick="previewRow(' + idx + ');return false" style="color:var(--txt0);text-decoration:none" title="' + esc(row.filename) + '">' + truncate(row.filename, 40) + '</a></td>' +
       '<td><span class="src-badge ' + row.source + '">' + row.source + '</span></td>' +
@@ -855,9 +943,14 @@ function renderStaging() {
       '<td>' + (committed ? esc(row.registry) : '<input class="edit-cell" value="' + esc(row.registry) + '" onchange="editRow(' + idx + ',\'registry\',this.value)" placeholder="verra, puro\u2026" list="dl-registry">') + '</td>' +
       '<td>' + (committed ? esc(row.project) : '<input class="edit-cell" value="' + esc(row.project) + '" onchange="editRow(' + idx + ',\'project\',this.value)" placeholder="project name\u2026">') + '</td>' +
       '<td style="text-align:center">' + (committed ? (row.isCanonical ? '\u2605' : '') : '<input type="checkbox" class="stg-chk" ' + (row.isCanonical ? 'checked' : '') + ' onchange="editRow(' + idx + ',\'isCanonical\',this.checked)">') + '</td>' +
-      '<td><span class="commit-status ' + row.commitStatus + '">' + commitLabel(row) + '</span></td>' +
+      '<td><span class="commit-status ' + row.commitStatus + '">' + commitLabel(row) + '</span>' +
+        ' <button onclick="toggleInlinePreview(' + idx + ')" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);font-size:9px;padding:2px 6px;border-radius:3px;cursor:pointer;margin-left:4px">Preview</button></td>' +
       '<td>' + (committed ? '' : '<button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px" onclick="removeRow(' + idx + ')" title="Remove">&times;</button>') + '</td>' +
       '</tr>';
+    const previewRow = '<tr id="inline-preview-' + idx + '" style="display:none"><td colspan="11" style="padding:0">' +
+      '<div style="background:#020609;border:1px solid rgba(255,255,255,0.06);border-radius:6px;margin:4px 8px;padding:12px;font-family:\'DM Mono\',monospace;font-size:11px;line-height:1.6;color:rgba(255,255,255,0.7);max-height:300px;overflow-y:auto;white-space:pre-wrap">' + previewText(row) + '</div>' +
+      '</td></tr>';
+    return dataRow + previewRow;
   }).join('');
 
   // Update commit button state
@@ -1027,6 +1120,26 @@ function previewRow(idx) {
 
 function closePreview() {
   document.getElementById('preview-drawer').classList.remove('open');
+}
+
+// ─── INLINE PREVIEW ───
+function toggleInlinePreview(idx) {
+  const el = document.getElementById('inline-preview-' + idx);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'table-row' : 'none';
+}
+
+function previewText(row) {
+  if (!row.markdown) return 'No extracted text available.';
+  const words = row.markdown.trim().split(/\s+/);
+  let preview = words.slice(0, 500).join(' ');
+  if (words.length > 500) preview += '\n\n\u2026 [truncated \u2014 ' + words.length.toLocaleString() + ' words total]';
+  // Highlight garbage patterns
+  const GARBAGE = ['RuleCounter','CIDInit','Hfootnote','cite.0@','IdentityAdobe','AdobeUCS'];
+  GARBAGE.forEach(function(p) {
+    if (preview.includes(p)) preview = preview.split(p).join('\u26A0' + p + '\u26A0');
+  });
+  return esc(preview);
 }
 
 // ─── HELPERS ───
