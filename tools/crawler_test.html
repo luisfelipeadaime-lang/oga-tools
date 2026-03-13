@@ -318,6 +318,7 @@ body{background:var(--bg0);color:var(--txt0);font-family:'DM Sans',sans-serif;fo
       <button class="stg-btn secondary" onclick="selectAll()">Select All</button>
       <button class="stg-btn secondary" onclick="clearSelection()">Clear Selection</button>
       <button class="stg-btn danger" id="btn-bulk-delete" onclick="bulkDelete()" style="display:none">Delete Selected</button>
+      <button class="stg-btn danger" id="stop-btn" onclick="stopAllExtractions()" style="display:none">&#9632; Stop Extraction</button>
       <button class="stg-btn danger" onclick="clearStaging()">Clear Staging</button>
       <button class="stg-btn primary" id="btn-commit" onclick="commitSelected()" disabled>Commit Selected</button>
     </div>
@@ -575,7 +576,31 @@ function updateStagingRow(idx, updates) {
   Object.assign(STAGING[idx], updates);
   if (updates.wordCount !== undefined || updates.quality !== undefined || updates.extractionStatus !== undefined) {
     renderStaging();
+    updateStopButton();
   }
+}
+
+function updateStopButton() {
+  const btn = document.getElementById('stop-btn');
+  if (!btn) return;
+  const hasActive = STAGING.some(r => r.extractionStatus === 'extracting' || r.extractionStatus === 'polling' || r.extractionStatus === 'chunks');
+  btn.style.display = hasActive ? 'inline-block' : 'none';
+}
+
+async function stopAllExtractions() {
+  const active = STAGING.filter(r => r._jobId && (r.extractionStatus === 'extracting' || r.extractionStatus === 'polling' || r.extractionStatus === 'chunks'));
+  for (const row of active) {
+    try {
+      await fetch(API + '/api/primitives/jobs/' + row._jobId + '/cancel', { method: 'POST' });
+      row.extractionStatus = 'error';
+      row.extractionDetail = 'Cancelled';
+      row.quality = 'red';
+      row.qualityReason = 'Cancelled by user';
+    } catch(e) { console.error('Cancel failed:', e); }
+  }
+  renderStaging();
+  updateStats();
+  updateStopButton();
 }
 
 async function processSingleFile(idx, fileBlob, filename, rowId) {
@@ -592,7 +617,7 @@ async function processSingleFile(idx, fileBlob, filename, rowId) {
 
     if (d.async) {
       if (statEl) { statEl.textContent = 'polling\u2026'; statEl.className = 'ustat polling'; }
-      updateStagingRow(idx, { extractionStatus: 'polling' });
+      updateStagingRow(idx, { extractionStatus: 'polling', _jobId: d.job_id });
       const result = await pollJobForStaging(idx, d.job_id, 120, statEl);
       updateStagingRow(idx, {
         wordCount: result.word_count || 0,
@@ -1047,6 +1072,7 @@ function addToStaging(data) {
     fileBlob: data.fileBlob || null,       // Patch C: preserved Blob
     crawlerDocId: data.crawlerDocId || null,
     knowledgeDocId: data.knowledgeDocId || null,
+    _jobId: data._jobId || null,
     registryDocType: data.registryDocType || classifyVerraDoc(data.filename || '') || '',
     documentRole: data.documentRole || inferDocumentRole(data.filename || ''),
     version: data.version || extractVersion(data.filename || ''),
