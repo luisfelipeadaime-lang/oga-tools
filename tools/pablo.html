@@ -1554,7 +1554,7 @@ function filterIntel(q){
 }
 
 // ══ KNOWLEDGE LIBRARY (v73) ════════════════════════════════════
-const KLIB = { docs: [], q: '', filterCanonical: false, filterSupply: false, sortCol: 'created_at', sortDir: 'desc' };
+const KLIB = { docs: [], q: '', filterCanonical: false, filterSupply: false, filterRegistered: false, sortCol: 'created_at', sortDir: 'desc' };
 
 function renderLibrary(){ loadKnowledgeLibrary(); }
 
@@ -1577,6 +1577,7 @@ function klibFilteredDocs() {
   }
   if (KLIB.filterCanonical) docs = docs.filter(d => d.is_canonical == 1);
   if (KLIB.filterSupply) docs = docs.filter(d => d.source_type === 'rfp_supply');
+  if (KLIB.filterRegistered) docs = docs.filter(d => d.is_registered_example == 1);
   return docs;
 }
 
@@ -1590,6 +1591,20 @@ function klibSort(col) {
     return KLIB.sortDir === 'asc' ? cmp : -cmp;
   });
   klibRender();
+}
+
+function klibSourceBadge(sourceType) {
+  const map = {
+    rfp_supply: { label: 'RFP Supply', bg: 'rgba(245,166,35,0.15)', color: '#F5A623' },
+    crawler: { label: 'Crawler', bg: 'rgba(0,212,170,0.12)', color: '#00D4AA' },
+    direct_upload: { label: 'Uploaded', bg: 'rgba(91,156,246,0.15)', color: '#5B9CF6' },
+    project_extract: { label: 'Project', bg: 'rgba(167,139,250,0.15)', color: '#A78BFA' },
+    project_sync: { label: 'Project', bg: 'rgba(167,139,250,0.15)', color: '#A78BFA' },
+    web_scrape: { label: 'Web', bg: 'rgba(255,255,255,0.07)', color: 'var(--txt2)' },
+    workflow: { label: 'Workflow', bg: 'rgba(255,255,255,0.07)', color: 'var(--txt2)' },
+  };
+  const s = map[sourceType] || { label: sourceType || '—', bg: 'rgba(255,255,255,0.05)', color: 'var(--txt3)' };
+  return `<span style="font-size:9px;background:${s.bg};color:${s.color};padding:2px 5px;border-radius:3px;white-space:nowrap">${s.label}</span>`;
 }
 
 function klibRender() {
@@ -1607,25 +1622,29 @@ function klibRender() {
       <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:5px;cursor:pointer">
         <input type="checkbox" ${KLIB.filterSupply?'checked':''} onchange="KLIB.filterSupply=this.checked;klibRender()"> Supply Docs
       </label>
+      <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:5px;cursor:pointer">
+        <input type="checkbox" ${KLIB.filterRegistered?'checked':''} onchange="KLIB.filterRegistered=this.checked;klibRender()"> Registered Examples
+      </label>
       <span style="font-size:10px;color:var(--txt3)">${docs.length} documents</span>
     </div>
     <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse;font-size:11px">
         <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.08)">
-          ${[['title','Title'],['registry_doc_type','Type'],['registry','Registry'],['version','Ver'],['word_count','Words'],['is_canonical','★']].map(([col,label])=>`
+          ${[['title','Title'],['registry_doc_type','Type'],['source_type','Source'],['registry','Registry'],['version','Ver'],['word_count','Words'],['is_canonical','★']].map(([col,label])=>`
             <th onclick="klibSort('${col}')" style="text-align:left;padding:6px 8px;color:var(--txt3);font-weight:500;cursor:pointer;white-space:nowrap;font-size:9px;text-transform:uppercase;letter-spacing:.06em">${label}${KLIB.sortCol===col?(KLIB.sortDir==='asc'?' ↑':' ↓'):''}</th>`).join('')}
           <th style="padding:6px 8px"></th>
         </tr></thead>
         <tbody>
-          ${!docs.length ? '<tr><td colspan="7" style="padding:20px;color:var(--txt3);text-align:center">No documents found</td></tr>' :
+          ${!docs.length ? '<tr><td colspan="8" style="padding:20px;color:var(--txt3);text-align:center">No documents found</td></tr>' :
             docs.map(d=>`
               <tr style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background .1s" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
                 <td style="padding:7px 8px;color:var(--txt1);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(d.title||'')}">${escHtml(d.title||'—')}</td>
                 <td style="padding:7px 8px">${(d.registry_doc_type||d.doc_type)?`<span style="font-size:9px;background:rgba(180,100,255,0.2);color:#B464FF;padding:2px 5px;border-radius:3px;white-space:nowrap">${REGISTRY_DOC_TYPE_LABELS[d.registry_doc_type||d.doc_type]||(d.registry_doc_type||d.doc_type)}</span>`:'<span style="color:var(--txt3)">—</span>'}</td>
+                <td style="padding:7px 8px">${klibSourceBadge(d.source_type)}</td>
                 <td style="padding:7px 8px;color:var(--txt2);white-space:nowrap">${REG_LABELS[d.registry]||d.registry||'—'}</td>
                 <td style="padding:7px 8px;color:var(--txt3);white-space:nowrap">${d.version||'—'}</td>
                 <td style="padding:7px 8px;color:var(--txt3);text-align:right;white-space:nowrap">${d.word_count?Number(d.word_count).toLocaleString():'—'}</td>
-                <td style="padding:7px 8px;text-align:center">${d.is_canonical==1?'<span style="color:#E8A020">★</span>':''}</td>
+                <td style="padding:7px 8px;text-align:center">${d.is_registered_example==1?'<span style="color:#F5A623;font-size:10px" title="Registered Example">★ Example</span>':(d.is_canonical==1?'<span style="color:#E8A020;font-size:10px" title="Canonical Methodology">★ Method</span>':'')}</td>
                 <td style="padding:7px 8px">
                   <button onclick="viewLibText('${d.id}','${escHtml(d.title||'doc').replace(/'/g,"\\'")}')" style="font-size:9px;padding:3px 8px;border-radius:3px;border:none;background:rgba(255,255,255,0.07);color:var(--txt2);cursor:pointer">Preview</button>
                 </td>

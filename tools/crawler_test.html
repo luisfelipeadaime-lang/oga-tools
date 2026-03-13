@@ -168,6 +168,21 @@ body{background:var(--bg0);color:var(--txt0);font-family:'DM Sans',sans-serif;fo
 /* Sublabel under filename */
 .fn-sub{display:block;font-size:9px;color:var(--txt2);margin-top:1px;font-family:'DM Mono',monospace}
 
+/* Project group headers (v77) */
+.project-group-header td{background:var(--bg3)!important;border-bottom:1px solid var(--border1);padding:8px!important;cursor:pointer}
+.project-group-header:hover td{background:var(--bg4)!important}
+.project-id-badge{font-family:'DM Mono',monospace;font-size:11px;color:var(--teal);background:var(--teal-faint);padding:3px 10px;border-radius:6px;font-weight:500;letter-spacing:.02em;display:inline-block}
+.geo-chip{font-size:10px;background:var(--bg4);color:var(--txt1);padding:2px 8px;border-radius:99px;display:inline-block;margin-left:6px}
+.method-chip{font-family:'DM Mono',monospace;font-size:10px;color:var(--blue);background:var(--blue-dim);padding:2px 8px;border-radius:99px;display:inline-block;margin-left:6px}
+.status-chip{font-size:10px;padding:2px 8px;border-radius:99px;display:inline-block;margin-left:6px}
+.status-chip.registered{color:var(--green);background:var(--green-dim)}
+.status-chip.validation{color:var(--amber);background:var(--amber-dim)}
+.status-chip.development{color:var(--txt2);background:var(--bg4)}
+.pg-name{font-size:11px;color:var(--txt2);margin-left:8px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle}
+.pg-collapse{font-size:10px;color:var(--txt2);float:right;margin-right:4px}
+.pg-meta{font-size:10px;color:var(--txt2);margin-top:3px}
+.pg-meta span{margin-right:10px}
+
 /* Preview drawer */
 #preview-drawer{position:fixed;right:0;top:0;width:420px;height:100vh;background:var(--bg1);border-left:1px solid var(--border1);transform:translateX(100%);transition:transform .25s;z-index:100;display:flex;flex-direction:column}
 #preview-drawer.open{transform:translateX(0)}
@@ -265,6 +280,13 @@ body{background:var(--bg0);color:var(--txt0);font-family:'DM Sans',sans-serif;fo
           <option value="true">Yes</option>
           <option value="false">No</option>
         </select>
+      </div>
+      <div class="form-group" id="pd-filter-group" style="display:none">
+        <label>Doc Filter</label>
+        <div style="display:flex;gap:10px;padding-top:4px">
+          <label style="font-size:11px;color:var(--txt1);cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="doc-filter" value="pd_only" checked style="accent-color:var(--teal)"> PDs only</label>
+          <label style="font-size:11px;color:var(--txt1);cursor:pointer;display:flex;align-items:center;gap:4px"><input type="radio" name="doc-filter" value="all" style="accent-color:var(--teal)"> All docs</label>
+        </div>
       </div>
       <button class="stg-btn primary" id="btn-crawl" onclick="startCrawl()">Start Crawl</button>
     </div>
@@ -712,6 +734,9 @@ let _crawlPollTimer = null;
 function renderCrawlFields() {
   const reg = document.getElementById('cr-registry').value;
   const el = document.getElementById('crawl-fields');
+  // Show PD filter only for Verra (v77)
+  const pdGroup = document.getElementById('pd-filter-group');
+  if (pdGroup) pdGroup.style.display = reg === 'verra' ? '' : 'none';
   if (reg === 'verra') {
     el.innerHTML =
       '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-top:12px">' +
@@ -771,6 +796,9 @@ function getCrawlParams() {
     if (ptype && ptype.value) params.projectType = ptype.value;
     if (status && status.value) params.status = status.value;
     if (query && query.value.trim()) params.query = query.value.trim();
+    // PD-only filter (v77)
+    const docFilter = document.querySelector('input[name="doc-filter"]:checked');
+    if (docFilter && docFilter.value === 'pd_only') params.pd_only = true;
   } else {
     const query = document.getElementById('cf-query');
     if (query && query.value.trim()) params.query = query.value.trim();
@@ -1172,6 +1200,87 @@ function assignQuality(row) {
   row.qualityReason = wc.toLocaleString() + ' words';
 }
 
+// Project metadata cache for group headers (v77)
+const PROJECT_META_CACHE = {};
+const COLLAPSED_GROUPS = new Set();
+
+function renderStagingRow(row, idx) {
+  const committed = row.commitStatus === 'committed';
+  const isSkipOrBoundary = row.quality === 'skip' || row.quality === 'boundary';
+  const rowClass = committed ? 'committed' : (row.quality === 'error' ? 'row-error' : (isSkipOrBoundary ? 'row-skip' : ''));
+
+  const dataRow = '<tr class="' + rowClass + '" data-idx="' + idx + '">' +
+    '<td><input type="checkbox" class="stg-chk" ' + (row.selected ? 'checked' : '') + ' ' + (committed ? 'disabled' : '') + ' onchange="toggleRow(' + idx + ',this.checked)"></td>' +
+    '<td><a href="#" onclick="previewRow(' + idx + ');return false" style="color:var(--txt0);text-decoration:none" title="' + esc(row.filename) + '">' + truncate(row.filename, 38) + '</a></td>' +
+    '<td><span class="src-badge ' + row.source + '">' + row.source + '</span></td>' +
+    '<td><span class="q-badge ' + row.quality + '" title="' + esc(row.qualityReason) + '">' + row.quality + '</span></td>' +
+    '<td class="mono">' + (row.wordCount > 0 ? row.wordCount.toLocaleString() : '&mdash;') + '</td>' +
+    '<td>' + (committed ? esc(row.registryDocType) : '<input class="edit-cell" value="' + esc(row.registryDocType) + '" onchange="editRow(' + idx + ',\'registryDocType\',this.value)" placeholder="VM_methodology\u2026" list="dl-regdoctype">') + '</td>' +
+    '<td>' + (committed ? esc(row.methodologyCode) : '<input class="edit-cell" value="' + esc(row.methodologyCode) + '" onchange="editRow(' + idx + ',\'methodologyCode\',this.value)" placeholder="VM0047" style="width:75px">') + '</td>' +
+    '<td>' + (committed ? esc(row.version) : '<input class="edit-cell" value="' + esc(row.version) + '" onchange="editRow(' + idx + ',\'version\',this.value)" placeholder="v1.0" style="width:55px">') + '</td>' +
+    '<td>' + (committed ? esc(row.documentRole) : '<input class="edit-cell" value="' + esc(row.documentRole) + '" onchange="editRow(' + idx + ',\'documentRole\',this.value)" placeholder="primary\u2026" list="dl-docrole">') + '</td>' +
+    '<td style="text-align:center">' + (committed ? (row.isCanonical ? '\u2605' : '') : '<input type="checkbox" class="stg-chk" ' + (row.isCanonical ? 'checked' : '') + ' onchange="editRow(' + idx + ',\'isCanonical\',this.checked)">') + '</td>' +
+    '<td>' + statusCell(row) +
+      ' <button onclick="toggleInlinePreview(' + idx + ')" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);font-size:9px;padding:2px 6px;border-radius:3px;cursor:pointer;margin-left:4px">Preview</button></td>' +
+    '<td>' + (committed ? '' : '<button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px" onclick="removeRow(' + idx + ')" title="Remove">&times;</button>') + '</td>' +
+    '</tr>';
+  const previewTr = '<tr id="inline-preview-' + idx + '" style="display:none"><td colspan="12" style="padding:0">' +
+    '<div style="background:#020609;border:1px solid rgba(255,255,255,0.06);border-radius:6px;margin:4px 8px;padding:12px;font-family:\'DM Mono\',monospace;font-size:11px;line-height:1.6;color:rgba(255,255,255,0.7);max-height:300px;overflow-y:auto;white-space:pre-wrap">' + previewText(row) + '</div>' +
+    '</td></tr>';
+  return dataRow + previewTr;
+}
+
+function buildProjectGroupHeader(pid, rows) {
+  const firstRow = rows[0];
+  const meta = PROJECT_META_CACHE[pid] || {};
+  const country = meta.country || firstRow.country || '';
+  const meth = meta.methodology_code || firstRow.methodologyCode || '';
+  const projName = meta.project_name || firstRow.project || '';
+  const status = meta.status || '';
+  const isCollapsed = COLLAPSED_GROUPS.has(pid);
+  const chevron = isCollapsed ? '\u25B6' : '\u25BC';
+  const pendingCount = rows.filter(r => r.commitStatus === 'pending').length;
+  const allSelected = rows.every(r => r.selected || r.commitStatus === 'committed');
+
+  // Status chip class
+  let statusClass = '';
+  const sl = status.toLowerCase();
+  if (sl.includes('registered') && !sl.includes('requested')) statusClass = 'registered';
+  else if (sl.includes('validation')) statusClass = 'validation';
+  else if (sl.includes('development')) statusClass = 'development';
+
+  let header = '<tr class="project-group-header" onclick="toggleProjectGroup(\'' + esc(pid) + '\')">' +
+    '<td colspan="12">' +
+      '<span class="pg-collapse">' + chevron + ' ' + rows.length + ' doc' + (rows.length !== 1 ? 's' : '') + '</span>' +
+      (pendingCount > 0 ? '<input type="checkbox" class="stg-chk" ' + (allSelected ? 'checked' : '') + ' onclick="event.stopPropagation();toggleGroupSelect(\'' + esc(pid) + '\',this.checked)" style="margin-right:8px;vertical-align:middle">' : '') +
+      '<span class="project-id-badge">VCS ' + esc(pid) + '</span>' +
+      '<a href="https://registry.verra.org/app/projectDetail/VCS/' + esc(pid) + '" target="_blank" onclick="event.stopPropagation()" style="color:var(--teal);font-size:10px;margin-left:4px;text-decoration:none" title="View on Verra">\u2197</a>' +
+      (country ? '<span class="geo-chip">' + esc(country) + '</span>' : '') +
+      (meth ? '<span class="method-chip">' + esc(meth) + '</span>' : '') +
+      (status && statusClass ? '<span class="status-chip ' + statusClass + '">' + esc(status) + '</span>' : '') +
+      (projName ? '<span class="pg-name" title="' + esc(projName) + '">' + esc(projName) + '</span>' : '') +
+      (meta.proponent ? '<div class="pg-meta"><span>Proponent: ' + esc(meta.proponent) + '</span>' +
+        (meta.crediting_period_start ? '<span>Crediting: ' + esc(meta.crediting_period_start).slice(0,4) + '\u2013' + esc(meta.crediting_period_end || '').slice(0,4) + '</span>' : '') +
+        '</div>' : '') +
+    '</td></tr>';
+  return header;
+}
+
+function toggleProjectGroup(pid) {
+  if (COLLAPSED_GROUPS.has(pid)) COLLAPSED_GROUPS.delete(pid);
+  else COLLAPSED_GROUPS.add(pid);
+  renderStaging();
+}
+
+function toggleGroupSelect(pid, checked) {
+  STAGING.forEach((row, idx) => {
+    if (row.registryProjectId === pid && row.commitStatus === 'pending') {
+      row.selected = checked;
+    }
+  });
+  renderStaging();
+}
+
 function renderStaging() {
   const tbody = document.getElementById('staging-tbody');
   const table = document.getElementById('staging-table');
@@ -1189,40 +1298,68 @@ function renderStaging() {
   empty.style.display = 'none';
   countEl.textContent = STAGING.length + ' row' + (STAGING.length !== 1 ? 's' : '');
 
-  tbody.innerHTML = STAGING.map((row, idx) => {
-    const committed = row.commitStatus === 'committed';
-    const isSkipOrBoundary = row.quality === 'skip' || row.quality === 'boundary';
-    const rowClass = committed ? 'committed' : (row.quality === 'error' ? 'row-error' : (isSkipOrBoundary ? 'row-skip' : ''));
+  // Group by registryProjectId (v77)
+  const groups = {};
+  const ungrouped = [];
+  STAGING.forEach((row, idx) => {
+    row._idx = idx;
+    if (row.registryProjectId) {
+      if (!groups[row.registryProjectId]) groups[row.registryProjectId] = [];
+      groups[row.registryProjectId].push(row);
+    } else {
+      ungrouped.push(row);
+    }
+  });
 
-    // Patch G: sublabel for Verra project ID
-    const sublabel = row.registryProjectId ? '<span class="fn-sub">' + esc(row.registryProjectId) + '</span>' : '';
+  let html = '';
 
-    const dataRow = '<tr class="' + rowClass + '" data-idx="' + idx + '">' +
-      '<td><input type="checkbox" class="stg-chk" ' + (row.selected ? 'checked' : '') + ' ' + (committed ? 'disabled' : '') + ' onchange="toggleRow(' + idx + ',this.checked)"></td>' +
-      '<td><a href="#" onclick="previewRow(' + idx + ');return false" style="color:var(--txt0);text-decoration:none" title="' + esc(row.filename) + '">' + truncate(row.filename, 38) + '</a>' + sublabel + '</td>' +
-      '<td><span class="src-badge ' + row.source + '">' + row.source + '</span></td>' +
-      '<td><span class="q-badge ' + row.quality + '" title="' + esc(row.qualityReason) + '">' + row.quality + '</span></td>' +
-      '<td class="mono">' + (row.wordCount > 0 ? row.wordCount.toLocaleString() : '&mdash;') + '</td>' +
-      // Patch I: registry_doc_type replaces old doc_type + registry + project columns
-      '<td>' + (committed ? esc(row.registryDocType) : '<input class="edit-cell" value="' + esc(row.registryDocType) + '" onchange="editRow(' + idx + ',\'registryDocType\',this.value)" placeholder="VM_methodology\u2026" list="dl-regdoctype">') + '</td>' +
-      '<td>' + (committed ? esc(row.methodologyCode) : '<input class="edit-cell" value="' + esc(row.methodologyCode) + '" onchange="editRow(' + idx + ',\'methodologyCode\',this.value)" placeholder="VM0047" style="width:75px">') + '</td>' +
-      '<td>' + (committed ? esc(row.version) : '<input class="edit-cell" value="' + esc(row.version) + '" onchange="editRow(' + idx + ',\'version\',this.value)" placeholder="v1.0" style="width:55px">') + '</td>' +
-      '<td>' + (committed ? esc(row.documentRole) : '<input class="edit-cell" value="' + esc(row.documentRole) + '" onchange="editRow(' + idx + ',\'documentRole\',this.value)" placeholder="primary\u2026" list="dl-docrole">') + '</td>' +
-      '<td style="text-align:center">' + (committed ? (row.isCanonical ? '\u2605' : '') : '<input type="checkbox" class="stg-chk" ' + (row.isCanonical ? 'checked' : '') + ' onchange="editRow(' + idx + ',\'isCanonical\',this.checked)">') + '</td>' +
-      '<td>' + statusCell(row) +
-        ' <button onclick="toggleInlinePreview(' + idx + ')" style="background:none;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.5);font-size:9px;padding:2px 6px;border-radius:3px;cursor:pointer;margin-left:4px">Preview</button></td>' +
-      '<td>' + (committed ? '' : '<button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px" onclick="removeRow(' + idx + ')" title="Remove">&times;</button>') + '</td>' +
-      '</tr>';
-    const previewTr = '<tr id="inline-preview-' + idx + '" style="display:none"><td colspan="12" style="padding:0">' +
-      '<div style="background:#020609;border:1px solid rgba(255,255,255,0.06);border-radius:6px;margin:4px 8px;padding:12px;font-family:\'DM Mono\',monospace;font-size:11px;line-height:1.6;color:rgba(255,255,255,0.7);max-height:300px;overflow-y:auto;white-space:pre-wrap">' + previewText(row) + '</div>' +
-      '</td></tr>';
-    return dataRow + previewTr;
-  }).join('');
+  // Render grouped rows (project-first)
+  for (const pid of Object.keys(groups)) {
+    const rows = groups[pid];
+    html += buildProjectGroupHeader(pid, rows);
+    if (!COLLAPSED_GROUPS.has(pid)) {
+      for (const row of rows) {
+        html += renderStagingRow(row, row._idx);
+      }
+    }
+  }
+
+  // Render ungrouped rows (local uploads etc.)
+  if (ungrouped.length > 0 && Object.keys(groups).length > 0) {
+    html += '<tr class="project-group-header"><td colspan="12"><span class="project-id-badge" style="color:var(--blue);background:var(--blue-dim)">Local Uploads</span><span class="pg-collapse">' + ungrouped.length + ' doc' + (ungrouped.length !== 1 ? 's' : '') + '</span></td></tr>';
+  }
+  for (const row of ungrouped) {
+    html += renderStagingRow(row, row._idx);
+  }
+
+  tbody.innerHTML = html;
 
   const selectedCount = STAGING.filter(r => r.selected && r.commitStatus === 'pending').length;
   const commitBtn = document.getElementById('btn-commit');
   commitBtn.disabled = selectedCount === 0;
   commitBtn.textContent = selectedCount > 0 ? 'Commit ' + selectedCount + ' Selected' : 'Commit Selected';
+
+  // Fire metadata enrichment for project groups (v77)
+  enrichProjectGroups(Object.keys(groups));
+}
+
+// Fetch project metadata for group headers (v77)
+async function enrichProjectGroups(pids) {
+  const toFetch = pids.filter(pid => !PROJECT_META_CACHE[pid]);
+  if (toFetch.length === 0) return;
+  try {
+    await Promise.all(toFetch.map(async (pid) => {
+      try {
+        const resp = await fetch(API + '/api/primitives/project-metadata/verra/' + pid);
+        if (resp.ok) {
+          const data = await resp.json();
+          PROJECT_META_CACHE[pid] = data;
+        }
+      } catch (e) { console.warn('Meta fetch failed for', pid, e.message); }
+    }));
+    // Re-render group headers with metadata (only if any fetched)
+    if (toFetch.some(pid => PROJECT_META_CACHE[pid])) renderStaging();
+  } catch (e) { console.warn('enrichProjectGroups:', e.message); }
 }
 
 function commitLabel(row) {
