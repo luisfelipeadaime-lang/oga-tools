@@ -234,7 +234,7 @@ body{background:var(--bg0);color:var(--txt0);font-family:'DM Sans',sans-serif;fo
     <div id="drop-zone" onclick="document.getElementById('file-input').click()">
       <div class="dz-icon">&#128196;</div>
       <div class="dz-main">Drop PDF, DOCX, XLSX files here &mdash; or click to browse</div>
-      <div class="dz-sub">PDFs >1MB go async via Cloudflare Queues &bull; KML/SHP auto-routed to boundaries</div>
+      <div class="dz-sub">PDFs >1MB go async via queue &bull; Scanned PDFs processed in chunks &bull; Large docs (500+ pages) may take several minutes</div>
     </div>
     <input type="file" id="file-input" multiple accept=".pdf,.docx,.xlsx,.pptx,.txt,.csv,.xml,.json,.rtf,.odt,.kml,.shp,.geojson,.zip,.gdb,.dbf">
     <div id="upload-progress"></div>
@@ -370,6 +370,10 @@ let _toastTimer = null;
 function classifyVerraDoc(filename) {
   const f = (filename || '').split('/').pop().split('\\').pop();
   const fl = f.toLowerCase();
+  // Geographic files have no registry doc type — return null immediately
+  const ext = fl.split('.').pop();
+  if (BOUNDARY_EXTS.includes(ext) || SKIP_EXTS.includes(ext)) return null;
+  // Methodology/program prefix patterns
   if (/^vm\d{4}/.test(fl)) return 'VM_methodology';
   if (/^vmd\d{4}/.test(fl)) return 'VMD_module';
   if (/^vt\d{4}/.test(fl)) return 'VT_tool';
@@ -382,7 +386,9 @@ function classifyVerraDoc(filename) {
   if (/^puro|tsb|biochar|puro_standard/.test(fl)) return 'puro_document';
   if (/^isometric|^sbcrs/.test(fl)) return 'isometric_document';
   if (/^gs[-_]|^gold[-_]standard/.test(fl)) return 'GS_document';
+  // Project document patterns
   if (/project.?descr|^pdd|draft.?pdd|^pd[-_\s]|[-_]pd[-_v]/.test(fl)) return 'project_description';
+  if (/^draft[-_\s]/.test(fl)) return 'project_description';
   if (/listing.?rep|^vcs.?listing/.test(fl)) return 'listing_representation';
   if (/comm(unication)?s?.?agree|comm.?agr/.test(fl)) return 'communications_agreement';
   if (/monitor(ing)?.?(report|plan)|^mr[-_\d]|mrv/.test(fl)) return 'monitoring_report';
@@ -403,18 +409,19 @@ function extractVersion(filename) {
   return m ? 'v' + m[1] : '';
 }
 
-// ─── DOCUMENT ROLE INFERENCE (Patch F) ───
+// ─── DOCUMENT ROLE INFERENCE — Verra-specific (Patch F rewrite) ───
 function inferDocumentRole(filename) {
   const fl = (filename || '').toLowerCase();
-  if (/template|blank|form/.test(fl)) return 'template';
-  if (/guidance|guide|instruction|manual/.test(fl)) return 'guidance';
-  if (/summary|overview|brief/.test(fl)) return 'summary';
-  if (/annex|appendix|attachment|supplement/.test(fl)) return 'supporting';
-  if (/monitor(ing)?|^mr[-_\d]/i.test(fl)) return 'monitoring';
-  if (/verif(ication)?|audit|vvb/i.test(fl)) return 'verification';
-  if (/validat(ion)?/i.test(fl)) return 'validation';
-  if (/register|issuance|listing/i.test(fl)) return 'registration';
-  if (/project.?descr|^pdd|^pd[-_]/i.test(fl)) return 'primary';
+  if (/\.kml$|\.shp$|\.kmz$|perimeter|boundary|rppn/.test(fl)) return 'boundary_file';
+  if (/project.?descr|^pdd|draft.?pdd|^pd[-_\s]|draft[-_\s]/.test(fl)) return 'project_description';
+  if (/listing.?rep|vcs.?listing/.test(fl)) return 'listing_representation';
+  if (/comm(unication)?s?.?agree|comm.?agr/.test(fl)) return 'legal_agreement';
+  if (/monitor(ing)?.?(report|plan)/.test(fl)) return 'monitoring_report';
+  if (/validat(ion)?/.test(fl)) return 'validation_report';
+  if (/verif(ication)?|audit|vvb/.test(fl)) return 'verification_report';
+  if (/public.?comment|pub.?com|pcs/.test(fl)) return 'public_commentary';
+  if (/non.?perm|buffer|afolu.?risk|permanence/.test(fl)) return 'risk_assessment';
+  if (/issuance|emission.?reduct|vcu/.test(fl)) return 'issuance_document';
   return '';
 }
 
@@ -564,7 +571,7 @@ async function extractFile(fileBlob, filename, rowId) {
     if (d.async) {
       statEl.textContent = 'polling\u2026';
       statEl.className = 'ustat polling';
-      const result = await pollJob(d.job_id);
+      const result = await pollJob(d.job_id, 120, statEl);
       addToStaging({
         filename: filename,
         word_count: result.word_count || 0,
@@ -618,7 +625,7 @@ async function extractFile(fileBlob, filename, rowId) {
   }
 }
 
-async function pollJob(jobId, maxAttempts) {
+async function pollJob(jobId, maxAttempts, statEl) {
   maxAttempts = maxAttempts || 60;
   for (let i = 0; i < maxAttempts; i++) {
     await sleep(3000);
@@ -630,6 +637,18 @@ async function pollJob(jobId, maxAttempts) {
       }
       if (d.status === 'error') {
         throw new Error(d.error || 'Extraction failed');
+      }
+      // Show chunk progress for multi-chunk jobs
+      if (statEl && d.total_chunks > 1 && d.status === 'processing') {
+        const pct = d.progress_pct || 0;
+        const done = d.completed_chunks || 0;
+        const total = d.total_chunks;
+        statEl.innerHTML =
+          '<span style="font-size:9px">' + done + '/' + total + ' chunks</span> ' +
+          '<span style="display:inline-block;width:50px;height:3px;background:rgba(255,255,255,0.1);border-radius:2px;vertical-align:middle">' +
+            '<span style="display:block;width:' + pct + '%;height:100%;background:#00D4AA;border-radius:2px;transition:width .5s"></span>' +
+          '</span>';
+        statEl.className = 'ustat polling';
       }
     } catch(e) {
       if (i === maxAttempts - 1) throw e;
@@ -882,11 +901,12 @@ async function loadCrawlDocs(runId) {
       if (STAGING.some(s => s.crawlerDocId === doc.id)) continue;
 
       const fname = doc.file_name || doc.original_url || 'unknown';
-      const regDocType = doc.registry_doc_type || classifyVerraDoc(fname) || '';
-      const docRole = doc.document_role || inferDocumentRole(fname);
-      const ver = doc.version || extractVersion(fname);
       const isBoundary = isGeographicFile(fname);
       const isBin = isBinaryFile(fname);
+      // Boundary files get null registry_doc_type — not a false-positive classification
+      const regDocType = (isBoundary || isBin) ? '' : (doc.registry_doc_type || classifyVerraDoc(fname) || '');
+      const docRole = doc.document_role || inferDocumentRole(fname);
+      const ver = doc.version || extractVersion(fname);
       // Patch H: crawler docs without extraction get quality='pending'
       const hasExtraction = (doc.word_count || 0) > 0 || !!doc.knowledge_doc_id;
       let forceQ;
