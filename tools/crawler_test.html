@@ -154,6 +154,7 @@ body{background:var(--bg0);color:var(--txt0);font-family:'DM Sans',sans-serif;fo
 .commit-status{font-family:'DM Mono',monospace;font-size:10px}
 .commit-status.pending{color:var(--txt2)}
 .commit-status.committing{color:var(--amber)}
+.commit-status.extracting{color:var(--teal)}
 .commit-status.committed{color:var(--green)}
 .commit-status.error{color:var(--red)}
 
@@ -1224,6 +1225,7 @@ function renderStaging() {
 function commitLabel(row) {
   if (row.commitStatus === 'committed') return '\u2713 done';
   if (row.commitStatus === 'committing') return 'saving\u2026';
+  if (row.commitStatus === 'extracting') return '\u21BB extracting\u2026';
   if (row.commitStatus === 'error') return '\u2717 ' + (row.commitError || 'error');
   return '\u2014';
 }
@@ -1331,16 +1333,19 @@ async function commitSelected() {
     renderStaging();
 
     try {
-      // Boundary files: store via boundaries endpoint
-      if (row.quality === 'boundary' && row.fileBlob) {
-        const fd = new FormData();
-        fd.append('file', row.fileBlob, row.filename);
-        fd.append('registry', row.registry || 'unknown');
-        fd.append('project_id', row.registryProjectId || row.project || 'unknown');
+      // Boundary files: store via boundaries endpoint (local uploads) or skip (crawler)
+      if (row.quality === 'boundary') {
+        if (row.fileBlob) {
+          const fd = new FormData();
+          fd.append('file', row.fileBlob, row.filename);
+          fd.append('registry', row.registry || 'unknown');
+          fd.append('project_id', row.registryProjectId || row.project || 'unknown');
 
-        const r = await fetch(API + '/api/primitives/boundaries/store', { method: 'POST', body: fd });
-        const d = await r.json();
-        if (d.error) throw new Error(d.error);
+          const r = await fetch(API + '/api/primitives/boundaries/store', { method: 'POST', body: fd });
+          const d = await r.json();
+          if (d.error) throw new Error(d.error);
+        }
+        // Crawler boundary files already in R2 — mark committed without extraction
         row.commitStatus = 'committed';
         successCount++;
 
@@ -1384,9 +1389,34 @@ async function commitSelected() {
         successCount++;
 
       } else if (row.crawlerDocId && !row.knowledgeDocId) {
-        row.commitStatus = 'error';
-        row.commitError = 'No knowledge doc \u2014 not yet extracted';
-        errorCount++;
+        // Case C: Crawler row — extract + sync via new endpoint
+        row.commitStatus = 'extracting';
+        renderStaging();
+
+        const body = { crawl_doc_id: row.crawlerDocId };
+        if (row.registryDocType) body.registry_doc_type = row.registryDocType;
+        if (row.documentRole) body.document_role = row.documentRole;
+        if (row.version) body.version = row.version;
+        body.is_canonical = row.isCanonical ? 1 : 0;
+
+        const r = await fetch(API + '/api/primitives/crawler/extract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const d = await r.json();
+        if (d.error) throw new Error(d.error);
+
+        row.knowledgeDocId = d.knowledge_doc_id;
+        row.wordCount = d.word_count || row.wordCount;
+        row.method = d.extraction_method || 'crawler';
+        row.commitStatus = 'committed';
+        // Re-assign quality with new word count
+        if (d.word_count > 0) {
+          row._extractionAttempted = true;
+          assignQuality(row);
+        }
+        successCount++;
       } else {
         row.commitStatus = 'error';
         row.commitError = 'No file or knowledge doc';
