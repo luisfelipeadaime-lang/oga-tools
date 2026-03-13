@@ -704,6 +704,11 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
             <div class="fgrp"><label class="flabel">Tags <span style="font-weight:400;color:var(--txt3)">(comma-separated)</span></label>
               <input class="finput" id="lib-tags" placeholder="e.g. miteco, spain, forestry">
             </div>
+            <div class="fgrp" style="margin-bottom:4px">
+              <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);cursor:pointer">
+                <input type="checkbox" id="lib-canonical"> Add to Methodology Library
+              </label>
+            </div>
             <div class="fgrp">
               <div class="lib-dzone" id="lib-dropzone" onclick="document.getElementById('lib-file-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="libHandleDrop(event)">
                 <span>Drop file or ZIP here, or click to browse</span>
@@ -1952,6 +1957,7 @@ async function uploadLibraryDoc(){
   const files = singleFile ? [singleFile] : zipFiles;
   const dname = document.getElementById('lib-dname').value.trim();
   const userTags = (document.getElementById('lib-tags')?.value || '').trim();
+  const isCanonical = document.getElementById('lib-canonical')?.checked ? '1' : '0';
   if(!files.length||!dname){ alert('Fill all fields and select a file'); return; }
 
   const log = document.getElementById('lib-log');
@@ -1977,6 +1983,7 @@ async function uploadLibraryDoc(){
       fd.append('uploaded_by', 'pablo_library');
       if (dname) fd.append('title', dname);
       if (userTags) fd.append('tags', userTags);
+      if (isCanonical === '1') fd.append('is_canonical', '1');
       const res = await fetch(`${API}/api/knowledge/ingest`, {method:'POST', body:fd});
       const data = await res.json();
       if(!res.ok) throw new Error(data.error||`HTTP ${res.status}`);
@@ -2670,7 +2677,7 @@ async function loadMethodologyTab() {
       fetch(API + '/api/registries').then(r => r.json()),
       fetch(API + '/api/document-roles').then(r => r.json()),
       fetch(API + '/api/methodologies').then(r => r.json()),
-      fetch(API + '/api/primitives/taxonomy/search?limit=500').then(r => r.json())
+      fetch(API + '/api/primitives/taxonomy/search?limit=500&canonical=1').then(r => r.json())
     ]);
     METH.registries = regRes.registries || [];
     METH.roles = roleRes.roles || [];
@@ -2763,10 +2770,11 @@ async function methLoadDetail(bundleId) {
         const src = d.taxonomy_source === 'manual' ? '' :
           d.taxonomy_source === 'ai' ? `<span style="color:var(--amber);font-size:9px" title="AI classified">AI</span>` :
           `<span style="color:var(--txt3);font-size:9px">auto</span>`;
+        const canonBadge = d.is_canonical ? '<span style="color:var(--teal);font-size:9px;font-weight:700" title="Methodology Library">★ Library</span> ' : '';
         html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
           <div style="flex:1">
             <div style="font-size:11px;font-weight:600;color:var(--txt0)">${d.title || 'Untitled'}</div>
-            <div style="font-size:10px;color:var(--txt3)">${d.word_count ? d.word_count.toLocaleString() + ' words' : 'processing'} ${src}</div>
+            <div style="font-size:10px;color:var(--txt3)">${canonBadge}${d.word_count ? d.word_count.toLocaleString() + ' words' : 'processing'} ${src}</div>
           </div>
           <button class="btn btn-s" onclick="methDownloadTaxDoc('${d.id}','txt')" style="font-size:9px;padding:2px 6px">TXT</button>
           <button class="btn btn-s" onclick="methDownloadTaxDoc('${d.id}','original')" style="font-size:9px;padding:2px 6px">Original</button>
