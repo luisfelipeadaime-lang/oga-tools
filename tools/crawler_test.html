@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PABLO — Bulk Intake Hub</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg0:#030810; --bg1:#070F1E; --bg2:#0A1628; --bg3:#0E1F36;
+  --bg4:#142744; --bg5:#1A3055;
+  --border0:#0F1E30; --border1:#162C44; --border2:#1E3A58;
+  --teal:#00D4AA; --teal2:#009E78; --teal-glow:rgba(0,212,170,.12); --teal-faint:rgba(0,212,170,.05);
+  --amber:#F5A623; --amber-dim:rgba(245,166,35,.14);
+  --red:#FF4757; --red-dim:rgba(255,71,87,.12);
+  --green:#2ED573; --green-dim:rgba(46,213,115,.12);
+  --blue:#5B9CF6; --blue-dim:rgba(91,156,246,.12);
+  --violet:#A78BFA; --violet-dim:rgba(167,139,250,.12);
+  --txt0:#D8E8F5; --txt1:#8AACCC; --txt2:#445E78; --txt3:#253344;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg0);color:var(--txt0);font-family:'DM Sans',sans-serif;font-size:13px;min-height:100vh}
+.syne{font-family:'Syne',sans-serif}
+.mono{font-family:'DM Mono',monospace}
+
+/* Layout */
+#header{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border0);background:var(--bg1)}
+#header h1{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;letter-spacing:.04em;color:var(--txt0)}
+#header h1 span{color:var(--teal);font-weight:800}
+#health-badge{font-family:'DM Mono',monospace;font-size:10px;padding:3px 8px;border-radius:3px;background:var(--bg3);color:var(--txt2);letter-spacing:.06em}
+#health-badge.ok{color:var(--green);background:var(--green-dim)}
+#health-badge.err{color:var(--red);background:var(--red-dim)}
+
+/* Stats bar */
+#stats-bar{display:flex;gap:24px;padding:10px 24px;border-bottom:1px solid var(--border0);background:var(--bg1)}
+.stat-item{display:flex;align-items:baseline;gap:6px}
+.stat-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--txt2)}
+.stat-val{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:var(--teal)}
+
+/* Tab bar */
+#tab-bar{display:flex;gap:0;border-bottom:1px solid var(--border0);background:var(--bg1);padding:0 24px}
+.tab-btn{font-family:'Syne',sans-serif;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:10px 18px;border:none;background:none;color:var(--txt2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.tab-btn:hover{color:var(--txt1)}
+.tab-btn.active{color:var(--teal);border-bottom-color:var(--teal)}
+
+/* Tab panels */
+.tab-panel{display:none;padding:20px 24px}
+.tab-panel.active{display:block}
+
+/* Shared panel styles */
+.panel-card{background:var(--bg1);border:1px solid var(--border0);border-radius:6px;padding:16px 20px;margin-bottom:16px}
+.panel-card h3{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt1);margin-bottom:12px}
+
+/* Drop zone */
+#drop-zone{border:2px dashed var(--border2);border-radius:8px;padding:40px 20px;text-align:center;transition:all .2s;cursor:pointer;background:var(--bg2)}
+#drop-zone:hover,#drop-zone.drag-over{border-color:var(--teal);background:var(--teal-faint)}
+#drop-zone .dz-icon{font-size:32px;margin-bottom:8px;opacity:.4}
+#drop-zone .dz-main{font-size:14px;color:var(--txt0);margin-bottom:4px}
+#drop-zone .dz-sub{font-size:11px;color:var(--txt2)}
+#file-input{display:none}
+
+/* Upload progress list */
+#upload-progress{margin-top:12px}
+.upload-row{display:flex;align-items:center;gap:10px;padding:6px 10px;background:var(--bg2);border-radius:4px;margin-bottom:4px;font-size:12px}
+.upload-row .fname{flex:1;color:var(--txt1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.upload-row .ustat{font-family:'DM Mono',monospace;font-size:10px;padding:2px 6px;border-radius:3px}
+.ustat.extracting{color:var(--amber);background:var(--amber-dim)}
+.ustat.done{color:var(--green);background:var(--green-dim)}
+.ustat.error{color:var(--red);background:var(--red-dim)}
+.ustat.polling{color:var(--blue);background:var(--blue-dim)}
+
+/* Crawler form */
+.form-row{display:flex;gap:12px;align-items:flex-end;margin-bottom:12px;flex-wrap:wrap}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-group label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--txt2)}
+.form-group select,.form-group input{background:var(--bg3);border:1px solid var(--border1);color:var(--txt0);font-family:'DM Sans',sans-serif;font-size:12px;padding:6px 10px;border-radius:4px;outline:none}
+.form-group select:focus,.form-group input:focus{border-color:var(--teal)}
+
+/* Pipeline stages */
+#pipeline{display:flex;gap:0;margin-top:16px;position:relative}
+.pipe-stage{flex:1;text-align:center;padding:10px 8px;background:var(--bg2);border:1px solid var(--border0);position:relative}
+.pipe-stage:first-child{border-radius:6px 0 0 6px}
+.pipe-stage:last-child{border-radius:0 6px 6px 0}
+.pipe-stage .ps-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--txt2);margin-bottom:4px}
+.pipe-stage .ps-count{font-family:'DM Mono',monospace;font-size:18px;font-weight:500;color:var(--txt2)}
+.pipe-stage.active{background:var(--teal-faint);border-color:var(--teal)}
+.pipe-stage.active .ps-count{color:var(--teal)}
+.pipe-stage.done .ps-count{color:var(--green)}
+.pipe-stage .ps-arrow{position:absolute;right:-8px;top:50%;transform:translateY(-50%);color:var(--border2);font-size:14px;z-index:1}
+
+/* Crawl log */
+#crawl-log{max-height:120px;overflow-y:auto;font-family:'DM Mono',monospace;font-size:11px;color:var(--txt2);background:var(--bg0);border:1px solid var(--border0);border-radius:4px;padding:8px 10px;margin-top:12px;line-height:1.6}
+#crawl-log::-webkit-scrollbar{width:3px}
+#crawl-log::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* Past runs table */
+#past-runs-table{width:100%;border-collapse:collapse}
+#past-runs-table th{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--txt2);text-align:left;padding:6px 10px;border-bottom:1px solid var(--border0)}
+#past-runs-table td{font-size:12px;padding:6px 10px;border-bottom:1px solid var(--border0);color:var(--txt1)}
+#past-runs-table tr:hover td{background:var(--bg2)}
+.run-status{font-family:'DM Mono',monospace;font-size:10px;padding:2px 6px;border-radius:3px}
+.run-status.complete{color:var(--green);background:var(--green-dim)}
+.run-status.running,.run-status.queued{color:var(--amber);background:var(--amber-dim)}
+.run-status.failed{color:var(--red);background:var(--red-dim)}
+.load-run-btn{font-family:'Syne',sans-serif;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border:1px solid var(--teal);background:none;color:var(--teal);border-radius:3px;cursor:pointer;transition:all .15s}
+.load-run-btn:hover{background:var(--teal);color:var(--bg0)}
+
+/* ===== STAGING TABLE ===== */
+#staging-section{padding:0 24px 20px}
+#staging-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-top:16px;border-top:1px solid var(--border0)}
+#staging-header h2{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;letter-spacing:.04em;color:var(--txt0)}
+#staging-actions{display:flex;gap:8px;align-items:center}
+.stg-btn{font-family:'Syne',sans-serif;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;border-radius:3px;border:none;cursor:pointer;transition:all .15s}
+.stg-btn.secondary{background:var(--bg3);color:var(--txt1);border:1px solid var(--border1)}
+.stg-btn.secondary:hover{background:var(--bg4);color:var(--txt0)}
+.stg-btn.primary{background:var(--teal);color:var(--bg0);font-weight:700}
+.stg-btn.primary:hover{background:var(--teal2)}
+.stg-btn:disabled{opacity:.4;cursor:default}
+#staging-count{font-family:'DM Mono',monospace;font-size:11px;color:var(--txt2);margin-left:8px}
+
+#staging-table-wrap{overflow-x:auto}
+#staging-table{width:100%;border-collapse:collapse;min-width:900px}
+#staging-table th{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--txt2);text-align:left;padding:6px 8px;border-bottom:1px solid var(--border1);position:sticky;top:0;background:var(--bg0)}
+#staging-table td{font-size:12px;padding:5px 8px;border-bottom:1px solid var(--border0);color:var(--txt1);vertical-align:middle}
+#staging-table tr:hover td{background:var(--bg2)}
+#staging-table tr.committed td{opacity:.5}
+
+/* Quality badges */
+.q-badge{font-family:'DM Mono',monospace;font-size:10px;padding:2px 7px;border-radius:3px;letter-spacing:.04em;font-weight:500;display:inline-block}
+.q-badge.green{color:var(--green);background:var(--green-dim)}
+.q-badge.amber{color:var(--amber);background:var(--amber-dim)}
+.q-badge.red{color:var(--red);background:var(--red-dim)}
+
+/* Source badges */
+.src-badge{font-family:'DM Mono',monospace;font-size:9px;padding:2px 6px;border-radius:3px;letter-spacing:.06em;text-transform:uppercase}
+.src-badge.local{color:var(--blue);background:var(--blue-dim)}
+.src-badge.crawler{color:var(--violet);background:var(--violet-dim)}
+
+/* Commit status */
+.commit-status{font-family:'DM Mono',monospace;font-size:10px}
+.commit-status.pending{color:var(--txt2)}
+.commit-status.committing{color:var(--amber)}
+.commit-status.committed{color:var(--green)}
+.commit-status.error{color:var(--red)}
+
+/* Editable cells */
+.edit-cell{background:var(--bg3);border:1px solid var(--border0);color:var(--txt0);font-family:'DM Sans',sans-serif;font-size:11px;padding:3px 6px;border-radius:3px;width:100%;outline:none}
+.edit-cell:focus{border-color:var(--teal)}
+
+/* Checkbox */
+.stg-chk{width:14px;height:14px;accent-color:var(--teal);cursor:pointer}
+
+/* Preview drawer */
+#preview-drawer{position:fixed;right:0;top:0;width:420px;height:100vh;background:var(--bg1);border-left:1px solid var(--border1);transform:translateX(100%);transition:transform .25s;z-index:100;display:flex;flex-direction:column}
+#preview-drawer.open{transform:translateX(0)}
+#preview-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border0)}
+#preview-head h3{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--txt0)}
+#preview-close{background:none;border:none;color:var(--txt2);cursor:pointer;font-size:18px;padding:2px 6px}
+#preview-close:hover{color:var(--txt0)}
+#preview-body{flex:1;overflow-y:auto;padding:16px;font-size:12px;line-height:1.7;color:var(--txt1);white-space:pre-wrap;word-break:break-word}
+#preview-body::-webkit-scrollbar{width:3px}
+#preview-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+#preview-meta{padding:12px 16px;border-bottom:1px solid var(--border0);font-size:11px;color:var(--txt2)}
+#preview-meta .pm-row{display:flex;justify-content:space-between;margin-bottom:3px}
+#preview-meta .pm-label{color:var(--txt2)}
+#preview-meta .pm-val{font-family:'DM Mono',monospace;color:var(--txt1)}
+
+/* Empty state */
+.empty-state{text-align:center;padding:40px 20px;color:var(--txt2)}
+.empty-state .es-icon{font-size:28px;opacity:.3;margin-bottom:8px}
+.empty-state .es-text{font-size:13px}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border1);border-radius:2px}
+
+/* Toast */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:8px 16px;border-radius:4px;font-size:12px;font-family:'DM Mono',monospace;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none}
+#toast.show{opacity:1}
+#toast.success{background:var(--green-dim);color:var(--green);border:1px solid var(--green)}
+#toast.error{background:var(--red-dim);color:var(--red);border:1px solid var(--red)}
+#toast.info{background:var(--blue-dim);color:var(--blue);border:1px solid var(--blue)}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <h1 class="syne"><span>PABLO</span> &mdash; Bulk Intake Hub</h1>
+  <div id="health-badge" class="mono">checking&hellip;</div>
+</div>
+
+<!-- STATS BAR -->
+<div id="stats-bar">
+  <div class="stat-item"><span class="stat-label">Staged</span><span class="stat-val mono" id="st-staged">0</span></div>
+  <div class="stat-item"><span class="stat-label">Green</span><span class="stat-val mono" id="st-green" style="color:var(--green)">0</span></div>
+  <div class="stat-item"><span class="stat-label">Amber</span><span class="stat-val mono" id="st-amber" style="color:var(--amber)">0</span></div>
+  <div class="stat-item"><span class="stat-label">Red</span><span class="stat-val mono" id="st-red" style="color:var(--red)">0</span></div>
+  <div class="stat-item"><span class="stat-label">Committed</span><span class="stat-val mono" id="st-committed">0</span></div>
+</div>
+
+<!-- TAB BAR -->
+<div id="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('local')">Local Upload</button>
+  <button class="tab-btn" onclick="switchTab('crawler')">Crawler Run</button>
+  <button class="tab-btn" onclick="switchTab('past')">Past Runs</button>
+</div>
+
+<!-- TAB 1: LOCAL UPLOAD -->
+<div class="tab-panel active" id="tab-local">
+  <div class="panel-card">
+    <h3>Drop Files for Extraction</h3>
+    <div id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <div class="dz-icon">&#128196;</div>
+      <div class="dz-main">Drop PDF, DOCX, XLSX files here &mdash; or click to browse</div>
+      <div class="dz-sub">Files are extracted via /api/primitives/extract &bull; Large files (>8MB) go async</div>
+    </div>
+    <input type="file" id="file-input" multiple accept=".pdf,.docx,.xlsx,.pptx,.txt,.csv,.xml,.json,.rtf,.odt">
+    <div id="upload-progress"></div>
+  </div>
+</div>
+
+<!-- TAB 2: CRAWLER RUN -->
+<div class="tab-panel" id="tab-crawler">
+  <div class="panel-card">
+    <h3>Start Registry Crawl</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Registry</label>
+        <select id="cr-registry">
+          <option value="verra">Verra VCS</option>
+          <option value="puro">Puro.earth</option>
+          <option value="isometric">Isometric</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Search Query</label>
+        <input type="text" id="cr-query" placeholder="e.g. REDD+, reforestation" style="width:220px">
+      </div>
+      <div class="form-group">
+        <label>Max Projects</label>
+        <input type="number" id="cr-max" value="10" min="1" max="100" style="width:70px">
+      </div>
+      <div class="form-group">
+        <label>Download Docs</label>
+        <select id="cr-download">
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+      </div>
+      <button class="stg-btn primary" id="btn-crawl" onclick="startCrawl()">Start Crawl</button>
+    </div>
+
+    <!-- Pipeline visualization -->
+    <div id="pipeline" style="display:none">
+      <div class="pipe-stage" id="ps-crawl">
+        <div class="ps-label">Crawl</div>
+        <div class="ps-count" id="ps-crawl-n">0</div>
+        <span class="ps-arrow">&rsaquo;</span>
+      </div>
+      <div class="pipe-stage" id="ps-download">
+        <div class="ps-label">Download</div>
+        <div class="ps-count" id="ps-download-n">0</div>
+        <span class="ps-arrow">&rsaquo;</span>
+      </div>
+      <div class="pipe-stage" id="ps-extract">
+        <div class="ps-label">Extract</div>
+        <div class="ps-count" id="ps-extract-n">0</div>
+        <span class="ps-arrow">&rsaquo;</span>
+      </div>
+      <div class="pipe-stage" id="ps-enrich">
+        <div class="ps-label">Enrich</div>
+        <div class="ps-count" id="ps-enrich-n">0</div>
+      </div>
+    </div>
+    <div id="crawl-log" style="display:none"></div>
+  </div>
+</div>
+
+<!-- TAB 3: PAST RUNS -->
+<div class="tab-panel" id="tab-past">
+  <div class="panel-card">
+    <h3>Previous Crawl Runs</h3>
+    <div style="margin-bottom:10px"><button class="stg-btn secondary" onclick="loadPastRuns()">Refresh</button></div>
+    <div id="past-runs-container">
+      <div class="empty-state"><div class="es-icon">&#128269;</div><div class="es-text">Click Refresh to load past runs</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- STAGING TABLE -->
+<div id="staging-section">
+  <div id="staging-header">
+    <div style="display:flex;align-items:center;gap:10px">
+      <h2 class="syne">Staging Table</h2>
+      <span id="staging-count" class="mono">0 rows</span>
+    </div>
+    <div id="staging-actions">
+      <button class="stg-btn secondary" onclick="selectAllGreen()">Select Green</button>
+      <button class="stg-btn secondary" onclick="selectAll()">Select All</button>
+      <button class="stg-btn secondary" onclick="clearAll()">Clear Selection</button>
+      <button class="stg-btn primary" id="btn-commit" onclick="commitSelected()" disabled>Commit Selected</button>
+    </div>
+  </div>
+  <div id="staging-table-wrap">
+    <div id="staging-empty" class="empty-state">
+      <div class="es-icon">&#128230;</div>
+      <div class="es-text">No documents staged. Upload files or run a crawl to populate.</div>
+    </div>
+    <table id="staging-table" style="display:none">
+      <thead>
+        <tr>
+          <th style="width:30px"><input type="checkbox" class="stg-chk" id="chk-all" onchange="toggleAll(this.checked)"></th>
+          <th>Filename</th>
+          <th>Source</th>
+          <th>Quality</th>
+          <th style="width:60px">Words</th>
+          <th>Doc Type</th>
+          <th>Registry</th>
+          <th>Project</th>
+          <th style="width:50px">Canon</th>
+          <th>Status</th>
+          <th style="width:40px"></th>
+        </tr>
+      </thead>
+      <tbody id="staging-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PREVIEW DRAWER -->
+<div id="preview-drawer">
+  <div id="preview-head">
+    <h3 class="syne" id="preview-title">Preview</h3>
+    <button id="preview-close" onclick="closePreview()">&times;</button>
+  </div>
+  <div id="preview-meta"></div>
+  <div id="preview-body"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+const API = 'https://api-tools.oga.earth';
+const STAGING = []; // master staging array
+let _toastTimer = null;
+
+// ─── HEALTH CHECK ───
+(async function checkHealth() {
+  const badge = document.getElementById('health-badge');
+  try {
+    const r = await fetch(API + '/health');
+    const d = await r.json();
+    badge.textContent = d.version || 'OK';
+    badge.className = 'mono ok';
+  } catch(e) {
+    badge.textContent = 'OFFLINE';
+    badge.className = 'mono err';
+  }
+})();
+
+// ─── TAB SWITCHING ───
+function switchTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  const labels = { local: 'Local Upload', crawler: 'Crawler Run', past: 'Past Runs' };
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.textContent.trim() === labels[tab]) b.classList.add('active');
+  });
+}
+
+// ─── TOAST ───
+function toast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + (type || 'info');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.className = '', 3000);
+}
+
+// ─── STATS UPDATE ───
+function updateStats() {
+  document.getElementById('st-staged').textContent = STAGING.length;
+  document.getElementById('st-green').textContent = STAGING.filter(r => r.quality === 'green').length;
+  document.getElementById('st-amber').textContent = STAGING.filter(r => r.quality === 'amber').length;
+  document.getElementById('st-red').textContent = STAGING.filter(r => r.quality === 'red').length;
+  document.getElementById('st-committed').textContent = STAGING.filter(r => r.commitStatus === 'committed').length;
+}
+
+// ═══════════════════════════════════════════
+// TAB 1: LOCAL UPLOAD
+// ═══════════════════════════════════════════
+
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  handleLocalUpload(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files.length) handleLocalUpload(fileInput.files);
+  fileInput.value = '';
+});
+
+async function handleLocalUpload(files) {
+  const progBox = document.getElementById('upload-progress');
+
+  for (const file of files) {
+    const rowId = 'up-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+    const el = document.createElement('div');
+    el.className = 'upload-row';
+    el.id = rowId;
+    el.innerHTML = `<span class="fname">${esc(file.name)}</span><span class="ustat extracting">extracting&hellip;</span>`;
+    progBox.prepend(el);
+
+    // Fire off extraction (don't await — allow parallel)
+    extractFile(file, rowId);
+  }
+}
+
+async function extractFile(file, rowId) {
+  const el = document.getElementById(rowId);
+  const statEl = el.querySelector('.ustat');
+
+  try {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('mode', 'full');
+
+    const r = await fetch(API + '/api/primitives/extract', { method: 'POST', body: fd });
+    const d = await r.json();
+
+    if (d.async) {
+      // Large file — poll for result
+      statEl.textContent = 'polling\u2026';
+      statEl.className = 'ustat polling';
+      const result = await pollJob(d.job_id);
+      addToStaging({
+        filename: file.name,
+        word_count: result.word_count || 0,
+        markdown: result.markdown || result.text || '',
+        method: result.extraction_method || 'async',
+        source: 'local',
+        file: file
+      });
+      statEl.textContent = 'done';
+      statEl.className = 'ustat done';
+    } else if (d.error) {
+      statEl.textContent = 'error';
+      statEl.className = 'ustat error';
+      statEl.title = d.error;
+    } else {
+      // Sync result — but we need the markdown text
+      // The extract endpoint returns word_count but not full markdown in sync mode for display
+      // We still add to staging with what we have
+      addToStaging({
+        filename: file.name,
+        word_count: d.word_count || 0,
+        markdown: d.markdown || '',
+        method: d.method || d.extraction_method || 'sync',
+        source: 'local',
+        file: file
+      });
+      statEl.textContent = (d.word_count || 0).toLocaleString() + 'w';
+      statEl.className = 'ustat done';
+    }
+  } catch(e) {
+    statEl.textContent = 'error';
+    statEl.className = 'ustat error';
+    statEl.title = e.message;
+  }
+}
+
+async function pollJob(jobId, maxAttempts) {
+  maxAttempts = maxAttempts || 60;
+  for (let i = 0; i < maxAttempts; i++) {
+    await sleep(3000);
+    try {
+      const r = await fetch(API + '/api/primitives/jobs/' + jobId);
+      const d = await r.json();
+      if (d.status === 'complete') {
+        return { word_count: d.word_count, markdown: d.text || d.markdown || '', extraction_method: d.extraction_method };
+      }
+      if (d.status === 'error') {
+        throw new Error(d.error || 'Extraction failed');
+      }
+    } catch(e) {
+      if (i === maxAttempts - 1) throw e;
+    }
+  }
+  throw new Error('Polling timed out');
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ═══════════════════════════════════════════
+// TAB 2: CRAWLER RUN
+// ═══════════════════════════════════════════
+
+let _crawlPollTimer = null;
+
+async function startCrawl() {
+  const registry = document.getElementById('cr-registry').value;
+  const query = document.getElementById('cr-query').value.trim();
+  const maxProjects = parseInt(document.getElementById('cr-max').value) || 10;
+  const downloadDocs = document.getElementById('cr-download').value === 'true';
+
+  const btn = document.getElementById('btn-crawl');
+  btn.disabled = true;
+  btn.textContent = 'Starting\u2026';
+
+  const pipeline = document.getElementById('pipeline');
+  const logBox = document.getElementById('crawl-log');
+  pipeline.style.display = 'flex';
+  logBox.style.display = 'block';
+  logBox.innerHTML = '';
+  resetPipeline();
+
+  crawlLog('Starting ' + registry + ' crawl\u2026');
+
+  try {
+    const config = { max_projects: maxProjects, download_documents: downloadDocs };
+    if (query) config.query = query;
+
+    const r = await fetch(API + '/api/primitives/crawler/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ registry, config, async: true })
+    });
+    const d = await r.json();
+
+    if (d.error) {
+      crawlLog('ERROR: ' + d.error);
+      btn.disabled = false;
+      btn.textContent = 'Start Crawl';
+      return;
+    }
+
+    const runId = d.run_id;
+    crawlLog('Run ' + runId.slice(0,8) + ' queued \u2014 polling\u2026');
+
+    // If sync response (no async queue), load results immediately
+    if (!d.async && d.status === 'complete') {
+      crawlLog('Crawl completed (sync). Loading documents\u2026');
+      await loadCrawlDocs(runId);
+      btn.disabled = false;
+      btn.textContent = 'Start Crawl';
+      return;
+    }
+
+    // Poll for async completion
+    pollCrawlRun(runId);
+  } catch(e) {
+    crawlLog('ERROR: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = 'Start Crawl';
+  }
+}
+
+async function pollCrawlRun(runId) {
+  const btn = document.getElementById('btn-crawl');
+  let attempts = 0;
+  const maxAttempts = 120; // 10 minutes at 5s intervals
+
+  _crawlPollTimer = setInterval(async () => {
+    attempts++;
+    if (attempts > maxAttempts) {
+      clearInterval(_crawlPollTimer);
+      crawlLog('Polling timed out after 10 minutes.');
+      btn.disabled = false;
+      btn.textContent = 'Start Crawl';
+      return;
+    }
+
+    try {
+      const r = await fetch(API + '/api/primitives/crawler/status?run_id=' + runId);
+      const d = await r.json();
+
+      // Update pipeline stages from document data
+      await updatePipelineFromDocs(runId, d);
+
+      if (d.status === 'complete') {
+        clearInterval(_crawlPollTimer);
+        crawlLog('Crawl complete! Loading documents into staging\u2026');
+        await loadCrawlDocs(runId);
+        btn.disabled = false;
+        btn.textContent = 'Start Crawl';
+      } else if (d.status === 'failed') {
+        clearInterval(_crawlPollTimer);
+        crawlLog('Crawl FAILED: ' + (d.error || 'Unknown error'));
+        btn.disabled = false;
+        btn.textContent = 'Start Crawl';
+      } else {
+        crawlLog('Status: ' + d.status + ' | projects: ' + (d.projectsFound || 0));
+      }
+    } catch(e) {
+      crawlLog('Poll error: ' + e.message);
+    }
+  }, 5000);
+}
+
+async function updatePipelineFromDocs(runId, runData) {
+  try {
+    const r = await fetch(API + '/api/primitives/crawler/documents?run_id=' + runId + '&limit=500');
+    const d = await r.json();
+    const docs = d.documents || [];
+
+    const projectCount = runData.projectsFound || 0;
+    const downloaded = docs.filter(x => x.r2_key).length;
+    const extracted = docs.filter(x => x.word_count > 0).length;
+    const enriched = docs.filter(x => x.knowledge_doc_id).length;
+
+    setPipeStage('crawl', projectCount, runData.status === 'complete' || projectCount > 0);
+    setPipeStage('download', downloaded, downloaded > 0);
+    setPipeStage('extract', extracted, extracted > 0);
+    setPipeStage('enrich', enriched, enriched > 0);
+  } catch(e) { /* ignore */ }
+}
+
+function resetPipeline() {
+  ['crawl','download','extract','enrich'].forEach(s => {
+    const el = document.getElementById('ps-' + s);
+    el.className = 'pipe-stage';
+    document.getElementById('ps-' + s + '-n').textContent = '0';
+  });
+}
+
+function setPipeStage(stage, count, active) {
+  const el = document.getElementById('ps-' + stage);
+  document.getElementById('ps-' + stage + '-n').textContent = count;
+  if (active) {
+    el.classList.add('active');
+  }
+}
+
+function crawlLog(msg) {
+  const box = document.getElementById('crawl-log');
+  const ts = new Date().toLocaleTimeString();
+  box.innerHTML += ts + '  ' + esc(msg) + '\n';
+  box.scrollTop = box.scrollHeight;
+}
+
+async function loadCrawlDocs(runId) {
+  try {
+    const r = await fetch(API + '/api/primitives/crawler/documents?run_id=' + runId + '&limit=500');
+    const d = await r.json();
+    const docs = d.documents || [];
+
+    if (docs.length === 0) {
+      crawlLog('No documents found for this run.');
+      return;
+    }
+
+    let added = 0;
+    for (const doc of docs) {
+      // Skip docs that are already in staging (by crawler doc id)
+      if (STAGING.some(s => s.crawlerDocId === doc.id)) continue;
+
+      addToStaging({
+        filename: doc.file_name || doc.original_url || 'unknown',
+        word_count: doc.word_count || 0,
+        markdown: '', // crawler docs don't have inline markdown
+        method: 'crawler',
+        source: 'crawler',
+        crawlerDocId: doc.id,
+        knowledgeDocId: doc.knowledge_doc_id || null,
+        docType: doc.doc_type || '',
+        registry: doc.registry || '',
+        registryProjectId: doc.registry_project_id || '',
+        r2Key: doc.r2_key || '',
+        sizeBytes: doc.size_bytes || 0
+      });
+      added++;
+    }
+    crawlLog('Added ' + added + ' documents to staging.');
+    toast(added + ' documents staged from crawl', 'success');
+  } catch(e) {
+    crawlLog('Error loading documents: ' + e.message);
+  }
+}
+
+// ═══════════════════════════════════════════
+// TAB 3: PAST RUNS
+// ═══════════════════════════════════════════
+
+async function loadPastRuns() {
+  const container = document.getElementById('past-runs-container');
+  container.innerHTML = '<div class="empty-state"><div class="es-text">Loading&hellip;</div></div>';
+
+  try {
+    const r = await fetch(API + '/api/primitives/crawler/status?limit=50');
+    const d = await r.json();
+    const runs = d.runs || (d.run_id ? [d] : []);
+
+    if (runs.length === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="es-icon">&#128196;</div><div class="es-text">No crawl runs found</div></div>';
+      return;
+    }
+
+    let html = '<table id="past-runs-table"><thead><tr>' +
+      '<th>Run ID</th><th>Registry</th><th>Status</th><th>Projects</th><th>Docs</th><th>Created</th><th></th>' +
+      '</tr></thead><tbody>';
+
+    for (const run of runs) {
+      const shortId = (run.run_id || run.id || '').slice(0, 8);
+      const registry = run.registry || '?';
+      const status = run.status || '?';
+      const projCount = run.projectsFound || run.projects_found || 0;
+      const docCount = run.docsFound || run.docs_found || 0;
+      const created = run.created_at ? new Date(run.created_at).toLocaleDateString() : '?';
+      const runId = run.run_id || run.id;
+
+      html += '<tr>' +
+        '<td class="mono">' + esc(shortId) + '</td>' +
+        '<td>' + esc(registry) + '</td>' +
+        '<td><span class="run-status ' + esc(status) + '">' + esc(status) + '</span></td>' +
+        '<td class="mono">' + projCount + '</td>' +
+        '<td class="mono">' + docCount + '</td>' +
+        '<td>' + esc(created) + '</td>' +
+        '<td><button class="load-run-btn" onclick="loadRunIntoStaging(\'' + esc(runId) + '\')">Load</button></td>' +
+        '</tr>';
+    }
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  } catch(e) {
+    container.innerHTML = '<div class="empty-state"><div class="es-text" style="color:var(--red)">Error: ' + esc(e.message) + '</div></div>';
+  }
+}
+
+async function loadRunIntoStaging(runId) {
+  toast('Loading run ' + runId.slice(0,8) + '\u2026', 'info');
+  await loadCrawlDocs(runId);
+}
+
+// ═══════════════════════════════════════════
+// STAGING TABLE
+// ═══════════════════════════════════════════
+
+function addToStaging(data) {
+  const row = {
+    id: 'stg-' + Date.now() + '-' + Math.random().toString(36).slice(2,6),
+    filename: data.filename || 'unknown',
+    wordCount: data.word_count || 0,
+    markdown: data.markdown || '',
+    method: data.method || '',
+    source: data.source || 'local', // 'local' or 'crawler'
+    file: data.file || null, // File object for local uploads
+    crawlerDocId: data.crawlerDocId || null, // crawler document ID
+    knowledgeDocId: data.knowledgeDocId || null, // if already in knowledge_docs
+    docType: data.docType || '',
+    registry: data.registry || '',
+    project: data.registryProjectId || data.project || '',
+    isCanonical: false,
+    selected: false,
+    commitStatus: 'pending', // pending | committing | committed | error
+    commitError: '',
+    quality: 'green', // assigned below
+    qualityReason: '',
+    r2Key: data.r2Key || '',
+    sizeBytes: data.sizeBytes || 0
+  };
+
+  assignQuality(row);
+  STAGING.push(row);
+  renderStaging();
+  updateStats();
+}
+
+function assignQuality(row) {
+  const wc = row.wordCount;
+  const text = (row.markdown || '').substring(0, 2000);
+
+  // RED: no content or very short
+  if (wc < 20) {
+    row.quality = 'red';
+    row.qualityReason = wc === 0 ? 'No text extracted' : 'Very short (' + wc + ' words)';
+    return;
+  }
+
+  // Check for garbage patterns
+  const garbagePatterns = [
+    /[^\x20-\x7E\xA0-\xFF]{20,}/,  // long non-printable runs
+    /(\b[A-Fa-f0-9]{32,}\b)/,       // hex strings (font data)
+    /(CMap|CIDFont|Type1C|endobj){3,}/i, // PDF internals
+  ];
+  for (const pat of garbagePatterns) {
+    if (pat.test(text)) {
+      row.quality = 'red';
+      row.qualityReason = 'Garbage content detected';
+      return;
+    }
+  }
+
+  // AMBER: low word count or suspicious ratios
+  if (wc < 100) {
+    row.quality = 'amber';
+    row.qualityReason = 'Low word count (' + wc + ')';
+    return;
+  }
+
+  // Check word-to-char ratio (normal English ~5 chars/word)
+  const charCount = text.length;
+  if (charCount > 0 && wc > 0) {
+    const ratio = charCount / wc;
+    if (ratio > 15) {
+      row.quality = 'amber';
+      row.qualityReason = 'Unusual char/word ratio (' + ratio.toFixed(1) + ')';
+      return;
+    }
+  }
+
+  // GREEN
+  row.quality = 'green';
+  row.qualityReason = wc.toLocaleString() + ' words';
+}
+
+function renderStaging() {
+  const tbody = document.getElementById('staging-tbody');
+  const table = document.getElementById('staging-table');
+  const empty = document.getElementById('staging-empty');
+  const countEl = document.getElementById('staging-count');
+
+  if (STAGING.length === 0) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    countEl.textContent = '0 rows';
+    return;
+  }
+
+  table.style.display = 'table';
+  empty.style.display = 'none';
+  countEl.textContent = STAGING.length + ' row' + (STAGING.length !== 1 ? 's' : '');
+
+  tbody.innerHTML = STAGING.map((row, idx) => {
+    const committed = row.commitStatus === 'committed';
+    return '<tr class="' + (committed ? 'committed' : '') + '" data-idx="' + idx + '">' +
+      '<td><input type="checkbox" class="stg-chk" ' + (row.selected ? 'checked' : '') + ' ' + (committed ? 'disabled' : '') + ' onchange="toggleRow(' + idx + ',this.checked)"></td>' +
+      '<td><a href="#" onclick="previewRow(' + idx + ');return false" style="color:var(--txt0);text-decoration:none" title="' + esc(row.filename) + '">' + truncate(row.filename, 40) + '</a></td>' +
+      '<td><span class="src-badge ' + row.source + '">' + row.source + '</span></td>' +
+      '<td><span class="q-badge ' + row.quality + '" title="' + esc(row.qualityReason) + '">' + row.quality + '</span></td>' +
+      '<td class="mono">' + (row.wordCount > 0 ? row.wordCount.toLocaleString() : '&mdash;') + '</td>' +
+      '<td>' + (committed ? esc(row.docType) : '<input class="edit-cell" value="' + esc(row.docType) + '" onchange="editRow(' + idx + ',\'docType\',this.value)" placeholder="pdd, vvb_report\u2026" list="dl-doctype">') + '</td>' +
+      '<td>' + (committed ? esc(row.registry) : '<input class="edit-cell" value="' + esc(row.registry) + '" onchange="editRow(' + idx + ',\'registry\',this.value)" placeholder="verra, puro\u2026" list="dl-registry">') + '</td>' +
+      '<td>' + (committed ? esc(row.project) : '<input class="edit-cell" value="' + esc(row.project) + '" onchange="editRow(' + idx + ',\'project\',this.value)" placeholder="project name\u2026">') + '</td>' +
+      '<td style="text-align:center">' + (committed ? (row.isCanonical ? '\u2605' : '') : '<input type="checkbox" class="stg-chk" ' + (row.isCanonical ? 'checked' : '') + ' onchange="editRow(' + idx + ',\'isCanonical\',this.checked)">') + '</td>' +
+      '<td><span class="commit-status ' + row.commitStatus + '">' + commitLabel(row) + '</span></td>' +
+      '<td>' + (committed ? '' : '<button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px" onclick="removeRow(' + idx + ')" title="Remove">&times;</button>') + '</td>' +
+      '</tr>';
+  }).join('');
+
+  // Update commit button state
+  const selectedCount = STAGING.filter(r => r.selected && r.commitStatus === 'pending').length;
+  const commitBtn = document.getElementById('btn-commit');
+  commitBtn.disabled = selectedCount === 0;
+  commitBtn.textContent = selectedCount > 0 ? 'Commit ' + selectedCount + ' Selected' : 'Commit Selected';
+}
+
+function commitLabel(row) {
+  if (row.commitStatus === 'committed') return '\u2713 done';
+  if (row.commitStatus === 'committing') return 'saving\u2026';
+  if (row.commitStatus === 'error') return '\u2717 ' + (row.commitError || 'error');
+  return '\u2014';
+}
+
+function toggleRow(idx, checked) {
+  STAGING[idx].selected = checked;
+  renderStaging();
+}
+
+function toggleAll(checked) {
+  STAGING.forEach(r => { if (r.commitStatus === 'pending') r.selected = checked; });
+  renderStaging();
+}
+
+function editRow(idx, field, value) {
+  STAGING[idx][field] = value;
+}
+
+function removeRow(idx) {
+  STAGING.splice(idx, 1);
+  renderStaging();
+  updateStats();
+}
+
+function selectAllGreen() {
+  STAGING.forEach(r => { if (r.quality === 'green' && r.commitStatus === 'pending') r.selected = true; });
+  renderStaging();
+}
+
+function selectAll() {
+  STAGING.forEach(r => { if (r.commitStatus === 'pending') r.selected = true; });
+  renderStaging();
+}
+
+function clearAll() {
+  STAGING.forEach(r => r.selected = false);
+  renderStaging();
+}
+
+// ─── COMMIT ───
+async function commitSelected() {
+  const toCommit = STAGING.filter(r => r.selected && r.commitStatus === 'pending');
+  if (toCommit.length === 0) return;
+
+  const commitBtn = document.getElementById('btn-commit');
+  commitBtn.disabled = true;
+  commitBtn.textContent = 'Committing\u2026';
+
+  let successCount = 0;
+  let errorCount = 0;
+
+  for (const row of toCommit) {
+    row.commitStatus = 'committing';
+    renderStaging();
+
+    try {
+      if (row.knowledgeDocId) {
+        // Case A: Already in knowledge_docs (crawler doc with knowledge_doc_id)
+        // Use taxonomy/assign to update metadata
+        const body = {};
+        if (row.docType) body.doc_type = row.docType;
+        if (row.registry) body.registry = row.registry;
+        if (row.project) body.project = row.project;
+        body.doc_id = row.knowledgeDocId;
+        body.is_canonical = row.isCanonical ? true : false;
+
+        const r = await fetch(API + '/api/primitives/taxonomy/assign', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const d = await r.json();
+        if (d.error) throw new Error(d.error);
+        row.commitStatus = 'committed';
+        successCount++;
+
+      } else if (row.file) {
+        // Case B: Local file — ingest into knowledge library
+        const fd = new FormData();
+        fd.append('file', row.file);
+        fd.append('title', row.filename);
+        fd.append('owner', 'clearsky');
+        fd.append('uploaded_by', 'bulk-intake');
+        if (row.docType) fd.append('doc_type', row.docType);
+        if (row.registry) fd.append('registry', row.registry);
+        if (row.project) fd.append('project', row.project);
+        if (row.isCanonical) fd.append('is_canonical', '1');
+
+        const r = await fetch(API + '/api/knowledge/ingest', { method: 'POST', body: fd });
+        const d = await r.json();
+        if (d.error) throw new Error(d.error);
+        row.knowledgeDocId = d.knowledge_doc?.id || d.knowledge_doc_id || null;
+        row.commitStatus = 'committed';
+        successCount++;
+
+      } else if (row.crawlerDocId && !row.knowledgeDocId) {
+        // Case C: Crawler doc without knowledge_doc_id — not yet ingested
+        // We can still assign taxonomy if we have a doc type
+        // For now mark as error since there's no knowledge doc to assign to
+        row.commitStatus = 'error';
+        row.commitError = 'No knowledge doc — not yet extracted';
+        errorCount++;
+      } else {
+        row.commitStatus = 'error';
+        row.commitError = 'No file or knowledge doc';
+        errorCount++;
+      }
+    } catch(e) {
+      row.commitStatus = 'error';
+      row.commitError = e.message.substring(0, 60);
+      errorCount++;
+    }
+
+    renderStaging();
+    updateStats();
+    // Small delay between commits to avoid rate limiting
+    await sleep(200);
+  }
+
+  commitBtn.disabled = false;
+  commitBtn.textContent = 'Commit Selected';
+
+  if (errorCount === 0) {
+    toast(successCount + ' document' + (successCount !== 1 ? 's' : '') + ' committed', 'success');
+  } else {
+    toast(successCount + ' committed, ' + errorCount + ' failed', 'error');
+  }
+}
+
+// ─── PREVIEW DRAWER ───
+function previewRow(idx) {
+  const row = STAGING[idx];
+  const drawer = document.getElementById('preview-drawer');
+  document.getElementById('preview-title').textContent = truncate(row.filename, 40);
+
+  document.getElementById('preview-meta').innerHTML =
+    '<div class="pm-row"><span class="pm-label">Source</span><span class="pm-val">' + row.source + '</span></div>' +
+    '<div class="pm-row"><span class="pm-label">Words</span><span class="pm-val">' + (row.wordCount || 0).toLocaleString() + '</span></div>' +
+    '<div class="pm-row"><span class="pm-label">Method</span><span class="pm-val">' + esc(row.method) + '</span></div>' +
+    '<div class="pm-row"><span class="pm-label">Quality</span><span class="pm-val">' + row.quality + ' \u2014 ' + esc(row.qualityReason) + '</span></div>' +
+    (row.crawlerDocId ? '<div class="pm-row"><span class="pm-label">Crawler ID</span><span class="pm-val">' + row.crawlerDocId.slice(0,8) + '</span></div>' : '') +
+    (row.r2Key ? '<div class="pm-row"><span class="pm-label">R2 Key</span><span class="pm-val">' + esc(truncate(row.r2Key, 40)) + '</span></div>' : '') +
+    (row.sizeBytes ? '<div class="pm-row"><span class="pm-label">Size</span><span class="pm-val">' + formatBytes(row.sizeBytes) + '</span></div>' : '');
+
+  const body = document.getElementById('preview-body');
+  if (row.markdown && row.markdown.length > 0) {
+    body.textContent = row.markdown.substring(0, 10000);
+    if (row.markdown.length > 10000) body.textContent += '\n\n\u2026 truncated (' + row.markdown.length.toLocaleString() + ' chars total)';
+  } else {
+    body.textContent = '(No extracted text available)';
+  }
+
+  drawer.classList.add('open');
+}
+
+function closePreview() {
+  document.getElementById('preview-drawer').classList.remove('open');
+}
+
+// ─── HELPERS ───
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function truncate(s, n) {
+  if (!s) return '';
+  return s.length > n ? s.substring(0, n - 1) + '\u2026' : s;
+}
+
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+  return (b / 1048576).toFixed(1) + ' MB';
+}
+</script>
+
+<!-- Datalists for autocomplete in staging cells -->
+<datalist id="dl-doctype">
+  <option value="pdd">
+  <option value="verification_report">
+  <option value="monitoring_report">
+  <option value="methodology">
+  <option value="vvb_report">
+  <option value="registration_doc">
+  <option value="issuance_doc">
+  <option value="listing_rep">
+  <option value="other">
+</datalist>
+<datalist id="dl-registry">
+  <option value="verra">
+  <option value="puro">
+  <option value="isometric">
+  <option value="gold_standard">
+  <option value="acr">
+  <option value="car">
+</datalist>
+
+</body>
+</html>
