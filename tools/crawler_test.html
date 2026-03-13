@@ -317,6 +317,7 @@ body{background:var(--bg0);color:var(--txt0);font-family:'DM Sans',sans-serif;fo
       <button class="stg-btn secondary" onclick="selectAllGreen()">Select Green</button>
       <button class="stg-btn secondary" onclick="selectAll()">Select All</button>
       <button class="stg-btn secondary" onclick="clearSelection()">Clear Selection</button>
+      <button class="stg-btn danger" id="btn-bulk-delete" onclick="bulkDelete()" style="display:none">Delete Selected</button>
       <button class="stg-btn danger" onclick="clearStaging()">Clear Staging</button>
       <button class="stg-btn primary" id="btn-commit" onclick="commitSelected()" disabled>Commit Selected</button>
     </div>
@@ -381,21 +382,54 @@ function classifyVerraDoc(filename) {
   if (/^puro|tsb|biochar|puro_standard/.test(fl)) return 'puro_document';
   if (/^isometric|^sbcrs/.test(fl)) return 'isometric_document';
   if (/^gs[-_]|^gold[-_]standard/.test(fl)) return 'GS_document';
-  if (/project.?description|^pd[-_]|[-_]pd[-_v]/.test(fl)) return 'project_description_template';
-  if (/verif|audit|vvb/.test(fl)) return 'verification_document';
-  if (/monitor|mrv/.test(fl)) return 'monitoring_document';
+  if (/project.?descr|^pdd|draft.?pdd|^pd[-_\s]|[-_]pd[-_v]/.test(fl)) return 'project_description';
+  if (/listing.?rep|^vcs.?listing/.test(fl)) return 'listing_representation';
+  if (/comm(unication)?s?.?agree|comm.?agr/.test(fl)) return 'communications_agreement';
+  if (/monitor(ing)?.?(report|plan)|^mr[-_\d]|mrv/.test(fl)) return 'monitoring_report';
+  if (/validat(ion)?.?(report|statement)|^val[-_]/.test(fl)) return 'validation_report';
+  if (/verif(ication)?.?(report|statement)|^ver[-_]|audit|vvb/.test(fl)) return 'verification_report';
+  if (/public.?comment|pub.?com|^pcs/.test(fl)) return 'public_commentary';
+  if (/non.?perm|buffer|afolu.?risk/.test(fl)) return 'risk_assessment';
+  if (/deed.?accession|accession/.test(fl)) return 'legal_agreement';
+  if (/emission.?reduct|issuance/.test(fl)) return 'issuance_document';
   return null;
 }
 
-// ─── BINARY FILE CLASSIFICATION ───
+// ─── VERSION EXTRACTION (Patch D: no default — blank if no match) ───
+function extractVersion(filename) {
+  const f = (filename || '').split('/').pop().split('\\').pop();
+  // Match patterns: v3.0, v12, V2.1, _v4_, -v1.0-, version 3
+  const m = f.match(/[_\-\s.]v(\d+(?:\.\d+)?)/i) || f.match(/version[\s._-]?(\d+(?:\.\d+)?)/i);
+  return m ? 'v' + m[1] : '';
+}
+
+// ─── DOCUMENT ROLE INFERENCE (Patch F) ───
+function inferDocumentRole(filename) {
+  const fl = (filename || '').toLowerCase();
+  if (/template|blank|form/.test(fl)) return 'template';
+  if (/guidance|guide|instruction|manual/.test(fl)) return 'guidance';
+  if (/summary|overview|brief/.test(fl)) return 'summary';
+  if (/annex|appendix|attachment|supplement/.test(fl)) return 'supporting';
+  if (/monitor(ing)?|^mr[-_\d]/i.test(fl)) return 'monitoring';
+  if (/verif(ication)?|audit|vvb/i.test(fl)) return 'verification';
+  if (/validat(ion)?/i.test(fl)) return 'validation';
+  if (/register|issuance|listing/i.test(fl)) return 'registration';
+  if (/project.?descr|^pdd|^pd[-_]/i.test(fl)) return 'primary';
+  return '';
+}
+
+// ─── FILE TYPE CLASSIFICATION (Patch G: extension-only) ───
 const BOUNDARY_EXTS = ['kml','shp','geojson'];
 const SKIP_EXTS = ['zip','gdb','dbf','prj','shx','sbn','sbx','cpg','qgs','qml','lyr','mxd'];
 
-function classifyFileType(filename) {
+function isGeographicFile(filename) {
   const ext = (filename || '').split('.').pop().toLowerCase();
-  if (BOUNDARY_EXTS.includes(ext)) return 'boundary';
-  if (SKIP_EXTS.includes(ext)) return 'skip';
-  return 'document';
+  return BOUNDARY_EXTS.includes(ext);
+}
+
+function isBinaryFile(filename) {
+  const ext = (filename || '').split('.').pop().toLowerCase();
+  return SKIP_EXTS.includes(ext);
 }
 
 // ─── HEALTH CHECK ───
@@ -477,9 +511,7 @@ async function handleLocalUpload(files) {
     const fileBlob = new Blob([fileBytes], { type: file.type });
     fileBlob.name = file.name;
 
-    const ft = classifyFileType(file.name);
-
-    if (ft === 'skip') {
+    if (isBinaryFile(file.name)) {
       el.innerHTML = '<span class="fname">' + esc(file.name) + '</span><span class="ustat skipped">skipped</span>';
       progBox.prepend(el);
       addToStaging({
@@ -494,7 +526,7 @@ async function handleLocalUpload(files) {
       continue;
     }
 
-    if (ft === 'boundary') {
+    if (isGeographicFile(file.name)) {
       el.innerHTML = '<span class="fname">' + esc(file.name) + '</span><span class="ustat" style="color:var(--violet);background:var(--violet-dim)">boundary</span>';
       progBox.prepend(el);
       addToStaging({
@@ -640,10 +672,10 @@ function renderCrawlFields() {
           '<div style="font-size:9px;color:var(--txt2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em">Status</div>' +
           '<select id="cf-status" style="width:100%;background:var(--bg3);border:1px solid var(--border1);color:var(--txt0);border-radius:4px;padding:6px 8px;font-size:12px;font-family:\'DM Sans\',sans-serif;outline:none">' +
             '<option value="">Any</option>' +
-            '<option value="Under development">Under development</option>' +
-            '<option value="Under validation">Under validation</option>' +
-            '<option value="Registration and verification approval requested">Registration requested</option>' +
-            '<option value="Registered">Registered</option>' +
+            '<option value="under_development">Under development</option>' +
+            '<option value="under_validation">Under validation</option>' +
+            '<option value="registration_requested">Registration requested</option>' +
+            '<option value="registered">Registered</option>' +
           '</select>' +
         '</div>' +
         '<div>' +
@@ -844,17 +876,26 @@ async function loadCrawlDocs(runId) {
       return;
     }
 
-    // Patch H: Count doc types for summary log
     const typeCounts = {};
-    let added = 0;
+    let added = 0, docCount = 0, boundaryCount = 0, skipCount = 0;
     for (const doc of docs) {
       if (STAGING.some(s => s.crawlerDocId === doc.id)) continue;
 
-      const regDocType = doc.registry_doc_type || classifyVerraDoc(doc.file_name || '') || null;
-      const ft = classifyFileType(doc.file_name || '');
+      const fname = doc.file_name || doc.original_url || 'unknown';
+      const regDocType = doc.registry_doc_type || classifyVerraDoc(fname) || '';
+      const docRole = doc.document_role || inferDocumentRole(fname);
+      const ver = doc.version || extractVersion(fname);
+      const isBoundary = isGeographicFile(fname);
+      const isBin = isBinaryFile(fname);
+      // Patch H: crawler docs without extraction get quality='pending'
+      const hasExtraction = (doc.word_count || 0) > 0 || !!doc.knowledge_doc_id;
+      let forceQ;
+      if (isBoundary) { forceQ = 'boundary'; boundaryCount++; }
+      else if (isBin) { forceQ = 'skip'; skipCount++; }
+      else { docCount++; }
 
       addToStaging({
-        filename: doc.file_name || doc.original_url || 'unknown',
+        filename: fname,
         word_count: doc.word_count || 0,
         markdown: '',
         method: 'crawler',
@@ -862,25 +903,32 @@ async function loadCrawlDocs(runId) {
         crawlerDocId: doc.id,
         knowledgeDocId: doc.knowledge_doc_id || null,
         registryDocType: regDocType,
-        documentRole: doc.document_role || null,
-        version: doc.version || '',
+        documentRole: docRole,
+        version: ver,
         registry: doc.registry || '',
         registryProjectId: doc.registry_project_id || '',
-        project: 'unassociated', // Patch G
+        project: 'unassociated',
         r2Key: doc.r2_key || '',
         sizeBytes: doc.size_bytes || 0,
-        forceQuality: ft === 'boundary' ? 'boundary' : (ft === 'skip' ? 'skip' : undefined)
+        forceQuality: forceQ,
+        _extractionAttempted: hasExtraction
       });
       added++;
 
-      // Track type counts for log
       const typeLabel = regDocType || doc.doc_type || 'unclassified';
       typeCounts[typeLabel] = (typeCounts[typeLabel] || 0) + 1;
     }
 
     crawlLog('Added ' + added + ' documents to staging.', 'success');
 
-    // Patch H: Log doc type breakdown
+    // Patch I: summary line with project/document/boundary counts
+    const parts = [];
+    if (docCount > 0) parts.push(docCount + ' document' + (docCount !== 1 ? 's' : ''));
+    if (boundaryCount > 0) parts.push(boundaryCount + ' boundary file' + (boundaryCount !== 1 ? 's' : ''));
+    if (skipCount > 0) parts.push(skipCount + ' skipped');
+    if (parts.length > 0) crawlLog(parts.join(' \u00B7 ') + ' staged', 'info');
+
+    // Doc type breakdown
     const typeEntries = Object.entries(typeCounts).sort((a,b) => b[1] - a[1]);
     if (typeEntries.length > 0) {
       const summary = typeEntries.map(([t,c]) => t + ': ' + c).join(', ');
@@ -963,8 +1011,8 @@ function addToStaging(data) {
     crawlerDocId: data.crawlerDocId || null,
     knowledgeDocId: data.knowledgeDocId || null,
     registryDocType: data.registryDocType || classifyVerraDoc(data.filename || '') || '',
-    documentRole: data.documentRole || '',
-    version: data.version || '',
+    documentRole: data.documentRole || inferDocumentRole(data.filename || ''),
+    version: data.version || extractVersion(data.filename || ''),
     registry: data.registry || '',
     registryProjectId: data.registryProjectId || '',
     project: data.project || '',
@@ -976,7 +1024,8 @@ function addToStaging(data) {
     qualityReason: '',
     errorMsg: data.errorMsg || '',
     r2Key: data.r2Key || '',
-    sizeBytes: data.sizeBytes || 0
+    sizeBytes: data.sizeBytes || 0,
+    _extractionAttempted: data._extractionAttempted !== undefined ? data._extractionAttempted : true
   };
 
   // Forced quality (boundary, skip, error)
@@ -997,6 +1046,13 @@ function addToStaging(data) {
 function assignQuality(row) {
   const wc = row.wordCount;
   const text = (row.markdown || '').substring(0, 2000);
+
+  // Patch H: crawler docs that haven't been extracted yet get 'pending'
+  if (row.source === 'crawler' && row._extractionAttempted === false && wc === 0) {
+    row.quality = 'pending';
+    row.qualityReason = 'Awaiting extraction';
+    return;
+  }
 
   // RED: no content or very short
   if (wc < 20) {
@@ -1103,11 +1159,13 @@ function commitLabel(row) {
 function toggleRow(idx, checked) {
   STAGING[idx].selected = checked;
   renderStaging();
+  updateBulkBar();
 }
 
 function toggleAll(checked) {
   STAGING.forEach(r => { if (r.commitStatus === 'pending') r.selected = checked; });
   renderStaging();
+  updateBulkBar();
 }
 
 function editRow(idx, field, value) {
@@ -1123,19 +1181,48 @@ function removeRow(idx) {
 function selectAllGreen() {
   STAGING.forEach(r => { if (r.quality === 'green' && r.commitStatus === 'pending') r.selected = true; });
   renderStaging();
+  updateBulkBar();
 }
 
 function selectAll() {
   STAGING.forEach(r => { if (r.commitStatus === 'pending') r.selected = true; });
   renderStaging();
+  updateBulkBar();
 }
 
 function clearSelection() {
   STAGING.forEach(r => r.selected = false);
   renderStaging();
+  updateBulkBar();
 }
 
-// Patch D: Clear entire staging table
+// ─── BULK DELETE (Patch J) ───
+function updateBulkBar() {
+  const selectedCount = STAGING.filter(r => r.selected && r.commitStatus !== 'committed').length;
+  const btn = document.getElementById('btn-bulk-delete');
+  if (selectedCount > 0) {
+    btn.style.display = 'inline-block';
+    btn.textContent = 'Delete Selected (' + selectedCount + ')';
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+function bulkDelete() {
+  const toDelete = STAGING.filter(r => r.selected && r.commitStatus !== 'committed');
+  if (toDelete.length === 0) return;
+  if (!confirm('Delete ' + toDelete.length + ' selected row' + (toDelete.length !== 1 ? 's' : '') + ' from staging?')) return;
+  for (let i = STAGING.length - 1; i >= 0; i--) {
+    if (STAGING[i].selected && STAGING[i].commitStatus !== 'committed') {
+      STAGING.splice(i, 1);
+    }
+  }
+  renderStaging();
+  updateStats();
+  updateBulkBar();
+  toast(toDelete.length + ' row' + (toDelete.length !== 1 ? 's' : '') + ' deleted', 'info');
+}
+
 function clearStaging() {
   if (STAGING.length === 0) return;
   if (!confirm('Clear all ' + STAGING.length + ' rows from staging?')) return;
@@ -1323,22 +1410,34 @@ function formatBytes(b) {
   <option value="VCS_program_document">
   <option value="JNR_document">
   <option value="CCP_document">
+  <option value="CCP_label_document">
   <option value="AFOLU_tool">
   <option value="CDM_tool">
   <option value="puro_document">
   <option value="isometric_document">
   <option value="GS_document">
-  <option value="project_description_template">
-  <option value="verification_document">
-  <option value="monitoring_document">
+  <option value="project_description">
+  <option value="listing_representation">
+  <option value="communications_agreement">
+  <option value="monitoring_report">
+  <option value="validation_report">
+  <option value="verification_report">
+  <option value="public_commentary">
+  <option value="risk_assessment">
+  <option value="legal_agreement">
+  <option value="issuance_document">
 </datalist>
 <datalist id="dl-docrole">
   <option value="primary">
   <option value="supporting">
   <option value="monitoring">
   <option value="verification">
+  <option value="validation">
   <option value="registration">
   <option value="issuance">
+  <option value="template">
+  <option value="guidance">
+  <option value="summary">
   <option value="reference">
 </datalist>
 
