@@ -250,8 +250,8 @@ td{padding:5px 8px;vertical-align:middle}
 
 <!-- PAGE TABS -->
 <div class="page-tabs">
-  <div class="ptab active">Project Browser <span class="ptab-badge" id="pb-badge">&mdash;</span></div>
-  <div class="ptab dim">VCU Intelligence <span class="ptab-badge">317K</span></div>
+  <div class="ptab active" onclick="showPage('browser')">Project Browser <span class="ptab-badge" id="pb-badge">&mdash;</span></div>
+  <div class="ptab" onclick="showPage('vcu')">VCU Intelligence <span class="ptab-badge" id="vcu-badge">317K</span></div>
   <div class="ptab dim">RFP Tracker <span class="ptab-badge">1</span></div>
 </div>
 
@@ -358,6 +358,88 @@ td{padding:5px 8px;vertical-align:middle}
 </div>
 </div>
 
+<!-- VCU INTELLIGENCE -->
+<div class="page" id="page-vcu">
+
+<!-- VCU SIDEBAR -->
+<div class="sidebar">
+  <div class="cat-section">
+    <div class="section-label">Filter credits</div>
+    <div style="padding-top:4px">
+      <input class="finput" id="vcuBuyerSearch" placeholder="Search buyer..." oninput="filterVCU()">
+    </div>
+  </div>
+
+  <div class="status-strip">
+    <div class="sstab on" id="vstab-all" onclick="setVCUStatus('all')">
+      <div class="sstab-left"><span class="sdot" style="background:var(--text3)"></span>All Credits</div>
+      <span class="sn" id="vsn-all">&mdash;</span>
+    </div>
+    <div class="sstab" id="vstab-active" onclick="setVCUStatus('active')">
+      <div class="sstab-left"><span class="sdot" style="background:var(--green)"></span>Active</div>
+      <span class="sn" id="vsn-active">&mdash;</span>
+    </div>
+    <div class="sstab" id="vstab-retired" onclick="setVCUStatus('retired')">
+      <div class="sstab-left"><span class="sdot" style="background:var(--amber)"></span>Fully Retired</div>
+      <span class="sn" id="vsn-retired">&mdash;</span>
+    </div>
+  </div>
+
+  <div class="sidebar-scroll">
+    <div class="filter-section" style="padding:8px 10px;">
+      <div class="section-label">Vintage year</div>
+      <div style="display:flex;gap:4px">
+        <input class="finput" id="vcuYearFrom" placeholder="From" style="width:50%" oninput="filterVCU()">
+        <input class="finput" id="vcuYearTo" placeholder="To" style="width:50%" oninput="filterVCU()">
+      </div>
+    </div>
+    <div class="filter-section" style="padding:8px 10px;">
+      <div class="section-label">Country</div>
+      <input class="finput" id="vcuCountrySearch" placeholder="Brazil, India..." oninput="filterVCU()">
+    </div>
+    <div class="filter-section" style="padding:8px 10px;">
+      <div class="section-label">Methodology</div>
+      <input class="finput" id="vcuMethSearch" placeholder="VM0007, ACM0002..." oninput="filterVCU()">
+    </div>
+    <div style="padding:8px 10px;">
+      <button class="dl-step-btn" onclick="resetVCU()" style="width:100%;font-size:11px;padding:6px">Reset Filters</button>
+    </div>
+  </div>
+</div>
+
+<!-- VCU MAIN TABLE -->
+<div class="main">
+  <div class="topstrip">
+    <div class="ts-left">
+      <span class="ts-label" id="vcuCount">Loading...</span>
+    </div>
+    <div class="ts-right">
+      <input class="ts-search" id="vcuProjectSearch" placeholder="Search project name or ID..." oninput="filterVCU()">
+    </div>
+  </div>
+  <div class="table-head">
+    <div class="th" style="width:54px" onclick="sortVCU('id')">ID</div>
+    <div class="th" style="flex:1;min-width:180px" onclick="sortVCU('name')">Project</div>
+    <div class="th" style="width:85px" onclick="sortVCU('issued')">Issued</div>
+    <div class="th" style="width:85px" onclick="sortVCU('retired')">Retired</div>
+    <div class="th" style="width:70px" onclick="sortVCU('outstanding')">Active</div>
+    <div class="th" style="width:52px" onclick="sortVCU('rr')">Ret%</div>
+  </div>
+  <div class="rows" id="vcuRows"></div>
+</div>
+
+<!-- VCU PANEL -->
+<div class="panel">
+  <div class="panel-empty" id="vcuPanelEmpty">
+    <div class="pe-icon">&#9678;</div>
+    <div style="font-size:12px;color:var(--text2);font-weight:600">Select a project</div>
+    <div style="font-size:11px;text-align:center;max-width:190px;line-height:1.5;color:var(--text3)">Click any row to see VCU transaction data, issuance trends, and top credit buyers</div>
+  </div>
+  <div id="vcuPanelDetail" style="display:none;flex:1;flex-direction:column;overflow:hidden"></div>
+</div>
+
+</div>
+
 <script>
 var ALL=[];
 var VCU={};
@@ -424,6 +506,14 @@ var S={status:'Registered',meths:{},cats:{},country:'',volMin:0,sortCol:'id',sor
 var API='https://api-tools.oga.earth';
 var IS_EXTERNAL=new URLSearchParams(window.location.search).get('mode')==='external';
 
+function showPage(pg){
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.ptab').forEach(function(t){t.classList.remove('active');});
+  var pages=document.querySelectorAll('.ptab');
+  if(pg==='browser'){document.getElementById('page-browser').classList.add('active');pages[0].classList.add('active');}
+  if(pg==='vcu'){document.getElementById('page-vcu').classList.add('active');pages[1].classList.add('active');if(!window.vcuLoaded)loadVCUPage();}
+}
+
 /* HELPERS */
 function fmtV(v){var n=parseInt(v)||0;if(!n)return'\u2014';if(n>=1e9)return(n/1e9).toFixed(1)+'B';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(0)+'K';return n.toLocaleString();}
 function fmtFull(v){var n=parseInt(v)||0;if(!n)return'\u2014';return n.toLocaleString()+' tCO\u2082e/yr';}
@@ -433,6 +523,9 @@ function sCls(s){return s==='Registered'?'cg':s.indexOf('validation')>=0?'ca':s.
 function dotCol(s){return s==='Registered'?'var(--green)':s.indexOf('validation')>=0?'var(--amber)':s.indexOf('development')>=0?'var(--blue)':'var(--text3)';}
 function cpCls(d){if(!d)return'tcp';var dt=new Date(d),now=new Date(),y27=new Date('2027-06-30');if(dt<now)return'tcp exd';if(dt<y27)return'tcp exp';return'tcp';}
 function vCls(v){var n=parseInt(v)||0;return n>=500000?'tvol vh':n>=100000?'tvol vm':'tvol vl';}
+function fmtN(v){var n=parseInt(v)||0;return n.toLocaleString();}
+function fmtK(v){var n=parseInt(v)||0;if(n>=1e9)return(n/1e9).toFixed(1)+'B';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return Math.round(n/1e3)+'K';return String(n);}
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
 /* LOAD DATA */
 function loadData(){
@@ -855,6 +948,191 @@ function addToRfp(id){
   if(row.meth)p.set('methodology',row.meth.split(';')[0].trim());
   window.open('https://tools.oga.earth/tools/rfp-tracker.html?'+p.toString(),'_blank');
 }
+/* ============ VCU INTELLIGENCE ============ */
+var VDATA=[], VFILT=[], VS={status:'all',sortCol:'issued',sortDir:'desc',selectedId:null};
+
+function loadVCUPage(){
+  window.vcuLoaded=true;
+  document.getElementById('vcuCount').textContent='Loading...';
+  fetch(API+'/api/primitives/vcu/search?limit=500')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      VDATA=d.rows||[];
+      document.getElementById('vcu-badge').textContent=fmtK(VDATA.reduce(function(s,r){return s+(r.total_issued||0);},0));
+      filterVCU();
+    });
+}
+
+function filterVCU(){
+  var buyer=(document.getElementById('vcuBuyerSearch').value||'').toLowerCase();
+  var project=(document.getElementById('vcuProjectSearch').value||'').toLowerCase();
+  var country=(document.getElementById('vcuCountrySearch').value||'').toLowerCase();
+  var meth=(document.getElementById('vcuMethSearch').value||'').toLowerCase();
+  var yf=parseInt(document.getElementById('vcuYearFrom').value)||0;
+  var yt=parseInt(document.getElementById('vcuYearTo').value)||9999;
+
+  VFILT=VDATA.filter(function(r){
+    if(VS.status==='active'&&(r.outstanding||0)<=0)return false;
+    if(VS.status==='retired'&&(r.retirement_rate||0)<99)return false;
+    if(project&&!(r.id+'').includes(project)&&!(r.name||'').toLowerCase().includes(project))return false;
+    if(country&&!(r.country||'').toLowerCase().includes(country))return false;
+    if(meth&&!(r.methodology||'').toLowerCase().includes(meth))return false;
+    if(buyer){
+      var bs=JSON.stringify(r.top_buyers||[]).toLowerCase();
+      if(!bs.includes(buyer))return false;
+    }
+    var fy=parseInt(r.first_issuance_year)||0;
+    var ly=parseInt(r.last_issuance_year)||9999;
+    if(ly<yf||fy>yt)return false;
+    return true;
+  });
+  sortVCUApply();
+  // counts
+  var na=VDATA.filter(function(r){return(r.outstanding||0)>0;}).length;
+  var nr=VDATA.filter(function(r){return(r.retirement_rate||0)>=99;}).length;
+  document.getElementById('vsn-all').textContent=fmtN(VDATA.length);
+  document.getElementById('vsn-active').textContent=fmtN(na);
+  document.getElementById('vsn-retired').textContent=fmtN(nr);
+  document.getElementById('vcuCount').textContent=fmtN(VFILT.length)+' projects';
+}
+
+function setVCUStatus(s){
+  VS.status=s;
+  document.querySelectorAll('#page-vcu .sstab').forEach(function(t){t.classList.remove('on');});
+  document.getElementById('vstab-'+s).classList.add('on');
+  filterVCU();
+}
+
+function sortVCU(col){
+  if(VS.sortCol===col)VS.sortDir=VS.sortDir==='asc'?'desc':'asc';
+  else{VS.sortCol=col;VS.sortDir='desc';}
+  sortVCUApply();
+}
+
+function sortVCUApply(){
+  var col=VS.sortCol,dir=VS.sortDir==='asc'?1:-1;
+  VFILT.sort(function(a,b){
+    var va,vb;
+    if(col==='id'){va=parseInt(a.id)||0;vb=parseInt(b.id)||0;}
+    else if(col==='name'){va=(a.name||'').toLowerCase();vb=(b.name||'').toLowerCase();return va<vb?-dir:va>vb?dir:0;}
+    else if(col==='issued'){va=a.total_issued||0;vb=b.total_issued||0;}
+    else if(col==='retired'){va=a.total_retired||0;vb=b.total_retired||0;}
+    else if(col==='outstanding'){va=a.outstanding||0;vb=b.outstanding||0;}
+    else if(col==='rr'){va=a.retirement_rate||0;vb=b.retirement_rate||0;}
+    else{va=0;vb=0;}
+    return (va-vb)*dir;
+  });
+  renderVCU();
+}
+
+function renderVCU(){
+  var c=document.getElementById('vcuRows');
+  var html='';
+  var max=Math.min(VFILT.length,500);
+  for(var i=0;i<max;i++){
+    var r=VFILT[i];
+    var sel=VS.selectedId===r.id?' sel':'';
+    html+='<div class="row'+sel+'" onclick="selVCURow(\''+r.id+'\')">';
+    html+='<div class="cell" style="width:54px"><span class="id-chip">'+r.id+'</span></div>';
+    html+='<div class="cell" style="flex:1;min-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r.name||'')+'</div>';
+    html+='<div class="cell mono" style="width:85px">'+fmtN(r.total_issued||0)+'</div>';
+    html+='<div class="cell mono" style="width:85px">'+fmtN(r.total_retired||0)+'</div>';
+    html+='<div class="cell mono" style="width:70px">'+fmtN(r.outstanding||0)+'</div>';
+    var rr=r.retirement_rate||0;
+    var rc=rr>=80?'var(--green)':rr>=50?'var(--amber)':'var(--red,#ef4444)';
+    html+='<div class="cell mono" style="width:52px;color:'+rc+'">'+rr.toFixed(0)+'%</div>';
+    html+='</div>';
+  }
+  c.innerHTML=html;
+}
+
+function selVCURow(id){
+  VS.selectedId=id;
+  renderVCU();
+  renderVCUPanel(id);
+}
+
+function renderVCUPanel(id){
+  var r=VDATA.find(function(d){return d.id===id;});
+  if(!r){return;}
+  document.getElementById('vcuPanelEmpty').style.display='none';
+  var pd=document.getElementById('vcuPanelDetail');
+  pd.style.display='flex';
+
+  var rrPct=r.retirement_rate||0;
+  var rrCol=rrPct>=80?'var(--green)':rrPct>=50?'var(--amber)':'var(--red,#ef4444)';
+  var circ=2*Math.PI*20;
+  var rrOff=circ*(1-rrPct/100);
+
+  var trend=r.issuance_trend||r.vcu_issuance_trend;
+  if(typeof trend==='string'){try{trend=JSON.parse(trend);}catch(e){trend=[];}}
+  if(!Array.isArray(trend))trend=[];
+  var tMax=Math.max.apply(null,trend.concat([1]));
+  var ly=parseInt(r.last_issuance_year||r.vcu_last_issuance_year)||2024;
+  var startYr=ly-trend.length+1;
+  var bars='',yrs='';
+  for(var i=0;i<trend.length;i++){
+    var h=Math.max(2,Math.round(trend[i]/tMax*42));
+    var col=trend[i]>0?'var(--teal)':'var(--bg4)';
+    bars+='<div class="sp-bar" style="height:'+h+'px;background:'+col+'"></div>';
+    yrs+='<div class="sp-yr">'+(startYr+i)+'</div>';
+  }
+
+  var buyers=r.top_buyers||r.vcu_top_buyers;
+  if(typeof buyers==='string'){try{buyers=JSON.parse(buyers);}catch(e){buyers=[];}}
+  if(!Array.isArray(buyers))buyers=[];
+  var bMax=buyers.length>0?buyers[0][1]:1;
+  var bHtml='';
+  buyers.slice(0,5).forEach(function(b){
+    var pct=Math.round(b[1]/bMax*100);
+    bHtml+='<div class="buyer-row"><div class="b-name" title="'+esc(b[0])+'">'+esc(b[0])+'</div><div class="b-bar"><div class="b-fill" style="width:'+pct+'%"></div></div><div class="b-vol">'+fmtK(b[1])+'</div></div>';
+  });
+  if(!buyers.length)bHtml='<div style="font-size:11px;color:var(--text3);padding:8px 0">No buyer data available</div>';
+
+  var h='<div class="panel-scroll" style="flex:1;overflow-y:auto;padding:14px">';
+  h+='<div style="font-size:12px;font-weight:600;color:var(--text0);margin-bottom:2px">'+esc(r.name||'')+'</div>';
+  h+='<div style="font-size:10px;color:var(--text3);margin-bottom:12px">VCS #'+r.id+(r.country?' \u00b7 '+r.country:'')+(r.methodology?' \u00b7 '+r.methodology:'')+'</div>';
+
+  h+='<div class="vcu-kpi-grid">';
+  h+='<div class="vcu-kpi"><div class="vku-l">Issued</div><div class="vku-v" style="color:var(--teal)">'+fmtN(r.total_issued||0)+'</div></div>';
+  h+='<div class="vcu-kpi"><div class="vku-l">Retired</div><div class="vku-v" style="color:var(--amber)">'+fmtN(r.total_retired||0)+'</div></div>';
+  h+='<div class="vcu-kpi"><div class="vku-l">Outstanding</div><div class="vku-v">'+fmtN(r.outstanding||0)+'</div></div>';
+  h+='<div class="vcu-kpi"><div class="vku-l">Vintage 2022+</div><div class="vku-v">'+(r.vintage_2022_pct||r.vcu_vintage_2022_pct||0)+'%</div></div>';
+  h+='</div>';
+
+  h+='<div class="rr-wrap">';
+  h+='<div class="rr-ring"><svg width="50" height="50"><circle cx="25" cy="25" r="20" fill="none" stroke="var(--bg4)" stroke-width="4"/><circle cx="25" cy="25" r="20" fill="none" stroke="'+rrCol+'" stroke-width="4" stroke-dasharray="'+circ+'" stroke-dashoffset="'+rrOff+'" stroke-linecap="round"/></svg><div class="rr-lbl" style="color:'+rrCol+'">'+rrPct.toFixed(0)+'%</div></div>';
+  h+='<div class="rr-txt"><div class="rrt">Retirement Rate</div><div class="rrs">'+fmtN(r.total_retired||0)+' of '+fmtN(r.total_issued||0)+' VCUs retired</div></div>';
+  h+='</div>';
+
+  if(trend.length>0){
+    h+='<div class="sp-wrap"><div class="sp-hdr"><span>Issuance Trend</span></div>';
+    h+='<div class="sp-bars">'+bars+'</div>';
+    h+='<div class="sp-yrs">'+yrs+'</div></div>';
+  }
+
+  h+='<div class="psec-title" style="margin-top:10px">Top Buyers</div>';
+  h+=bHtml;
+
+  h+='</div>';
+  pd.innerHTML=h;
+}
+
+function resetVCU(){
+  document.getElementById('vcuBuyerSearch').value='';
+  document.getElementById('vcuProjectSearch').value='';
+  document.getElementById('vcuCountrySearch').value='';
+  document.getElementById('vcuMethSearch').value='';
+  document.getElementById('vcuYearFrom').value='';
+  document.getElementById('vcuYearTo').value='';
+  VS.status='all';VS.sortCol='issued';VS.sortDir='desc';VS.selectedId=null;
+  document.querySelectorAll('#page-vcu .sstab').forEach(function(t){t.classList.remove('on');});
+  document.getElementById('vstab-all').classList.add('on');
+  document.getElementById('vcuPanelEmpty').style.display='';
+  document.getElementById('vcuPanelDetail').style.display='none';
+  filterVCU();
+}
+
 /* BOOT */
 loadData();
 </script>
