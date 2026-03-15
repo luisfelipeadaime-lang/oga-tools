@@ -405,9 +405,17 @@ var WATERSHED={
   'VM0048':1,'VM0003':1,'VM0010':1,'VM0012':1,'VM0019':1,
   'VM0026':1,'VM0034':1,'VM0041':1,'AR-ACM0003':1,'AR-ACM0001':1
 };
+function deriveCat(r){
+  var a=r.afolu||'';if(a.trim())return'AFOLU';
+  var m=r.methodology||'';
+  if(/AMS-III\.[BDEFGHIJ]|VM0008|ACM0022/i.test(m))return'Waste';
+  if(/AMS-III\.[ACSTU]|AM0031/i.test(m))return'Transport';
+  if(/CCS|VM0048|AM0057/i.test(m))return'CCS';
+  return'Energy';
+}
 var CAT_MAP={
-  'AFOLU':function(r){return r.cat==='AFOLU'||r.cat==='Livestock';},
-  'Energy':function(r){return r.cat==='Energy'||r.cat==='Energy Demand'||r.cat==='Mining'||r.cat==='Chemical'||r.cat==='Manufacturing';},
+  'AFOLU':function(r){return r.cat==='AFOLU';},
+  'Energy':function(r){return r.cat==='Energy';},
   'Waste':function(r){return r.cat==='Waste';},
   'Transport':function(r){return r.cat==='Transport';},
   'CCS':function(r){return r.cat==='CCS';}
@@ -438,7 +446,7 @@ function loadData(){
         meth:r.methodology||'',status:r.status||'',country:r.country||'',
         region:r.region||'',vol:String(r.est_annual_reductions||0),
         reg_date:r.reg_date||'',cp_end:r.cp_end||'',
-        cat:r.project_category||'Other',
+        cat:deriveCat(r),
         url:r.registry_url||('https://registry.verra.org/app/projectDetail/VCS/'+r.id)
       };});
       VCU={};
@@ -701,7 +709,7 @@ function renderPanel(id){
     +'</div>'
     +'<div style="margin-bottom:12px"><div class="psec-title">Methodology</div>'+methHtml+'</div>'
     +'<div style="margin-bottom:12px"><div class="psec-title">Proponent</div><div style="font-size:12px;color:var(--text1)">'+(row.proponent||'\u2014')+'</div></div>'
-    +(wsElig&&!IS_EXTERNAL?'<div class="ws-callout"><div class="ws-callout-title">Watershed 2026 eligible</div><div class="ws-callout-body">This project qualifies for the Watershed 2026 RFP based on its methodology. Submission deadline is April 10, 2026.</div><button class="btn btn-ghost" style="font-size:10.5px;padding:5px 10px;color:var(--teal);border-color:rgba(45,212,191,.3)" onclick="window.open(\'https://tools.oga.earth/tools/rfp-tracker.html\',\'_blank\')">+ Add to RFP Tracker</button></div>':'');
+    +(wsElig&&!IS_EXTERNAL?'<div class="ws-callout"><div class="ws-callout-title">Watershed 2026 eligible</div><div class="ws-callout-body">This project qualifies for the Watershed 2026 RFP based on its methodology. Submission deadline is April 10, 2026.</div><button class="btn btn-ghost" style="font-size:10.5px;padding:5px 10px;color:var(--teal);border-color:rgba(45,212,191,.3)" onclick="addToRfp(\''+row.id+'\')">+ Add to RFP Tracker</button></div>':'');
 
   var vcuHtml='';
   if(vcu){
@@ -814,25 +822,39 @@ function pollDlStatus(id,runId,btn){
         if(d.status==='complete'&&d.knowledge_doc_id){
           clearInterval(timer);
           if(dlTimers[id]){clearTimeout(dlTimers[id]);delete dlTimers[id];}
-          finishDl(id,btn,d.knowledge_doc_id);
+          finishDl(id,btn,d.knowledge_doc_id,d.crawl_doc_id);
         }
       }).catch(function(){});
   },5000);
 }
-function finishDl(id,btn,docId){
+function finishDl(id,btn,docId,crawlDocId){
   var fillEl=document.getElementById('dlFill-'+id);if(fillEl)fillEl.style.width='100%';
   var stepEl=document.getElementById('dlStep-'+id);if(stepEl)stepEl.textContent='Document saved and ready';
   var noteEl=document.getElementById('dlNote-'+id);if(noteEl)noteEl.textContent='';
   if(btn){
-    btn.className='btn btn-ghost btn-done';
-    btn.textContent='Open Document';
-    var url=docId
-      ?'https://tools.oga.earth/tools/pablo.html?tab=knowledge&project_id='+id
-      :'https://tools.oga.earth/tools/pablo.html?tab=knowledge';
-    btn.onclick=function(){window.open(url,'_blank');};
+    var html='';
+    if(crawlDocId)html+='<a class="btn btn-ghost" href="'+API+'/api/primitives/crawler/download/'+crawlDocId+'" target="_blank" style="font-size:10.5px;margin-right:6px;text-decoration:none">\u2B07 Download PDF</a>';
+    if(docId)html+='<button class="btn btn-ghost" onclick="viewText(\''+docId+'\')" style="font-size:10.5px">\u2630 View Text</button>';
+    if(!html)html='<span style="font-size:11px;color:var(--text2)">Document processed</span>';
+    btn.outerHTML=html;
   }
 }
+function viewText(docId){
+  fetch(API+'/api/knowledge/docs/'+docId).then(function(r){return r.json();}).then(function(d){
+    var md=(d.markdown||'No text available').replace(/</g,'&lt;');
+    var w=window.open('','_blank');
+    w.document.write('<html><head><title>'+(d.title||'Extracted Text')+'</title><style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;line-height:1.6;color:#1a1a2e}pre{white-space:pre-wrap;word-break:break-word}</style></head><body><h2>'+(d.title||'Extracted Text')+'</h2><pre>'+md+'</pre></body></html>');
+    w.document.close();
+  });
+}
 
+function addToRfp(id){
+  var row=ALL.find(function(r){return r.id===id;});if(!row)return;
+  var p=new URLSearchParams();
+  p.set('project_name',row.name);p.set('registry','verra');p.set('verra_id',row.id);
+  if(row.meth)p.set('methodology',row.meth.split(';')[0].trim());
+  window.open('https://tools.oga.earth/tools/rfp-tracker.html?'+p.toString(),'_blank');
+}
 /* BOOT */
 loadData();
 </script>

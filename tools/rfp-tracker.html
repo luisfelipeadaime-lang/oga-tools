@@ -1172,11 +1172,30 @@ function setupUploadZone() {
 // ============================================================
 // INIT
 // ============================================================
+function checkUrlParams(){
+  var p=new URLSearchParams(window.location.search);
+  var name=p.get('project_name');if(!name)return;
+  STATE.addProjectOpen=true;
+  renderProjectsTab();
+  setTimeout(function(){
+    var el;
+    el=document.getElementById('ap-name');if(el)el.value=name;
+    el=document.getElementById('ap-registry');if(el&&p.get('registry')){
+      var reg=p.get('registry');
+      for(var i=0;i<el.options.length;i++){if(el.options[i].value===reg){el.selectedIndex=i;break;}}
+    }
+    var notes=[];
+    if(p.get('verra_id'))notes.push('Verra ID: '+p.get('verra_id'));
+    if(p.get('methodology'))notes.push('Methodology: '+p.get('methodology'));
+    el=document.getElementById('ap-notes');if(el&&notes.length)el.value=notes.join('\n');
+  },50);
+}
 async function init() {
   await loadRfps();
   if (STATE.rfps.length > 0) {
     await selectRfp(STATE.rfps[0].id);
   }
+  checkUrlParams();
 }
 init();
 </script>
