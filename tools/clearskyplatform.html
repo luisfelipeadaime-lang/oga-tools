@@ -954,7 +954,7 @@ var VDATA=[], VFILT=[], VS={status:'all',sortCol:'issued',sortDir:'desc',selecte
 function loadVCUPage(){
   window.vcuLoaded=true;
   document.getElementById('vcuCount').textContent='Loading...';
-  fetch(API+'/api/primitives/vcu/search?limit=500')
+  fetch(API+'/api/primitives/vcu/search?limit=2500')
     .then(function(r){return r.json();})
     .then(function(d){
       VDATA=(d.rows||[]).map(function(r){r.id=r.project_id;return r;});
@@ -1027,7 +1027,7 @@ function sortVCUApply(){
 function renderVCU(){
   var c=document.getElementById('vcuRows');
   var html='';
-  var max=Math.min(VFILT.length,500);
+  var max=Math.min(VFILT.length,2500);
   for(var i=0;i<max;i++){
     var r=VFILT[i];
     var sel=VS.selectedId===r.id?' sel':'';
