@@ -978,8 +978,7 @@ function filterVCU(){
     if(country&&!(r.country||'').toLowerCase().includes(country))return false;
     if(meth&&!(r.methodology||'').toLowerCase().includes(meth))return false;
     if(buyer){
-      var bs=JSON.stringify(r.top_buyers||[]).toLowerCase();
-      if(!bs.includes(buyer))return false;
+      if(!(r.top_buyer_name||'').toLowerCase().includes(buyer))return false;
     }
     var fy=parseInt(r.first_issuance_year)||0;
     var ly=parseInt(r.last_issuance_year)||9999;
@@ -1053,69 +1052,77 @@ function selVCURow(id){
 }
 
 function renderVCUPanel(id){
-  var r=VDATA.find(function(d){return d.id===id;});
-  if(!r){return;}
   document.getElementById('vcuPanelEmpty').style.display='none';
   var pd=document.getElementById('vcuPanelDetail');
-  pd.style.display='flex';
+  pd.style.display='flex';pd.style.flexDirection='column';
+  pd.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);font-size:12px">Loading...</div>';
 
-  var rrPct=r.retirement_rate||0;
-  var rrCol=rrPct>=80?'var(--green)':rrPct>=50?'var(--amber)':'var(--red,#ef4444)';
-  var circ=2*Math.PI*20;
-  var rrOff=circ*(1-rrPct/100);
+  fetch(API+'/api/primitives/vcu/project/'+id)
+    .then(function(res){return res.json();})
+    .then(function(r){
+      if(r.error){pd.innerHTML='<div style="padding:20px;color:var(--red,#ef4444);font-size:12px">'+esc(r.error)+'</div>';return;}
 
-  var trend=r.issuance_trend||r.vcu_issuance_trend;
-  if(typeof trend==='string'){try{trend=JSON.parse(trend);}catch(e){trend=[];}}
-  if(!Array.isArray(trend))trend=[];
-  var tMax=Math.max.apply(null,trend.concat([1]));
-  var ly=parseInt(r.last_issuance_year||r.vcu_last_issuance_year)||2024;
-  var startYr=ly-trend.length+1;
-  var bars='',yrs='';
-  for(var i=0;i<trend.length;i++){
-    var h=Math.max(2,Math.round(trend[i]/tMax*42));
-    var col=trend[i]>0?'var(--teal)':'var(--bg4)';
-    bars+='<div class="sp-bar" style="height:'+h+'px;background:'+col+'"></div>';
-    yrs+='<div class="sp-yr">'+(startYr+i)+'</div>';
-  }
+      var rrPct=r.retirement_rate||0;
+      var rrCol=rrPct>=80?'var(--green)':rrPct>=50?'var(--amber)':'var(--red,#ef4444)';
+      var circ=2*Math.PI*20;
+      var rrOff=circ*(1-rrPct/100);
 
-  var buyers=r.top_buyers||r.vcu_top_buyers;
-  if(typeof buyers==='string'){try{buyers=JSON.parse(buyers);}catch(e){buyers=[];}}
-  if(!Array.isArray(buyers))buyers=[];
-  var bMax=buyers.length>0?buyers[0][1]:1;
-  var bHtml='';
-  buyers.slice(0,5).forEach(function(b){
-    var pct=Math.round(b[1]/bMax*100);
-    bHtml+='<div class="buyer-row"><div class="b-name" title="'+esc(b[0])+'">'+esc(b[0])+'</div><div class="b-bar"><div class="b-fill" style="width:'+pct+'%"></div></div><div class="b-vol">'+fmtK(b[1])+'</div></div>';
-  });
-  if(!buyers.length)bHtml='<div style="font-size:11px;color:var(--text3);padding:8px 0">No buyer data available</div>';
+      var trend=r.issuance_trend||[];
+      if(typeof trend==='string'){try{trend=JSON.parse(trend);}catch(e){trend=[];}}
+      if(!Array.isArray(trend))trend=[];
+      var tMax=Math.max.apply(null,trend.concat([1]));
+      var ly=parseInt(r.last_issuance_year)||2024;
+      var startYr=ly-trend.length+1;
+      var bars='',yrs='';
+      for(var i=0;i<trend.length;i++){
+        var bh=Math.max(2,Math.round(trend[i]/tMax*42));
+        var bc=trend[i]>0?'var(--teal)':'var(--bg4)';
+        bars+='<div class="sp-bar" style="height:'+bh+'px;background:'+bc+'"></div>';
+        yrs+='<div class="sp-yr">'+(startYr+i)+'</div>';
+      }
 
-  var h='<div class="panel-scroll" style="flex:1;overflow-y:auto;padding:14px">';
-  h+='<div style="font-size:12px;font-weight:600;color:var(--text0);margin-bottom:2px">'+esc(r.name||'')+'</div>';
-  h+='<div style="font-size:10px;color:var(--text3);margin-bottom:12px">VCS #'+r.id+(r.country?' \u00b7 '+r.country:'')+(r.methodology?' \u00b7 '+r.methodology:'')+'</div>';
+      var buyers=r.top_buyers||[];
+      if(typeof buyers==='string'){try{buyers=JSON.parse(buyers);}catch(e){buyers=[];}}
+      if(!Array.isArray(buyers))buyers=[];
+      var bMax=buyers.length>0?buyers[0][1]:1;
+      var bHtml='';
+      buyers.slice(0,5).forEach(function(b){
+        var pct=Math.round(b[1]/bMax*100);
+        bHtml+='<div class="buyer-row"><div class="b-name" title="'+esc(b[0])+'">'+esc(b[0])+'</div><div class="b-bar"><div class="b-fill" style="width:'+pct+'%"></div></div><div class="b-vol">'+fmtK(b[1])+'</div></div>';
+      });
+      if(!buyers.length)bHtml='<div style="font-size:11px;color:var(--text3);padding:8px 0">No buyer data available</div>';
 
-  h+='<div class="vcu-kpi-grid">';
-  h+='<div class="vcu-kpi"><div class="vku-l">Issued</div><div class="vku-v" style="color:var(--teal)">'+fmtN(r.total_issued||0)+'</div></div>';
-  h+='<div class="vcu-kpi"><div class="vku-l">Retired</div><div class="vku-v" style="color:var(--amber)">'+fmtN(r.total_retired||0)+'</div></div>';
-  h+='<div class="vcu-kpi"><div class="vku-l">Outstanding</div><div class="vku-v">'+fmtN(r.outstanding||0)+'</div></div>';
-  h+='<div class="vcu-kpi"><div class="vku-l">Vintage 2022+</div><div class="vku-v">'+(r.vintage_2022_pct||r.vcu_vintage_2022_pct||0)+'%</div></div>';
-  h+='</div>';
+      var h='<div class="panel-scroll" style="flex:1;overflow-y:auto;padding:14px">';
+      h+='<div style="font-size:12px;font-weight:600;color:var(--text0);margin-bottom:2px">'+esc(r.name||'')+'</div>';
+      h+='<div style="font-size:10px;color:var(--text3);margin-bottom:12px">VCS #'+r.project_id+(r.country?' \u00b7 '+r.country:'')+(r.methodology?' \u00b7 '+r.methodology:'')+'</div>';
 
-  h+='<div class="rr-wrap">';
-  h+='<div class="rr-ring"><svg width="50" height="50"><circle cx="25" cy="25" r="20" fill="none" stroke="var(--bg4)" stroke-width="4"/><circle cx="25" cy="25" r="20" fill="none" stroke="'+rrCol+'" stroke-width="4" stroke-dasharray="'+circ+'" stroke-dashoffset="'+rrOff+'" stroke-linecap="round"/></svg><div class="rr-lbl" style="color:'+rrCol+'">'+rrPct.toFixed(0)+'%</div></div>';
-  h+='<div class="rr-txt"><div class="rrt">Retirement Rate</div><div class="rrs">'+fmtN(r.total_retired||0)+' of '+fmtN(r.total_issued||0)+' VCUs retired</div></div>';
-  h+='</div>';
+      h+='<div class="vcu-kpi-grid">';
+      h+='<div class="vcu-kpi"><div class="vku-l">Issued</div><div class="vku-v" style="color:var(--teal)">'+fmtN(r.total_issued||0)+'</div></div>';
+      h+='<div class="vcu-kpi"><div class="vku-l">Retired</div><div class="vku-v" style="color:var(--amber)">'+fmtN(r.total_retired||0)+'</div></div>';
+      h+='<div class="vcu-kpi"><div class="vku-l">Outstanding</div><div class="vku-v">'+fmtN(r.outstanding||0)+'</div></div>';
+      h+='<div class="vcu-kpi"><div class="vku-l">Vintage 2022+</div><div class="vku-v">'+(r.vintage_2022_pct||0)+'%</div></div>';
+      h+='</div>';
 
-  if(trend.length>0){
-    h+='<div class="sp-wrap"><div class="sp-hdr"><span>Issuance Trend</span></div>';
-    h+='<div class="sp-bars">'+bars+'</div>';
-    h+='<div class="sp-yrs">'+yrs+'</div></div>';
-  }
+      h+='<div class="rr-wrap">';
+      h+='<div class="rr-ring"><svg width="50" height="50"><circle cx="25" cy="25" r="20" fill="none" stroke="var(--bg4)" stroke-width="4"/><circle cx="25" cy="25" r="20" fill="none" stroke="'+rrCol+'" stroke-width="4" stroke-dasharray="'+circ+'" stroke-dashoffset="'+rrOff+'" stroke-linecap="round"/></svg><div class="rr-lbl" style="color:'+rrCol+'">'+rrPct.toFixed(0)+'%</div></div>';
+      h+='<div class="rr-txt"><div class="rrt">Retirement Rate</div><div class="rrs">'+fmtN(r.total_retired||0)+' of '+fmtN(r.total_issued||0)+' VCUs retired</div></div>';
+      h+='</div>';
 
-  h+='<div class="psec-title" style="margin-top:10px">Top Buyers</div>';
-  h+=bHtml;
+      if(trend.length>0){
+        h+='<div class="sp-wrap"><div class="sp-hdr"><span>Issuance Trend</span></div>';
+        h+='<div class="sp-bars">'+bars+'</div>';
+        h+='<div class="sp-yrs">'+yrs+'</div></div>';
+      }
 
-  h+='</div>';
-  pd.innerHTML=h;
+      h+='<div class="psec-title" style="margin-top:10px">Top Buyers</div>';
+      h+=bHtml;
+
+      h+='</div>';
+      pd.innerHTML=h;
+    })
+    .catch(function(e){
+      pd.innerHTML='<div style="padding:20px;color:var(--red,#ef4444);font-size:12px">Failed to load: '+e.message+'</div>';
+    });
 }
 
 function resetVCU(){
