@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClearSky Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg0:#030810;--bg1:#080f1e;--bg2:#0d1628;--bg3:#111d35;--bg4:#16243f;
+  --border:rgba(99,130,191,0.12);--border-hi:rgba(99,130,191,0.22);
+  --text0:#e8eef8;--text1:#b8c8e4;--text2:#7a94b8;--text3:#4a6080;
+  --teal:#2dd4bf;--teal-dim:rgba(45,212,191,0.10);
+  --blue:#60a5fa;--blue-dim:rgba(96,165,250,0.09);
+  --green:#34d399;--green-dim:rgba(52,211,153,0.09);
+  --red:#f87171;--red-dim:rgba(248,113,113,0.09);
+  --amber:#fbbf24;--amber-dim:rgba(251,191,36,0.09);
+  --violet:#a78bfa;--violet-dim:rgba(167,139,250,0.08);
+  --orange:#fb923c;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg0);color:var(--text0);font-family:'DM Sans',sans-serif;font-size:13px;overflow:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:99px}
+
+/* LAYOUT */
+.app{display:grid;grid-template-rows:auto 1fr;height:100vh;overflow:hidden}
+.topbar{background:var(--bg1);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.topbar-brand{font-family:'Syne',sans-serif;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text3)}
+.topbar-title{font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--text0)}
+.topbar-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+.stat-pill{display:flex;align-items:center;gap:5px;padding:4px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:99px;font-size:11px}
+.stat-pill-num{font-family:'DM Mono',monospace;font-weight:500;color:var(--teal)}
+.stat-pill-label{color:var(--text2)}
+.topbar-right{margin-left:auto;display:flex;gap:6px;align-items:center}
+
+.body{display:grid;grid-template-columns:230px 1fr 380px;overflow:hidden}
+
+/* SIDEBAR FILTERS */
+.sidebar{background:var(--bg1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-head{padding:12px 14px 8px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sidebar-head-title{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.filter-section{padding:10px 14px;border-bottom:1px solid var(--border)}
+.filter-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+
+/* Status tabs */
+.status-tabs{display:flex;flex-direction:column;gap:2px}
+.status-tab{display:flex;align-items:center;justify-content:space-between;padding:6px 9px;border-radius:7px;cursor:pointer;transition:background .12s,color .12s;color:var(--text2);font-size:12px}
+.status-tab:hover{background:var(--bg3);color:var(--text0)}
+.status-tab.active{background:var(--bg3);border:1px solid var(--border-hi);color:var(--text0)}
+.status-tab.active .stab-dot{background:var(--teal)}
+.stab-dot{width:6px;height:6px;border-radius:50%;background:var(--text3);flex-shrink:0}
+.stab-count{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);background:var(--bg4);padding:1px 6px;border-radius:99px}
+
+/* Checkboxes */
+.check-list{display:flex;flex-direction:column;gap:3px;max-height:150px;overflow-y:auto}
+.check-item{display:flex;align-items:center;gap:7px;padding:3px 4px;border-radius:5px;cursor:pointer}
+.check-item:hover{background:var(--bg3)}
+.check-item input[type=checkbox]{accent-color:var(--teal);width:12px;height:12px;cursor:pointer;flex-shrink:0}
+.check-item label{font-size:12px;color:var(--text1);cursor:pointer;flex:1}
+.check-item .ci-count{font-family:'DM Mono',monospace;font-size:10px;color:var(--text3)}
+
+/* Method search */
+.method-search{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:6px 9px;color:var(--text0);font-family:'DM Sans',sans-serif;font-size:12px;outline:none}
+.method-search:focus{border-color:var(--teal)}
+.method-search::placeholder{color:var(--text3)}
+.method-chips{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;max-height:80px;overflow-y:auto}
+
+/* Volume filter */
+.vol-row{display:flex;align-items:center;gap:8px}
+.vol-input{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text0);font-family:'DM Mono',monospace;font-size:11px;outline:none}
+.vol-input:focus{border-color:var(--teal)}
+
+/* Reset */
+.reset-btn{width:100%;margin:8px 14px;width:calc(100% - 28px);padding:7px;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;transition:all .12s}
+.reset-btn:hover{border-color:var(--border-hi);color:var(--text0)}
+
+/* WATERSHED MODE */
+.watershed-btn{padding:7px 14px;background:linear-gradient(135deg,rgba(45,212,191,.15),rgba(96,165,250,.12));border:1px solid rgba(45,212,191,.3);border-radius:8px;color:var(--teal);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.watershed-btn:hover{background:linear-gradient(135deg,rgba(45,212,191,.22),rgba(96,165,250,.18));border-color:rgba(45,212,191,.5)}
+.watershed-btn.active{background:linear-gradient(135deg,rgba(45,212,191,.25),rgba(96,165,250,.2));border-color:var(--teal);box-shadow:0 0 12px rgba(45,212,191,.2)}
+
+/* MAIN */
+.main{background:var(--bg0);display:flex;flex-direction:column;overflow:hidden}
+.results-bar{padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-shrink:0;background:var(--bg1)}
+.results-count{font-family:'DM Mono',monospace;font-weight:500;color:var(--teal);font-size:13px}
+.results-label{color:var(--text2);font-size:12px}
+.results-vol{margin-left:auto;font-size:11px;color:var(--text2)}
+.results-vol strong{color:var(--green);font-family:'DM Mono',monospace}
+
+/* Table */
+.table-wrap{flex:1;overflow-y:auto}
+table{width:100%;border-collapse:collapse}
+thead th{position:sticky;top:0;background:var(--bg1);padding:8px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none}
+thead th:hover{color:var(--text1)}
+thead th.sort-asc::after{content:' \2191';color:var(--teal)}
+thead th.sort-desc::after{content:' \2193';color:var(--teal)}
+tbody tr{border-bottom:1px solid rgba(99,130,191,.06);cursor:pointer;transition:background .1s}
+tbody tr:hover{background:var(--bg2)}
+tbody tr.active-row{background:rgba(45,212,191,.06)!important;border-left:2px solid var(--teal)}
+td{padding:7px 10px;vertical-align:middle}
+.td-id{font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--teal);white-space:nowrap}
+.td-name{font-size:12px;color:var(--text0);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.td-proponent{font-size:11px;color:var(--text2);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.td-country{font-size:11.5px;color:var(--text1);white-space:nowrap}
+.td-vol{font-family:'DM Mono',monospace;font-size:11.5px;color:var(--text1);white-space:nowrap;text-align:right}
+.td-vol.vol-high{color:var(--green)}
+.td-vol.vol-med{color:var(--amber)}
+.td-cp{font-size:11px;color:var(--text2);white-space:nowrap;font-family:'DM Mono',monospace}
+.td-cp.expiring{color:var(--amber)}
+.td-cp.expired{color:var(--red)}
+.mchip{display:inline-flex;align-items:center;padding:1px 6px;border-radius:99px;font-size:10px;font-family:'DM Mono',monospace;font-weight:500;margin:1px;white-space:nowrap;border:1px solid}
+.mchip-afolu{color:var(--green);border-color:rgba(52,211,153,.25);background:var(--green-dim)}
+.mchip-cdm{color:var(--blue);border-color:rgba(96,165,250,.25);background:var(--blue-dim)}
+.mchip-other{color:var(--text2);border-color:var(--border);background:var(--bg3)}
+.mchip-watershed{color:var(--teal);border-color:rgba(45,212,191,.3);background:var(--teal-dim)}
+.status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;flex-shrink:0}
+.s-registered{background:var(--green)}
+.s-validation{background:var(--amber)}
+.s-development{background:var(--blue)}
+.s-inactive{background:var(--text3)}
+.s-other{background:var(--red)}
+.empty-state{padding:60px 24px;text-align:center;color:var(--text3)}
+.empty-state-icon{font-size:28px;opacity:.4;margin-bottom:8px}
+.empty-state-text{font-size:13px}
+
+/* PANEL */
+.panel{background:var(--bg1);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.panel-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--text3);padding:24px}
+.panel-empty-icon{font-size:28px;opacity:.35}
+.panel-empty-text{font-size:12px;text-align:center;line-height:1.5;max-width:200px}
+.panel-head{padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.panel-id{font-family:'DM Mono',monospace;font-size:22px;font-weight:600;color:var(--teal);line-height:1}
+.panel-name{font-family:'Syne',sans-serif;font-weight:600;font-size:14px;color:var(--text0);margin-top:4px;line-height:1.3}
+.panel-proponent{font-size:11px;color:var(--text2);margin-top:3px}
+.panel-chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.chip{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:500;border:1px solid;white-space:nowrap}
+.chip-green{color:var(--green);border-color:rgba(52,211,153,.25);background:var(--green-dim)}
+.chip-amber{color:var(--amber);border-color:rgba(251,191,36,.25);background:var(--amber-dim)}
+.chip-blue{color:var(--blue);border-color:rgba(96,165,250,.25);background:var(--blue-dim)}
+.chip-teal{color:var(--teal);border-color:rgba(45,212,191,.25);background:var(--teal-dim)}
+.chip-gray{color:var(--text2);border-color:var(--border);background:var(--bg3)}
+.chip-red{color:var(--red);border-color:rgba(248,113,113,.25);background:var(--red-dim)}
+.chip-violet{color:var(--violet);border-color:rgba(167,139,250,.25);background:var(--violet-dim)}
+.panel-body{flex:1;overflow-y:auto;padding:14px 16px}
+.panel-section{margin-bottom:16px}
+.panel-section-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.panel-kv{display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;font-size:12px}
+.panel-key{color:var(--text2);width:110px;flex-shrink:0}
+.panel-val{color:var(--text0);flex:1;font-weight:500;word-break:break-word}
+.panel-val.mono{font-family:'DM Mono',monospace}
+.panel-actions{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.btn{padding:8px 14px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;border:1px solid;transition:all .12s;display:flex;align-items:center;gap:6px;justify-content:center}
+.btn-primary{background:var(--teal);color:#000;border-color:var(--teal)}
+.btn-primary:hover{background:#25b8a6}
+.btn-ghost{background:transparent;color:var(--text1);border-color:var(--border-hi)}
+.btn-ghost:hover{border-color:var(--teal);color:var(--teal)}
+.watershed-match-box{background:var(--teal-dim);border:1px solid rgba(45,212,191,.2);border-radius:8px;padding:10px 12px;margin-bottom:14px}
+.watershed-match-title{font-size:11px;font-weight:600;color:var(--teal);margin-bottom:3px;display:flex;align-items:center;gap:5px}
+.watershed-match-body{font-size:11px;color:var(--text1);line-height:1.5}
+.watershed-fail-box{background:var(--red-dim);border:1px solid rgba(248,113,113,.2);border-radius:8px;padding:10px 12px;margin-bottom:14px}
+.watershed-fail-title{font-size:11px;font-weight:600;color:var(--red);margin-bottom:3px}
+.watershed-fail-body{font-size:11px;color:var(--text1);line-height:1.5}
+.add-rfp-btn{padding:8px 12px;background:rgba(45,212,191,.1);border:1px solid rgba(45,212,191,.25);border-radius:7px;color:var(--teal);font-size:11.5px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .12s}
+.add-rfp-btn:hover{background:rgba(45,212,191,.18);border-color:var(--teal)}
+
+/* VCU PANEL */
+.panel-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);flex-shrink:0}
+.panel-tab{flex:1;padding:8px 12px;text-align:center;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .12s}
+.panel-tab:hover{color:var(--text1)}
+.panel-tab.active{color:var(--teal);border-bottom-color:var(--teal)}
+.vcu-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.vcu-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.vcu-card-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.vcu-card-val{font-family:'DM Mono',monospace;font-size:18px;font-weight:600;color:var(--teal)}
+.vcu-card-sub{font-size:10px;color:var(--text2);margin-top:2px}
+.sparkline-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px}
+.sparkline-title{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.buyer-bar{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px}
+.buyer-bar-name{color:var(--text1);width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.buyer-bar-fill{height:14px;background:var(--teal);border-radius:3px;min-width:4px;transition:width .3s}
+.buyer-bar-pct{font-family:'DM Mono',monospace;font-size:10px;color:var(--text2);width:36px;text-align:right}
+
+/* LOADING */
+.loading-overlay{position:fixed;inset:0;background:var(--bg0);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;transition:opacity .5s}
+.loading-overlay.hidden{opacity:0;pointer-events:none}
+.loading-spinner{width:36px;height:36px;border:3px solid var(--bg3);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{margin-top:14px;font-size:12px;color:var(--text2);letter-spacing:.5px}
+.error-msg{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:var(--red-dim);border:1px solid rgba(248,113,113,.25);border-radius:8px;padding:12px 20px;color:var(--red);font-size:12px;z-index:200;display:none}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loadingText">Loading ClearSky Platform...</div>
+</div>
+<div class="error-msg" id="errorMsg"></div>
+
+<div class="app">
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div>
+    <div class="topbar-brand">PABLO Platform</div>
+    <div class="topbar-title">ClearSky Platform</div>
+  </div>
+  <div class="topbar-sep"></div>
+  <div class="stat-pill">
+    <span class="stat-pill-num" id="sp-total-n">-</span>
+    <span class="stat-pill-label">total projects</span>
+  </div>
+  <div class="stat-pill">
+    <span class="stat-pill-num" id="sp-registered-n">-</span>
+    <span class="stat-pill-label">registered</span>
+  </div>
+  <div class="stat-pill">
+    <span class="stat-pill-num" id="sp-vol-n">-</span>
+    <span class="stat-pill-label">tCO2e/yr (registered)</span>
+  </div>
+  <div class="topbar-sep"></div>
+  <div class="topbar-right">
+    <button class="watershed-btn" id="watershedBtn" onclick="toggleWatershed()">Watershed 2026 Screener</button>
+    <span id="dataSource" style="font-size:10px;color:var(--text3);margin-left:6px">Live · D1</span>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="body">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-head">
+    <div class="sidebar-head-title">Filters</div>
+    <div class="status-tabs" id="statusTabs">
+      <div class="status-tab active" onclick="setStatus('Registered')" id="stab-Registered">
+        <span style="display:flex;align-items:center;gap:6px"><span class="stab-dot s-registered"></span>Registered</span>
+        <span class="stab-count" id="sc-Registered">-</span>
+      </div>
+      <div class="status-tab" onclick="setStatus('Under validation')" id="stab-Under validation">
+        <span style="display:flex;align-items:center;gap:6px"><span class="stab-dot s-validation"></span>Under Validation</span>
+        <span class="stab-count" id="sc-Under validation">-</span>
+      </div>
+      <div class="status-tab" onclick="setStatus('Under development')" id="stab-Under development">
+        <span style="display:flex;align-items:center;gap:6px"><span class="stab-dot s-development"></span>Under Development</span>
+        <span class="stab-count" id="sc-Under development">-</span>
+      </div>
+      <div class="status-tab" onclick="setStatus('all')" id="stab-all">
+        <span style="display:flex;align-items:center;gap:6px"><span class="stab-dot s-other"></span>All Statuses</span>
+        <span class="stab-count" id="sc-all">-</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex:1;overflow-y:auto">
+    <div class="filter-section">
+      <div class="filter-label">Region</div>
+      <div class="check-list" id="regionList"></div>
+    </div>
+    <div class="filter-section">
+      <div class="filter-label">Methodology</div>
+      <input class="method-search" id="methSearch" placeholder="Search e.g. VM0047..." oninput="onMethSearch(this.value)">
+      <div class="method-chips" id="methChips"></div>
+      <div id="methDropdown" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:7px;margin-top:3px;max-height:120px;overflow-y:auto;font-size:12px"></div>
+    </div>
+    <div class="filter-section" id="afoluSection">
+      <div class="filter-label">AFOLU Activity</div>
+      <div class="check-list" id="afoluList"></div>
+    </div>
+    <div class="filter-section">
+      <div class="filter-label">Project Category</div>
+      <div class="check-list" id="categoryList"></div>
+    </div>
+    <div class="filter-section">
+      <div class="filter-label">Min Volume (tCO2e/yr)</div>
+      <input class="vol-input" type="number" id="volMin" placeholder="e.g. 10000" oninput="S.volMin=parseInt(this.value)||0;renderTable()">
+    </div>
+    <button class="reset-btn" onclick="resetFilters()">Reset all filters</button>
+  </div>
+</div>
+
+<!-- MAIN TABLE -->
+<div class="main">
+  <div class="results-bar">
+    <span class="results-count" id="resultsCount">-</span>
+    <span class="results-label" id="resultsLabel">projects</span>
+    <span class="results-vol" id="resultsVol"></span>
+    <span id="watershedLabel" style="display:none;margin-left:8px;font-size:11px;padding:3px 9px;background:var(--teal-dim);border:1px solid rgba(45,212,191,.25);border-radius:99px;color:var(--teal);font-weight:600">Watershed eligible</span>
+  </div>
+  <div class="table-wrap" id="tableWrap">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('id')">ID</th>
+          <th onclick="sortBy('name')">Project Name</th>
+          <th onclick="sortBy('methodology')">Methodology</th>
+          <th onclick="sortBy('country')">Country</th>
+          <th onclick="sortBy('volume')" style="text-align:right">Volume/yr</th>
+          <th onclick="sortBy('cp_end')">Cred. End</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div class="empty-state-icon"></div>
+      <div class="empty-state-text">No projects match current filters.<br>Try adjusting your criteria.</div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="panel" id="rightPanel">
+  <div class="panel-empty" id="panelEmpty">
+    <div class="panel-empty-icon"></div>
+    <div class="panel-empty-text">Click any project to see its registry card, VCU intelligence, and Verra link</div>
+  </div>
+  <div id="panelDetail" style="display:none;flex:1;overflow:hidden;flex-direction:column"></div>
+</div>
+
+</div>
+</div>
+
+<script>
+// ── CONFIG ───────────────────────────────────────────────────────────────────
+var API = 'https://api-tools.oga.earth';
+var ALL = [];
+var VCU = {};
+var ALL_METHS = [];
+
+var WATERSHED_METHS = new Set(['VM0044','VM0007','VM0042','VM0047','VM0033','VM0048','VM0003','VM0010','VM0012','VM0019','VM0026','VM0034']);
+var WATERSHED_STATUS = 'Registered';
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+var S = {
+  status: 'Registered',
+  regions: new Set(),
+  methodologies: new Set(),
+  afolus: new Set(),
+  categories: new Set(),
+  volMin: 0,
+  sortCol: 'id',
+  sortDir: 'asc',
+  selectedId: null,
+  watershedMode: false,
+  filtered: [],
+  page: 0,
+  pageSize: 200,
+  panelTab: 'overview'
+};
+
+// ── LOAD DATA FROM API ───────────────────────────────────────────────────────
+function loadData() {
+  document.getElementById('loadingText').textContent = 'Loading registry data...';
+  fetch(API + '/api/primitives/registry-index/search?limit=5000')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.rows || !data.rows.length) {
+        showError('No data returned from API.');
+        return;
+      }
+      ALL = data.rows.map(function(r) {
+        return {
+          id: String(r.id),
+          name: r.name || '',
+          proponent: r.proponent || '',
+          afolu: r.afolu || '',
+          methodology: r.methodology || '',
+          status: r.status || '',
+          country: r.country || '',
+          region: r.region || '',
+          volume: String(r.est_annual_reductions || 0),
+          reg_date: r.reg_date || '',
+          cp_start: '',
+          cp_end: r.cp_end || '',
+          category: r.project_category || 'Other',
+          url: r.registry_url || ('https://registry.verra.org/app/projectDetail/VCS/' + r.id),
+          project_type: r.afolu || ''
+        };
+      });
+
+      // Build VCU lookup
+      VCU = {};
+      data.rows.forEach(function(r) {
+        if (r.vcu_total_issued) {
+          VCU[String(r.id)] = {
+            ti: r.vcu_total_issued,
+            tr: r.vcu_total_retired,
+            os: r.vcu_outstanding || 0,
+            rr: r.vcu_retirement_rate || 0,
+            trend: safeParse(r.vcu_issuance_trend, [0,0,0,0,0,0,0,0]),
+            buyers: safeParse(r.vcu_top_buyers, []),
+            v22: r.vcu_vintage_2022_pct || 0,
+            fi: r.vcu_first_issuance_year || '',
+            li: r.vcu_last_issuance_year || ''
+          };
+        }
+      });
+
+      // Compute unique methodologies
+      var ms = {};
+      ALL.forEach(function(r) {
+        r.methodology.split(';').forEach(function(m) {
+          m = m.trim();
+          if (m) ms[m] = 1;
+        });
+      });
+      ALL_METHS = Object.keys(ms).sort();
+
+      // Update topbar stats
+      var total = ALL.length;
+      var registered = ALL.filter(function(r) { return r.status === 'Registered'; });
+      var regCount = registered.length;
+      var totalVol = registered.reduce(function(s, r) { return s + (parseInt(r.volume) || 0); }, 0);
+      document.getElementById('sp-total-n').textContent = total.toLocaleString();
+      document.getElementById('sp-registered-n').textContent = regCount.toLocaleString();
+      document.getElementById('sp-vol-n').textContent = totalVol >= 1000000 ? (totalVol / 1000000).toFixed(0) + 'M' : (totalVol / 1000).toFixed(0) + 'K';
+
+      // Hide loading overlay
+      document.getElementById('loadingOverlay').classList.add('hidden');
+
+      // Build UI
+      buildSidebar();
+      renderTable();
+    })
+    .catch(function(e) {
+      showError('Failed to load registry data: ' + e.message);
+    });
+}
+
+function safeParse(str, fallback) {
+  if (!str) return fallback;
+  try { return JSON.parse(str); } catch(e) { return fallback; }
+}
+
+function showError(msg) {
+  var el = document.getElementById('errorMsg');
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+  document.getElementById('loadingOverlay').classList.add('hidden');
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+function fmtVol(v) {
+  if (!v || v === '0') return '\u2014';
+  var n = parseInt(v);
+  if (isNaN(n)) return '\u2014';
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n/1000).toFixed(0) + 'K';
+  return n.toLocaleString();
+}
+function fmtVolFull(v) {
+  var n = parseInt(v);
+  if (isNaN(n) || n === 0) return '\u2014';
+  return n.toLocaleString() + ' tCO2e/yr';
+}
+function fmtNum(n) {
+  if (!n && n !== 0) return '\u2014';
+  return Number(n).toLocaleString();
+}
+function methClass(m) {
+  if (WATERSHED_METHS.has(m.trim())) return 'mchip mchip-watershed';
+  if (m.startsWith('VM')) return 'mchip mchip-afolu';
+  if (m.startsWith('AMS') || m.startsWith('ACM') || m.startsWith('AM') || m.startsWith('AR-')) return 'mchip mchip-cdm';
+  return 'mchip mchip-other';
+}
+function statusChip(s) {
+  if (s === 'Registered') return 'chip chip-green';
+  if (s.includes('validation')) return 'chip chip-amber';
+  if (s.includes('development')) return 'chip chip-blue';
+  if (s === 'Inactive') return 'chip chip-gray';
+  return 'chip chip-red';
+}
+function statusDot(s) {
+  if (s === 'Registered') return 's-registered';
+  if (s.includes('validation')) return 's-validation';
+  if (s.includes('development')) return 's-development';
+  return 's-inactive';
+}
+function cpClass(dateStr) {
+  if (!dateStr) return '';
+  var d = new Date(dateStr);
+  var now = new Date();
+  var y2027 = new Date('2027-06-30');
+  if (d < now) return 'td-cp expired';
+  if (d < y2027) return 'td-cp expiring';
+  return 'td-cp';
+}
+function isWatershedEligible(row) {
+  if (row.status !== 'Registered') return false;
+  var meths = row.methodology.split(';').map(function(m) { return m.trim(); });
+  if (!meths.some(function(m) { return WATERSHED_METHS.has(m); })) return false;
+  return true;
+}
+function getRegionCounts() {
+  var counts = {};
+  var base = S.status === 'all' ? ALL : ALL.filter(function(r) { return r.status === S.status; });
+  base.forEach(function(r) { if(r.region) counts[r.region] = (counts[r.region]||0)+1; });
+  return counts;
+}
+function getStatusCounts() {
+  var counts = {};
+  ALL.forEach(function(r) { counts[r.status] = (counts[r.status]||0)+1; });
+  return counts;
+}
+
+// ── FILTER ───────────────────────────────────────────────────────────────────
+function applyFilters() {
+  var rows = ALL;
+  if (S.watershedMode) {
+    rows = rows.filter(isWatershedEligible);
+  } else {
+    if (S.status !== 'all') rows = rows.filter(function(r) { return r.status === S.status; });
+    if (S.regions.size) rows = rows.filter(function(r) { return S.regions.has(r.region); });
+    if (S.methodologies.size) rows = rows.filter(function(r) {
+      var meths = r.methodology.split(';').map(function(m) { return m.trim(); });
+      return meths.some(function(m) { return S.methodologies.has(m); });
+    });
+    if (S.afolus.size) rows = rows.filter(function(r) {
+      var acts = r.afolu.split(';').map(function(a) { return a.trim(); });
+      return acts.some(function(a) { return S.afolus.has(a); });
+    });
+    if (S.categories.size) rows = rows.filter(function(r) { return S.categories.has(r.category); });
+    if (S.volMin > 0) rows = rows.filter(function(r) { return parseInt(r.volume||0) >= S.volMin; });
+  }
+  // Sort
+  rows = rows.slice().sort(function(a,b) {
+    var va = a[S.sortCol] || '';
+    var vb = b[S.sortCol] || '';
+    if (S.sortCol === 'volume' || S.sortCol === 'id') { va = parseInt(va||0); vb = parseInt(vb||0); }
+    if (va < vb) return S.sortDir === 'asc' ? -1 : 1;
+    if (va > vb) return S.sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+  S.filtered = rows;
+}
+
+// ── RENDER TABLE ─────────────────────────────────────────────────────────────
+function renderTable() {
+  applyFilters();
+  var rows = S.filtered;
+  var body = document.getElementById('tableBody');
+  var empty = document.getElementById('emptyState');
+
+  document.getElementById('resultsCount').textContent = rows.length.toLocaleString();
+  document.getElementById('resultsLabel').textContent = rows.length === 1 ? 'project' : 'projects';
+  var totalVol = rows.reduce(function(s,r) { return s + (parseInt(r.volume)||0); }, 0);
+  document.getElementById('resultsVol').innerHTML = totalVol > 0
+    ? 'Total: <strong>' + (totalVol/1000000).toFixed(1) + 'M tCO2e/yr</strong>' : '';
+  document.getElementById('watershedLabel').style.display = S.watershedMode ? 'inline-flex' : 'none';
+
+  if (!rows.length) {
+    body.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  var visible = rows.slice(0, S.pageSize);
+  body.innerHTML = visible.map(function(r) {
+    var meths = r.methodology.split(';').map(function(m) { return m.trim(); }).filter(Boolean);
+    var methHtml = meths.slice(0,2).map(function(m) { return '<span class="' + methClass(m) + '">' + m + '</span>'; }).join('');
+    var extraMeths = meths.length > 2 ? '<span class="mchip mchip-other">+' + (meths.length-2) + '</span>' : '';
+    var vol = parseInt(r.volume||0);
+    var volClass = vol >= 500000 ? 'td-vol vol-high' : vol >= 100000 ? 'td-vol vol-med' : 'td-vol';
+    return '<tr onclick="selectRow(\'' + r.id + '\')" id="tr-' + r.id + '" class="' + (S.selectedId === r.id ? 'active-row' : '') + '">' +
+      '<td><span class="td-id">' + r.id + '</span></td>' +
+      '<td><div class="td-name" title="' + r.name.replace(/"/g,'&quot;') + '">' + r.name + '</div><div class="td-proponent">' + r.proponent + '</div></td>' +
+      '<td>' + methHtml + extraMeths + '</td>' +
+      '<td class="td-country"><span class="status-dot ' + statusDot(r.status) + '"></span>' + r.country + '</td>' +
+      '<td class="' + volClass + '">' + fmtVol(r.volume) + '</td>' +
+      '<td class="' + cpClass(r.cp_end) + '">' + (r.cp_end ? r.cp_end.substring(0,7) : '\u2014') + '</td>' +
+    '</tr>';
+  }).join('');
+
+  if (rows.length > S.pageSize) {
+    body.innerHTML += '<tr><td colspan="6" style="text-align:center;padding:10px;color:var(--text2);font-size:11px">' +
+      'Showing first ' + S.pageSize + ' of ' + rows.length + ' results \u2014 use filters to narrow</td></tr>';
+  }
+
+  if (!S.selectedId && rows.length) selectRow(rows[0].id);
+}
+
+function selectRow(id) {
+  if (S.selectedId) {
+    var old = document.getElementById('tr-' + S.selectedId);
+    if (old) old.classList.remove('active-row');
+  }
+  S.selectedId = id;
+  S.panelTab = 'overview';
+  var tr = document.getElementById('tr-' + id);
+  if (tr) tr.classList.add('active-row');
+  renderPanel(id);
+}
+
+// ── RENDER PANEL ─────────────────────────────────────────────────────────────
+function renderPanel(id) {
+  var row = ALL.find(function(r) { return r.id === id; });
+  if (!row) return;
+  document.getElementById('panelEmpty').style.display = 'none';
+  var pd = document.getElementById('panelDetail');
+  pd.style.display = 'flex';
+  pd.style.flexDirection = 'column';
+
+  var vcu = VCU[id];
+  var hasVcu = !!vcu;
+  var isEligible = isWatershedEligible(row);
+  var meths = row.methodology.split(';').map(function(m) { return m.trim(); }).filter(Boolean);
+  var acts = row.afolu.split(';').map(function(a) { return a.trim(); }).filter(Boolean);
+
+  var watershedBox = isEligible
+    ? '<div class="watershed-match-box"><div class="watershed-match-title">Watershed 2026 Eligible</div>' +
+      '<div class="watershed-match-body">Registered status, eligible methodology (' + meths.filter(function(m){return WATERSHED_METHS.has(m);}).join(', ') + '), and geography pass hard filters.</div></div>'
+    : row.status === 'Registered' ? '<div class="watershed-fail-box"><div class="watershed-fail-title">Not Watershed-eligible</div>' +
+      '<div class="watershed-fail-body">Methodology not in Watershed eligible list.</div></div>' : '';
+
+  // Tabs
+  var tabsHtml = '<div class="panel-tabs">' +
+    '<div class="panel-tab ' + (S.panelTab === 'overview' ? 'active' : '') + '" onclick="S.panelTab=\'overview\';renderPanel(\'' + id + '\')">Overview</div>' +
+    '<div class="panel-tab ' + (S.panelTab === 'vcu' ? 'active' : '') + '" onclick="S.panelTab=\'vcu\';renderPanel(\'' + id + '\')" style="' + (hasVcu ? '' : 'opacity:.4;cursor:default') + '">VCU Intelligence' + (hasVcu ? '' : '') + '</div>' +
+  '</div>';
+
+  var headHtml = '<div class="panel-head">' +
+    '<div class="panel-id">' + row.id + '</div>' +
+    '<div class="panel-name">' + row.name + '</div>' +
+    '<div class="panel-proponent">' + row.proponent + '</div>' +
+    '<div class="panel-chips">' +
+      '<span class="' + statusChip(row.status) + '">' + row.status + '</span>' +
+      (row.region ? '<span class="chip chip-gray">' + row.region + '</span>' : '') +
+      (row.category !== 'AFOLU' ? '<span class="chip chip-violet">' + row.category + '</span>' : '') +
+      acts.map(function(a) { return '<span class="chip chip-teal">' + a + '</span>'; }).join('') +
+    '</div></div>';
+
+  var bodyHtml = '';
+  if (S.panelTab === 'overview') {
+    bodyHtml = '<div class="panel-body">' + watershedBox +
+      '<div class="panel-section"><div class="panel-section-title">Registry Details</div>' +
+      '<div class="panel-kv"><span class="panel-key">Verra ID</span><span class="panel-val mono">' + row.id + '</span></div>' +
+      '<div class="panel-kv"><span class="panel-key">Country</span><span class="panel-val">' + (row.country || '\u2014') + '</span></div>' +
+      '<div class="panel-kv"><span class="panel-key">Region</span><span class="panel-val">' + (row.region || '\u2014') + '</span></div>' +
+      '<div class="panel-kv"><span class="panel-key">Status</span><span class="panel-val">' + row.status + '</span></div>' +
+      '<div class="panel-kv"><span class="panel-key">Methodology</span><span class="panel-val mono" style="display:flex;flex-wrap:wrap;gap:3px">' + meths.map(function(m){return '<span class="'+methClass(m)+'">'+m+'</span>';}).join('') + '</span></div>' +
+      (acts.length ? '<div class="panel-kv"><span class="panel-key">AFOLU Activities</span><span class="panel-val">' + acts.join(', ') + '</span></div>' : '') +
+      '</div>' +
+      '<div class="panel-section"><div class="panel-section-title">Carbon Data</div>' +
+      '<div class="panel-kv"><span class="panel-key">Est. Annual Reductions</span><span class="panel-val mono" style="color:var(--green)">' + fmtVolFull(row.volume) + '</span></div>' +
+      '<div class="panel-kv"><span class="panel-key">Registration Date</span><span class="panel-val mono">' + (row.reg_date || '\u2014') + '</span></div>' +
+      '<div class="panel-kv"><span class="panel-key">Crediting End</span><span class="panel-val mono ' + (row.cp_end && new Date(row.cp_end) < new Date('2027-06-30') ? 'expiring' : '') + '">' + (row.cp_end || '\u2014') + '</span></div>' +
+      '</div>' +
+      '<div class="panel-actions">' +
+      '<a href="' + row.url + '" target="_blank" style="text-decoration:none"><button class="btn btn-primary" style="width:100%">Open Verra Registry Page</button></a>' +
+      (isEligible ? '<button class="add-rfp-btn" onclick="addToRfp(\'' + id + '\')">+ Add to Watershed 2026 RFP</button>' : '') +
+      '<button class="btn btn-ghost" style="width:100%;font-size:11px" onclick="crawlPdd(\'' + id + '\')">Crawl PDD for VCS ' + id + '</button>' +
+      '</div></div>';
+  } else if (S.panelTab === 'vcu' && hasVcu) {
+    bodyHtml = renderVcuTab(vcu, id);
+  } else {
+    bodyHtml = '<div class="panel-body"><div class="empty-state"><div class="empty-state-text">No VCU transaction data available for this project.</div></div></div>';
+  }
+
+  pd.innerHTML = headHtml + tabsHtml + bodyHtml;
+}
+
+// ── VCU INTELLIGENCE TAB ─────────────────────────────────────────────────────
+function renderVcuTab(vcu, id) {
+  var rrPct = Math.round(vcu.rr || 0);
+  var sparkHtml = renderSparkline(vcu.trend);
+  var buyerHtml = '';
+  if (vcu.buyers && vcu.buyers.length) {
+    buyerHtml = '<div class="panel-section"><div class="panel-section-title">Top Buyers (by retirement %)</div>';
+    var maxPct = vcu.buyers[0] ? vcu.buyers[0][1] : 1;
+    vcu.buyers.slice(0, 5).forEach(function(b) {
+      var name = b[0] || 'Unknown';
+      var pct = b[1] || 0;
+      buyerHtml += '<div class="buyer-bar"><span class="buyer-bar-name" title="' + name + '">' + name + '</span>' +
+        '<div style="flex:1;background:var(--bg3);border-radius:3px;height:14px"><div class="buyer-bar-fill" style="width:' + Math.max(4, (pct/maxPct)*100) + '%"></div></div>' +
+        '<span class="buyer-bar-pct">' + pct + '%</span></div>';
+    });
+    buyerHtml += '</div>';
+  }
+
+  return '<div class="panel-body">' +
+    '<div class="vcu-grid">' +
+    '<div class="vcu-card"><div class="vcu-card-label">Total Issued</div><div class="vcu-card-val">' + fmtNum(vcu.ti) + '</div><div class="vcu-card-sub">VCUs</div></div>' +
+    '<div class="vcu-card"><div class="vcu-card-label">Total Retired</div><div class="vcu-card-val">' + fmtNum(vcu.tr) + '</div><div class="vcu-card-sub">VCUs</div></div>' +
+    '<div class="vcu-card"><div class="vcu-card-label">Outstanding</div><div class="vcu-card-val" style="color:var(--amber)">' + fmtNum(vcu.os) + '</div><div class="vcu-card-sub">available</div></div>' +
+    '<div class="vcu-card"><div class="vcu-card-label">Retirement Rate</div><div class="vcu-card-val" style="color:' + (rrPct >= 80 ? 'var(--green)' : rrPct >= 50 ? 'var(--amber)' : 'var(--red)') + '">' + rrPct + '%</div>' +
+    '<div class="vcu-card-sub">' + (vcu.fi || '?') + ' \u2013 ' + (vcu.li || '?') + '</div></div>' +
+    '</div>' +
+    '<div class="sparkline-wrap"><div class="sparkline-title">Issuance Trend (2019\u20132026)</div>' + sparkHtml + '</div>' +
+    (vcu.v22 ? '<div class="panel-kv"><span class="panel-key">Vintage 2022+</span><span class="panel-val mono" style="color:var(--teal)">' + vcu.v22 + '%</span></div>' : '') +
+    buyerHtml +
+  '</div>';
+}
+
+function renderSparkline(trend) {
+  if (!trend || !trend.length) return '';
+  var max = Math.max.apply(null, trend) || 1;
+  var years = ['2019','2020','2021','2022','2023','2024','2025','2026'];
+  var barWidth = 28;
+  var gap = 4;
+  var w = (barWidth + gap) * trend.length;
+  var h = 60;
+  var bars = '';
+  for (var i = 0; i < trend.length; i++) {
+    var val = trend[i] || 0;
+    var barH = Math.max(2, (val / max) * (h - 16));
+    var x = i * (barWidth + gap);
+    bars += '<rect x="' + x + '" y="' + (h - barH - 14) + '" width="' + barWidth + '" height="' + barH + '" rx="3" fill="' + (val > 0 ? 'var(--teal)' : 'var(--bg3)') + '" opacity="' + (val > 0 ? '0.7' : '0.3') + '"/>';
+    bars += '<text x="' + (x + barWidth/2) + '" y="' + (h - 2) + '" text-anchor="middle" fill="var(--text3)" font-size="8" font-family="DM Mono">' + (years[i] ? years[i].substring(2) : '') + '</text>';
+    if (val > 0) {
+      bars += '<text x="' + (x + barWidth/2) + '" y="' + (h - barH - 18) + '" text-anchor="middle" fill="var(--text2)" font-size="8" font-family="DM Mono">' + fmtVol(String(val)) + '</text>';
+    }
+  }
+  return '<svg width="' + w + '" height="' + h + '" style="display:block;margin:0 auto">' + bars + '</svg>';
+}
+
+// ── FILTER UI ────────────────────────────────────────────────────────────────
+function buildSidebar() {
+  var sc = getStatusCounts();
+  ['Registered','Under validation','Under development'].forEach(function(s) {
+    var el = document.getElementById('sc-' + s);
+    if (el) el.textContent = (sc[s]||0).toLocaleString();
+  });
+  var allEl = document.getElementById('sc-all');
+  if (allEl) allEl.textContent = ALL.length.toLocaleString();
+
+  var regionCounts = {};
+  ALL.forEach(function(r) { if(r.region) regionCounts[r.region] = (regionCounts[r.region]||0)+1; });
+  var regions = Object.entries(regionCounts).sort(function(a,b) { return b[1]-a[1]; });
+  document.getElementById('regionList').innerHTML = regions.map(function(e) {
+    var r = e[0], n = e[1];
+    var rid = r.replace(/\s/g,'_');
+    return '<label class="check-item" id="ri-' + rid + '">' +
+      '<input type="checkbox" onchange="toggleRegion(\'' + r + '\')" id="rc-' + rid + '">' +
+      '<label for="rc-' + rid + '" style="cursor:pointer">' + r + '</label>' +
+      '<span class="ci-count">' + n + '</span></label>';
+  }).join('');
+
+  var afoluCounts = {};
+  ALL.forEach(function(r) { r.afolu.split(';').forEach(function(a) { a=a.trim(); if(a) afoluCounts[a]=(afoluCounts[a]||0)+1; }); });
+  var afolus = Object.entries(afoluCounts).sort(function(a,b) { return b[1]-a[1]; });
+  document.getElementById('afoluList').innerHTML = afolus.map(function(e) {
+    var a = e[0], n = e[1];
+    return '<label class="check-item"><input type="checkbox" onchange="toggleAfolu(\'' + a + '\')" id="ac-' + a + '">' +
+      '<label for="ac-' + a + '" style="cursor:pointer">' + a + '</label><span class="ci-count">' + n + '</span></label>';
+  }).join('');
+
+  var catCounts = {};
+  ALL.forEach(function(r) { catCounts[r.category]=(catCounts[r.category]||0)+1; });
+  var cats = Object.entries(catCounts).sort(function(a,b) { return b[1]-a[1]; });
+  document.getElementById('categoryList').innerHTML = cats.map(function(e) {
+    var c = e[0], n = e[1];
+    return '<label class="check-item"><input type="checkbox" onchange="toggleCategory(\'' + c + '\')" id="cc-' + c + '">' +
+      '<label for="cc-' + c + '" style="cursor:pointer">' + c + '</label><span class="ci-count">' + n + '</span></label>';
+  }).join('');
+}
+
+// ── METHOD SEARCH ────────────────────────────────────────────────────────────
+function onMethSearch(q) {
+  var dd = document.getElementById('methDropdown');
+  if (!q) { dd.style.display='none'; return; }
+  var matches = ALL_METHS.filter(function(m) { return m.toUpperCase().indexOf(q.toUpperCase()) >= 0; }).slice(0,12);
+  if (!matches.length) { dd.style.display='none'; return; }
+  dd.style.display = 'block';
+  dd.innerHTML = matches.map(function(m) {
+    return '<div onclick="addMeth(\'' + m + '\')" style="padding:6px 10px;cursor:pointer;color:var(--text1)" onmouseenter="this.style.background=\'var(--bg3)\'" onmouseleave="this.style.background=\'\'">' + m + '</div>';
+  }).join('');
+}
+function addMeth(m) {
+  S.methodologies.add(m);
+  document.getElementById('methSearch').value = '';
+  document.getElementById('methDropdown').style.display = 'none';
+  renderMethChips();
+  renderTable();
+}
+function removeMeth(m) {
+  S.methodologies.delete(m);
+  renderMethChips();
+  renderTable();
+}
+function renderMethChips() {
+  var arr = [];
+  S.methodologies.forEach(function(m) { arr.push(m); });
+  document.getElementById('methChips').innerHTML = arr.map(function(m) {
+    return '<span class="' + methClass(m) + '" style="cursor:pointer" onclick="removeMeth(\'' + m + '\')">' + m + ' \u2715</span>';
+  }).join('');
+}
+
+// ── EVENT HANDLERS ───────────────────────────────────────────────────────────
+function setStatus(s) {
+  S.status = s;
+  S.watershedMode = false;
+  document.getElementById('watershedBtn').classList.remove('active');
+  document.querySelectorAll('.status-tab').forEach(function(t) { t.classList.remove('active'); });
+  var tab = document.getElementById('stab-' + s);
+  if (tab) tab.classList.add('active');
+  S.selectedId = null;
+  renderTable();
+}
+function toggleRegion(r) { S.regions.has(r) ? S.regions.delete(r) : S.regions.add(r); renderTable(); }
+function toggleAfolu(a) { S.afolus.has(a) ? S.afolus.delete(a) : S.afolus.add(a); renderTable(); }
+function toggleCategory(c) { S.categories.has(c) ? S.categories.delete(c) : S.categories.add(c); renderTable(); }
+function sortBy(col) {
+  if (S.sortCol === col) S.sortDir = S.sortDir === 'asc' ? 'desc' : 'asc';
+  else { S.sortCol = col; S.sortDir = 'asc'; }
+  document.querySelectorAll('thead th').forEach(function(th) { th.classList.remove('sort-asc','sort-desc'); });
+  var thMap = {id:0,name:1,methodology:2,country:3,volume:4,cp_end:5};
+  var thEl = document.querySelectorAll('thead th')[thMap[col]];
+  if (thEl) thEl.classList.add(S.sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+  renderTable();
+}
+function toggleWatershed() {
+  S.watershedMode = !S.watershedMode;
+  var btn = document.getElementById('watershedBtn');
+  btn.classList.toggle('active', S.watershedMode);
+  if (S.watershedMode) {
+    S.status = 'Registered';
+    S.regions = new Set();
+    S.methodologies = new Set();
+    S.afolus = new Set();
+    S.categories = new Set();
+    S.volMin = 0;
+    document.querySelectorAll('.status-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.getElementById('stab-Registered').classList.add('active');
+    document.querySelectorAll('.check-item input').forEach(function(el) { el.checked = false; });
+    document.getElementById('methChips').innerHTML = '';
+    document.getElementById('volMin').value = '';
+  }
+  S.selectedId = null;
+  renderTable();
+}
+function resetFilters() {
+  S.status = 'Registered';
+  S.regions = new Set();
+  S.methodologies = new Set();
+  S.afolus = new Set();
+  S.categories = new Set();
+  S.volMin = 0;
+  S.watershedMode = false;
+  S.selectedId = null;
+  document.getElementById('watershedBtn').classList.remove('active');
+  document.querySelectorAll('.status-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.getElementById('stab-Registered').classList.add('active');
+  document.querySelectorAll('.check-item input').forEach(function(el) { el.checked = false; });
+  document.getElementById('methChips').innerHTML = '';
+  document.getElementById('methSearch').value = '';
+  document.getElementById('volMin').value = '';
+  renderTable();
+}
+function addToRfp(id) {
+  var row = ALL.find(function(r) { return r.id === id; });
+  if (!row) return;
+  alert('Add to RFP Tracker:\n\nProject: ' + row.name + '\nVerra ID: ' + id + '\nMethodology: ' + row.methodology + '\nCountry: ' + row.country + '\nVolume: ' + fmtVolFull(row.volume) + '\n\nOpen rfp-tracker.html to add this project.');
+}
+function crawlPdd(id) {
+  window.open('https://registry.verra.org/app/projectDetail/VCS/' + id, '_blank');
+}
+
+// ── BOOT ─────────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
