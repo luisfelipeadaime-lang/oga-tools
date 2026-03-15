@@ -957,7 +957,7 @@ function loadVCUPage(){
   fetch(API+'/api/primitives/vcu/search?limit=500')
     .then(function(r){return r.json();})
     .then(function(d){
-      VDATA=d.rows||[];
+      VDATA=(d.rows||[]).map(function(r){r.id=r.project_id;return r;});
       document.getElementById('vcu-badge').textContent=fmtK(VDATA.reduce(function(s,r){return s+(r.total_issued||0);},0));
       filterVCU();
     });
