@@ -1,5 +1,5 @@
 # SYSTEM.md — OGA / ClearSky / LFA Platform Architecture
-*Last updated: 2026-03-13 | Author: Luis Felipe Adaime*
+*Last updated: 2026-03-15 | Author: Luis Felipe Adaime*
 *Read this file completely before touching ANY tool, Worker endpoint, or D1 schema.*
 
 ---
@@ -138,44 +138,20 @@ knowledge_docs:
                     climate_action, plan_vivo, miteco, eu_ets, art_trees. NULL for unknown.
                     NEVER store raw variants (verra_vcs, car, acr). normalizeRegistry() wired into
                     enrichKnowledgeDocAI, taxonomy/assign, taxonomy/classify. [v73]
+  methodology_code → TEXT, nullable. AI-extracted methodology identifier (e.g. VM0047, AR-ACM0003). [v75b]
+                    Extracted by enrichKnowledgeDocAI field #10. Indexed (idx_knowledge_docs_methodology_code).
+                    Filter: taxonomy/search?methodology_code=VM0047. Writable via taxonomy/assign PATCH.
   is_canonical    → INTEGER DEFAULT 0. 0 = general library, 1 = curated methodology reference. [v66]
                     /api/primitives/taxonomy/search?canonical=1 → curated view only.
+                    /api/primitives/taxonomy/search?methodology_code=VM0047 → filter by methodology code. [v75b]
                     /api/primitives/taxonomy/assign accepts is_canonical field.
+                    /api/primitives/taxonomy/assign accepts methodology_code in PATCH body. [v75b]
                     /api/knowledge/ingest accepts is_canonical FormData ('1' to set).
                     Methodology Library browse axis: Registry chips → registry_doc_type list → documents. [v73]
                     Two-panel layout, single API call, client-side filtering.
                     Registry chips derived from actual data (not hardcoded).
                     Doc type list uses registry_doc_type + REGISTRY_DOC_TYPE_LABELS (24 entries). [v73]
   input_source    → user_declared | ai_inferred | unknown
-  is_registered_example → INTEGER DEFAULT 0. 1 = PDD from a Registered Verra project. [v77]
-                    Auto-flagged by enrichKnowledgeDocAI for crawler PDDs from Registered projects.
-                    taxonomy/search?registered_example=1 → filter.
-  canonical_type  → TEXT: 'methodology' | 'registered_project' | NULL. [v77]
-                    Distinguishes curated methodology references from registered project examples.
-                    taxonomy/search?canonical_type=methodology → filter.
-
-project_metadata:               [v77]
-  id              → TEXT PK, format '{registry}:{project_id}' (e.g. 'verra:934')
-  registry        → TEXT (verra, puro_earth, etc.)
-  project_id      → TEXT (registry-specific project ID)
-  project_name    → TEXT
-  country         → TEXT
-  continent       → TEXT (from CONTINENT_MAP: Latin America, Africa, Asia, etc.)
-  methodology_code → TEXT (e.g. VM0047, AR-ACM0003)
-  project_type    → TEXT
-  status          → TEXT (Registered, Under development, etc.)
-  proponent       → TEXT
-  vvb             → TEXT (validation/verification body)
-  crediting_period_start → TEXT
-  crediting_period_end → TEXT
-  total_credits_issued → INTEGER
-  estimated_annual_reductions → INTEGER
-  registry_url    → TEXT
-  raw_json        → TEXT (full API response)
-  fetched_at      → TEXT (ISO 8601)
-  Upsert: INSERT ... ON CONFLICT(id) DO UPDATE via storeProjectMetadata()
-  Endpoints: GET /api/primitives/project-metadata (list+filter),
-             GET /api/primitives/project-metadata/:registry/:id (live-fetch + cache)
 
 hubspot_threads:
   involves_luis   → 1 if Luis (owner ID 82916631) sent the email, 0 otherwise
@@ -311,6 +287,42 @@ PABLO.HTML:
   - No inline style= on platform views — CSS specificity bug (Rule #12)
   - Every new tab must wire nav to showPlatform() (Rule #17)
   - CLEARSKY_CONTACTS lives here, not in Worker — do not duplicate
+
+REGISTRY INDEX (v78):
+  - verra_registry_index methodology — semicolon-separated string, maps to meth field in frontend
+  - clearskyplatform loadData — ALL = all 4903 rows. VCU = only rows where vcu_total_issued exists (2116).
+    LEFT JOIN means 2787 projects have null VCU data — this is correct, not a bug
+  - vcu_aggregates issuance_trend — JSON string, parse with JSON.parse() in loadData()
+  - registry.html vs clearskyplatform.html — registry.html has embedded data blobs (~1.1MB),
+    clearskyplatform.html fetches from API (~46KB). Same UI logic.
+  - RESEARCH BEFORE BUILDING — Always web_search for existing free/open-source solutions before
+    proposing custom builds. Proven: Tailscale+tmux+SSH for mobile terminal access. [standing rule]
+
+57. clearskyplatform Download PD — calls POST /api/primitives/crawler/run with {registry:'verra', query:id, max:1, downloadFiles:true, pdOnly:true}. Polls GET /api/primitives/registry-index/project/:id/pdd-status every 5s, max 36 attempts (3min). Button id="pdd-btn-{project_id}", CSS classes: .loading, .done, .err. On complete, rewires onclick to open pablo.html?tab=knowledge&project_id={id}. [v79a]
+58. Watershed inline filter — S.watershedMode boolean toggle in toggleWatershed(). Resets all filters, sets status='Registered', clears country/meth/region. Does NOT navigate away. Button id="watershedBtn", text "Watershed 2026". [v79a]
+59. Country search — S.country string, onCountryInput() sets it. applyFilters() does r.country.toLowerCase().indexOf(S.country) substring match. Input id="countrySearch", cleared in resetFilters() and toggleWatershed(). [v79a]
+
+60. crawl_projects D1 schema — column is `registry_project_id` (NOT `project_id`), FK is `crawl_run_id` (NOT `run_id`). crawl_documents FK is also `crawl_run_id`. Always check PRAGMA table_info() before writing JOINs against crawl_* tables. [v79b]
+
+61. clearskyplatform.html v79b language rules — NEVER use "PABLO", "Knowledge Library", or "crawler/crawling" in any user-visible text. Use "ClearSky document library", "Credit History" (not "VCU Intelligence"), "Get Project Document" / "Open Document" (not "Download PD" / "Crawl PDD"), "Locating project document on Verra registry" (not "Crawling"). [v79b]
+
+62. clearskyplatform.html panel tabs are JS-rendered — `ptb-ov` and `ptb-vcu` IDs exist only in renderPanel() JavaScript, not in static HTML. QA checks looking in pre-script HTML will miss them. [v79b]
+
+63. CAT_MAP uses OR logic — `toggleCat('Energy')` matches project_category==='Energy' || 'Energy Demand' || 'Mining' || 'Chemical' || 'Manufacturing'. Nature matches AFOLU || Livestock. CCS is standalone. [v79b]
+
+64. DL_STEPS download animation — 5 steps at 2s intervals (total 10s animation). Runs in parallel with pollDlStatus (5s interval, max 36 attempts = 3min). If crawl finishes before animation, animation is cancelled and finishDl() called immediately. If crawl times out, animation completes then finishDl(null) is called. [v79b]
+
+65. crawler/run field names — Worker accepts: registry, project_id, query, max_projects, download_documents, pd_only, async, country, projectType, status. NOT: max, downloadFiles, pdOnly. clearskyplatform.html must use the correct names. [v79b fix]
+
+66. query vs project_id in buildVerraFilter — `query` does `contains(resourceName, ...)` (name search). `project_id` does `resourceIdentifier eq N` (exact ID match). For single-project PD download, ALWAYS use project_id, not query. [v79b fix]
+
+67. crawlVerra auto-extract — when pd_only is set, crawlVerra now auto-extracts the first PD document (prioritizes PROJ_DESC/PDD filenames). Creates knowledge_doc and sets knowledge_doc_id on crawl_documents. This makes pdd-status return 'complete' immediately after crawl. Without auto-extract, documents stay in 'extracting' state forever. [v79b fix]
+
+68. project_category always 'ALL' — verra_registry_index.project_category is the import batch label (always 'ALL'), NOT a project-level category. Category must be derived from `afolu` column (non-empty = AFOLU/Nature) and `methodology` patterns. deriveCat() in clearskyplatform.html does this normalization. [v79c]
+
+69. corsOrigin vs corsHeaders() — Worker binary download endpoints must use `...corsHeaders(request, env)` for CORS headers. There is no `corsOrigin` variable in scope — using it throws "corsOrigin is not defined". Pattern: `return new Response(data, { headers: { 'Content-Type': ..., ...corsHeaders(request, env) } })`. [v79c]
+
+70. crawler/download endpoint — GET /api/primitives/crawler/download/:crawl_doc_id serves file from R2 using crawl_documents.r2_key. Different from /api/files/download/:fileId which uses files table. Crawler files are NOT in the files table — they're in crawl_documents with their own r2_key. [v79c]
 ```
 
 ---
@@ -366,7 +378,7 @@ EXAMPLE CORRECT: SELECT thread_json FROM hubspot_threads LIMIT 1,
 | Worker URL | `https://api-tools.oga.earth` |
 | Worker source | `C:\brand-presentations\infrastructure\clearsky-api\src\worker.js` |
 | Worker deploy | `cd C:\brand-presentations\infrastructure\clearsky-api && npx wrangler deploy` |
-| Current version | v77-project-metadata |
+| Current version | v71-extraction-stable |
 | D1 database | `clearsky-tools-db` (binding: DB) |
 | R2 bucket | `clearsky-files` (binding: FILES) |
 | CF Account ID | `ea8c23643f21195df3f364066cdf76dd` |
@@ -400,7 +412,8 @@ EXAMPLE CORRECT: SELECT thread_json FROM hubspot_threads LIMIT 1,
 | `rfp-screener.html` | /api/ey-rfp/*, /api/files/* | Inbound RFP screening vs EY/Abatable criteria |
 | `goodcarbon.html` | /api/goodcarbon/*, /api/files/* | Inbound RFP screening vs Good Carbon Fund criteria |
 | `onboarding.html` | /api/onboarding/* | Counterparty onboarding — NDAs, KYC, documents |
-| `registry.html` | /api/onboarding/* | Read-only CRM view of onboarding data |
+| `clearskyplatform.html` | /api/primitives/registry-index/* | API-fed Verra registry intelligence — 4,903 projects, VCU tab, filters, Watershed screener (46KB, replaces 774KB registry.html) |
+| `registry.html` | (embedded data) | Legacy embedded-data registry browser — superseded by clearskyplatform.html |
 | `projects.html` | /api/projects/*, /api/hubspot/* | Project status tracker + HubSpot activity |
 | `linkedin.html` | /api/social/* | LinkedIn AI post generation, hooks, scheduling, publishing |
 | `expense-report.html` | /api/expense/* | Receipt OCR → expense claim → Excel/PDF |
@@ -638,7 +651,6 @@ POST      /api/primitives/rfp/:id/project                      ← add project t
 POST      /api/primitives/rfp/:rfp_id/project/:pid/supply      ← upload supply doc (file→extract→knowledge_docs) or link existing
 POST      /api/primitives/rfp/:rfp_id/project/:pid/evaluate    ← AI evaluation: Sonnet, per-criterion, verbatim text, fit_score 0-100
 GET       /api/primitives/rfp/:rfp_id/project/:pid             ← project detail with supply docs + evaluation
-PATCH     /api/primitives/rfp/:rfp_id/project/:pid             ← update project fields (submission_status, notes) [v76]
 ```
 
 ### Projects
@@ -748,4 +760,9 @@ copy "C:\brand-presentations\PABLO_CLAUDE.md" "C:\MITECO-ForestEngineer\PABLO_CL
 | 2026-03-13 | v70-scanned-pdf: Worker scanned PDF chunking + continuation queue. isLikelyScannedPdf() heuristic (bytes/page <50KB AND >30 pages). computePagesPerChunk() shared helper (15p text, 6p scanned, 4p scanned >300p, 20p ceiling). CHUNKS_PER_INVOCATION=15 with R2 staging (extractions/{jobId}/chunk_NNNN.txt), saveChunkResult()+assembleChunks() helpers. Queue consumer accepts {jobId, chunkOffset, isContinuation}. processExtractionJob rewritten with continuation support. extraction_jobs +total_chunks/completed_chunks/chunk_offset columns. jobs/:id returns progress_pct. Test: Seringueira PDD 536p/8.5MB → 6p/chunk → 90 chunks → 6 continuation hops. crawler_test v6: chunk progress bar, drop zone hint update, classifyVerraDoc geographic guard + Draft pattern, inferDocumentRole rewrite with Verra-specific roles, boundary files registry_doc_type='', multi-file upload confirmed. |
 | 2026-03-13 | v71-extraction-stable: Worker hasBinaryGarbage() detection for Document AI binary output. isLikelyScannedPdf() now skips native text extraction entirely (was short-circuiting at 200 char threshold). Native text threshold proportional: max(200, pageCount*20) chars. _docAiRequest() accepts forceOcr param → ocrConfig.enableNativePdfParsing=false for scanned PDFs. All 3 DocAI paths (sync single, sync chunked, async queue) pass forceOcr=isScanned and filter hasBinaryGarbage. crawler_test.html: extractionStatus field on staging rows (extracting/polling/chunks/done/error), statusCell() shows extraction progress in Status column, addToStaging before extraction (immediate row), processSingleFile() replaces extractFile(), pollJobForStaging() replaces pollJob() with chunk progress, updateStagingRow() helper, assignQuality() guards active extraction rows, version v1.0. |
 | 2026-03-13 | v72-mistral-ocr: (1) Multi-file upload fix — Array.from() snapshots FileList before async work (FileList is live DOM ref cleared by input.value=''). (2) Mistral OCR 3 as primary OCR — extractWithMistralOCR() sends base64 PDF to api.mistral.ai/v1/ocr, $0.002/page, ~30s for 536p. Routing: native text → Mistral OCR → Claude OCR fallback → Sonnet base64. (3) Document AI subsystem deleted — ~300 lines removed (getGoogleAuthToken, extractWithDocumentAI*, _docAiRequest, computePagesPerChunk, saveChunkResult, assembleChunks, all DOCAI_* constants). No more Google JWT auth or chunking continuation. (4) Cancel/Stop button — POST /api/primitives/jobs/:id/cancel + /requeue endpoints. Queue consumer skips cancelled jobs. Frontend red stop button during active extractions. Health: v72-mistral-ocr, mistral:true. |
-| 2026-03-13 | v77-project-metadata: New D1 table project_metadata (migration_018). New knowledge_docs columns: is_registered_example (INTEGER DEFAULT 0), canonical_type (TEXT). fetchVerraProjectDetail() uses Verra search POST to get project details + storeProjectMetadata() upserts. CONTINENT_MAP (~100 countries → 7 regions). crawlVerra now fetches project detail during crawl loop. fetchVerraDocuments pd_only filter (PD_PATTERNS + isPdDocument()). enrichKnowledgeDocAI auto-flags is_registered_example=1 for crawler PDDs from Registered projects. taxonomy/search returns is_registered_example + canonical_type with filters. New endpoints: GET /api/primitives/project-metadata, GET /api/primitives/project-metadata/:registry/:id. crawler_test.html v10: PD-only radio, project-ID grouped staging with collapsible headers, PROJECT_META_CACHE enrichment. pablo.html: klibSourceBadge(), enhanced canonical column (Method/Example), Registered Examples filter checkbox. Snapshot: worker-v77.js. Frontend commit 8f1aaa6. |
+| 2026-03-15 | v78-registry-platform: clearskyplatform.html — API-fed Verra registry intelligence. Replaces 774KB embedded-data registry.html with 46KB live-fetch version. Fetches 4,903 projects from GET /api/primitives/registry-index/search?limit=5000. Same 3-column dark UI: sidebar filters (status/region/methodology/AFOLU/category/volume), sortable paginated table, slide-out detail panel. Added VCU Intelligence tab (4 KPI cards, SVG sparkline bar chart 2019-2026, top buyer bars). Loading overlay + error handling. Fixed volume filter (S.volMin wired to oninput). No worker changes. Commit 3df4163. |
+| 2026-03-15 | v78-registry-platform: D1 verra_registry_index (4903) + vcu_aggregates (2116). clearskyplatform.html API-fed. Worker endpoints: registry-index/import, vcu/import-aggregates, registry-index/search. |
+| 2026-03-15 | v79a-ux-fixes | clearskyplatform.html UX: Download PD (crawler/run + pdd-status polling), Watershed inline filter, methodology dropdown labels+count, country search, AFOLU removed |
+| 2026-03-15 | v79b-ux-rebuild | clearskyplatform.html full UX rewrite (840 lines, 49KB). Worker: pdd-status endpoint added (worker-v79b.js). New: category pills (CAT_MAP OR logic), Verra-style meth dropdown (36 METH_LABELS), status strip with counts, VCU column in table, Credit History panel tab (retRing SVG + sparkline + top buyers), DL_STEPS download flow (5 plain-English steps), IS_EXTERNAL mode, Watershed inline with banner. Language: no PABLO/Knowledge Library/crawler in user text. Commit cf28c91. |
+| 2026-03-15 | v79b-fix | Worker: (1) project_id field in buildVerraFilter does `resourceIdentifier eq N` for exact ID lookup (query only does name search). (2) Auto-extract first PD after crawl when pd_only=true — creates knowledge_doc inline, pdd-status returns 'complete' immediately. (3) clearskyplatform.html: startDownload uses project_id + correct field names (max_projects, download_documents, pd_only). Tested: VCS 934 → complete, 23K words extracted. Commit c686282. |
+| 2026-03-15 | v79c-fixes | Category pills deriveCat (project_category='ALL' workaround), download flow no pablo.html (crawler/download endpoint + corsHeaders fix), RFP pre-populate, is_registered_example in auto-extract. Gotchas 68-70. |
