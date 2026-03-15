@@ -331,6 +331,10 @@ REGISTRY INDEX (v78):
 73. safeJsonParse(str, fallback) utility — parse JSON strings that may be null/empty/malformed. Used for issuance_trend and top_buyers columns which are stored as JSON TEXT in D1. Always provide a fallback ([] for arrays, {} for objects). Added in v79d worker. [v79d]
 
 74. showPage() tab switching — uses `.page.active` class (not inline display styles). Pattern: remove 'active' from all `.page` and `.ptab` elements, then add 'active' to the target. Lazy-load with `window.vcuLoaded` flag to avoid re-fetching data on tab switch. [v79d]
+
+75. vcu/search list vs detail split — List endpoint (vcu/search) returns `top_buyer_name` and `top_buyer_vol` (first buyer only), NO issuance_trend or full top_buyers array. Detail endpoint (vcu/project/:id) returns full data including issuance_trend and all top_buyers. Frontend filterVCU() must use `top_buyer_name` not `JSON.stringify(top_buyers)` for buyer search. [v79e]
+
+76. vcu_market_cache — D1 table (key TEXT PK, value TEXT, updated_at TEXT). Populated on first miss (cache-on-read) and after vcu/import-aggregates. computeMarketTotals(env) is the shared helper. Cache hit: 0.2s, cache miss: 1.4s. Response includes `cached: true/false` field. [v79e]
 ```
 
 ---
@@ -775,3 +779,4 @@ copy "C:\brand-presentations\PABLO_CLAUDE.md" "C:\MITECO-ForestEngineer\PABLO_CL
 | 2026-03-15 | v79b-fix | Worker: (1) project_id field in buildVerraFilter does `resourceIdentifier eq N` for exact ID lookup (query only does name search). (2) Auto-extract first PD after crawl when pd_only=true — creates knowledge_doc inline, pdd-status returns 'complete' immediately. (3) clearskyplatform.html: startDownload uses project_id + correct field names (max_projects, download_documents, pd_only). Tested: VCS 934 → complete, 23K words extracted. Commit c686282. |
 | 2026-03-15 | v79c-fixes | Category pills deriveCat (project_category='ALL' workaround), download flow no pablo.html (crawler/download endpoint + corsHeaders fix), RFP pre-populate, is_registered_example in auto-extract. Gotchas 68-70. |
 | 2026-03-15 | v79d-vcu-intelligence | Worker: GET /api/primitives/vcu/search (buyer/project/meth/status/year/country filters, LEFT JOIN vcu_aggregates+verra_registry_index) + GET /api/primitives/vcu/market-totals (SUM aggregates, top 10 buyers computed in JS). Added safeJsonParse(). Frontend: VCU Intelligence tab activated (was dimmed), showPage() tab switcher, page-vcu div with sidebar filters (buyer/status/vintage/country/methodology), sortable table (ID/Project/Issued/Retired/Active/Ret%), detail panel (KPI grid, retirement ring SVG, issuance trend sparkline, top 5 buyers). Helper functions fmtN/fmtK/esc. project_id→id mapping fix. Worker v79d deployed. Frontend commits 81b8935, cacb81f. Snapshot: worker-v79d.js. Gotchas 71-74. |
+| 2026-03-15 | v79e-vcu-perf | Lighter list payload (no issuance_trend, top_buyer_name/vol only). Detail endpoint GET /api/primitives/vcu/project/:id. market-totals cache (vcu_market_cache D1 table, cache-on-read + post-import). computeMarketTotals() helper. 87KB/200 rows (was 247KB/500). Cached market-totals: 0.2s (was 1.4s). Gotchas 75-76. |
