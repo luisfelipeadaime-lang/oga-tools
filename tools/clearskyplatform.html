@@ -780,7 +780,7 @@ function startDownload(id){
   if(btn){btn.className='btn btn-ghost btn-loading';btn.textContent='Requesting document...';}
   fetch(API+'/api/primitives/crawler/run',{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({registry:'verra',query:id,max_projects:1,download_documents:true,pd_only:true})
+    body:JSON.stringify({registry:'verra',project_id:id,max_projects:1,download_documents:true,pd_only:true})
   }).then(function(r){return r.json();})
   .then(function(data){
     if(!data.run_id)throw new Error('no run_id');
