@@ -978,7 +978,7 @@ function filterVCU(){
     if(country&&!(r.country||'').toLowerCase().includes(country))return false;
     if(meth&&!(r.methodology||'').toLowerCase().includes(meth))return false;
     if(buyer){
-      if(!(r.top_buyer_name||'').toLowerCase().includes(buyer))return false;
+      if(!JSON.stringify(r.all_buyers||[]).toLowerCase().includes(buyer))return false;
     }
     var fy=parseInt(r.first_issuance_year)||0;
     var ly=parseInt(r.last_issuance_year)||9999;
