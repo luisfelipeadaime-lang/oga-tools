@@ -323,6 +323,14 @@ REGISTRY INDEX (v78):
 69. corsOrigin vs corsHeaders() — Worker binary download endpoints must use `...corsHeaders(request, env)` for CORS headers. There is no `corsOrigin` variable in scope — using it throws "corsOrigin is not defined". Pattern: `return new Response(data, { headers: { 'Content-Type': ..., ...corsHeaders(request, env) } })`. [v79c]
 
 70. crawler/download endpoint — GET /api/primitives/crawler/download/:crawl_doc_id serves file from R2 using crawl_documents.r2_key. Different from /api/files/download/:fileId which uses files table. Crawler files are NOT in the files table — they're in crawl_documents with their own r2_key. [v79c]
+
+71. vcu_aggregates.top_buyers is a JSON string — `[["Shell",38780870],["Eni",22885945]]`. In SQL, use `LOWER(v.top_buyers) LIKE ?` for buyer name substring search. In JS, parse with safeJsonParse(str, fallback) before aggregating. The market-totals endpoint aggregates across ALL rows in JS (not SQL) because buyer names span multiple projects. [v79d]
+
+72. vcu/search returns `project_id` (from vcu_aggregates) not `id` — frontend must map `r.id = r.project_id` after fetch. The verra_registry_index table uses `id` but vcu_aggregates uses `project_id` as FK. JOIN aliases don't change this because the SELECT explicitly lists `v.project_id`. [v79d]
+
+73. safeJsonParse(str, fallback) utility — parse JSON strings that may be null/empty/malformed. Used for issuance_trend and top_buyers columns which are stored as JSON TEXT in D1. Always provide a fallback ([] for arrays, {} for objects). Added in v79d worker. [v79d]
+
+74. showPage() tab switching — uses `.page.active` class (not inline display styles). Pattern: remove 'active' from all `.page` and `.ptab` elements, then add 'active' to the target. Lazy-load with `window.vcuLoaded` flag to avoid re-fetching data on tab switch. [v79d]
 ```
 
 ---
@@ -766,3 +774,4 @@ copy "C:\brand-presentations\PABLO_CLAUDE.md" "C:\MITECO-ForestEngineer\PABLO_CL
 | 2026-03-15 | v79b-ux-rebuild | clearskyplatform.html full UX rewrite (840 lines, 49KB). Worker: pdd-status endpoint added (worker-v79b.js). New: category pills (CAT_MAP OR logic), Verra-style meth dropdown (36 METH_LABELS), status strip with counts, VCU column in table, Credit History panel tab (retRing SVG + sparkline + top buyers), DL_STEPS download flow (5 plain-English steps), IS_EXTERNAL mode, Watershed inline with banner. Language: no PABLO/Knowledge Library/crawler in user text. Commit cf28c91. |
 | 2026-03-15 | v79b-fix | Worker: (1) project_id field in buildVerraFilter does `resourceIdentifier eq N` for exact ID lookup (query only does name search). (2) Auto-extract first PD after crawl when pd_only=true — creates knowledge_doc inline, pdd-status returns 'complete' immediately. (3) clearskyplatform.html: startDownload uses project_id + correct field names (max_projects, download_documents, pd_only). Tested: VCS 934 → complete, 23K words extracted. Commit c686282. |
 | 2026-03-15 | v79c-fixes | Category pills deriveCat (project_category='ALL' workaround), download flow no pablo.html (crawler/download endpoint + corsHeaders fix), RFP pre-populate, is_registered_example in auto-extract. Gotchas 68-70. |
+| 2026-03-15 | v79d-vcu-intelligence | Worker: GET /api/primitives/vcu/search (buyer/project/meth/status/year/country filters, LEFT JOIN vcu_aggregates+verra_registry_index) + GET /api/primitives/vcu/market-totals (SUM aggregates, top 10 buyers computed in JS). Added safeJsonParse(). Frontend: VCU Intelligence tab activated (was dimmed), showPage() tab switcher, page-vcu div with sidebar filters (buyer/status/vintage/country/methodology), sortable table (ID/Project/Issued/Retired/Active/Ret%), detail panel (KPI grid, retirement ring SVG, issuance trend sparkline, top 5 buyers). Helper functions fmtN/fmtK/esc. project_id→id mapping fix. Worker v79d deployed. Frontend commits 81b8935, cacb81f. Snapshot: worker-v79d.js. Gotchas 71-74. |
