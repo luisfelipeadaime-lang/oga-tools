@@ -187,6 +187,17 @@ td{padding:7px 10px;vertical-align:middle}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-text{margin-top:14px;font-size:12px;color:var(--text2);letter-spacing:.5px}
 .error-msg{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:var(--red-dim);border:1px solid rgba(248,113,113,.25);border-radius:8px;padding:12px 20px;color:var(--red);font-size:12px;z-index:200;display:none}
+
+/* PDD DOWNLOAD */
+.pdd-btn.loading{background:var(--teal-dim)!important;color:var(--teal)!important;border-color:rgba(45,212,191,.3)!important;cursor:wait!important}
+.pdd-btn.done{background:var(--green-dim)!important;color:var(--green)!important;border-color:rgba(52,211,153,.3)!important}
+.pdd-btn.err{background:var(--red-dim)!important;color:var(--red)!important;border-color:rgba(248,113,113,.3)!important}
+
+/* METHODOLOGY DROPDOWN */
+.meth-dd-item{padding:7px 10px;cursor:pointer;font-size:12px;color:var(--text1);display:flex;align-items:center;gap:4px}
+.meth-dd-item:hover{background:var(--bg3);color:var(--text0)}
+.mdi-code{font-family:'DM Mono',monospace;color:var(--teal);flex-shrink:0}
+.mdi-label{color:var(--text2);font-size:11px}
 </style>
 </head>
 <body>
@@ -220,7 +231,7 @@ td{padding:7px 10px;vertical-align:middle}
   </div>
   <div class="topbar-sep"></div>
   <div class="topbar-right">
-    <button class="watershed-btn" id="watershedBtn" onclick="toggleWatershed()">Watershed 2026 Screener</button>
+    <button class="watershed-btn" id="watershedBtn" onclick="toggleWatershed()">Watershed 2026</button>
     <span id="dataSource" style="font-size:10px;color:var(--text3);margin-left:6px">Live · D1</span>
   </div>
 </div>
@@ -254,7 +265,9 @@ td{padding:7px 10px;vertical-align:middle}
 
   <div style="flex:1;overflow-y:auto">
     <div class="filter-section">
-      <div class="filter-label">Region</div>
+      <div class="filter-label">Country</div>
+      <input class="method-search" id="countrySearch" placeholder="Type Brazil, India..." oninput="onCountryInput(this.value)" style="margin-bottom:6px">
+      <div class="filter-label" style="margin-top:8px">Region</div>
       <div class="check-list" id="regionList"></div>
     </div>
     <div class="filter-section">
@@ -262,10 +275,6 @@ td{padding:7px 10px;vertical-align:middle}
       <input class="method-search" id="methSearch" placeholder="Search e.g. VM0047..." oninput="onMethSearch(this.value)">
       <div class="method-chips" id="methChips"></div>
       <div id="methDropdown" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:7px;margin-top:3px;max-height:120px;overflow-y:auto;font-size:12px"></div>
-    </div>
-    <div class="filter-section" id="afoluSection">
-      <div class="filter-label">AFOLU Activity</div>
-      <div class="check-list" id="afoluList"></div>
     </div>
     <div class="filter-section">
       <div class="filter-label">Project Category</div>
@@ -335,8 +344,8 @@ var S = {
   status: 'Registered',
   regions: new Set(),
   methodologies: new Set(),
-  afolus: new Set(),
   categories: new Set(),
+  country: '',
   volMin: 0,
   sortCol: 'id',
   sortDir: 'asc',
@@ -347,6 +356,77 @@ var S = {
   pageSize: 200,
   panelTab: 'overview'
 };
+
+// ── METHODOLOGY LABELS ──────────────────────────────────────────────────────
+var METH_LABELS = {
+  'VM0003':'Improved Forest Management (Rotation Age)','VM0006':'Mosaic/Landscape REDD','VM0007':'REDD+ Methodology Framework',
+  'VM0009':'Avoided Ecosystem Conversion','VM0010':'IFM: Logged to Protected Forest','VM0012':'IFM: Temperate/Boreal Forests',
+  'VM0015':'Avoided Unplanned Deforestation','VM0017':'Sustainable Agricultural Land Mgmt','VM0022':'N2O Reduction in Crops',
+  'VM0026':'Sustainable Grassland Management','VM0033':'Tidal Wetland & Seagrass Restoration','VM0034':'Canadian Forest Carbon Offset',
+  'VM0042':'Improved Agricultural Land Management','VM0044':'Biochar Utilization','VM0046':'Reducing Food Loss & Waste',
+  'VM0047':'Afforestation, Reforestation & Revegetation','VM0048':'Reducing Deforestation & Degradation',
+  'VM0019':'Fuel Switch Gasoline to Ethanol','VM0041':'Methane Emission Reduction (Mines)',
+  'AR-ACM0003':'A/R of Lands (excl. Wetlands)','AMS-III.D':'Methane Recovery (Animal Manure)',
+  'ACM0002':'Grid-Connected Electricity from Renewables','ACM0006':'Consolidated Landfill Gas',
+  'AMS-I.D':'Grid-Connected Renewable Electricity','AMS-III.AV':'Low GHG Emitting Water Purification'
+};
+
+// ── DOWNLOAD PD ─────────────────────────────────────────────────────────────
+function downloadPD(id) {
+  var btn = document.getElementById('pdd-btn-'+id);
+  if(!btn || btn.classList.contains('loading')) return;
+  btn.classList.add('loading');
+  btn.textContent = 'Starting download...';
+  fetch(API + '/api/primitives/crawler/run', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({registry:'verra', query:id, max:1, downloadFiles:true, pdOnly:true})
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if(!data.run_id) throw new Error(data.error||'No run_id returned');
+    btn.textContent = 'Crawling Verra...';
+    pollPD(id, data.run_id, btn);
+  })
+  .catch(function(e){
+    btn.classList.remove('loading'); btn.classList.add('err');
+    btn.textContent = 'Error — retry';
+    setTimeout(function(){btn.classList.remove('err');btn.textContent='Download PD for VCS '+id;}, 4000);
+  });
+}
+
+function pollPD(id, runId, btn) {
+  var attempts = 0;
+  var timer = setInterval(function(){
+    attempts++;
+    if(attempts > 36){
+      clearInterval(timer);
+      btn.classList.remove('loading'); btn.classList.add('err');
+      btn.textContent = 'Timed out — check PABLO library';
+      return;
+    }
+    fetch(API + '/api/primitives/registry-index/project/'+id+'/pdd-status')
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(d.status==='crawling') btn.textContent='Downloading PD...';
+        else if(d.status==='extracting') btn.textContent='Extracting text...';
+        else if(d.status==='complete' && d.knowledge_doc_id){
+          clearInterval(timer);
+          btn.classList.remove('loading'); btn.classList.add('done');
+          btn.textContent = 'PD ready — view in PABLO';
+          btn.onclick = function(){ window.open('https://tools.oga.earth/tools/pablo.html?tab=knowledge&project_id='+id,'_blank'); };
+        }
+      })
+      .catch(function(){/* keep polling */});
+  }, 5000);
+}
+
+// ── COUNTRY SEARCH ──────────────────────────────────────────────────────────
+function onCountryInput(q) {
+  S.country = q.trim().toLowerCase();
+  S.selectedId = null;
+  renderTable();
+}
 
 // ── LOAD DATA FROM API ───────────────────────────────────────────────────────
 function loadData() {
@@ -514,12 +594,9 @@ function applyFilters() {
       var meths = r.methodology.split(';').map(function(m) { return m.trim(); });
       return meths.some(function(m) { return S.methodologies.has(m); });
     });
-    if (S.afolus.size) rows = rows.filter(function(r) {
-      var acts = r.afolu.split(';').map(function(a) { return a.trim(); });
-      return acts.some(function(a) { return S.afolus.has(a); });
-    });
     if (S.categories.size) rows = rows.filter(function(r) { return S.categories.has(r.category); });
     if (S.volMin > 0) rows = rows.filter(function(r) { return parseInt(r.volume||0) >= S.volMin; });
+    if (S.country) rows = rows.filter(function(r) { return r.country.toLowerCase().indexOf(S.country) >= 0; });
   }
   // Sort
   rows = rows.slice().sort(function(a,b) {
@@ -648,7 +725,7 @@ function renderPanel(id) {
       '<div class="panel-actions">' +
       '<a href="' + row.url + '" target="_blank" style="text-decoration:none"><button class="btn btn-primary" style="width:100%">Open Verra Registry Page</button></a>' +
       (isEligible ? '<button class="add-rfp-btn" onclick="addToRfp(\'' + id + '\')">+ Add to Watershed 2026 RFP</button>' : '') +
-      '<button class="btn btn-ghost" style="width:100%;font-size:11px" onclick="crawlPdd(\'' + id + '\')">Crawl PDD for VCS ' + id + '</button>' +
+      '<button class="btn btn-ghost pdd-btn" id="pdd-btn-'+id+'" onclick="downloadPD(\''+id+'\')" style="width:100%;font-size:11px;margin-top:4px">Download PD for VCS ' + id + '</button>' +
       '</div></div>';
   } else if (S.panelTab === 'vcu' && hasVcu) {
     bodyHtml = renderVcuTab(vcu, id);
@@ -735,15 +812,6 @@ function buildSidebar() {
       '<span class="ci-count">' + n + '</span></label>';
   }).join('');
 
-  var afoluCounts = {};
-  ALL.forEach(function(r) { r.afolu.split(';').forEach(function(a) { a=a.trim(); if(a) afoluCounts[a]=(afoluCounts[a]||0)+1; }); });
-  var afolus = Object.entries(afoluCounts).sort(function(a,b) { return b[1]-a[1]; });
-  document.getElementById('afoluList').innerHTML = afolus.map(function(e) {
-    var a = e[0], n = e[1];
-    return '<label class="check-item"><input type="checkbox" onchange="toggleAfolu(\'' + a + '\')" id="ac-' + a + '">' +
-      '<label for="ac-' + a + '" style="cursor:pointer">' + a + '</label><span class="ci-count">' + n + '</span></label>';
-  }).join('');
-
   var catCounts = {};
   ALL.forEach(function(r) { catCounts[r.category]=(catCounts[r.category]||0)+1; });
   var cats = Object.entries(catCounts).sort(function(a,b) { return b[1]-a[1]; });
@@ -758,11 +826,14 @@ function buildSidebar() {
 function onMethSearch(q) {
   var dd = document.getElementById('methDropdown');
   if (!q) { dd.style.display='none'; return; }
-  var matches = ALL_METHS.filter(function(m) { return m.toUpperCase().indexOf(q.toUpperCase()) >= 0; }).slice(0,12);
+  var qu = q.toUpperCase();
+  var matches = ALL_METHS.filter(function(m){ return m.toUpperCase().indexOf(qu) >= 0 || (METH_LABELS[m] && METH_LABELS[m].toUpperCase().indexOf(qu) >= 0); }).slice(0,15);
   if (!matches.length) { dd.style.display='none'; return; }
   dd.style.display = 'block';
-  dd.innerHTML = matches.map(function(m) {
-    return '<div onclick="addMeth(\'' + m + '\')" style="padding:6px 10px;cursor:pointer;color:var(--text1)" onmouseenter="this.style.background=\'var(--bg3)\'" onmouseleave="this.style.background=\'\'">' + m + '</div>';
+  dd.innerHTML = matches.map(function(m){
+    var lbl = METH_LABELS[m] ? METH_LABELS[m].slice(0,40) : '';
+    var cnt = S.filtered ? S.filtered.filter(function(r){return r.methodology.indexOf(m)>=0;}).length : '';
+    return '<div class="meth-dd-item" onclick="addMeth(\''+m+'\')"><span class="mdi-code">'+m+'</span>'+(lbl?'<span class="mdi-label"> — '+lbl+'</span>':'')+' <span style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3);margin-left:auto">'+(cnt||'')+' proj</span></div>';
   }).join('');
 }
 function addMeth(m) {
@@ -797,7 +868,6 @@ function setStatus(s) {
   renderTable();
 }
 function toggleRegion(r) { S.regions.has(r) ? S.regions.delete(r) : S.regions.add(r); renderTable(); }
-function toggleAfolu(a) { S.afolus.has(a) ? S.afolus.delete(a) : S.afolus.add(a); renderTable(); }
 function toggleCategory(c) { S.categories.has(c) ? S.categories.delete(c) : S.categories.add(c); renderTable(); }
 function sortBy(col) {
   if (S.sortCol === col) S.sortDir = S.sortDir === 'asc' ? 'desc' : 'asc';
@@ -816,13 +886,14 @@ function toggleWatershed() {
     S.status = 'Registered';
     S.regions = new Set();
     S.methodologies = new Set();
-    S.afolus = new Set();
     S.categories = new Set();
+    S.country = '';
     S.volMin = 0;
     document.querySelectorAll('.status-tab').forEach(function(t) { t.classList.remove('active'); });
     document.getElementById('stab-Registered').classList.add('active');
     document.querySelectorAll('.check-item input').forEach(function(el) { el.checked = false; });
     document.getElementById('methChips').innerHTML = '';
+    document.getElementById('countrySearch').value = '';
     document.getElementById('volMin').value = '';
   }
   S.selectedId = null;
@@ -832,8 +903,8 @@ function resetFilters() {
   S.status = 'Registered';
   S.regions = new Set();
   S.methodologies = new Set();
-  S.afolus = new Set();
   S.categories = new Set();
+  S.country = '';
   S.volMin = 0;
   S.watershedMode = false;
   S.selectedId = null;
@@ -843,6 +914,7 @@ function resetFilters() {
   document.querySelectorAll('.check-item input').forEach(function(el) { el.checked = false; });
   document.getElementById('methChips').innerHTML = '';
   document.getElementById('methSearch').value = '';
+  document.getElementById('countrySearch').value = '';
   document.getElementById('volMin').value = '';
   renderTable();
 }
@@ -851,10 +923,6 @@ function addToRfp(id) {
   if (!row) return;
   alert('Add to RFP Tracker:\n\nProject: ' + row.name + '\nVerra ID: ' + id + '\nMethodology: ' + row.methodology + '\nCountry: ' + row.country + '\nVolume: ' + fmtVolFull(row.volume) + '\n\nOpen rfp-tracker.html to add this project.');
 }
-function crawlPdd(id) {
-  window.open('https://registry.verra.org/app/projectDetail/VCS/' + id, '_blank');
-}
-
 // ── BOOT ─────────────────────────────────────────────────────────────────────
 loadData();
 </script>
