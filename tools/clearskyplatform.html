@@ -149,7 +149,8 @@ td{padding:5px 8px;vertical-align:middle}
 .panel{background:var(--bg1);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
 .panel-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:24px;color:var(--text3)}
 .pe-icon{font-size:28px;opacity:.25}
-.ph{padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.ph{padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0;position:sticky;top:0;z-index:10;background:var(--bg1)}
+.results-bar{position:sticky;top:0;z-index:8;background:var(--bg1)}
 .ph-id{font-family:'DM Mono',monospace;font-size:22px;font-weight:600;color:var(--teal);line-height:1}
 .ph-name{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text0);margin-top:4px;line-height:1.25}
 .ph-prop{font-size:11px;color:var(--text2);margin-top:2px}
@@ -264,6 +265,11 @@ td{padding:5px 8px;vertical-align:middle}
   <div class="stat-pill"><span class="stat-pill-num" id="sp-reg">&mdash;</span><span class="stat-pill-label">registered</span></div>
   <div class="stat-pill"><span class="stat-pill-num">1.38B</span><span class="stat-pill-label">VCUs issued</span></div>
   <div class="stat-pill"><span class="stat-pill-num">912M</span><span class="stat-pill-label">VCUs retired</span></div>
+  <div style="position:relative;margin-left:8px" id="globalSearchWrap">
+    <input id="globalSearchInp" placeholder="Search buyers, projects, sectors..." style="width:220px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:5px 9px 5px 28px;color:var(--text0);font-size:11px;outline:none" oninput="onGlobalSearch(this.value)" onfocus="showGlobalResults()" autocomplete="off">
+    <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text3);pointer-events:none">&#128269;</span>
+    <div id="globalResults" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border-hi);border-radius:0 0 7px 7px;z-index:200;max-height:280px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.4)"></div>
+  </div>
   <div class="topbar-sep"></div>
   <div class="topbar-right">
     <span class="live-note" id="liveNote"></span>
@@ -394,7 +400,7 @@ td{padding:5px 8px;vertical-align:middle}
     </div>
   </div>
 
-  <div id="vProjectOnlyFilters">
+  <div id="vProjectOnlyFilters" style="display:none">
   <div class="status-strip">
     <div class="sstab on" id="vstab-all" onclick="setVCUStatus('all')">
       <div class="sstab-left"><span class="sdot" style="background:var(--text3)"></span>All Credits</div>
@@ -433,7 +439,7 @@ td{padding:5px 8px;vertical-align:middle}
       <div class="section-label">Methodology</div>
       <input class="finput" id="vcuMethSearch" placeholder="VM0007, ACM0002..." oninput="filterVCU()">
     </div>
-    <div class="filter-section" id="vBuyerOnlyFilters" style="padding:8px 10px;display:none">
+    <div class="filter-section" id="vBuyerOnlyFilters" style="padding:8px 10px">
       <div class="section-label">Buyer sector</div>
       <select class="finput" id="vSectorQ" onchange="filterVCU()" style="cursor:pointer">
         <option value="">All sectors</option>
@@ -458,11 +464,11 @@ td{padding:5px 8px;vertical-align:middle}
 <!-- VCU MAIN TABLE -->
 <div class="main">
   <div style="background:var(--bg1);border-bottom:1px solid var(--border);display:flex;padding:0 14px;flex-shrink:0">
-    <div class="ptb on" id="vsubt-project" onclick="setVCUSub('project')" style="font-size:11px;padding:7px 14px">By Project</div>
-    <div class="ptb" id="vsubt-buyer" onclick="setVCUSub('buyer')" style="font-size:11px;padding:7px 14px">By Buyer</div>
+    <div class="ptb on" id="vsubt-buyer" onclick="setVCUSub('buyer')" style="font-size:11px;padding:7px 14px">By Buyer</div>
     <div class="ptb" id="vsubt-map" onclick="setVCUSub('map')" style="font-size:11px;padding:7px 14px">Demand Map</div>
+    <div class="ptb" id="vsubt-project" onclick="setVCUSub('project')" style="font-size:11px;padding:7px 14px">By Project</div>
   </div>
-  <div id="vProjectView" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+  <div id="vProjectView" style="display:none;flex-direction:column;flex:1;overflow:hidden">
     <div class="topstrip">
       <div class="ts-left">
         <span class="ts-label" id="vcuCount">Loading...</span>
@@ -483,10 +489,11 @@ td{padding:5px 8px;vertical-align:middle}
     <div class="rows" id="vcuRows"></div>
   </div>
   <div id="vMapView" style="display:none;flex:1;overflow-y:auto;padding:16px">
+    <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:6px"><button onclick="exportCSV('demand_matrix')" style="padding:4px 12px;background:transparent;border:1px solid var(--border-hi);border-radius:6px;color:var(--text1);font-family:inherit;font-size:10.5px;cursor:pointer">&darr; Export CSV</button></div>
     <div id="vMapLoading" style="text-align:center;padding:40px;color:var(--text3);font-size:12px">Loading demand matrix...</div>
     <div id="vMapContent" style="display:none"></div>
   </div>
-  <div id="vBuyerView" style="display:none;flex-direction:column;flex:1;overflow:hidden">
+  <div id="vBuyerView" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
     <div class="results-bar">
       <span class="rc" id="vBRc">&mdash;</span>
       <span class="rl">buyers</span>
@@ -518,6 +525,7 @@ td{padding:5px 8px;vertical-align:middle}
 
 <!-- VCU PANEL -->
 <div class="panel">
+  <div id="panelBreadcrumb" style="display:none;padding:5px 12px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:10.5px;color:var(--text2);align-items:center;gap:4px;flex-wrap:wrap;flex-shrink:0"></div>
   <div class="panel-empty" id="vcuPanelEmpty">
     <div class="pe-icon">&#9678;</div>
     <div style="font-size:12px;color:var(--text2);font-weight:600">Select a project</div>
@@ -1149,6 +1157,8 @@ function renderVCU(){
 
 function selVCURow(id){
   VS.selectedId=id;
+  var row=ALL.find(function(p){return p.id===id;});
+  pushBreadcrumb('project',id,row?(row.name.length>22?row.name.slice(0,22)+'\u2026':row.name):('VCS #'+id));
   renderVCU();
   renderVCUPanel(id);
 }
@@ -1186,17 +1196,26 @@ function renderVCUPanel(id){
       var buyers=r.top_buyers||[];
       if(typeof buyers==='string'){try{buyers=JSON.parse(buyers);}catch(e){buyers=[];}}
       if(!Array.isArray(buyers))buyers=[];
+      currentProjectBuyers=buyers;
       var bMax=buyers.length>0?buyers[0][1]:1;
+      var bTotal=buyers.reduce(function(s,b){return s+(b[1]||0);},0);
       var bHtml='';
       buyers.slice(0,5).forEach(function(b){
         var pct=Math.round(b[1]/bMax*100);
-        bHtml+='<div class="buyer-row"><div class="b-name" title="'+esc(b[0])+'">'+esc(b[0])+'</div><div class="b-bar"><div class="b-fill" style="width:'+pct+'%"></div></div><div class="b-vol">'+fmtK(b[1])+'</div></div>';
+        var sharePct=bTotal>0?((b[1]/bTotal)*100).toFixed(1):'0';
+        bHtml+='<div class="buyer-row" onclick="gotoBuyer(\''+esc(b[0]).replace(/'/g,"\\'")+'\')" style="cursor:pointer" title="Click to view buyer profile"><div class="b-name" style="color:var(--teal);text-decoration:underline" title="'+esc(b[0])+'">'+esc(b[0])+'</div><div class="b-bar"><div class="b-fill" style="width:'+pct+'%"></div></div><div class="b-vol">'+fmtK(b[1])+'<span style="font-size:8.5px;color:var(--text3);margin-left:3px">'+sharePct+'%</span></div></div>';
       });
       if(!buyers.length)bHtml='<div style="font-size:11px;color:var(--text3);padding:8px 0">No buyer data available</div>';
 
+      var methLabel=r.meth_label||methPlainFE(r.methodology)||r.methodology||'';
       var h='<div class="panel-scroll" style="flex:1;overflow-y:auto;padding:14px">';
-      h+='<div style="font-size:12px;font-weight:600;color:var(--text0);margin-bottom:2px">'+esc(r.name||'')+'</div>';
-      h+='<div style="font-size:10px;color:var(--text3);margin-bottom:12px">VCS #'+r.project_id+(r.country?' \u00b7 '+r.country:'')+(r.methodology?' \u00b7 '+r.methodology:'')+'</div>';
+      h+='<div style="display:flex;align-items:flex-start;justify-content:space-between">'
+       +'<div><div style="font-size:12px;font-weight:600;color:var(--text0);margin-bottom:2px">'+esc(r.name||'')+'</div>'
+       +'<div style="font-size:10px;color:var(--text3);margin-bottom:3px">VCS #'+r.project_id+(r.country?' \u00b7 '+r.country:'')+'</div>'
+       +(methLabel?'<div style="font-size:10px;color:var(--text2);margin-bottom:12px">'+esc(methLabel)+'</div>':'')
+       +(r.clearsky_project?'<span style="font-size:8.5px;padding:2px 6px;border-radius:99px;background:var(--teal);color:var(--bg0);font-weight:600">ClearSky Portfolio</span>':'')
+       +'</div>'
+       +'<button onclick="exportCSV(\'project_buyers\',currentProjectBuyers)" style="padding:3px 10px;background:transparent;border:1px solid var(--border-hi);border-radius:6px;color:var(--text2);font-family:inherit;font-size:10px;cursor:pointer;flex-shrink:0">&darr; CSV</button></div>';
 
       h+='<div class="vcu-kpi-grid">';
       h+='<div class="vcu-kpi"><div class="vku-l">Issued</div><div class="vku-v" style="color:var(--teal)">'+fmtN(r.total_issued||0)+'</div></div>';
@@ -1236,6 +1255,12 @@ function renderVCUPanel(id){
       h+='<div class="psec-title" style="margin-top:10px">Top Buyers</div>';
       h+=bHtml;
 
+      /* F9: Find buyers section */
+      h+='<div style="margin-top:14px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+       +'<div class="psec-title" style="margin:0">Find potential buyers</div>'
+       +'<button onclick="loadBuyerRecs(\''+r.project_id+'\')" style="padding:3px 10px;background:var(--teal-dim);border:1px solid rgba(45,212,191,.3);border-radius:6px;color:var(--teal);font-family:inherit;font-size:10px;cursor:pointer">Score buyers</button></div>'
+       +'<div id="buyerRecs-'+r.project_id+'" style="font-size:10.5px;color:var(--text3)">Click to find buyers whose history matches this project</div></div>';
+
       h+='</div>';
       pd.innerHTML=h;
     })
@@ -1245,7 +1270,7 @@ function renderVCUPanel(id){
 }
 
 /* ============ BUYER INTELLIGENCE ============ */
-var VCU_SUB='project';
+var VCU_SUB='buyer';
 var BUYER_DATA=[],BUYER_FILTERED=[];
 var BUYER_SORT={col:'total_retired',dir:'desc'};
 var buyersLoaded=false;
@@ -1352,36 +1377,11 @@ function renderBuyers(){
   document.getElementById('vBTbody').innerHTML=html||'<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text3)">No buyers match</td></tr>';
 }
 
-function exportBuyerCSV(){
-  var rows=BUYER_FILTERED;
-  var headers=['Buyer','Sector','Total Retired','Projects','Avg Annual','Last Active','Top Methodology','Top Country','Methodologies','Countries'];
-  var csv=headers.join(',')+'\n';
-  rows.forEach(function(b){
-    var row=[
-      '"'+(b.name||'').replace(/"/g,'""')+'"',
-      '"'+(b.sector||'')+'"',
-      b.total_retired||0,
-      b.project_count||0,
-      b.avg_annual_retirement||0,
-      b.last_activity_year||'',
-      '"'+(b.top_methodology||'')+'"',
-      '"'+(b.top_country||'')+'"',
-      '"'+(b.methodologies||[]).join('; ')+'"',
-      '"'+(b.countries||[]).join('; ')+'"'
-    ];
-    csv+=row.join(',')+'\n';
-  });
-  var blob=new Blob([csv],{type:'text/csv'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');
-  a.href=url;
-  a.download='clearsky_buyer_intelligence_'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-}
+function exportBuyerCSV(){exportCSV('buyers');}
 
 function selBuyerRow(name){
   selBuyer=name;
+  pushBreadcrumb('buyer',name,name.length>20?name.slice(0,20)+'\u2026':name);
   renderBuyers();
   renderBuyerPanel(name);
 }
@@ -1406,6 +1406,8 @@ function renderBuyerPanelData(name,totalRetired,projects,methodologies,countries
   var pd=document.getElementById('vcuPanelDetail');
   pd.style.display='flex';pd.style.flexDirection='column';
 
+  currentBuyerData={name:name,total_retired:totalRetired,projects:projects,methodologies:methodologies,countries:countries};
+
   var methChips=methodologies.slice(0,6).map(function(m){return '<span class="'+mCls(m)+'" style="font-size:10px">'+m+'</span>';}).join(' ');
 
   var topProjects=projects.slice(0,5).map(function(p){
@@ -1426,34 +1428,44 @@ function renderBuyerPanelData(name,totalRetired,projects,methodologies,countries
   var buyerObj={name:name,total_retired:totalRetired,projects:projects,methodologies:methodologies,countries:countries,top_methodology:methodologies[0]||null,top_country:countries[0]||null};
   var sparkHtml=buyerSparkline(buyerObj);
 
-  var matches=matchProjects(buyerObj);
-  var matchHtml='';
-  if(matches.length){
-    matchHtml='<div style="margin-top:14px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:8px">Recommended projects to pitch</div>';
-    matches.forEach(function(m){
-      var p=m.row;
-      var scoreColor=m.score>=7?'var(--teal)':m.score>=5?'var(--green)':'var(--amber)';
-      var methMs=p.meth.split(';')[0].trim();
-      matchHtml+='<div onclick="showPage(\'browser\');setTimeout(function(){selRow(\''+p.id+'\');},400);" style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer">'
-        +'<div style="flex:1;min-width:0">'
-        +'<div style="font-size:11.5px;color:var(--text0);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(p.name)+'">'+esc(p.name)+'</div>'
-        +'<div style="font-size:9.5px;color:var(--text3);margin-top:1px">'+m.reasons.slice(0,2).join(' \u00B7 ')+'</div>'
-        +'</div>'
-        +'<span class="'+mCls(methMs)+'" style="font-size:8.5px;flex-shrink:0">'+methMs+'</span>'
-        +'<div style="font-family:\'DM Mono\',monospace;font-size:11px;color:'+scoreColor+';flex-shrink:0;min-width:24px;text-align:right">'+m.score+'</div>'
-        +'</div>';
+  /* F7: Methodology cards */
+  var methCardsHtml='<div style="margin-top:14px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:6px">Preferred methodologies</div>';
+  methodologies.forEach(function(m){
+    var label=METH_LABELS_FE[m]||METH_LABELS[m]||'Carbon project methodology';
+    methCardsHtml+='<div onclick="toggleMethCard(this,\''+esc(name).replace(/'/g,"\\'")+'\',\''+m+'\')" style="cursor:pointer;padding:7px 10px;margin-bottom:4px;border:1px solid var(--border);border-radius:6px;background:var(--bg3)">'
+      +'<div style="display:flex;align-items:center;gap:6px">'
+      +'<span class="meth-arrow" style="font-size:10px;color:var(--text3)">\u25B8</span>'
+      +'<span class="'+mCls(m)+'" style="font-size:9px">'+m+'</span>'
+      +'<span style="font-size:10px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+label+'</span></div>'
+      +'<div class="meth-proj-list" style="display:none;margin-top:6px;padding-top:6px;border-top:1px solid var(--border)"></div></div>';
+  });
+  methCardsHtml+='</div>';
+
+  /* F11: Similar buyers */
+  var similar=getSimilarBuyers(name,buyerFromList?buyerFromList.sector:'',methodologies);
+  var simHtml='';
+  if(similar.length){
+    simHtml='<div style="margin-top:14px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:6px">Similar buyers</div>';
+    similar.forEach(function(sb){
+      simHtml+='<div onclick="selBuyerRow(\''+esc(sb.name).replace(/'/g,"\\'")+'\')" style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border);cursor:pointer">'
+        +'<div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:500;color:var(--teal);text-decoration:underline;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(sb.name)+'</div>'
+        +'<div style="font-size:9.5px;color:var(--text3)">'+(sb.sector||'')+' \u00B7 '+(sb.project_count||0)+' projects</div></div>'
+        +'<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--amber)">'+fmtV(String(sb.total_retired||0))+'</div></div>';
     });
-    matchHtml+='</div>';
+    simHtml+='</div>';
   }
 
+  var escName=esc(name).replace(/'/g,"\\'");
   pd.innerHTML=
-    '<div style="padding:14px 16px;border-bottom:1px solid var(--border)">'
-    +'<div style="font-size:15px;font-weight:600;color:var(--text0)">'+esc(name)+'</div>'
+    '<div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between">'
+    +'<div><div style="font-size:15px;font-weight:600;color:var(--text0)">'+esc(name)+'</div>'
     +'<div style="font-size:11px;color:var(--text2);margin-top:4px">'+projects.length+' projects \u00B7 '+countries.slice(0,3).join(', ')+'</div>'
     +'<div style="margin-top:7px;display:flex;flex-wrap:wrap;gap:4px">'
     +'<span style="font-size:10px;padding:2px 8px;border-radius:99px;background:var(--amber-dim,rgba(245,158,11,.12));color:var(--amber)">'+fmtV(String(totalRetired))+' retired</span>'
     +methChips
     +'</div></div>'
+    +'<button onclick="exportCSV(\'buyer_profile\',currentBuyerData)" style="padding:3px 10px;background:transparent;border:1px solid var(--border-hi);border-radius:6px;color:var(--text2);font-family:inherit;font-size:10px;cursor:pointer;flex-shrink:0">&darr; CSV</button>'
+    +'</div>'
     +'<div style="padding:14px 16px;overflow-y:auto;flex:1">'
     +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">'
     +'<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Total Retired</div><div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:600;color:var(--amber);margin-top:4px">'+fmtV(String(totalRetired))+'</div></div>'
@@ -1466,21 +1478,14 @@ function renderBuyerPanelData(name,totalRetired,projects,methodologies,countries
     +sparkHtml
     +'<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:8px;margin-top:14px">Top projects retired from</div>'
     +topProjects
-    +'<div style="margin-top:14px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:6px">Preferred methodologies</div>'
-    +'<div style="display:flex;flex-wrap:wrap;gap:4px">'
-    +methodologies.map(function(m){return '<span class="'+mCls(m)+'" title="'+(METH_LABELS[m]||m)+'">'+m+'</span>';}).join('')
-    +'</div>'
-    +'<div style="margin-top:6px">'
-    +methodologies.slice(0,4).map(function(m){
-      return '<div style="font-size:9.5px;color:var(--text3);margin-bottom:2px">'
-        +'<span style="color:var(--teal);font-family:\'DM Mono\',monospace">'+m+'</span>'
-        +' \u2014 '+(METH_LABELS[m]||'Carbon project methodology')
-        +'</div>';
-    }).join('')
-    +'</div></div>'
+    +methCardsHtml
     +'<div style="margin-top:14px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:6px">Countries</div>'
     +'<div style="font-size:11px;color:var(--text1)">'+countries.join(' \u00B7 ')+'</div></div>'
-    +matchHtml
+    +'<div style="margin-top:14px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+    +'<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Recommended projects to pitch</div>'
+    +'<button id="rec-btn-'+esc(name)+'" onclick="event.stopPropagation();loadRecs(\''+escName+'\')" style="padding:3px 10px;background:var(--teal-dim);border:1px solid rgba(45,212,191,.3);border-radius:6px;color:var(--teal);font-family:inherit;font-size:10px;cursor:pointer">Load matches</button></div>'
+    +'<div id="rec-content-'+esc(name)+'" style="font-size:10.5px;color:var(--text3)">Click to score projects against this buyer\'s history</div></div>'
+    +simHtml
     +'</div>';
 }
 
@@ -1525,14 +1530,21 @@ function buyerSparkline(buyer){
     });
   });
   var maxT=Math.max.apply(null,trend.concat([1]));
+  var nonZero=trend.filter(function(v){return v>0;});
+  var avg=nonZero.length?Math.round(nonZero.reduce(function(s,v){return s+v;},0)/nonZero.length):0;
+  var avgPct=maxT>0?(avg/maxT*100).toFixed(1):0;
   var bars=trend.map(function(v,i){
     var pct=Math.max(v/maxT*100,v>0?5:0).toFixed(1);
     var col=i>=3?'var(--amber)':'var(--text3)';
-    return '<div class="sp-bar" style="height:'+pct+'%;background:'+col+'"></div>';
+    return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:1px">'
+      +(v>0?'<div style="font-family:\'DM Mono\',monospace;font-size:7.5px;color:var(--text3)">'+fmtV(String(v))+'</div>':'<div style="height:10px"></div>')
+      +'<div class="sp-bar" style="height:'+pct+'%;background:'+col+';width:100%"></div></div>';
   }).join('');
   return '<div class="sp-wrap" style="margin-top:10px">'
     +'<div class="sp-hdr"><span>Estimated retirement activity</span><span style="color:var(--amber);font-size:9px">2022+ amber</span></div>'
-    +'<div class="sp-bars">'+bars+'</div>'
+    +'<div style="position:relative"><div class="sp-bars" style="display:flex;align-items:flex-end;gap:2px">'+bars+'</div>'
+    +'<div style="position:absolute;left:0;right:0;bottom:'+avgPct+'%;border-top:1px dashed rgba(96,165,250,.4);pointer-events:none">'
+    +'<span style="position:absolute;right:0;top:-10px;font-size:7.5px;color:var(--blue);font-family:\'DM Mono\',monospace">avg '+fmtV(String(avg))+'</span></div></div>'
     +'<div class="sp-yrs">'+yrs.map(function(y){return '<div class="sp-yr">'+y+'</div>';}).join('')+'</div>'
     +'</div>';
 }
@@ -1642,11 +1654,12 @@ function renderDemandMap(data){
     if(!matrix[s])return;
     var rowTotal=meths.reduce(function(sum,m){return sum+((matrix[s]&&matrix[s][m])||0);},0);
     if(rowTotal===0)return;
+    var sk=s.replace(/[^a-z0-9]/gi,'_');
     var topB=topBySector[s]&&topBySector[s][0]?topBySector[s][0].name:'';
     var rowPct=grandTotal>0?((rowTotal/grandTotal)*100).toFixed(1):'0';
-    html+='<tr data-sector="'+s+'">';
+    html+='<tr id="mrow-'+sk+'" data-sector="'+s+'" style="cursor:pointer" onclick="expandSector(\''+s.replace(/'/g,"\\'")+'\')">';
     html+='<td style="padding:8px 10px;border-bottom:1px solid rgba(99,130,191,.07)">'
-      +'<div style="font-size:11.5px;font-weight:500;color:var(--text0)">'+s+'</div>'
+      +'<div style="font-size:11.5px;font-weight:500;color:var(--text0)"><span style="color:var(--text3);margin-right:3px">\u25B8</span>'+s+'</div>'
       +(topB?'<div style="font-size:9.5px;color:var(--text3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px">'+esc(topB)+'</div>':'')
       +'</td>';
     meths.forEach(function(m){
@@ -1667,6 +1680,8 @@ function renderDemandMap(data){
     });
     html+='<td style="padding:6px 8px;border-bottom:1px solid rgba(99,130,191,.07);text-align:right;font-family:\'DM Mono\',monospace;font-size:11px;font-weight:500;color:var(--amber)">'+fmtV(String(rowTotal))+'<div style="font-size:8.5px;color:var(--text3);font-weight:400">'+rowPct+'%</div></td>';
     html+='</tr>';
+    html+='<tr id="mexp-'+sk+'" data-sector="'+s+'" style="display:none"><td colspan="'+(meths.length+2)+'" style="padding:0;background:var(--bg2)">'
+      +'<div style="padding:10px 12px" id="mexp-table-'+sk+'"><div style="font-size:10.5px;color:var(--text3)">Click to load companies...</div></div></td></tr>';
   });
 
   html+='</tbody><tfoot><tr style="background:var(--bg2);border-top:1px solid var(--border-hi)">';
@@ -1704,8 +1719,310 @@ function resetVCU(){
   else filterBuyers();
 }
 
+/* F1: GLOBAL SEARCH */
+var gsTimer=null;
+function onGlobalSearch(q){
+  clearTimeout(gsTimer);
+  if(!q||q.length<2){document.getElementById('globalResults').style.display='none';return;}
+  gsTimer=setTimeout(function(){
+    fetch(API+'/api/primitives/vcu/global-search?q='+encodeURIComponent(q))
+      .then(function(r){return r.json();})
+      .then(function(d){renderGlobalResults(d,q);});
+  },200);
+}
+function renderGlobalResults(d,q){
+  var el=document.getElementById('globalResults');
+  var html='';
+  var total=(d.buyers||[]).length+(d.projects||[]).length+(d.sectors||[]).length;
+  if(!total){el.innerHTML='<div style="padding:10px 12px;font-size:11px;color:var(--text3)">No results for "'+esc(q)+'"</div>';el.style.display='block';return;}
+  if((d.sectors||[]).length){
+    html+='<div style="padding:5px 10px 3px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3)">Sectors</div>';
+    d.sectors.forEach(function(s){
+      html+='<div onclick="gotoSector(\''+esc(s.name).replace(/'/g,"\\'")+'\')" style="padding:7px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(99,130,191,.05)" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
+        +'<span style="font-size:11px;color:var(--text3)">&#127970;</span>'
+        +'<span style="font-size:11.5px;color:var(--text0)">'+esc(s.name)+'</span>'
+        +'<span style="font-size:9.5px;color:var(--text3);margin-left:auto">sector</span></div>';
+    });
+  }
+  if((d.buyers||[]).length){
+    html+='<div style="padding:5px 10px 3px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3)">Buyers</div>';
+    d.buyers.forEach(function(b){
+      html+='<div onclick="gotoBuyer(\''+esc(b.name).replace(/'/g,"\\'")+'\')" style="padding:7px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(99,130,191,.05)" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
+        +'<span style="font-size:11px;color:var(--text3)">&#128100;</span>'
+        +'<div style="flex:1;min-width:0"><div style="font-size:11.5px;color:var(--teal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(b.name)+'</div>'
+        +'<div style="font-size:9.5px;color:var(--text3)">'+esc(b.sector||'')+'</div></div>'
+        +'<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--amber)">'+fmtV(String(b.total_retired||0))+'</span></div>';
+    });
+  }
+  if((d.projects||[]).length){
+    html+='<div style="padding:5px 10px 3px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3)">Projects</div>';
+    d.projects.forEach(function(p){
+      html+='<div onclick="gotoProject(\''+esc(p.id)+'\')" style="padding:7px 12px;cursor:pointer;display:flex;align-items:center;gap:8px" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
+        +'<span style="font-size:11px;color:var(--text3)">&#127807;</span>'
+        +'<div style="flex:1;min-width:0"><div style="font-size:11.5px;color:var(--text0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.name)+'</div>'
+        +'<div style="font-size:9.5px;color:var(--text3)">'+esc(p.id)+' · '+esc(p.country||'')+'</div></div></div>';
+    });
+  }
+  el.innerHTML=html;el.style.display='block';
+}
+function showGlobalResults(){var inp=document.getElementById('globalSearchInp');if(inp&&inp.value.length>=2)onGlobalSearch(inp.value);}
+function gotoBuyer(name){hideGlobalResults();showPage('vcu');setTimeout(function(){setVCUSub('buyer');setTimeout(function(){selBuyerRow(name);},300);},300);}
+function gotoProject(id){hideGlobalResults();showPage('browser');setTimeout(function(){selRow(id);},500);}
+function gotoSector(name){hideGlobalResults();showPage('vcu');setTimeout(function(){setVCUSub('map');setTimeout(function(){expandSector(name);},400);},300);}
+function hideGlobalResults(){var el=document.getElementById('globalResults');if(el)el.style.display='none';var inp=document.getElementById('globalSearchInp');if(inp)inp.value='';}
+document.addEventListener('click',function(e){if(!e.target.closest('#globalSearchWrap'))hideGlobalResults();});
+
+/* F2: BREADCRUMB NAVIGATION */
+var panelBreadcrumb=[];
+function pushBreadcrumb(type,id,label){
+  var existing=panelBreadcrumb.findIndex(function(b){return b.type===type&&b.id===id;});
+  if(existing>=0)panelBreadcrumb=panelBreadcrumb.slice(0,existing+1);
+  else panelBreadcrumb.push({type:type,id:id,label:label});
+  renderBreadcrumb();
+}
+function renderBreadcrumb(){
+  var el=document.getElementById('panelBreadcrumb');if(!el)return;
+  if(panelBreadcrumb.length<=1){el.style.display='none';return;}
+  el.style.display='flex';
+  el.innerHTML=panelBreadcrumb.map(function(b,i){
+    var isLast=i===panelBreadcrumb.length-1;
+    if(isLast)return '<span style="color:var(--text0)">'+esc(b.label)+'</span>';
+    return '<span onclick="navBreadcrumb('+i+')" style="color:var(--teal);cursor:pointer" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">'+esc(b.label)+'</span><span style="color:var(--text3);margin:0 2px">\u203A</span>';
+  }).join('');
+}
+function navBreadcrumb(idx){
+  var b=panelBreadcrumb[idx];if(!b)return;
+  panelBreadcrumb=panelBreadcrumb.slice(0,idx+1);
+  if(b.type==='buyer')selBuyerRow(b.id);
+  else if(b.type==='project'){showPage('browser');setTimeout(function(){selRow(b.id);},300);}
+  else if(b.type==='sector')expandSector(b.id);
+}
+
+/* F4: SECTOR ACCORDION */
+var expandedSector=null;
+var sectorCompanyCache={};
+function expandSector(s){
+  var sk=s.replace(/[^a-z0-9]/gi,'_');
+  if(expandedSector){
+    var ok=expandedSector.replace(/[^a-z0-9]/gi,'_');
+    var expEl=document.getElementById('mexp-'+ok);
+    var rowEl=document.getElementById('mrow-'+ok);
+    if(expEl)expEl.style.display='none';
+    if(rowEl)rowEl.style.background='';
+  }
+  if(expandedSector===s){expandedSector=null;return;}
+  expandedSector=s;
+  var expEl=document.getElementById('mexp-'+sk);
+  var rowEl=document.getElementById('mrow-'+sk);
+  if(expEl)expEl.style.display='table-row';
+  if(rowEl)rowEl.style.background='rgba(45,212,191,.04)';
+  pushBreadcrumb('sector',s,s);
+  loadSectorCompanies(s,sk);
+}
+function loadSectorCompanies(sector,sk){
+  if(sectorCompanyCache[sector]){renderSectorCompanies(sector,sk,sectorCompanyCache[sector]);return;}
+  fetch(API+'/api/primitives/vcu/buyers?sector='+encodeURIComponent(sector)+'&limit=100')
+    .then(function(r){return r.json();})
+    .then(function(d){sectorCompanyCache[sector]=d.buyers||[];renderSectorCompanies(sector,sk,d.buyers||[]);});
+}
+function renderSectorCompanies(sector,sk,buyers){
+  var el=document.getElementById('mexp-table-'+sk);if(!el)return;
+  if(!buyers.length){el.innerHTML='<div style="padding:10px 12px;font-size:10.5px;color:var(--text3)">No company data available</div>';return;}
+  var html='<table style="width:100%;border-collapse:collapse"><thead><tr style="font-size:9.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">'
+    +'<th style="text-align:left;padding:4px 8px">Company</th>'
+    +'<th style="text-align:right;padding:4px 8px">Total Retired</th>'
+    +'<th style="text-align:right;padding:4px 8px">Velocity</th>'
+    +'<th style="text-align:right;padding:4px 8px">Projects</th>'
+    +'<th style="padding:4px 8px">Top Method</th>'
+    +'<th style="text-align:center;padding:4px 8px">Concentration</th>'
+    +'</tr></thead><tbody>';
+  buyers.forEach(function(b){
+    var conc=b.project_count<=2?'\uD83D\uDD34':b.project_count<=5?'\uD83D\uDFE1':'\uD83D\uDFE2';
+    var concTitle=b.project_count<=2?'High concentration ('+b.project_count+' projects)':b.project_count<=5?'Moderate ('+b.project_count+' projects)':'Well diversified ('+b.project_count+' projects)';
+    html+='<tr onclick="selBuyerFromSector(\''+esc(b.name).replace(/'/g,"\\'")+'\')" style="cursor:pointer" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
+      +'<td style="padding:5px 8px;font-size:11px;font-weight:500;color:var(--teal);text-decoration:underline">'+esc(b.name)+'</td>'
+      +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--amber)">'+fmtV(String(b.total_retired||0))+'</td>'
+      +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text2)">'+fmtV(String(Math.round(b.avg_annual_retirement||0)))+'/yr</td>'
+      +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--teal)">'+(b.project_count||0)+'</td>'
+      +'<td style="padding:5px 8px"><span class="'+mCls(b.top_methodology||'')+'" style="font-size:9px" title="'+(METH_LABELS[b.top_methodology]||b.top_methodology||'')+'">'+(b.top_methodology||'\u2014')+'</span></td>'
+      +'<td style="text-align:center;padding:5px 8px;font-size:12px" title="'+concTitle+'">'+conc+'</td>'
+      +'</tr>';
+  });
+  html+='</tbody></table>';
+  el.innerHTML=html;
+}
+function selBuyerFromSector(name){selBuyerRow(name);}
+
+/* F5: RECS FROM API */
+var currentBuyerData=null;
+var currentProjectBuyers=null;
+function loadRecs(name){
+  var btn=document.getElementById('rec-btn-'+CSS.escape(name));
+  if(btn){btn.textContent='Loading...';btn.disabled=true;}
+  var el=document.getElementById('rec-content-'+CSS.escape(name));
+  if(el)el.innerHTML='<div style="padding:8px 0;font-size:10.5px;color:var(--text3)">Scoring projects against '+esc(name)+'\'s retirement history...</div>';
+  fetch(API+'/api/primitives/vcu/match-projects/'+encodeURIComponent(name))
+    .then(function(r){return r.json();})
+    .then(function(d){renderRecs(name,d);})
+    .catch(function(e){if(el)el.innerHTML='<div style="color:var(--red,#ef4444);font-size:10.5px">Failed: '+e.message+'</div>';});
+}
+function renderRecs(name,d){
+  var el=document.getElementById('rec-content-'+CSS.escape(name));if(!el)return;
+  var html='';
+  var market=d.market_matches||[];
+  var cs=d.clearsky_matches||[];
+  if(market.length){
+    html+='<div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin:8px 0 4px">Market matches</div>';
+    market.slice(0,8).forEach(function(p){html+=recRow(p,false);});
+    if(market.length>8){
+      var extraHtml='';market.slice(8).forEach(function(p){extraHtml+=recRow(p,false);});
+      window['_moreRecs_market_'+name]=extraHtml;
+      html+='<div onclick="showMoreRecs(this,\'market\',\''+esc(name).replace(/'/g,"\\'")+'\')" style="font-size:10px;color:var(--teal);cursor:pointer;padding:4px 0;text-decoration:underline">Show '+(market.length-8)+' more</div>';
+    }
+  }
+  if(cs.length){
+    html+='<div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin:10px 0 4px">ClearSky portfolio</div>';
+    cs.forEach(function(p){html+=recRow(p,true);});
+  }
+  if(!market.length&&!cs.length)html='<div style="font-size:10.5px;color:var(--text3);padding:6px 0">No matching projects found.</div>';
+  el.innerHTML=html;
+  var btn=document.getElementById('rec-btn-'+CSS.escape(name));
+  if(btn){btn.textContent='Refresh';btn.disabled=false;}
+}
+function recRow(p,isCS){
+  var scoreColor=p.score>=7?'var(--teal)':p.score>=5?'var(--green)':'var(--amber)';
+  return '<div onclick="selRow_fromRec(\''+p.project_id+'\')" style="padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer;border-left:2px solid '+(isCS?'var(--teal)':'transparent')+';padding-left:8px">'
+    +'<div style="display:flex;align-items:center;gap:6px">'
+    +(isCS?'<span style="font-size:8px;padding:1px 4px;border-radius:99px;background:var(--teal);color:var(--bg0);font-weight:600;flex-shrink:0">CS</span>':'')
+    +'<div style="flex:1;min-width:0"><div style="font-size:11.5px;color:var(--text0);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(p.name||'')+'">'+esc(p.name||p.project_id)+'</div>'
+    +'<div style="font-size:9.5px;color:var(--text3);margin-top:1px">'+esc(p.reason||'')+'</div></div>'
+    +scoreBar(p.score)
+    +'</div>'
+    +vintageBar(p.vintage_breakdown)
+    +'</div>';
+}
+function scoreBar(score){
+  var pct=Math.min(score/10*100,100);
+  var col=score>=7?'var(--teal)':score>=5?'var(--green)':'var(--amber)';
+  return '<div style="display:flex;align-items:center;gap:4px;flex-shrink:0"><div style="width:40px;height:4px;background:var(--bg4);border-radius:2px"><div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:2px"></div></div><span style="font-family:\'DM Mono\',monospace;font-size:10px;color:'+col+'">'+score+'</span></div>';
+}
+function vintageBar(breakdown){
+  if(!breakdown||!breakdown.length)return '';
+  var maxV=Math.max.apply(null,breakdown.map(function(b){return b.issued||0;}).concat([1]));
+  return '<div style="display:flex;gap:2px;align-items:flex-end;height:18px;margin-top:4px">'+breakdown.map(function(b){
+    var h=Math.max((b.issued||0)/maxV*100,5);
+    var outPct=b.issued>0?((b.outstanding||0)/b.issued*100):0;
+    return '<div title="'+b.year+': '+fmtV(String(b.outstanding||0))+' outstanding" style="flex:1;height:'+h+'%;background:linear-gradient(to top,var(--teal) '+outPct+'%,var(--bg4) '+outPct+'%);border-radius:1px;min-width:4px"></div>';
+  }).join('')+'</div>';
+}
+function selRow_fromRec(id){showPage('browser');setTimeout(function(){selRow(id);},400);}
+function showMoreRecs(el,type,buyerName){
+  var cacheKey='_moreRecs_'+type+'_'+buyerName;
+  if(window[cacheKey]){
+    var parent=el.parentNode;
+    var extra=document.createElement('div');
+    extra.innerHTML=window[cacheKey];
+    parent.insertBefore(extra,el);
+  }
+  el.style.display='none';
+}
+
+/* F7: METHODOLOGY DRILL-DOWN CARDS */
+var METH_LABELS_FE={'VM0007':'REDD+ (Avoided Deforestation)','VM0015':'REDD+ (IFM \u2014 Forest Management)','VM0048':'REDD+ (High Conservation Values)','VMR0006':'REDD+ (Jurisdictional)','VM0047':'ARR (Afforestation & Reforestation)','AR-ACM0001':'ARR (CDM Afforestation)','AR-ACM0003':'ARR (Small Scale)','VM0003':'IFM (Rotation Age Extension)','VM0010':'IFM (Improved Forest Management)','VM0012':'IFM (Boreal Forest)','VM0034':'IFM (Canadian Forest)','VM0033':'Blue Carbon (Tidal Wetland)','VM0044':'Biochar Carbon Removal','VM0041':'Savanna Burning (Fire Management)','VM0026':'Grassland Management','VM0019':'Landfill Gas Capture','VM0009':'Avoided Methane (Rice)','AMS-III.D.':'Methane Recovery (Wastewater)','AMS-III.H.':'Methane Recovery (Manure)','ACM0002':'Grid-Connected Renewable Energy','ACM0016':'Wind Power Generation','ACM0012':'Energy Efficiency (Transport)','AM0073':'Natural Gas Substitution','AMS-I.D.':'Solar Thermal Energy','AMS-I.E.':'Small-Scale Wind Power','AMS-I.F.':'Small-Scale Renewable Electricity','AMS-II.G.':'Energy Efficiency (Industry)','AMS-III.F.':'Avoided Methane (Biomass)','AMS-III.G.':'Small-Scale Landfill Gas'};
+function methPlainFE(code){if(!code)return code;var f=code.split(';')[0].trim();return METH_LABELS_FE[f]||f;}
+var methCardCache={};
+function toggleMethCard(card,buyerName,meth){
+  var list=card.querySelector('.meth-proj-list');
+  var arrow=card.querySelector('.meth-arrow');
+  if(list.style.display!=='none'){list.style.display='none';if(arrow)arrow.textContent='\u25B8';return;}
+  list.style.display='block';if(arrow)arrow.textContent='\u25BE';
+  var ckey=buyerName+'|'+meth;
+  if(methCardCache[ckey]){list.innerHTML=methCardCache[ckey];return;}
+  list.innerHTML='<div style="font-size:10px;color:var(--text3)">Loading...</div>';
+  fetch(API+'/api/primitives/vcu/match-projects/'+encodeURIComponent(buyerName))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var all=(d.market_matches||[]).concat(d.clearsky_matches||[]);
+      var matching=all.filter(function(p){return p.methodology&&p.methodology.indexOf(meth)>=0;}).slice(0,3);
+      if(!matching.length){list.innerHTML='<div style="font-size:10px;color:var(--text3)">No active projects for this methodology.</div>';return;}
+      var h=matching.map(function(p){
+        return '<div onclick="event.stopPropagation();selRow_fromRec(\''+p.project_id+'\')" style="display:flex;align-items:center;gap:7px;padding:4px 0;border-bottom:1px solid rgba(99,130,191,.05);cursor:pointer">'
+          +(p.clearsky_project?'<span style="font-size:8px;padding:1px 4px;border-radius:99px;background:var(--teal);color:var(--bg0);font-weight:600;flex-shrink:0">CS</span>':'')
+          +'<span style="font-size:11px;color:var(--teal);text-decoration:underline;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(p.name)+'</span>'
+          +'<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:var(--text3)">'+esc(p.country||'')+'</span>'
+          +'<span style="font-family:\'DM Mono\',monospace;font-size:9.5px;color:var(--green)">'+fmtV(String(p.outstanding||0))+'</span></div>';
+      }).join('');
+      methCardCache[ckey]=h;
+      list.innerHTML=h;
+    });
+}
+
+/* F9: FIND BUYERS (reverse matching in project panel) */
+function loadBuyerRecs(projectId){
+  var el=document.getElementById('buyerRecs-'+projectId);if(!el)return;
+  el.innerHTML='<div style="padding:8px 0;font-size:10.5px;color:var(--text3)">Scoring buyers...</div>';
+  fetch(API+'/api/primitives/vcu/match-buyers/'+projectId)
+    .then(function(r){return r.json();})
+    .then(function(d){renderBuyerRecs(projectId,d.buyers||[]);})
+    .catch(function(e){el.innerHTML='<div style="color:var(--red,#ef4444);font-size:10.5px">'+e.message+'</div>';});
+}
+function renderBuyerRecs(projectId,buyers){
+  var el=document.getElementById('buyerRecs-'+projectId);if(!el)return;
+  if(!buyers.length){el.innerHTML='<div style="font-size:10.5px;color:var(--text3)">No buyers found.</div>';return;}
+  el.innerHTML=buyers.map(function(b){
+    return '<div onclick="gotoBuyer(\''+esc(b.name).replace(/'/g,"\\'")+'\')" style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border);cursor:pointer">'
+      +'<div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:500;color:var(--teal);text-decoration:underline;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(b.name)+'</div>'
+      +'<div style="font-size:9.5px;color:var(--text3)">'+esc(b.sector||'')+' \u00B7 '+esc(b.reason||'')+'</div></div>'
+      +scoreBar(b.score)
+      +'</div>';
+  }).join('');
+}
+
+/* F10: CSV EXPORTS */
+function exportCSV(type,context){
+  var rows=[],headers=[],filename='';
+  if(type==='buyers'){
+    headers=['Buyer','Sector','Total Retired','Velocity/yr','Projects','Top Methodology','Top Country','Methodologies','Countries','Last Active'];
+    rows=BUYER_FILTERED.map(function(b){return['"'+esc(b.name)+'"','"'+(b.sector||'')+'"',b.total_retired||0,Math.round(b.avg_annual_retirement||0),b.project_count||0,'"'+(b.top_methodology||'')+'"','"'+(b.top_country||'')+'"','"'+(b.methodologies||[]).join('; ')+'"','"'+(b.countries||[]).join('; ')+'"',b.last_activity_year||''];});
+    filename='clearsky_buyers_'+new Date().toISOString().slice(0,10)+'.csv';
+  }else if(type==='buyer_profile'&&context){
+    headers=['Project ID','Project Name','Methodology','Meth Label','Country','Vol Retired'];
+    rows=(context.projects||[]).map(function(p){return[p.project_id,'"'+esc(p.name||'')+'"','"'+(p.methodology||'')+'"','"'+methPlainFE(p.methodology||'')+'"','"'+(p.country||'')+'"',p.vol||0];});
+    filename='clearsky_buyer_'+(context.name||'').replace(/[^a-z0-9]/gi,'_').slice(0,20)+'_'+new Date().toISOString().slice(0,10)+'.csv';
+  }else if(type==='demand_matrix'){
+    if(!DEMAND_MATRIX)return;
+    headers=['Sector'].concat(DEMAND_MATRIX.methodologies||[]).concat(['Total']);
+    rows=(DEMAND_MATRIX.sectors||[]).map(function(s){
+      var d=DEMAND_MATRIX.matrix[s]||{};var meths=DEMAND_MATRIX.methodologies||[];
+      var tot=meths.reduce(function(a,m){return a+(d[m]||0);},0);
+      return['"'+s+'"'].concat(meths.map(function(m){return d[m]||0;})).concat([tot]);
+    });
+    filename='clearsky_demand_matrix_'+new Date().toISOString().slice(0,10)+'.csv';
+  }else if(type==='project_buyers'&&context){
+    headers=['Buyer','Volume Retired','% Share'];
+    var tot=context.reduce(function(s,b){return s+b[1];},0);
+    rows=context.map(function(b){return['"'+esc(b[0])+'"',b[1],Math.round(b[1]/(tot||1)*100)+'%'];});
+    filename='clearsky_project_buyers_'+new Date().toISOString().slice(0,10)+'.csv';
+  }
+  if(!rows.length)return;
+  var csv=headers.join(',')+'\n'+rows.map(function(r){return r.join(',');}).join('\n');
+  var blob=new Blob([csv],{type:'text/csv'});var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);
+}
+
+/* F11: SIMILAR BUYERS */
+function getSimilarBuyers(name,sector,meths){
+  return(BUYER_DATA||[]).filter(function(b){
+    if(b.name===name)return false;
+    if(b.sector===sector)return true;
+    var overlap=(b.methodologies||[]).filter(function(m){return meths.indexOf(m)>=0;});
+    return overlap.length>=1;
+  }).sort(function(a,b){return b.total_retired-a.total_retired;}).slice(0,4);
+}
+
 /* BOOT */
 loadVCUPage();
+loadBuyers();
 window.vcuLoaded=true;
 </script>
 </body>
