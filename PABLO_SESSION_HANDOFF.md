@@ -1,14 +1,14 @@
-# PABLO Session Handoff — v79p
+# PABLO Session Handoff — v79r
 *Date: 2026-03-16*
 
 ---
 
 ## Current State Summary
 
-**Worker version:** v79p-clean (deployed)
+**Worker version:** v79p-clean (deployed, no changes in v79r)
 **Worker file:** `C:\brand-presentations\infrastructure\clearsky-api\src\worker.js`
 **Snapshot:** `C:\brand-presentations\infrastructure\worker-v79p.js`
-**Frontend:** `C:\brand-presentations\repos\oga-tools\tools\clearskyplatform.html` (commit 18d38e1)
+**Frontend:** `C:\brand-presentations\repos\oga-tools\tools\clearskyplatform.html` (commit 731a1f2)
 **RFP Tracker:** `C:\brand-presentations\repos\oga-tools\tools\rfp-tracker.html` (commit ba1fa8b)
 **Design System:** `C:\brand-presentations\repos\oga-tools\tools\pablo-system.css` (commit a46c220)
 **Bulk Intake:** `C:\brand-presentations\repos\oga-tools\tools\crawler_test.html` v10 (commit 8f1aaa6)
@@ -27,38 +27,46 @@
 | P4: Crawler | v65-v69, v74 | Verra + Puro + Isometric, R2, queue routing, input normalization, extract+sync pipeline |
 | P5: RFP Tool | v75-v76 | 3 D1 tables, 7 endpoints, AI evaluation engine, Watershed 2026 seeded |
 | P6: Project Metadata | v77 | project_metadata D1 table, fetchVerraProjectDetail, PD filter, registered examples |
-| P7: Registry Platform | v78-v79p | clearskyplatform.html — full UX with two-pane navigation, entity nav, Buyer Intelligence, boot hardening, full panel for VCU projects |
+| P7: Registry Platform | v78-v79r | clearskyplatform.html — full UX with two-pane navigation, entity nav, Buyer Intelligence, boot hardening, project card fix, quick find, Deal Radar |
 
 ---
 
-## What Was Done: v79p — Clean Release (Worker + Frontend)
+## What Was Done: v79r — Project Card Fix + Quick Find + Deal Radar (Frontend only)
 
-### Worker Changes (W1-W2)
-
-| # | Feature | Details |
-|---|---------|---------|
-| W1 | **/vcu/buyers limit** | Default raised from 200 to 2000, max from 500 to 2000. Enables full buyer dataset in single load. |
-| W2 | **Health** | v79p-clean |
-
-### Frontend Changes (F1-F7)
+### STEP 1 — Project Card Fix
 
 | # | Feature | Details |
 |---|---------|---------|
-| F1 | **gotoProjectFromVCU** | New function: VCU By-Project rows now open full Project Browser panel (renderPanel) instead of minimal renderVCUPanel. Pushes breadcrumb + entity context. |
-| F2 | **renderPanel safe wrapper** | Detects active page (VCU vs Browser) and targets correct panel element. Loading fallback with polling if ALL not yet populated. showPanelError error boundary. |
-| F3 | **openProjectCard updated** | Uses gotoProjectFromVCU instead of selVCURow. Buyer card project links now open full panel too. |
-| F4 | **Buyer limit 200→2000** | loadBuyers() limit=2000, sector accordion limit=500. Full buyer dataset loaded. |
-| F5 | **.pb CSS** | flex:1;overflow-y:auto;padding for panel body scrolling. panel-error CSS for error states. |
-| F6 | **_bootPhase guard** | _bootPhase=true until both loadData + loadBuyers complete. openEntityPanel no-op during boot. Prevents boot race conditions. |
-| F7 | **pb-badge loading dots** | Shows "···" until data arrives, then real count. |
+| F1 | **Remove old download functions** | Deleted: DL_STEPS, dlTimers, startDownload, animateDlSteps, pollDlStatus, finishDl, downloadPDFNow, viewText, INTEL_STEPS, old generateIntelReport, animateIntelSteps, finishIntel (~160 lines removed) |
+| F2 | **Two clean CTAs** | "↓ Download PDF" = direct `<a href>` to Verra URL. "◈ Intelligence Report" = new generateIntelReport with 5-step progress |
+| F3 | **New Intel functions** | generateIntelReport(projectId), pollIntelStatus(projectId,runId,...), downloadProcessedDoc(docId), viewExtractedText(docId) |
+| F4 | **Clean up CSS** | Removed 6 orphaned dl-progress CSS rules |
+| F5 | **Fix renderVCUPanel** | Replaced downloadPDFNow with Verra link, updated IDs to intel-btn-/intel-step-/intel-fill-/intel-note- |
 
-### Gotchas Added (125-129)
+### STEP 2 — Project Quick Find
 
-125. gotoProjectFromVCU — uses renderPanel instead of renderVCUPanel
-126. renderPanel active page detection — targets vcuPanelDetail or panelDetail
-127. _bootPhase guard — cleared after loadData + loadBuyers complete
-128. /vcu/buyers limit — default 2000, max 2000
-129. .pb CSS — panel body scrolling
+| # | Feature | Details |
+|---|---------|---------|
+| F6 | **Quick find input** | New input at top of Project Browser sidebar, above category pills |
+| F7 | **onProjectIDSearch** | 180ms debounce, searches ALL by ID prefix or name substring, 8 results max |
+| F8 | **jumpToProject** | Clears search, calls selRow(id), scrollIntoView({block:'center'}) |
+| F9 | **Click-outside close** | document.addEventListener('click') closes dropdown |
+
+### STEP 3 — Deal Radar
+
+| # | Feature | Details |
+|---|---------|---------|
+| F10 | **4th sub-tab** | "Deal Radar" tab in Buyer Intelligence (Buyers | Demand Map | Projects | Deal Radar) |
+| F11 | **vRadarView** | Container div, setVCUSub('radar') handler, _radarPending lazy-load hook |
+| F12 | **renderDealRadar()** | Three sections: Active 2026 (sorted by retired_2026), Strong 2025 (≥200K, sorted by retired_2025), Methodology Demand (aggregated volumes with horizontal bars) |
+| F13 | **radarCard()** | Buyer card: name, volume, sector badge, methCategory pill, project count, ClearSky portfolio match count |
+
+### Gotchas Added (130-133)
+
+130. Download PDF CTA — direct `<a href>` to Verra, no worker round-trip
+131. Intelligence Report — new ID patterns (intel-btn-, intel-step-, intel-fill-, intel-note-)
+132. Project Quick Find — 180ms debounce, ID prefix or name substring, max 8 results
+133. Deal Radar — 4th VCU sub-tab, _radarPending, Active 2026 + Strong 2025 + Methodology Demand
 
 ---
 
@@ -66,10 +74,10 @@
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Worker | v79p-clean (deployed) | Snapshot: worker-v79p.js |
-| clearskyplatform.html | Deployed (18d38e1) | Live at tools.oga.earth |
-| PABLO_CLAUDE.md | Updated | v79p entry added |
-| SYSTEM.md | Updated | Gotchas 125-129 |
+| Worker | v79p-clean (unchanged) | No worker changes in v79r |
+| clearskyplatform.html | Deployed (731a1f2) | Live at tools.oga.earth |
+| PABLO_CLAUDE.md | Updated | v79r entry added |
+| SYSTEM.md | Updated | Gotchas 130-133 |
 
 ---
 
@@ -77,10 +85,15 @@
 
 | QA | Test | Result |
 |----|------|--------|
-| QA-1 | Health version | PASS (v79p-clean) |
-| QA-2 | /vcu/buyers limit > 200 | PASS (300 returned at limit=300) |
-| QA-3 | Deployed file verification | PASS (157,264 bytes, all v79p features present) |
-| QA-4 | Verification script | PASS (22/22 assertions) |
+| QA-1 | File size | PASS (163,274 bytes) |
+| QA-2 | Quick find deployed | PASS |
+| QA-3 | Deal Radar deployed | PASS |
+| QA-4 | Deal Radar tab deployed | PASS |
+| QA-5 | Old download code removed | PASS |
+| QA-6 | New Intel Report deployed | PASS |
+| QA-7 | Quick find jump deployed | PASS |
+| QA-8 | DL_STEPS not in deployed | PASS |
+| VERIFY | 43/43 assertions | PASS |
 
 ---
 
@@ -111,4 +124,4 @@ git push
 - Buyer sectors: 65 classified, 11 sector categories
 - METH_PLAIN: 29 methodology labels
 - Top buyers (normalized): Shell (38.8M, active_2026), Eni SpA (26.5M, active_2026), DL (11.5M, dormant)
-- Frontend: 2,563 lines, ~130 functions, 157,264 bytes
+- Frontend: 2,625 lines, ~135 functions, 163,274 bytes

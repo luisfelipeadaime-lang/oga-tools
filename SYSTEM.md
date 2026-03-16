@@ -411,6 +411,14 @@ REGISTRY INDEX (v78):
 128. /vcu/buyers limit — Worker default raised from 200 to 2000, max from 500 to 2000. Frontend loadBuyers uses limit=2000. Sector accordion uses limit=500. [v79p]
 
 129. .pb CSS class — flex:1;overflow-y:auto;padding:14px 16px. Applied to panel body divs (#pt-ov, #pt-vcu) inside renderPanel output. Ensures panel body scrolls within fixed-height panel container. [v79p]
+
+130. Download PDF CTA — v79r replaced all old download functions with a direct `<a href>` to row.url (Verra registry page). No worker round-trip for PDF download. renderVCUPanel uses constructed URL: `https://registry.verra.org/app/projectDetail/VCS/`+project_id. [v79r]
+
+131. Intelligence Report — v79r generateIntelReport(projectId) fires POST /crawler/run + pollIntelStatus every 5s. New ID patterns: intel-btn-, intel-prog-, intel-step-, intel-fill-, intel-note-. Old patterns (intelBtn-, intelStep-, intelFill-, intelNote-) fully removed. [v79r]
+
+132. Project Quick Find — onProjectIDSearch(val) with 180ms debounce, searches ALL array. Numeric input matches ID prefix, text matches name substring. Max 8 results. jumpToProject(id) calls selRow + scrollIntoView. Click-outside closes dropdown. [v79r]
+
+133. Deal Radar — 4th VCU sub-tab ('radar'). setVCUSub('radar') shows vRadarView, triggers renderDealRadar(). Uses _radarPending flag if BUYER_DATA not loaded yet. Active 2026 = activity_status==='active_2026'. Strong 2025 = active_2025 AND retired_2025≥200K. ClearSky matches via VCU[k].cs flag. [v79r]
 ```
 
 ---
