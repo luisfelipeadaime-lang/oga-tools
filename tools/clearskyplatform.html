@@ -187,7 +187,7 @@ td{padding:5px 8px;vertical-align:middle}
 
 /* Panel tabs */
 .panel-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
-.vcu-subtabs{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;padding:0 14px;flex-shrink:0;position:sticky;top:0;z-index:19}
+.vcu-subtabs{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;padding:0 14px;flex-shrink:0;position:sticky;top:42px;z-index:49}
 .ptb{padding:8px 16px;font-size:12.5px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s;display:flex;align-items:center;gap:6px}
 .ptb.on{color:var(--teal);border-bottom-color:var(--teal)}
 .ptb:hover:not(.on){color:var(--text0)}
@@ -231,9 +231,11 @@ td{padding:5px 8px;vertical-align:middle}
 .b-vol{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--text2);flex-shrink:0}
 .no-vcu{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;color:var(--text3)}
 .panel-body-top{flex-shrink:0;padding:14px 16px 10px;border-bottom:1px solid var(--border)}
-.panel-body-scroll{flex:1;overflow-y:auto;padding:12px 16px}
+.panel-body-scroll{flex:1;overflow-y:auto;padding:12px 16px;position:relative}
 .page.active.panel-full .panel-body-scroll{column-count:2;column-gap:24px;padding:16px 24px}
 .page.active.panel-full .panel-body-scroll>div{break-inside:avoid}
+.scroll-fade{position:sticky;bottom:0;left:0;right:0;height:28px;pointer-events:none;background:linear-gradient(transparent,var(--bg1));z-index:5;margin-top:-28px;transition:opacity .2s}
+.scroll-fade.hidden{opacity:0}
 .entity-nav{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20;flex-shrink:0}
 .entity-nav .back-btn{display:flex;align-items:center;gap:5px;padding:5px 10px;background:transparent;border:1px solid var(--border-hi);border-radius:6px;color:var(--text1);cursor:pointer;font-size:11.5px;font-weight:500;font-family:inherit;transition:all .15s}
 .entity-nav .back-btn:hover{border-color:var(--teal);color:var(--teal)}
@@ -303,7 +305,7 @@ td{padding:5px 8px;vertical-align:middle}
 
 <!-- PAGE TABS -->
 <div class="page-tabs">
-  <div class="ptab active" onclick="showPage('vcu')">VCU Intelligence <span class="ptab-badge" id="vcu-badge">2,116</span></div>
+  <div class="ptab active" onclick="showPage('vcu')">Buyer Intelligence <span class="ptab-badge" id="vcu-badge">2,116</span></div>
   <div class="ptab" onclick="showPage('browser')">Project Browser <span class="ptab-badge" id="pb-badge">4,903</span></div>
   <div class="ptab dim">RFP Tracker <span class="ptab-badge">1</span></div>
 </div>
@@ -488,9 +490,9 @@ td{padding:5px 8px;vertical-align:middle}
 <!-- VCU MAIN TABLE -->
 <div class="main">
   <div class="vcu-subtabs">
-    <div class="ptb on" id="vsubt-buyer" onclick="setVCUSub('buyer')">By Buyer <span class="ptab-badge" id="vsubt-buyer-badge">\u2014</span></div>
+    <div class="ptb on" id="vsubt-buyer" onclick="setVCUSub('buyer')">Buyers <span class="ptab-badge" id="vsubt-buyer-badge">\u2014</span></div>
     <div class="ptb" id="vsubt-map" onclick="setVCUSub('map')">Demand Map</div>
-    <div class="ptb" id="vsubt-project" onclick="setVCUSub('project')">By Project <span class="ptab-badge">2,116</span></div>
+    <div class="ptb" id="vsubt-project" onclick="setVCUSub('project')">Projects <span class="ptab-badge">2,116</span></div>
   </div>
   <div id="vProjectView" style="display:none;flex-direction:column;flex:1;overflow:hidden">
     <div class="topstrip">
@@ -520,7 +522,7 @@ td{padding:5px 8px;vertical-align:middle}
   <div id="vBuyerView" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
     <div class="results-bar">
       <span class="rc" id="vBRc">&mdash;</span>
-      <span class="rl">buyers</span>
+      <span class="rl">buyers</span><span id="vBActive"></span>
       <button onclick="exportBuyerCSV()" style="padding:4px 12px;background:transparent;border:1px solid var(--border-hi);border-radius:6px;color:var(--text1);font-family:inherit;font-size:10.5px;cursor:pointer;margin-left:8px">&darr; Export CSV</button>
       <div style="margin-left:auto;display:flex;gap:8px">
         <div style="text-align:center;padding:2px 10px;background:var(--bg3);border-radius:6px;border:1px solid var(--border)">
@@ -532,14 +534,14 @@ td{padding:5px 8px;vertical-align:middle}
     <div class="table-wrap">
       <table style="width:100%;border-collapse:collapse">
         <thead><tr>
-          <th onclick="sortBuyers('name')" title="Company or entity retiring credits" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border)">Buyer</th>
-          <th onclick="sortBuyers('total_retired')" title="Lifetime VCUs retired across all projects" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">Total Retired</th>
-          <th onclick="sortBuyers('avg_annual_retirement')" title="Average annual retirement volume" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">Velocity</th>
-          <th onclick="sortBuyers('last_activity_year')" title="Most recent year with retirement activity" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">Last Active</th>
-          <th onclick="sortBuyers('project_count')" title="Number of distinct projects retired from" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">Projects</th>
-          <th style="padding:6px 8px;font-size:10.5px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border)">Top Methodology</th>
-          <th style="padding:6px 8px;font-size:10.5px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border)">Top Country</th>
-          <th style="padding:6px 8px;font-size:10.5px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border)">Methodologies</th>
+          <th onclick="sortBuyers('name')" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border);min-width:160px">Buyer</th>
+          <th style="padding:6px 8px;font-size:10.5px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border);min-width:60px">Status</th>
+          <th onclick="sortBuyers('retired_2026')" title="VCUs retired in 2026 year-to-date" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--teal);border-bottom:1px solid var(--border)">2026 YTD &#8645;</th>
+          <th onclick="sortBuyers('retired_2025')" title="VCUs retired in 2025" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--amber);border-bottom:1px solid var(--border)">2025 &#8645;</th>
+          <th onclick="sortBuyers('retired_2024')" title="VCUs retired in 2024" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">2024 &#8645;</th>
+          <th style="padding:6px 8px;font-size:10.5px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border);min-width:100px">Recent method</th>
+          <th onclick="sortBuyers('project_count')" title="Number of distinct projects" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">Projects &#8645;</th>
+          <th style="padding:6px 8px;font-size:10.5px;text-align:center;color:var(--text2);border-bottom:1px solid var(--border)" title="Green = diversified. Red = concentrated in 1-2 projects.">Conc.</th>
         </tr></thead>
         <tbody id="vBTbody"></tbody>
       </table>
@@ -880,7 +882,11 @@ function selRow(id){
   if(S.selectedId){var o=document.getElementById('tr-'+S.selectedId);if(o)o.classList.remove('sel');}
   S.selectedId=id;
   var tr=document.getElementById('tr-'+id);if(tr)tr.classList.add('sel');
-  renderPanel(id);
+  var row=ALL.find(function(p){return p.id===id;});
+  var label=row?(row.name.length>22?row.name.slice(0,22)+'\u2026':row.name):('VCS #'+id);
+  pushBreadcrumb('project',id,label);
+  setEntityContext(['Registry',label]);
+  openEntityPanel(function(){renderPanel(id);});
 }
 
 function retRing(rr){
@@ -1415,7 +1421,7 @@ function renderVCUPanel(id){
 /* ============ BUYER INTELLIGENCE ============ */
 var VCU_SUB='buyer';
 var BUYER_DATA=[],BUYER_FILTERED=[];
-var BUYER_SORT={col:'total_retired',dir:'desc'};
+var BUYER_SORT={col:'retired_2025',dir:'desc'};
 var buyersLoaded=false;
 var selBuyer=null;
 
@@ -1494,28 +1500,48 @@ function sortBuyers(col){
   renderBuyers();
 }
 
+function activityBadge(b){
+  var s=b.activity_status||'';
+  if(s==='active_2026')return '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:99px;font-size:9.5px;font-weight:600;background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.25)">\u25CF 2026</span>';
+  if(s==='active_2025')return '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:99px;font-size:9.5px;font-weight:500;background:rgba(251,191,36,.1);color:var(--amber);border:1px solid rgba(251,191,36,.2)">\u25CF 2025</span>';
+  if(s==='active_2024')return '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:99px;font-size:9.5px;color:var(--text2);border:1px solid var(--border)">\u25CF 2024</span>';
+  if(s==='dormant')return '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:99px;font-size:9.5px;color:var(--text3);border:1px solid var(--border)">\u25CB Dormant</span>';
+  return '<span style="font-size:9.5px;color:var(--text3);padding:2px 7px">\u2014</span>';
+}
+function recentMethLabel(b){
+  var m=b.recent_methodology||b.top_methodology||'';
+  if(!m)return '\u2014';
+  var first=m.split(';')[0].trim();
+  var label=(typeof METH_LABELS_FE!=='undefined'&&METH_LABELS_FE[first])?METH_LABELS_FE[first]:first;
+  return label.length>28?label.slice(0,26)+'...':label;
+}
 function renderBuyers(){
   var rows=BUYER_FILTERED.slice().sort(function(a,b){
     var va=a[BUYER_SORT.col],vb=b[BUYER_SORT.col];
     if(typeof va==='string')return BUYER_SORT.dir==='asc'?va.localeCompare(vb):vb.localeCompare(va);
-    return BUYER_SORT.dir==='desc'?vb-va:va-vb;
+    return BUYER_SORT.dir==='desc'?(vb||0)-(va||0):(va||0)-(vb||0);
   });
   document.getElementById('vBRc').textContent=rows.length.toLocaleString();
   var tot=rows.reduce(function(s,b){return s+(b.total_retired||0);},0);
   document.getElementById('vBKTot').textContent=fmtV(String(tot));
+  /* F6: Active counts */
+  var active2026=BUYER_FILTERED.filter(function(b){return b.activity_status==='active_2026';}).length;
+  var active2025=BUYER_FILTERED.filter(function(b){return b.activity_status==='active_2025'||b.activity_status==='active_2026';}).length;
+  var acEl=document.getElementById('vBActive');
+  if(acEl)acEl.innerHTML='<span style="font-size:10px;color:var(--green);margin-left:8px">\u25CF '+active2026+' active 2026</span><span style="font-size:10px;color:var(--amber);margin-left:6px">\u25CF '+active2025+' active 2025+</span>';
   var html='';
   rows.slice(0,200).forEach(function(b){
-    var methChips=(b.methodologies||[]).slice(0,3).map(function(m){return '<span class="'+mCls(m)+'" style="font-size:8.5px;padding:1px 4px">'+m+'</span>';}).join('');
     var sel=selBuyer===b.name?' style="background:var(--bg3)"':'';
-    html+='<tr onclick="selBuyerRow(\''+esc(b.name).replace(/'/g,"\\'")+'\');"'+sel+'>'
-      +'<td style="padding:5px 8px"><div style="font-size:12px;color:var(--text0);font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(b.name)+'">'+esc(b.name)+'</div></td>'
-      +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--amber)">'+fmtV(String(b.total_retired||0))+'</td>'
-      +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text2);white-space:nowrap">'+(b.avg_annual_retirement?fmtV(String(Math.round(b.avg_annual_retirement)))+'/yr':'\u2014')+'</td>'
-      +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:10px;color:'+(parseInt(b.last_activity_year)>=2024?'var(--green)':'var(--text3)')+'">'+((b.last_activity_year||'\u2014'))+'</td>'
+    var concIcon=b.project_count<=2?'<span style="font-size:10px;color:var(--red)" title="High concentration">\u25CF</span>':b.project_count<=5?'<span style="font-size:10px;color:var(--amber)" title="Moderate">\u25CF</span>':'<span style="font-size:10px;color:var(--green)" title="Well diversified">\u25CF</span>';
+    html+='<tr onclick="selBuyerRow(\''+esc(b.name).replace(/'/g,"\\'")+'\');" style="cursor:pointer"'+sel+'>'
+      +'<td style="padding:5px 8px"><div style="font-size:12px;font-weight:500;color:var(--text0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px" title="'+esc(b.name)+'">'+esc(b.name)+'</div><div style="font-size:9.5px;color:var(--text3)">'+esc(b.sector||'')+'</div></td>'
+      +'<td style="padding:5px 8px">'+activityBadge(b)+'</td>'
+      +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:11px;font-weight:500;color:var(--teal)">'+(b.retired_2026>0?fmtV(String(b.retired_2026)):'<span style="color:var(--text3)">\u2014</span>')+'</td>'
+      +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--amber)">'+(b.retired_2025>0?fmtV(String(b.retired_2025)):'<span style="color:var(--text3)">\u2014</span>')+'</td>'
+      +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:10.5px;color:var(--text2)">'+(b.retired_2024>0?fmtV(String(b.retired_2024)):'<span style="color:var(--text3)">\u2014</span>')+'</td>'
+      +'<td style="padding:5px 8px;font-size:10.5px;color:var(--text1);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+recentMethLabel(b)+'">'+recentMethLabel(b)+'</td>'
       +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--teal)">'+(b.project_count||0)+'</td>'
-      +'<td style="padding:5px 8px"><span class="'+mCls(b.top_methodology||'')+'" style="font-size:8.5px">'+(b.top_methodology||'\u2014')+'</span></td>'
-      +'<td style="padding:5px 8px;font-size:11px;color:var(--text1)">'+(b.top_country||'\u2014')+'</td>'
-      +'<td style="padding:5px 8px">'+methChips+'</td>'
+      +'<td style="text-align:center;padding:5px 8px">'+concIcon+'</td>'
       +'</tr>';
   });
   document.getElementById('vBTbody').innerHTML=html||'<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text3)">No buyers match</td></tr>';
@@ -1532,28 +1558,38 @@ function selBuyerRow(name){
 }
 
 function renderBuyerPanel(name){
-  var buyer=BUYER_FILTERED.find(function(b){return b.name===name;});
+  var buyer=BUYER_FILTERED.find(function(b){return b.name===name;})||BUYER_DATA.find(function(b){return b.name===name;});
   if(!buyer){
     var pd=document.getElementById('vcuPanelDetail');
     if(pd)pd.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);font-size:12px">Loading...</div>';
     fetch(API+'/api/primitives/vcu/buyers/'+encodeURIComponent(name))
       .then(function(r){return r.json();})
-      .then(function(d){renderBuyerPanelData(d.buyer_name||name,d.total_retired||0,d.projects||[],d.methodologies||[],d.countries||[]);});
+      .then(function(d){
+        var fakeBuyer={name:d.buyer_name||name,total_retired:d.total_retired||0,projects:d.projects||[],methodologies:d.methodologies||[],countries:d.countries||[],project_count:(d.projects||[]).length,sector:'',activity_status:'historical',retired_2024:0,retired_2025:0,retired_2026:0,last_activity_year:null,recent_methodology:null};
+        renderBuyerPanelData(fakeBuyer);
+      });
     return;
   }
-  renderBuyerPanelData(buyer.name,buyer.total_retired,buyer.projects||[],buyer.methodologies||[],buyer.countries||[]);
+  renderBuyerPanelData(buyer);
 }
 
-function renderBuyerPanelData(name,totalRetired,projects,methodologies,countries){
-  document.getElementById('vcuPanelEmpty').style.display='none';
-  var pd=document.getElementById('vcuPanelDetail');
-  pd.style.display='flex';pd.style.flexDirection='column';
+function methCategory(code){
+  var c=(code||'').toUpperCase();
+  if(c.indexOf('VM0007')>=0||c.indexOf('VM0015')>=0||c.indexOf('VM0048')>=0||c.indexOf('VMR0006')>=0)return 'Forest Protection (REDD+)';
+  if(c.indexOf('VM0047')>=0||c.indexOf('AR-ACM')>=0||c.indexOf('AR-AMS')>=0)return 'Afforestation & Reforestation';
+  if(c.indexOf('VM0003')>=0||c.indexOf('VM0010')>=0||c.indexOf('VM0012')>=0||c.indexOf('VM0034')>=0)return 'Forest Management (IFM)';
+  if(c.indexOf('VM0033')>=0)return 'Blue Carbon';
+  if(c.indexOf('VM0044')>=0)return 'Biochar Removal';
+  if(c.indexOf('VM0041')>=0||c.indexOf('VM0026')>=0)return 'Savanna & Grassland';
+  if(c.indexOf('VM0019')>=0||c.indexOf('AMS-III.G')>=0)return 'Landfill Gas';
+  if(c.indexOf('AMS-III.D')>=0||c.indexOf('AMS-III.H')>=0||c.indexOf('VM0009')>=0)return 'Methane Reduction';
+  if(c.indexOf('ACM0002')>=0||c.indexOf('ACM0016')>=0||c.indexOf('AMS-I')>=0)return 'Renewable Energy';
+  if(c.indexOf('ACM0012')>=0||c.indexOf('AM0073')>=0)return 'Energy Efficiency';
+  return 'Other';
+}
 
-  currentBuyerData={name:name,total_retired:totalRetired,projects:projects,methodologies:methodologies,countries:countries};
-
-  var methChips=methodologies.slice(0,6).map(function(m){return '<span class="'+mCls(m)+'" style="font-size:10px">'+m+'</span>';}).join(' ');
-
-  var topProjects=projects.slice(0,5).map(function(p){
+function renderTopProjectBars(projects,totalRetired){
+  return projects.slice(0,5).map(function(p){
     var pct=totalRetired>0?Math.round(p.vol/totalRetired*100):0;
     var sharePct=totalRetired>0?((p.vol/totalRetired)*100).toFixed(1):'0';
     var barW=Math.max(pct,3);
@@ -1562,85 +1598,168 @@ function renderBuyerPanelData(name,totalRetired,projects,methodologies,countries
       +'<div class="b-bar" style="flex:1;height:8px;background:var(--bg4);border-radius:4px;margin:0 6px"><div style="height:100%;border-radius:4px;background:var(--teal);width:'+barW+'%"></div></div>'
       +'<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text2);min-width:70px;text-align:right"><span style="font-weight:600">'+fmtV(String(p.vol))+'</span><span style="font-size:8.5px;color:var(--text3);margin-left:3px">'+sharePct+'%</span></div>'
       +'</div>';
-  }).join('');
+  }).join('')||'<div style="font-size:10.5px;color:var(--text3);padding:4px 0">No project data</div>';
+}
 
-  var avgPerProject=projects.length?Math.round(totalRetired/(projects.length||1)):0;
-  var lastYear=0;
-  projects.forEach(function(p){var vcu=VCU[String(p.project_id)];if(vcu&&parseInt(vcu.li)>lastYear)lastYear=parseInt(vcu.li);});
-  var buyerFromList=BUYER_DATA.find(function(b){return b.name===name;});
-  if(buyerFromList&&buyerFromList.last_activity_year&&buyerFromList.last_activity_year>lastYear)lastYear=buyerFromList.last_activity_year;
+var activityProjectCache={};
+function fetchActivityProjects(buyerName,year,containerId){
+  var el=document.getElementById(containerId);if(!el)return;
+  var ckey=buyerName+'|'+year;
+  if(activityProjectCache[ckey]){el.innerHTML=activityProjectCache[ckey];return;}
+  fetch(API+'/api/primitives/vcu/buyer-yearly/'+encodeURIComponent(buyerName))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var byProject=d.by_project||[];
+      var yearProjects=[];
+      byProject.forEach(function(p){
+        var yd=(p.yearly||[]).find(function(y){return y.year===year;});
+        if(yd&&yd.qty>0)yearProjects.push({id:p.project_id,name:p.name||p.project_id,qty:yd.qty});
+      });
+      yearProjects.sort(function(a,b){return b.qty-a.qty;});
+      var html=yearProjects.length
+        ?yearProjects.slice(0,3).map(function(p){return '<span onclick="gotoProject(\''+esc(p.id)+'\')" style="cursor:pointer;color:var(--teal);text-decoration:underline;font-size:10px;margin-right:8px" title="'+esc(p.name||p.id)+' \u2014 '+fmtV(String(p.qty))+'">'+esc((p.name||p.id).toString().slice(0,25))+'</span>';}).join(' \u00B7 ')
+         +(yearProjects.length>3?'<span style="color:var(--text3);font-size:9.5px">+'+(yearProjects.length-3)+' more</span>':'')
+        :'<span style="color:var(--text3);font-size:10px">No projects identified</span>';
+      activityProjectCache[ckey]=html;
+      if(el)el.innerHTML=html;
+    }).catch(function(){if(el)el.innerHTML='<span style="color:var(--text3);font-size:10px">\u2014</span>';});
+}
 
-  var buyerObj={name:name,total_retired:totalRetired,projects:projects,methodologies:methodologies,countries:countries,top_methodology:methodologies[0]||null,top_country:countries[0]||null};
-  var sparkHtml=buyerSparkline(buyerObj);
+function fetchAndRenderYearlyChart(name,containerId){
+  loadBuyerYearly(name);
+}
 
-  /* F7: Methodology cards */
-  var methCardsHtml='<div style="margin-top:14px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:6px">Preferred methodologies</div>';
-  methodologies.forEach(function(m){
-    var label=METH_LABELS_FE[m]||METH_LABELS[m]||'Carbon project methodology';
-    methCardsHtml+='<div onclick="toggleMethCard(this,\''+esc(name).replace(/'/g,"\\'")+'\',\''+m+'\')" style="cursor:pointer;padding:7px 10px;margin-bottom:4px;border:1px solid var(--border);border-radius:6px;background:var(--bg3)">'
-      +'<div style="display:flex;align-items:center;gap:6px">'
-      +'<span class="meth-arrow" style="font-size:10px;color:var(--text3)">\u25B8</span>'
-      +'<span class="'+mCls(m)+'" style="font-size:9px">'+m+'</span>'
-      +'<span style="font-size:10px;color:var(--text2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+label+'</span></div>'
-      +'<div class="meth-proj-list" style="display:none;margin-top:6px;padding-top:6px;border-top:1px solid var(--border)"></div></div>';
-  });
-  methCardsHtml+='</div>';
+function renderBuyerPanelData(b){
+  document.getElementById('vcuPanelEmpty').style.display='none';
+  var pd=document.getElementById('vcuPanelDetail');
+  pd.style.display='flex';pd.style.flexDirection='column';
 
-  /* F11: Similar buyers */
-  var similar=getSimilarBuyers(name,buyerFromList?buyerFromList.sector:'',methodologies);
-  var simHtml='';
-  if(similar.length){
-    simHtml='<div style="margin-top:14px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:6px">Similar buyers</div>';
-    similar.forEach(function(sb){
-      simHtml+='<div onclick="selBuyerRow(\''+esc(sb.name).replace(/'/g,"\\'")+'\')" style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border);cursor:pointer">'
-        +'<div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:500;color:var(--teal);text-decoration:underline;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(sb.name)+'</div>'
-        +'<div style="font-size:9.5px;color:var(--text3)">'+(sb.sector||'')+' \u00B7 '+(sb.project_count||0)+' projects</div></div>'
-        +'<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--amber)">'+fmtV(String(sb.total_retired||0))+'</div></div>';
+  var name=b.name;
+  currentBuyerData=b;
+
+  var r2026=b.retired_2026||0,r2025=b.retired_2025||0,r2024=b.retired_2024||0;
+  var recentTotal=r2026+r2025+r2024;
+  var isDormant=b.activity_status==='dormant'||(b.activity_status==='historical'&&b.total_retired>500000);
+
+  var statusBadge=b.activity_status==='active_2026'
+    ?'<span style="padding:3px 10px;border-radius:99px;background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.3);font-size:10.5px;font-weight:600">\u25CF Active 2026</span>'
+    :b.activity_status==='active_2025'
+    ?'<span style="padding:3px 10px;border-radius:99px;background:rgba(251,191,36,.1);color:var(--amber);border:1px solid rgba(251,191,36,.25);font-size:10.5px;font-weight:600">\u25CF Active 2025</span>'
+    :isDormant
+    ?'<span style="padding:3px 10px;border-radius:99px;background:var(--bg3);color:var(--text3);border:1px solid var(--border);font-size:10.5px">\u25CB Dormant \u2014 last active '+(b.last_activity_year||'\u2014')+'</span>'
+    :'<span style="padding:3px 10px;border-radius:99px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);font-size:10.5px">\u25CF Active '+(b.last_activity_year||'')+'</span>';
+
+  var dormantWarning=isDormant
+    ?'<div style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:7px;padding:10px 12px;margin-bottom:12px">'
+     +'<div style="font-size:11px;color:var(--red);font-weight:600;margin-bottom:3px">\u26A0 Market exit detected</div>'
+     +'<div style="font-size:10.5px;color:var(--text2);line-height:1.5">No significant purchases since '+(b.last_activity_year||'2023')+'. Historical data shown below \u2014 not recommended for active outreach.</div>'
+     +'</div>'
+    :'';
+
+  /* Methodology bars */
+  var methBarsHtml='';
+  if(!isDormant&&b.projects&&b.projects.length){
+    var methVols={};
+    b.projects.forEach(function(p){
+      var m=p.methodology||'';var first=m.split(';')[0].trim();
+      var cat=methCategory(first);
+      methVols[cat]=(methVols[cat]||0)+(p.vol||0);
     });
-    simHtml+='</div>';
+    var methTotal=Object.values(methVols).reduce(function(a,v){return a+v;},0)||1;
+    var methData=Object.entries(methVols).sort(function(a,b){return b[1]-a[1];}).slice(0,4);
+    methBarsHtml=methData.map(function(mv){
+      var pct=Math.round(mv[1]/methTotal*100);
+      return '<div style="margin-bottom:8px">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">'
+        +'<span style="font-size:11.5px;color:var(--text0);font-weight:500">'+esc(mv[0])+'</span>'
+        +'<span style="font-family:\'DM Mono\',monospace;font-size:10.5px;color:var(--text2)">'+fmtV(String(mv[1]))+' <span style="color:var(--text3)">'+pct+'%</span></span>'
+        +'</div>'
+        +'<div style="height:7px;background:var(--bg3);border-radius:99px;overflow:hidden">'
+        +'<div style="width:'+pct+'%;height:100%;background:var(--teal);border-radius:99px;transition:width .4s ease"></div>'
+        +'</div>'
+        +'</div>';
+    }).join('');
   }
 
-  var escName=esc(name).replace(/'/g,"\\'");
+  /* Activity row helper */
+  function activityRow(year,volume,label){
+    if(!volume)return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">'
+      +'<span style="font-family:\'DM Mono\',monospace;font-size:12px;color:var(--text3);font-weight:600;min-width:36px">'+year+'</span>'
+      +'<span style="font-size:10.5px;color:var(--text3)">No recorded activity</span>'
+      +'</div>';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)">'
+      +'<span style="font-family:\'DM Mono\',monospace;font-size:13px;color:'+label+';font-weight:700;min-width:36px">'+year+'</span>'
+      +'<div style="flex:1">'
+      +'<div style="font-family:\'DM Mono\',monospace;font-size:13px;font-weight:600;color:'+label+'">'+fmtV(String(volume))+'</div>'
+      +'<div style="font-size:9.5px;color:var(--text3);margin-top:1px" id="actproj-'+esc(name)+'-'+year+'">Loading projects...</div>'
+      +'</div>'
+      +'</div>';
+  }
+
+  /* Similar buyers */
+  var similar=getSimilarBuyers(name,b.sector||'',(b.methodologies||[]));
+  var simHtml=similar.map(function(sb){
+    return '<div onclick="selBuyerRow(\''+esc(sb.name).replace(/'/g,"\\'")+'\')" style="display:flex;align-items:center;gap:7px;padding:4px 0;border-bottom:1px solid var(--border);cursor:pointer">'
+      +'<div style="flex:1;min-width:0">'
+      +'<div style="font-size:11px;font-weight:500;color:var(--teal);text-decoration:underline;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(sb.name)+'</div>'
+      +'<div style="font-size:9.5px;color:var(--text3)">'+esc(sb.sector||'')+'</div></div>'
+      +activityBadge(sb)
+      +'<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--amber)">'+fmtV(String(sb.retired_2025||sb.total_retired||0))+'</span>'
+      +'</div>';
+  }).join('');
+
   pd.innerHTML=
-    '<div class="panel-body-top">'
-    +'<div style="display:flex;align-items:flex-start;justify-content:space-between">'
-    +'<div><div style="font-size:15px;font-weight:600;color:var(--text0)">'+esc(name)+'</div>'
-    +'<div style="font-size:11px;color:var(--text2);margin-top:4px">'+projects.length+' projects \u00B7 '+countries.slice(0,3).join(', ')+'</div>'
-    +'<div style="margin-top:7px;display:flex;flex-wrap:wrap;gap:4px">'
-    +'<span style="font-size:10px;padding:2px 8px;border-radius:99px;background:var(--amber-dim,rgba(245,158,11,.12));color:var(--amber)">'+fmtV(String(totalRetired))+' retired</span>'
-    +methChips
-    +'</div></div>'
-    +'<button onclick="exportCSV(\'buyer_profile\',currentBuyerData)" style="padding:3px 10px;background:transparent;border:1px solid var(--border-hi);border-radius:6px;color:var(--text2);font-family:inherit;font-size:10px;cursor:pointer;flex-shrink:0">&darr; CSV</button>'
-    +'</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px">'
-    +'<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Total Retired</div><div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:600;color:var(--amber);margin-top:4px">'+fmtV(String(totalRetired))+'</div></div>'
-    +'<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Projects</div><div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:600;color:var(--teal);margin-top:4px">'+projects.length+'</div></div>'
-    +'<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Avg per Project</div><div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:600;color:var(--teal);margin-top:4px">'+fmtV(String(avgPerProject))+'</div></div>'
-    +'<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Methodologies</div><div style="font-size:14px;font-weight:600;color:var(--text0);margin-top:4px">'+methodologies.length+'</div></div>'
-    +'<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Countries</div><div style="font-size:14px;font-weight:600;color:var(--text0);margin-top:4px">'+countries.length+'</div></div>'
-    +'<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Last Activity</div><div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:600;color:'+(lastYear>=2024?'var(--green)':'var(--text0)')+';margin-top:4px">'+(lastYear>0?lastYear:'\u2014')+'</div></div>'
+    '<div class="panel-body-scroll" style="flex:1;overflow-y:auto;padding:14px 16px">'
+    /* BUYER NAME + STATUS */
+    +'<div style="margin-bottom:10px">'
+    +'<div style="font-size:18px;font-weight:700;color:var(--text0);margin-bottom:5px">'+esc(name)+'</div>'
+    +statusBadge
+    +'<div style="font-size:10.5px;color:var(--text3);margin-top:6px">'
+    +esc(b.sector||'')+(b.project_count?' \u00B7 '+b.project_count+' projects':'')+(b.total_retired?' \u00B7 '+fmtV(String(b.total_retired))+' lifetime':'')
     +'</div>'
     +'</div>'
-    +'<div class="panel-body-scroll">'
-    +sparkHtml
-    +'<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:8px;margin-top:14px">Top projects retired from</div>'
-    +topProjects
-    +methCardsHtml
-    +'<div style="margin-top:14px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:6px">Countries</div>'
-    +'<div style="font-size:11px;color:var(--text1)">'+countries.join(' \u00B7 ')+'</div></div>'
-    +'<div style="margin-top:14px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:6px">Recommended projects to pitch</div>'
-    +'<div id="rec-content-'+esc(name)+'" style="margin-top:6px">'
-    +'<div style="display:flex;align-items:center;gap:7px;padding:6px 0">'
-    +'<div style="width:10px;height:10px;border:1.5px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0"></div>'
-    +'<span style="font-size:10.5px;color:var(--text3)">Scoring projects...</span>'
-    +'</div></div></div>'
-    +simHtml
+    /* DORMANT WARNING */
+    +dormantWarning
+    /* WHAT THEY BUY */
+    +(!isDormant&&methBarsHtml?'<div style="margin-bottom:14px"><div style="font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">What they buy</div>'+methBarsHtml+'</div>':'')
+    /* RECENT ACTIVITY */
+    +'<div style="margin-bottom:14px">'
+    +'<div style="font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px">Recent activity</div>'
+    +activityRow(2026,r2026,'var(--green)')
+    +activityRow(2025,r2025,'var(--amber)')
+    +(r2024>0?activityRow(2024,r2024,'var(--text2)'):'')
+    +'</div>'
+    /* RECOMMENDED TO PITCH */
+    +'<div style="margin-bottom:14px">'
+    +'<div style="font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px">Recommended to pitch</div>'
+    +'<div id="rec-content-'+esc(name)+'" style="font-size:10.5px;color:var(--text3)">'
+    +'<div style="display:flex;align-items:center;gap:6px;padding:4px 0"><div style="width:10px;height:10px;border:1.5px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0"></div>Scoring projects...</div>'
+    +'</div>'
+    +'</div>'
+    /* MORE DETAILS DIVIDER */
+    +'<div style="text-align:center;margin:10px 0;color:var(--text3);font-size:10px;letter-spacing:.1em">\u2500\u2500 MORE DETAILS \u2500\u2500</div>'
+    /* RETIREMENT HISTORY */
+    +'<div id="buyer-yearly-chart" style="margin-bottom:12px"><div style="font-size:10px;color:var(--text3)">Loading retirement history...</div></div>'
+    /* TOP PROJECTS ALL TIME */
+    +'<div style="margin-bottom:12px">'
+    +'<div style="font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px">Top projects (all time)</div>'
+    +renderTopProjectBars(b.projects||[],b.total_retired||1)
+    +'</div>'
+    /* SIMILAR BUYERS */
+    +(simHtml?'<div style="margin-bottom:12px"><div style="font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px">Similar buyers</div>'+simHtml+'</div>':'')
+    /* CSV EXPORT */
+    +'<button onclick="exportCSV(\'buyer_profile\',currentBuyerData)" style="width:100%;padding:6px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:10.5px;cursor:pointer;margin-top:6px">\u2193 Export buyer data CSV</button>'
     +'</div>';
+
   setTimeout(function(){pd.style.opacity='1';},50);
-  /* T2-1: Load real yearly data */
-  setTimeout(function(){loadBuyerYearly(name);},100);
-  /* T1-3: Auto-load recs when buyer panel opens */
-  setTimeout(function(){loadRecs(name);},200);
+  setTimeout(function(){
+    loadBuyerYearly(name);
+    loadRecs(name);
+    if(r2026>0)fetchActivityProjects(name,2026,'actproj-'+esc(name)+'-2026');
+    if(r2025>0)fetchActivityProjects(name,2025,'actproj-'+esc(name)+'-2025');
+    if(r2024>0)fetchActivityProjects(name,2024,'actproj-'+esc(name)+'-2024');
+    setTimeout(function(){checkScrollIndicator();},200);
+  },50);
 }
 
 function toggleMobileSidebar(){
@@ -2244,7 +2363,7 @@ function vintageBar(breakdown){
 }
 function selRow_fromRec(id){openProjectCard(id);}
 function openProjectCard(id){
-  /* T1-2: Navigate to project within VCU Intelligence instead of switching page */
+  /* T1-2: Navigate to project within Buyer Intelligence instead of switching page */
   if(VCU_SUB==='buyer'||VCU_SUB==='map'){
     /* Switch to project sub-tab */
     setVCUSub('project');
@@ -2390,11 +2509,29 @@ function showOnbTip(i){
   else if(t.pos==='left'){tip.style.top=rect.top+'px';tip.style.right=(window.innerWidth-rect.left+8)+'px';}
 }
 
+/* SCROLL INDICATOR */
+function checkScrollIndicator(){
+  var el=document.querySelector('.panel-body-scroll');
+  if(!el)return;
+  var existing=el.querySelector('.scroll-fade');
+  if(el.scrollHeight>el.clientHeight+20){
+    if(!existing){var d=document.createElement('div');d.className='scroll-fade';el.appendChild(d);}
+    else existing.classList.remove('hidden');
+    el.onscroll=function(){
+      var f=el.querySelector('.scroll-fade');
+      if(!f)return;
+      if(el.scrollTop+el.clientHeight>=el.scrollHeight-10)f.classList.add('hidden');
+      else f.classList.remove('hidden');
+    };
+  }else if(existing){existing.classList.add('hidden');}
+}
+
 /* BOOT */
 loadVCUPage();
 loadBuyers();
 window.vcuLoaded=true;
 showOnboardingTooltips();
+setTimeout(function(){if(!window.browserLoaded){loadData();window.browserLoaded=true;}},3000);
 </script>
 </body>
 </html>
