@@ -419,6 +419,18 @@ REGISTRY INDEX (v78):
 132. Project Quick Find — onProjectIDSearch(val) with 180ms debounce, searches ALL array. Numeric input matches ID prefix, text matches name substring. Max 8 results. jumpToProject(id) calls selRow + scrollIntoView. Click-outside closes dropdown. [v79r]
 
 133. Deal Radar — 4th VCU sub-tab ('radar'). setVCUSub('radar') shows vRadarView, triggers renderDealRadar(). Uses _radarPending flag if BUYER_DATA not loaded yet. Active 2026 = activity_status==='active_2026'. Strong 2025 = active_2025 AND retired_2025≥200K. ClearSky matches via VCU[k].cs flag. [v79r]
+
+134. _bootPhase REMOVED (v79t) — openEntityPanel no longer blocks during boot. Panels open immediately. If data hasn't loaded yet, renderPanel's retry logic (500ms poll, 20 attempts) handles the race. [v79t]
+
+135. renderPanel split (v79t) — renderPanel(id) = retry logic only (finds row in ALL, polls if missing). renderPanelHTML(row) = pure HTML generation. Always call renderPanel(id), never renderPanelHTML directly from outside. [v79t]
+
+136. BUYER_YEARLY_CACHE (v79t) — populated from /vcu/buyers-full endpoint during loadBuyers(). Keys are buyer_name strings, values are {2019:N,...,2026:N} objects. fetchAndRenderYearlyChart checks cache before API call. [v79t]
+
+137. recCache (v79t) — populated from /vcu/preload-recommendations for top 20 buyers on boot. loadRecs(name) checks recCache[name] before fetching /vcu/match-projects. [v79t]
+
+138. PRELOAD state (v79t) — {registry, buyers, vcuAgg, demandMatrix, recs, market}. checkAllLoaded() hides loading overlay when registry+buyers+vcuAgg all true. Other fields are informational. [v79t]
+
+139. loadDemandMap (v79t) — checks DEMAND_MATRIX before fetching. If preloadDemandMatrix() already ran, renders instantly from cache. Uses demand-matrix-full endpoint (adds sector_yearly). [v79t]
 ```
 
 ---
