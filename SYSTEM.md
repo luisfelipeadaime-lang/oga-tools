@@ -401,6 +401,16 @@ REGISTRY INDEX (v78):
 123. selRow() now calls openEntityPanel — Project Browser selRow() uses pushBreadcrumb + setEntityContext + openEntityPanel(function(){renderPanel(id);}). Previously just called renderPanel() directly without entity panel integration. [v79o]
 
 124. checkScrollIndicator() — appends .scroll-fade div (sticky gradient) to panel-body-scroll. Shows fade when content overflows (scrollHeight > clientHeight + 20). Hides when user scrolls to bottom (<10px from end). el.onscroll bound for live detection. [v79o]
+
+125. gotoProjectFromVCU(id) — VCU By-Project rows use this instead of selVCURow. Calls openEntityPanel with renderPanel(id) to show the full Project Browser panel. selVCURow still exists for the minimal VCU panel (used internally). [v79p]
+
+126. renderPanel active page detection — renderPanel detects page-vcu vs page-browser to target correct panel element (vcuPanelDetail or panelDetail). If row not in ALL, shows loading and polls every 500ms until available (max 10s timeout). Uses showPanelError for failures. [v79p]
+
+127. _bootPhase guard — _bootPhase=true at init, cleared after BOTH loadData and loadBuyers complete (_bootReady >= 2). openEntityPanel returns immediately during boot. Prevents race condition where user clicks before data is ready. [v79p]
+
+128. /vcu/buyers limit — Worker default raised from 200 to 2000, max from 500 to 2000. Frontend loadBuyers uses limit=2000. Sector accordion uses limit=500. [v79p]
+
+129. .pb CSS class — flex:1;overflow-y:auto;padding:14px 16px. Applied to panel body divs (#pt-ov, #pt-vcu) inside renderPanel output. Ensures panel body scrolls within fixed-height panel container. [v79p]
 ```
 
 ---
