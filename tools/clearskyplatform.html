@@ -187,7 +187,7 @@ td{padding:5px 8px;vertical-align:middle}
 
 /* Panel tabs */
 .panel-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
-.vcu-subtabs{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;padding:0 14px;flex-shrink:0;position:sticky;top:42px;z-index:49}
+.vcu-subtabs{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;padding:0 14px;flex-shrink:0;position:sticky;top:0;z-index:10}
 .ptb{padding:8px 16px;font-size:12.5px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s;display:flex;align-items:center;gap:6px}
 .ptb.on{color:var(--teal);border-bottom-color:var(--teal)}
 .ptb:hover:not(.on){color:var(--text0)}
@@ -2527,11 +2527,10 @@ function checkScrollIndicator(){
 }
 
 /* BOOT */
+loadData();
 loadVCUPage();
 loadBuyers();
-window.vcuLoaded=true;
 showOnboardingTooltips();
-setTimeout(function(){if(!window.browserLoaded){loadData();window.browserLoaded=true;}},3000);
 </script>
 </body>
 </html>
