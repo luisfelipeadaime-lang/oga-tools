@@ -42,14 +42,18 @@ html,body{height:100%;background:var(--bg0);color:var(--text0);font-family:'DM S
 .ptab.dim{opacity:.35;cursor:default}
 .ptab-badge{font-size:10px;padding:2px 7px;border-radius:99px;background:var(--teal-dim);color:var(--teal);font-family:'DM Mono',monospace;font-weight:400}
 
-/* PAGE LAYOUT */
+/* PAGE LAYOUT — v79u navigation architecture */
 .page{display:none}
-.page.active{display:grid;grid-template-columns:210px 1fr 0px;overflow:hidden;grid-column:1/-1;transition:grid-template-columns .2s ease}
-.page.active.panel-split{grid-template-columns:210px 0px 1fr}
-.page.active.panel-split>.main{overflow:hidden;max-width:0;min-width:0;padding:0}
-.page.active.panel-full{grid-template-columns:0px 0px 1fr}
-.page.active.panel-full .sidebar{display:none}
-.page.active.panel-full .main{display:none}
+.page.active{display:grid;grid-template-columns:210px 1fr 0px;overflow:hidden;grid-column:1/-1}
+.page.active .panel{overflow:hidden;min-width:0}
+.page.active:not(.panel-open) .panel{width:0;min-width:0;border-left:none;padding:0}
+.page.active.panel-open{grid-template-columns:210px 0px 1fr}
+.page.active.panel-open>.main{display:none}
+.page.active.panel-open .panel{display:flex;flex-direction:column;min-width:0}
+.page.active.panel-expanded{grid-template-columns:0px 0px 1fr}
+.page.active.panel-expanded .sidebar{display:none}
+.page.active.panel-expanded .panel .panel-body-scroll{column-count:2;column-gap:24px;padding:16px 24px}
+.page.active.panel-expanded .panel .panel-body-scroll>div{break-inside:avoid}
 
 /* SIDEBAR */
 .sidebar{background:var(--bg1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
@@ -151,10 +155,7 @@ td{padding:5px 8px;vertical-align:middle}
 .empty-s{padding:40px;text-align:center;color:var(--text3);font-size:12px}
 
 /* PANEL */
-.panel{background:var(--bg1);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;position:relative;transition:all .2s ease}
-.page.active:not(.panel-split):not(.panel-full) .panel{width:0;min-width:0;border-left:none;padding:0}
-.page.active.panel-split .panel{min-width:0}
-.page.active.panel-full .panel{border-left:none}
+.panel{background:var(--bg1);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;position:relative}
 .pb{flex:1;overflow-y:auto;padding:14px 16px}
 .panel-error{padding:40px;text-align:center}
 .panel-error .pe-warn{font-size:14px;color:var(--red);margin-bottom:6px}
@@ -229,8 +230,6 @@ td{padding:5px 8px;vertical-align:middle}
 .no-vcu{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;color:var(--text3)}
 .panel-body-top{flex-shrink:0;padding:14px 16px 10px;border-bottom:1px solid var(--border)}
 .panel-body-scroll{flex:1;overflow-y:auto;padding:12px 16px;position:relative}
-.page.active.panel-full .panel-body-scroll{column-count:2;column-gap:24px;padding:16px 24px}
-.page.active.panel-full .panel-body-scroll>div{break-inside:avoid}
 .scroll-fade{position:sticky;bottom:0;left:0;right:0;height:28px;pointer-events:none;background:linear-gradient(transparent,var(--bg1));z-index:5;margin-top:-28px;transition:opacity .2s}
 .scroll-fade.hidden{opacity:0}
 .entity-nav{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20;flex-shrink:0}
@@ -251,11 +250,11 @@ td{padding:5px 8px;vertical-align:middle}
   .stat-pill{font-size:9.5px;padding:2px 6px}
   .page-tabs{overflow-x:auto;padding:0 10px}
   .ptab{font-size:11px;padding:8px 10px;white-space:nowrap}
-  .page.active,.page.active.panel-split,.page.active.panel-full{grid-template-columns:1fr !important;height:auto}
+  .page.active,.page.active.panel-open,.page.active.panel-expanded{grid-template-columns:1fr !important;height:auto}
   .sidebar{display:none}
   .main{min-height:50vh}
   .panel{display:none;border-left:none;border-top:1px solid var(--border)}
-  .page.active:not(.panel-split):not(.panel-full) .panel{width:auto;border-left:none}
+  .page.active:not(.panel-open) .panel{width:auto;border-left:none}
   .table-wrap{overflow-x:auto}
   table{min-width:500px}
   .tname{max-width:120px}
@@ -646,7 +645,9 @@ var API='https://api-tools.oga.earth';
 var IS_EXTERNAL=new URLSearchParams(window.location.search).get('mode')==='external';
 
 function showPage(pg){
-  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  /* v79u: close panel on page switch */
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active','panel-open','panel-expanded');});
+  PANEL_OPEN=false;PANEL_EXPANDED=false;
   document.querySelectorAll('.ptab').forEach(function(t){t.classList.remove('active');});
   var pages=document.querySelectorAll('.ptab');
   if(pg==='vcu'){document.getElementById('page-vcu').classList.add('active');pages[0].classList.add('active');if(!window.vcuLoaded)loadVCUPage();}
@@ -931,13 +932,7 @@ document.addEventListener('click',function(e){if(!e.target.closest('#projQuickFi
 /* PANEL */
 function selRow(id){
   if(S.selectedId){var o=document.getElementById('tr-'+S.selectedId);if(o)o.classList.remove('sel');}
-  S.selectedId=id;
-  var tr=document.getElementById('tr-'+id);if(tr)tr.classList.add('sel');
-  var row=ALL.find(function(p){return p.id===id;});
-  var label=row?(row.name.length>22?row.name.slice(0,22)+'\u2026':row.name):('VCS #'+id);
-  pushBreadcrumb('project',id,label);
-  setEntityContext(['Registry',label]);
-  openEntityPanel(function(){renderPanel(id);});
+  openProject(id,'browser');
 }
 
 function retRing(rr){
@@ -1255,19 +1250,13 @@ function selVCURow(id){
   var row=ALL.find(function(p){return p.id===id;});
   var label=row?(row.name.length>22?row.name.slice(0,22)+'\u2026':row.name):('VCS #'+id);
   pushBreadcrumb('project',id,label);
-  setEntityContext(['By Project',label]);
+  openPanel('project',id,['By Project',label]);
   renderVCU();
-  openEntityPanel(function(){renderVCUPanel(id);});
+  renderVCUPanel(id);
 }
 
 function gotoProjectFromVCU(id){
-  VS.selectedId=id;
-  var row=ALL.find(function(p){return p.id===id;});
-  var label=row?(row.name.length>22?row.name.slice(0,22)+'\u2026':row.name):('VCS #'+id);
-  pushBreadcrumb('project',id,label);
-  setEntityContext(['By Project',label]);
-  renderVCU();
-  openEntityPanel(function(){renderPanel(id);});
+  openProject(id,'vcu');
 }
 
 function renderVCUPanel(id){
@@ -1400,6 +1389,8 @@ var selBuyer=null;
 
 function setVCUSub(sub){
   VCU_SUB=sub;
+  /* v79u: close panel when switching sub-tabs */
+  if(PANEL_OPEN)closePanel();
   document.querySelectorAll('[id^="vsubt-"]').forEach(function(el){el.classList.remove('on');});
   document.getElementById('vsubt-'+sub).classList.add('on');
   var projView=document.getElementById('vProjectView');
@@ -1415,8 +1406,6 @@ function setVCUSub(sub){
     if(radarView)radarView.style.display='none';
     if(projFilters)projFilters.style.display='';
     if(buyerFilters)buyerFilters.style.display='none';
-    document.getElementById('vcuPanelEmpty').style.display='flex';
-    document.getElementById('vcuPanelDetail').style.display='none';
     filterVCU();
   }else if(sub==='map'){
     if(projView)projView.style.display='none';
@@ -1425,8 +1414,6 @@ function setVCUSub(sub){
     if(radarView)radarView.style.display='none';
     if(projFilters)projFilters.style.display='none';
     if(buyerFilters)buyerFilters.style.display='none';
-    document.getElementById('vcuPanelEmpty').style.display='flex';
-    document.getElementById('vcuPanelDetail').style.display='none';
     if(!window.mapLoaded)loadDemandMap();
   }else if(sub==='radar'){
     if(projView)projView.style.display='none';
@@ -1435,8 +1422,6 @@ function setVCUSub(sub){
     if(radarView)radarView.style.display='block';
     if(projFilters)projFilters.style.display='none';
     if(buyerFilters)buyerFilters.style.display='none';
-    document.getElementById('vcuPanelEmpty').style.display='flex';
-    document.getElementById('vcuPanelDetail').style.display='none';
     if(!buyersLoaded){loadBuyers();window._radarPending=true;}
     else renderDealRadar();
   }else{
@@ -1446,8 +1431,6 @@ function setVCUSub(sub){
     if(radarView)radarView.style.display='none';
     if(projFilters)projFilters.style.display='none';
     if(buyerFilters)buyerFilters.style.display='';
-    document.getElementById('vcuPanelEmpty').style.display='flex';
-    document.getElementById('vcuPanelDetail').style.display='none';
     if(!buyersLoaded)loadBuyers();
     else filterBuyers();
   }
@@ -1544,13 +1527,7 @@ function renderBuyers(){
 
 function exportBuyerCSV(){exportCSV('buyers');}
 
-function selBuyerRow(name){
-  selBuyer=name;
-  pushBreadcrumb('buyer',name,name.length>20?name.slice(0,20)+'\u2026':name);
-  setEntityContext(['By Buyer',name]);
-  renderBuyers();
-  openEntityPanel(function(){renderBuyerPanel(name);});
-}
+function selBuyerRow(name){openBuyer(name);}
 
 function renderBuyerPanel(name){
   var buyer=BUYER_FILTERED.find(function(b){return b.name===name;})||BUYER_DATA.find(function(b){return b.name===name;});
@@ -2212,7 +2189,7 @@ function renderGlobalResults(d,q){
   el.innerHTML=html;el.style.display='block';
 }
 function showGlobalResults(){var inp=document.getElementById('globalSearchInp');if(inp&&inp.value.length>=2)onGlobalSearch(inp.value);}
-function gotoBuyer(name){hideGlobalResults();showPage('vcu');setTimeout(function(){setVCUSub('buyer');setTimeout(function(){selBuyerRow(name);},300);},300);}
+function gotoBuyer(name){hideGlobalResults();showPage('vcu');setTimeout(function(){setVCUSub('buyer');setTimeout(function(){openBuyer(name);},300);},300);}
 function gotoProject(id){hideGlobalResults();showPage('browser');setTimeout(function(){selRow(id);},500);}
 function gotoSector(name){hideGlobalResults();showPage('vcu');setTimeout(function(){setVCUSub('map');setTimeout(function(){expandSector(name);},400);},300);}
 function hideGlobalResults(){var el=document.getElementById('globalResults');if(el)el.style.display='none';var inp=document.getElementById('globalSearchInp');if(inp)inp.value='';}
@@ -2225,33 +2202,65 @@ document.addEventListener('keydown',function(e){
     if(inp){inp.focus();inp.select();}
   }
   if(e.key==='Escape'){
-    if(PANEL_STATE==='full'){setPanelState('split');return;}
-    if(PANEL_STATE==='split'){goBack();return;}
+    if(PANEL_EXPANDED){togglePanelExpand();return;}
+    if(PANEL_OPEN){goBack();return;}
     hideGlobalResults();
   }
 });
 
-/* PANEL STATE SYSTEM — hidden | split | full */
-var PANEL_STATE='hidden';
-var panelExpanded=false;
-function setPanelState(state){
-  PANEL_STATE=state;
-  panelExpanded=(state==='full');
-  var pages=document.querySelectorAll('.page.active');
-  pages.forEach(function(el){
-    el.classList.remove('panel-split','panel-full');
-    el.style.gridTemplateColumns='';
-    if(state==='split')el.classList.add('panel-split');
-    else if(state==='full')el.classList.add('panel-full');
-  });
-  var panel=document.getElementById('vcuPanel');
-  if(panel){
-    if(state==='full')panel.classList.add('expanded');
-    else panel.classList.remove('expanded');
-  }
+/* v79u NAVIGATION SYSTEM */
+var PANEL_OPEN=false;
+var PANEL_EXPANDED=false;
+function _activePage(){return document.querySelector('.page.active');}
+function _isVCU(){return document.getElementById('page-vcu').classList.contains('active');}
+function _panelEls(){
+  var isV=_isVCU();
+  return{
+    empty:document.getElementById(isV?'vcuPanelEmpty':'panelEmpty'),
+    detail:document.getElementById(isV?'vcuPanelDetail':'panelDetail'),
+    nav:document.getElementById('entityNavBar')
+  };
+}
+function openPanel(type,id,contextParts){
+  var pg=_activePage();if(!pg)return;
+  var els=_panelEls();
+  /* fade out detail */
+  if(els.detail){els.detail.style.transition='opacity .15s';els.detail.style.opacity='0';}
+  PANEL_OPEN=true;
+  pg.classList.add('panel-open');
+  setTimeout(function(){
+    if(els.empty)els.empty.style.display='none';
+    if(els.detail){els.detail.style.display='flex';els.detail.style.flexDirection='column';els.detail.style.opacity='1';}
+    if(els.nav)els.nav.style.display='flex';
+    if(contextParts)setEntityContext(contextParts);
+  },60);
+}
+function closePanel(){
+  var pg=_activePage();if(!pg)return;
+  PANEL_OPEN=false;PANEL_EXPANDED=false;
+  pg.classList.remove('panel-open','panel-expanded');
+  var els=_panelEls();
+  if(els.empty)els.empty.style.display='flex';
+  if(els.detail){els.detail.style.display='none';}
+  if(els.nav)els.nav.style.display='none';
+  panelBreadcrumb=[];
+  selBuyer=null;S.selectedId=null;
+  if(_isVCU())renderBuyers();
+  setEntityContext([]);
+  _updateExpandBtn();
+}
+function togglePanelExpand(){
+  if(!PANEL_OPEN)return;
+  var pg=_activePage();if(!pg)return;
+  PANEL_EXPANDED=!PANEL_EXPANDED;
+  if(PANEL_EXPANDED)pg.classList.add('panel-expanded');
+  else pg.classList.remove('panel-expanded');
+  _updateExpandBtn();
+}
+function _updateExpandBtn(){
   var il=document.getElementById('panelExpandIcon');
   var ll=document.getElementById('panelExpandLabel');
-  if(state==='full'){
+  if(PANEL_EXPANDED){
     if(il)il.innerHTML='\u2716';
     if(ll)ll.textContent='Collapse';
   }else{
@@ -2259,50 +2268,12 @@ function setPanelState(state){
     if(ll)ll.textContent='Expand';
   }
 }
-function togglePanelExpand(){
-  if(PANEL_STATE==='full')setPanelState('split');
-  else if(PANEL_STATE==='split')setPanelState('full');
-}
-function openEntityPanel(renderFn){
-  var isVCU=document.getElementById('page-vcu').classList.contains('active');
-  var pd=isVCU?document.getElementById('vcuPanelDetail'):document.getElementById('panelDetail');
-  if(pd){pd.style.transition='opacity .15s';pd.style.opacity='0';}
-  setTimeout(function(){
-    renderFn();
-    if(pd)pd.style.opacity='1';
-    if(PANEL_STATE==='hidden')setPanelState('split');
-    if(isVCU){
-      document.getElementById('vcuPanelEmpty').style.display='none';
-      var nav=document.getElementById('entityNavBar');if(nav)nav.style.display='flex';
-    }else{
-      document.getElementById('panelEmpty').style.display='none';
-    }
-    if(pd){pd.style.display='flex';pd.style.flexDirection='column';}
-  },150);
-}
 function goBack(){
-  if(panelBreadcrumb.length<=1){
-    setPanelState('hidden');
-    var isVCU=document.getElementById('page-vcu').classList.contains('active');
-    if(isVCU){
-      document.getElementById('vcuPanelEmpty').style.display='flex';
-      document.getElementById('vcuPanelDetail').style.display='none';
-      var nav=document.getElementById('entityNavBar');if(nav)nav.style.display='none';
-    }else{
-      var pe=document.getElementById('panelEmpty');if(pe)pe.style.display='flex';
-      var pd=document.getElementById('panelDetail');if(pd)pd.style.display='none';
-    }
-    panelBreadcrumb=[];
-    selBuyer=null;
-    S.selectedId=null;
-    if(isVCU)renderBuyers();
-    setEntityContext([]);
-    return;
-  }
+  if(panelBreadcrumb.length<=1){closePanel();return;}
   panelBreadcrumb.pop();
   var prev=panelBreadcrumb[panelBreadcrumb.length-1];
-  if(!prev){goBack();return;}
-  if(prev.type==='buyer')selBuyerRow(prev.id);
+  if(!prev){closePanel();return;}
+  if(prev.type==='buyer')openBuyer(prev.id);
   else if(prev.type==='project')openProjectCard(prev.id);
   else if(prev.type==='sector')expandSector(prev.id);
 }
@@ -2310,13 +2281,31 @@ function setEntityContext(parts){
   var el=document.getElementById('entityContext');
   if(el)el.textContent=parts.join(' \u203A ');
 }
-
-/* T1-5: PANEL TRANSITION */
-function panelTransition(el,renderFn){
-  el.style.transition='opacity .15s';
-  el.style.opacity='0';
-  setTimeout(function(){renderFn();el.style.opacity='1';},150);
+function openBuyer(name){
+  var label=name.length>20?name.slice(0,20)+'\u2026':name;
+  pushBreadcrumb('buyer',name,label);
+  openPanel('buyer',name,['By Buyer',name]);
+  selBuyer=name;
+  renderBuyers();
+  renderBuyerPanel(name);
 }
+function openProject(id,fromPage){
+  var row=ALL.find(function(p){return p.id===id;});
+  var label=row?(row.name.length>22?row.name.slice(0,22)+'\u2026':row.name):('VCS #'+id);
+  pushBreadcrumb('project',id,label);
+  if(fromPage==='browser'){
+    S.selectedId=id;
+    var tr=document.getElementById('tr-'+id);if(tr)tr.classList.add('sel');
+    openPanel('project',id,['Registry',label]);
+    renderPanel(id);
+  }else{
+    VS.selectedId=id;
+    renderVCU();
+    openPanel('project',id,['By Project',label]);
+    renderPanel(id);
+  }
+}
+function openBuyerFromSector(name){openBuyer(name);}
 
 /* F2: BREADCRUMB NAVIGATION */
 var panelBreadcrumb=[];
@@ -2341,7 +2330,7 @@ function renderBreadcrumb(){
 function navBreadcrumb(idx){
   var b=panelBreadcrumb[idx];if(!b)return;
   panelBreadcrumb=panelBreadcrumb.slice(0,idx+1);
-  if(b.type==='buyer')selBuyerRow(b.id);
+  if(b.type==='buyer')openBuyer(b.id);
   else if(b.type==='project'){showPage('browser');setTimeout(function(){selRow(b.id);},300);}
   else if(b.type==='sector')expandSector(b.id);
 }
@@ -2672,10 +2661,9 @@ function preloadRecommendations(){
     .catch(function(){});
 }
 
-/* BOOT (v79t: 6 parallel loaders) */
-PANEL_STATE='hidden';
+/* BOOT (v79u: clean nav + 5 parallel loaders) */
+PANEL_OPEN=false;PANEL_EXPANDED=false;
 panelBreadcrumb=[];
-setPanelState('hidden');
 loadData();
 loadVCUPage();
 loadBuyers();
