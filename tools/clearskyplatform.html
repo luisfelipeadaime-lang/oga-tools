@@ -35,16 +35,20 @@ html,body{height:100%;background:var(--bg0);color:var(--text0);font-family:'DM S
 .live-note{font-size:10px;color:var(--text3)}
 
 /* PAGE TABS */
-.page-tabs{background:var(--bg1);border-bottom:1px solid var(--border);display:flex;padding:0 16px;flex-shrink:0}
-.ptab{padding:9px 16px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s;display:flex;align-items:center;gap:6px;white-space:nowrap}
-.ptab:hover:not(.dim){color:var(--text0)}
-.ptab.active{color:var(--teal);border-bottom-color:var(--teal)}
-.ptab.dim{opacity:.4;cursor:default}
-.ptab-badge{font-size:9px;padding:1px 5px;border-radius:99px;background:var(--teal-dim);color:var(--teal);font-family:'DM Mono',monospace}
+.page-tabs{background:var(--bg1);border-bottom:2px solid var(--border);display:flex;padding:0 16px;flex-shrink:0;position:sticky;top:0;z-index:50}
+.ptab{padding:0 20px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text2);border-bottom:3px solid transparent;margin-bottom:-2px;height:42px;display:flex;align-items:center;gap:7px;transition:all .15s;letter-spacing:.01em;white-space:nowrap}
+.ptab.active{color:var(--teal);border-bottom-color:var(--teal);background:rgba(45,212,191,.03)}
+.ptab:hover:not(.dim):not(.active){color:var(--text0);background:rgba(255,255,255,.02)}
+.ptab.dim{opacity:.35;cursor:default}
+.ptab-badge{font-size:10px;padding:2px 7px;border-radius:99px;background:var(--teal-dim);color:var(--teal);font-family:'DM Mono',monospace;font-weight:400}
 
 /* PAGE LAYOUT */
 .page{display:none}
-.page.active{display:grid;grid-template-columns:210px 1fr 370px;overflow:hidden;grid-column:1/-1}
+.page.active{display:grid;grid-template-columns:210px 1fr 0px;overflow:hidden;grid-column:1/-1;transition:grid-template-columns .2s ease}
+.page.active.panel-split{grid-template-columns:210px 38fr 62fr}
+.page.active.panel-full{grid-template-columns:0px 0px 1fr}
+.page.active.panel-full .sidebar{display:none}
+.page.active.panel-full .main{display:none}
 
 /* SIDEBAR */
 .sidebar{background:var(--bg1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
@@ -146,7 +150,10 @@ td{padding:5px 8px;vertical-align:middle}
 .empty-s{padding:40px;text-align:center;color:var(--text3);font-size:12px}
 
 /* PANEL */
-.panel{background:var(--bg1);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.panel{background:var(--bg1);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;position:relative;transition:all .2s ease}
+.page.active:not(.panel-split):not(.panel-full) .panel{width:0;min-width:0;border-left:none;padding:0}
+.page.active.panel-split .panel{min-width:0}
+.page.active.panel-full .panel{border-left:none}
 .panel-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:24px;color:var(--text3)}
 .pe-icon{font-size:28px;opacity:.25}
 .ph{padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0;position:sticky;top:0;z-index:10;background:var(--bg1)}
@@ -180,7 +187,8 @@ td{padding:5px 8px;vertical-align:middle}
 
 /* Panel tabs */
 .panel-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
-.ptb{padding:8px 14px;font-size:11.5px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s}
+.vcu-subtabs{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;padding:0 14px;flex-shrink:0;position:sticky;top:0;z-index:19}
+.ptb{padding:8px 16px;font-size:12.5px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s;display:flex;align-items:center;gap:6px}
 .ptb.on{color:var(--teal);border-bottom-color:var(--teal)}
 .ptb:hover:not(.on){color:var(--text0)}
 .pb{flex:1;overflow-y:auto;padding:14px 16px}
@@ -222,6 +230,20 @@ td{padding:5px 8px;vertical-align:middle}
 .b-fill{height:100%;border-radius:99px;background:var(--amber)}
 .b-vol{font-family:'DM Mono',monospace;font-size:9.5px;color:var(--text2);flex-shrink:0}
 .no-vcu{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;color:var(--text3)}
+.panel-body-top{flex-shrink:0;padding:14px 16px 10px;border-bottom:1px solid var(--border)}
+.panel-body-scroll{flex:1;overflow-y:auto;padding:12px 16px}
+.page.active.panel-full .panel-body-scroll{column-count:2;column-gap:24px;padding:16px 24px}
+.page.active.panel-full .panel-body-scroll>div{break-inside:avoid}
+.entity-nav{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20;flex-shrink:0}
+.entity-nav .back-btn{display:flex;align-items:center;gap:5px;padding:5px 10px;background:transparent;border:1px solid var(--border-hi);border-radius:6px;color:var(--text1);cursor:pointer;font-size:11.5px;font-weight:500;font-family:inherit;transition:all .15s}
+.entity-nav .back-btn:hover{border-color:var(--teal);color:var(--teal)}
+.entity-nav .expand-btn{display:flex;align-items:center;gap:5px;padding:5px 12px;background:var(--bg3);border:1px solid var(--border-hi);border-radius:6px;color:var(--text1);cursor:pointer;font-size:11.5px;font-weight:500;font-family:inherit;transition:all .15s;flex-shrink:0}
+.entity-nav .expand-btn:hover{border-color:var(--teal);color:var(--teal)}
+@keyframes fadeInTip{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.onb-tip{position:fixed;z-index:999;background:var(--bg3);border:1px solid var(--teal);border-radius:8px;padding:10px 14px;max-width:260px;box-shadow:0 4px 20px rgba(0,0,0,.35);animation:fadeInTip .25s ease}
+.onb-tip-text{font-size:11.5px;color:var(--text1);line-height:1.5;margin-bottom:8px}
+.onb-tip-btn{padding:4px 12px;background:var(--teal);color:var(--bg0);border:none;border-radius:5px;font-size:10.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.onb-tip-step{font-size:9px;color:var(--text3);float:right;margin-top:3px}
 @media(max-width:768px){
   html,body{overflow:auto}
   .app{height:auto;min-height:100vh;grid-template-rows:auto auto auto}
@@ -230,10 +252,11 @@ td{padding:5px 8px;vertical-align:middle}
   .stat-pill{font-size:9.5px;padding:2px 6px}
   .page-tabs{overflow-x:auto;padding:0 10px}
   .ptab{font-size:11px;padding:8px 10px;white-space:nowrap}
-  .page.active{grid-template-columns:1fr !important;height:auto}
+  .page.active,.page.active.panel-split,.page.active.panel-full{grid-template-columns:1fr !important;height:auto}
   .sidebar{display:none}
   .main{min-height:50vh}
   .panel{display:none;border-left:none;border-top:1px solid var(--border)}
+  .page.active:not(.panel-split):not(.panel-full) .panel{width:auto;border-left:none}
   .table-wrap{overflow-x:auto}
   table{min-width:500px}
   .tname{max-width:120px}
@@ -464,10 +487,10 @@ td{padding:5px 8px;vertical-align:middle}
 
 <!-- VCU MAIN TABLE -->
 <div class="main">
-  <div style="background:var(--bg1);border-bottom:1px solid var(--border);display:flex;padding:0 14px;flex-shrink:0">
-    <div class="ptb on" id="vsubt-buyer" onclick="setVCUSub('buyer')" style="font-size:11px;padding:7px 14px">By Buyer</div>
-    <div class="ptb" id="vsubt-map" onclick="setVCUSub('map')" style="font-size:11px;padding:7px 14px">Demand Map</div>
-    <div class="ptb" id="vsubt-project" onclick="setVCUSub('project')" style="font-size:11px;padding:7px 14px">By Project</div>
+  <div class="vcu-subtabs">
+    <div class="ptb on" id="vsubt-buyer" onclick="setVCUSub('buyer')">By Buyer <span class="ptab-badge" id="vsubt-buyer-badge">\u2014</span></div>
+    <div class="ptb" id="vsubt-map" onclick="setVCUSub('map')">Demand Map</div>
+    <div class="ptb" id="vsubt-project" onclick="setVCUSub('project')">By Project <span class="ptab-badge">2,116</span></div>
   </div>
   <div id="vProjectView" style="display:none;flex-direction:column;flex:1;overflow:hidden">
     <div class="topstrip">
@@ -509,11 +532,11 @@ td{padding:5px 8px;vertical-align:middle}
     <div class="table-wrap">
       <table style="width:100%;border-collapse:collapse">
         <thead><tr>
-          <th onclick="sortBuyers('name')" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border)">Buyer</th>
-          <th onclick="sortBuyers('total_retired')" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">Total Retired</th>
-          <th onclick="sortBuyers('avg_annual_retirement')" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">Velocity</th>
-          <th onclick="sortBuyers('last_activity_year')" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">Last Active</th>
-          <th onclick="sortBuyers('project_count')" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">Projects</th>
+          <th onclick="sortBuyers('name')" title="Company or entity retiring credits" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border)">Buyer</th>
+          <th onclick="sortBuyers('total_retired')" title="Lifetime VCUs retired across all projects" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">Total Retired</th>
+          <th onclick="sortBuyers('avg_annual_retirement')" title="Average annual retirement volume" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">Velocity</th>
+          <th onclick="sortBuyers('last_activity_year')" title="Most recent year with retirement activity" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">Last Active</th>
+          <th onclick="sortBuyers('project_count')" title="Number of distinct projects retired from" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">Projects</th>
           <th style="padding:6px 8px;font-size:10.5px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border)">Top Methodology</th>
           <th style="padding:6px 8px;font-size:10.5px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border)">Top Country</th>
           <th style="padding:6px 8px;font-size:10.5px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border)">Methodologies</th>
@@ -526,14 +549,23 @@ td{padding:5px 8px;vertical-align:middle}
 
 <!-- VCU PANEL -->
 <div class="panel" id="vcuPanel">
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-    <div id="panelBreadcrumb" style="display:none;padding:5px 12px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:10.5px;color:var(--text2);align-items:center;gap:4px;flex-wrap:wrap;flex:1"></div>
-    <button onclick="togglePanelExpand()" id="panelExpandBtn" style="display:none;position:absolute;top:10px;right:10px;background:var(--bg3);border:1px solid var(--border-hi);border-radius:6px;color:var(--text1);cursor:pointer;padding:4px 10px;font-size:10.5px;font-weight:500;align-items:center;gap:5px;z-index:20;transition:all .15s" onmouseover="this.style.borderColor='var(--teal)';this.style.color='var(--teal)'" onmouseout="this.style.borderColor='var(--border-hi)';this.style.color='var(--text1)'" title="Expand to full screen (Escape to close)"><span id="panelExpandIcon" style="font-size:11px">&#8599;</span><span id="panelExpandLabel">Expand</span></button>
+  <div class="entity-nav" id="entityNavBar" style="display:none">
+    <button class="back-btn" onclick="goBack()"><span style="font-size:14px;line-height:1">&larr;</span> Back</button>
+    <div id="entityContext" style="font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1"></div>
+    <button class="expand-btn" onclick="togglePanelExpand()" id="panelExpandBtn"><span id="panelExpandIcon">&#8599;</span><span id="panelExpandLabel">Expand</span></button>
   </div>
+  <div id="panelBreadcrumb" style="display:none"></div>
   <div class="panel-empty" id="vcuPanelEmpty">
-    <div class="pe-icon">&#9678;</div>
-    <div style="font-size:12px;color:var(--text2);font-weight:600">Select a project</div>
-    <div style="font-size:11px;text-align:center;max-width:190px;line-height:1.5;color:var(--text3)">Click any row to see VCU transaction data, issuance trends, and top credit buyers</div>
+    <div style="font-size:20px;opacity:.15;margin-bottom:12px">&rarr;</div>
+    <div style="font-size:13px;color:var(--text1);font-weight:600;margin-bottom:6px">Click any row to open</div>
+    <div style="font-size:11px;color:var(--text3);text-align:center;max-width:200px;line-height:1.6">Select a buyer, project, or sector to see full intelligence profile</div>
+    <div style="margin-top:20px;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;font-size:10.5px;color:var(--text3);text-align:left;max-width:220px;line-height:1.7">
+      <div style="color:var(--teal);font-weight:600;margin-bottom:4px;font-size:11px">Quick tips</div>
+      <div>&rarr; Click sector row to see all companies</div>
+      <div>&rarr; Click any buyer for full profile</div>
+      <div>&rarr; &#8984;K to search everything</div>
+      <div>&rarr; &#8599; Expand for full-screen view</div>
+    </div>
   </div>
   <div id="vcuPanelDetail" style="display:none;flex:1;flex-direction:column;overflow:hidden"></div>
 </div>
@@ -1044,6 +1076,94 @@ function viewText(docId){
   });
 }
 
+/* DOWNLOAD PDF + INTELLIGENCE REPORT */
+function downloadPDFNow(projectId){
+  fetch(API+'/api/primitives/registry-index/project/'+projectId+'/pdd-status')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.status==='complete'&&d.crawl_doc_id){
+        window.open(API+'/api/primitives/crawler/download/'+d.crawl_doc_id,'_blank');
+      }else{
+        window.open('https://registry.verra.org/app/projectDetail/VCS/'+projectId,'_blank');
+        fetch(API+'/api/primitives/crawler/run',{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({registry:'verra',project_id:projectId,max_projects:1,download_documents:true,pd_only:true})
+        });
+      }
+    })
+    .catch(function(){window.open('https://registry.verra.org/app/projectDetail/VCS/'+projectId,'_blank');});
+}
+
+var INTEL_STEPS=[
+  {pct:15,text:'Locating project document on Verra registry...',note:'Searching for the project design document.'},
+  {pct:35,text:'Downloading document from Verra...',note:'This may take 30\u201390 seconds.'},
+  {pct:60,text:'Extracting text from document...',note:'Processing the PDF content.'},
+  {pct:80,text:'Generating intelligence report...',note:'Analyzing document with AI.'},
+  {pct:100,text:'Intelligence report ready',note:'Click to view the report.'}
+];
+
+function generateIntelReport(projectId){
+  var prog=document.getElementById('intel-prog-'+projectId);
+  if(prog)prog.classList.add('show');
+  var btn=document.getElementById('intelBtn-'+projectId);
+  if(btn){btn.className='btn btn-ghost btn-loading';btn.textContent='Generating...';}
+  fetch(API+'/api/primitives/crawler/run',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({registry:'verra',project_id:projectId,max_projects:1,download_documents:true,pd_only:true})
+  }).then(function(r){return r.json();})
+  .then(function(data){
+    if(!data.run_id)throw new Error('no run_id');
+    animateIntelSteps(projectId,0);
+    pollIntelStatus(projectId,data.run_id,btn);
+  }).catch(function(){
+    animateIntelSteps(projectId,0);
+    var totalMs=INTEL_STEPS.length*2000;
+    setTimeout(function(){finishIntel(projectId,btn,null,null);},totalMs);
+  });
+}
+
+function animateIntelSteps(id,i){
+  if(i>=INTEL_STEPS.length)return;
+  var s=INTEL_STEPS[i];
+  var stepEl=document.getElementById('intelStep-'+id);
+  var fillEl=document.getElementById('intelFill-'+id);
+  var noteEl=document.getElementById('intelNote-'+id);
+  if(stepEl)stepEl.textContent=s.text;
+  if(fillEl)fillEl.style.width=s.pct+'%';
+  if(noteEl)noteEl.textContent=s.note;
+  dlTimers['intel-'+id]=setTimeout(function(){animateIntelSteps(id,i+1);},2000);
+}
+
+function pollIntelStatus(id,runId,btn){
+  var attempts=0;
+  var timer=setInterval(function(){
+    attempts++;
+    if(attempts>36){clearInterval(timer);return;}
+    fetch(API+'/api/primitives/registry-index/project/'+id+'/pdd-status')
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(d.status==='complete'&&d.knowledge_doc_id){
+          clearInterval(timer);
+          if(dlTimers['intel-'+id]){clearTimeout(dlTimers['intel-'+id]);delete dlTimers['intel-'+id];}
+          finishIntel(id,btn,d.knowledge_doc_id,d.crawl_doc_id);
+        }
+      }).catch(function(){});
+  },5000);
+}
+
+function finishIntel(id,btn,docId,crawlDocId){
+  var fillEl=document.getElementById('intelFill-'+id);if(fillEl)fillEl.style.width='100%';
+  var stepEl=document.getElementById('intelStep-'+id);if(stepEl)stepEl.textContent='Intelligence report ready';
+  var noteEl=document.getElementById('intelNote-'+id);if(noteEl)noteEl.textContent='';
+  if(btn){
+    var html='';
+    if(crawlDocId)html+='<a class="btn btn-ghost" href="'+API+'/api/primitives/crawler/download/'+crawlDocId+'" target="_blank" style="font-size:10.5px;margin-right:6px;text-decoration:none">\u2B07 Download PDF</a>';
+    if(docId)html+='<button class="btn btn-ghost" onclick="viewText(\''+docId+'\')" style="font-size:10.5px">\u2630 View Report</button>';
+    if(!html)html='<span style="font-size:11px;color:var(--text2)">Report processed</span>';
+    btn.outerHTML=html;
+  }
+}
+
 function addToRfp(id){
   var row=ALL.find(function(r){return r.id===id;});if(!row)return;
   var p=new URLSearchParams();
@@ -1164,19 +1284,18 @@ function renderVCU(){
 function selVCURow(id){
   VS.selectedId=id;
   var row=ALL.find(function(p){return p.id===id;});
-  pushBreadcrumb('project',id,row?(row.name.length>22?row.name.slice(0,22)+'\u2026':row.name):('VCS #'+id));
+  var label=row?(row.name.length>22?row.name.slice(0,22)+'\u2026':row.name):('VCS #'+id);
+  pushBreadcrumb('project',id,label);
+  setEntityContext(['By Project',label]);
   renderVCU();
-  renderVCUPanel(id);
+  openEntityPanel(function(){renderVCUPanel(id);});
 }
 
 function renderVCUPanel(id){
   document.getElementById('vcuPanelEmpty').style.display='none';
   var pd=document.getElementById('vcuPanelDetail');
   pd.style.display='flex';pd.style.flexDirection='column';
-  pd.style.transition='opacity .15s';pd.style.opacity='0';
   pd.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);font-size:12px">Loading...</div>';
-  var eb=document.getElementById('panelExpandBtn');if(eb)eb.style.display='flex';
-  setTimeout(function(){pd.style.opacity='1';},50);
 
   fetch(API+'/api/primitives/vcu/project/'+id)
     .then(function(res){return res.json();})
@@ -1217,7 +1336,7 @@ function renderVCUPanel(id){
       if(!buyers.length)bHtml='<div style="font-size:11px;color:var(--text3);padding:8px 0">No buyer data available</div>';
 
       var methLabel=r.meth_label||methPlainFE(r.methodology)||r.methodology||'';
-      var h='<div class="panel-scroll" style="flex:1;overflow-y:auto;padding:14px">';
+      var h='<div class="panel-body-top">';
       h+='<div style="display:flex;align-items:flex-start;justify-content:space-between">'
        +'<div><div style="font-size:12px;font-weight:600;color:var(--text0);margin-bottom:2px">'+esc(r.name||'')+'</div>'
        +'<div style="font-size:10px;color:var(--text3);margin-bottom:3px">VCS #'+r.project_id+(r.country?' \u00b7 '+r.country:'')+'</div>'
@@ -1232,6 +1351,18 @@ function renderVCUPanel(id){
       h+='<div class="vcu-kpi"><div class="vku-l">Outstanding</div><div class="vku-v">'+fmtN(r.outstanding||0)+'</div></div>';
       h+='<div class="vcu-kpi"><div class="vku-l">Vintage 2022+</div><div class="vku-v">'+(r.vintage_2022_pct||0)+'%</div></div>';
       h+='</div>';
+      if(!IS_EXTERNAL){
+        h+='<div style="display:flex;gap:6px;margin-top:10px">';
+        h+='<button class="btn btn-ghost" onclick="downloadPDFNow(\''+r.project_id+'\')" style="flex:1;font-size:11px">\u2193 Download PDF</button>';
+        h+='<button class="btn btn-primary" id="intelBtn-'+r.project_id+'" onclick="generateIntelReport(\''+r.project_id+'\')" style="flex:1;font-size:11px">\u25C8 Intelligence Report</button>';
+        h+='</div>';
+        h+='<div id="intel-prog-'+r.project_id+'" class="dl-progress">';
+        h+='<div class="dl-step" id="intelStep-'+r.project_id+'"></div>';
+        h+='<div class="dl-bar"><div class="dl-fill" id="intelFill-'+r.project_id+'" style="width:0%"></div></div>';
+        h+='<div class="dl-note" id="intelNote-'+r.project_id+'"></div>';
+        h+='</div>';
+      }
+      h+='</div><div class="panel-body-scroll">';
 
       var supplyCallout='';
       if(r.outstanding>0&&r.total_retired>0){
@@ -1334,6 +1465,7 @@ function loadBuyers(){
     .then(function(r){return r.json();})
     .then(function(data){
       BUYER_DATA=data.buyers||[];
+      var bb=document.getElementById('vsubt-buyer-badge');if(bb)bb.textContent=BUYER_DATA.length.toLocaleString();
       filterBuyers();
     })
     .catch(function(e){
@@ -1394,17 +1526,16 @@ function exportBuyerCSV(){exportCSV('buyers');}
 function selBuyerRow(name){
   selBuyer=name;
   pushBreadcrumb('buyer',name,name.length>20?name.slice(0,20)+'\u2026':name);
+  setEntityContext(['By Buyer',name]);
   renderBuyers();
-  renderBuyerPanel(name);
+  openEntityPanel(function(){renderBuyerPanel(name);});
 }
 
 function renderBuyerPanel(name){
   var buyer=BUYER_FILTERED.find(function(b){return b.name===name;});
   if(!buyer){
     var pd=document.getElementById('vcuPanelDetail');
-    pd.style.display='flex';pd.style.flexDirection='column';
-    pd.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);font-size:12px">Loading...</div>';
-    document.getElementById('vcuPanelEmpty').style.display='none';
+    if(pd)pd.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);font-size:12px">Loading...</div>';
     fetch(API+'/api/primitives/vcu/buyers/'+encodeURIComponent(name))
       .then(function(r){return r.json();})
       .then(function(d){renderBuyerPanelData(d.buyer_name||name,d.total_retired||0,d.projects||[],d.methodologies||[],d.countries||[]);});
@@ -1417,8 +1548,6 @@ function renderBuyerPanelData(name,totalRetired,projects,methodologies,countries
   document.getElementById('vcuPanelEmpty').style.display='none';
   var pd=document.getElementById('vcuPanelDetail');
   pd.style.display='flex';pd.style.flexDirection='column';
-  pd.style.transition='opacity .15s';pd.style.opacity='0';
-  var eb=document.getElementById('panelExpandBtn');if(eb)eb.style.display='flex';
 
   currentBuyerData={name:name,total_retired:totalRetired,projects:projects,methodologies:methodologies,countries:countries};
 
@@ -1473,7 +1602,8 @@ function renderBuyerPanelData(name,totalRetired,projects,methodologies,countries
 
   var escName=esc(name).replace(/'/g,"\\'");
   pd.innerHTML=
-    '<div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between">'
+    '<div class="panel-body-top">'
+    +'<div style="display:flex;align-items:flex-start;justify-content:space-between">'
     +'<div><div style="font-size:15px;font-weight:600;color:var(--text0)">'+esc(name)+'</div>'
     +'<div style="font-size:11px;color:var(--text2);margin-top:4px">'+projects.length+' projects \u00B7 '+countries.slice(0,3).join(', ')+'</div>'
     +'<div style="margin-top:7px;display:flex;flex-wrap:wrap;gap:4px">'
@@ -1482,8 +1612,7 @@ function renderBuyerPanelData(name,totalRetired,projects,methodologies,countries
     +'</div></div>'
     +'<button onclick="exportCSV(\'buyer_profile\',currentBuyerData)" style="padding:3px 10px;background:transparent;border:1px solid var(--border-hi);border-radius:6px;color:var(--text2);font-family:inherit;font-size:10px;cursor:pointer;flex-shrink:0">&darr; CSV</button>'
     +'</div>'
-    +'<div style="padding:14px 16px;overflow-y:auto;flex:1">'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px">'
     +'<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Total Retired</div><div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:600;color:var(--amber);margin-top:4px">'+fmtV(String(totalRetired))+'</div></div>'
     +'<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Projects</div><div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:600;color:var(--teal);margin-top:4px">'+projects.length+'</div></div>'
     +'<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Avg per Project</div><div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:600;color:var(--teal);margin-top:4px">'+fmtV(String(avgPerProject))+'</div></div>'
@@ -1491,6 +1620,8 @@ function renderBuyerPanelData(name,totalRetired,projects,methodologies,countries
     +'<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Countries</div><div style="font-size:14px;font-weight:600;color:var(--text0);margin-top:4px">'+countries.length+'</div></div>'
     +'<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Last Activity</div><div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:600;color:'+(lastYear>=2024?'var(--green)':'var(--text0)')+';margin-top:4px">'+(lastYear>0?lastYear:'\u2014')+'</div></div>'
     +'</div>'
+    +'</div>'
+    +'<div class="panel-body-scroll">'
     +sparkHtml
     +'<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:8px;margin-top:14px">Top projects retired from</div>'
     +topProjects
@@ -1851,33 +1982,85 @@ function gotoProject(id){hideGlobalResults();showPage('browser');setTimeout(func
 function gotoSector(name){hideGlobalResults();showPage('vcu');setTimeout(function(){setVCUSub('map');setTimeout(function(){expandSector(name);},400);},300);}
 function hideGlobalResults(){var el=document.getElementById('globalResults');if(el)el.style.display='none';var inp=document.getElementById('globalSearchInp');if(inp)inp.value='';}
 document.addEventListener('click',function(e){if(!e.target.closest('#globalSearchWrap'))hideGlobalResults();});
-/* T3-5: Cmd+K / Ctrl+K global search + Escape to collapse panel */
+/* T3-5: Cmd+K / Ctrl+K global search + Escape panel navigation */
 document.addEventListener('keydown',function(e){
   if((e.metaKey||e.ctrlKey)&&e.key==='k'){
     e.preventDefault();
     var inp=document.getElementById('globalSearchInp');
     if(inp){inp.focus();inp.select();}
   }
-  if(e.key==='Escape'&&panelExpanded){togglePanelExpand();}
+  if(e.key==='Escape'){
+    if(PANEL_STATE==='full'){setPanelState('split');return;}
+    if(PANEL_STATE==='split'){goBack();return;}
+    hideGlobalResults();
+  }
 });
 
-/* T3-1: PANEL EXPAND/COLLAPSE */
+/* PANEL STATE SYSTEM — hidden | split | full */
+var PANEL_STATE='hidden';
 var panelExpanded=false;
-function togglePanelExpand(){
-  panelExpanded=!panelExpanded;
-  var page=document.getElementById('page-vcu');
+function setPanelState(state){
+  PANEL_STATE=state;
+  panelExpanded=(state==='full');
+  var pages=document.querySelectorAll('.page.active');
+  pages.forEach(function(el){
+    el.classList.remove('panel-split','panel-full');
+    el.style.gridTemplateColumns='';
+    if(state==='split')el.classList.add('panel-split');
+    else if(state==='full')el.classList.add('panel-full');
+  });
   var panel=document.getElementById('vcuPanel');
-  if(panelExpanded){
-    page.style.gridTemplateColumns='0px 0px 1fr';
-    if(panel)panel.classList.add('expanded');
-    var il=document.getElementById('panelExpandIcon');if(il)il.innerHTML='\u2716';
-    var ll=document.getElementById('panelExpandLabel');if(ll)ll.textContent='Collapse';
-  }else{
-    page.style.gridTemplateColumns='210px 1fr 370px';
-    if(panel)panel.classList.remove('expanded');
-    var il=document.getElementById('panelExpandIcon');if(il)il.innerHTML='&#8599;';
-    var ll=document.getElementById('panelExpandLabel');if(ll)ll.textContent='Expand';
+  if(panel){
+    if(state==='full')panel.classList.add('expanded');
+    else panel.classList.remove('expanded');
   }
+  var il=document.getElementById('panelExpandIcon');
+  var ll=document.getElementById('panelExpandLabel');
+  if(state==='full'){
+    if(il)il.innerHTML='\u2716';
+    if(ll)ll.textContent='Collapse';
+  }else{
+    if(il)il.innerHTML='&#8599;';
+    if(ll)ll.textContent='Expand';
+  }
+}
+function togglePanelExpand(){
+  if(PANEL_STATE==='full')setPanelState('split');
+  else if(PANEL_STATE==='split')setPanelState('full');
+}
+function openEntityPanel(renderFn){
+  var pd=document.getElementById('vcuPanelDetail');
+  if(pd){pd.style.transition='opacity .15s';pd.style.opacity='0';}
+  setTimeout(function(){
+    renderFn();
+    if(pd)pd.style.opacity='1';
+    if(PANEL_STATE==='hidden')setPanelState('split');
+    document.getElementById('vcuPanelEmpty').style.display='none';
+    var nav=document.getElementById('entityNavBar');if(nav)nav.style.display='flex';
+    if(pd){pd.style.display='flex';pd.style.flexDirection='column';}
+  },150);
+}
+function goBack(){
+  if(panelBreadcrumb.length<=1){
+    setPanelState('hidden');
+    document.getElementById('vcuPanelEmpty').style.display='flex';
+    document.getElementById('vcuPanelDetail').style.display='none';
+    var nav=document.getElementById('entityNavBar');if(nav)nav.style.display='none';
+    panelBreadcrumb=[];
+    selBuyer=null;
+    renderBuyers();
+    setEntityContext([]);
+    return;
+  }
+  panelBreadcrumb.pop();
+  var prev=panelBreadcrumb[panelBreadcrumb.length-1];
+  if(prev.type==='buyer')selBuyerRow(prev.id);
+  else if(prev.type==='project')openProjectCard(prev.id);
+  else if(prev.type==='sector')expandSector(prev.id);
+}
+function setEntityContext(parts){
+  var el=document.getElementById('entityContext');
+  if(el)el.textContent=parts.join(' \u203A ');
 }
 
 /* T1-5: PANEL TRANSITION */
@@ -2174,10 +2357,44 @@ function getSimilarBuyers(name,sector,meths){
   }).sort(function(a,b){return b.total_retired-a.total_retired;}).slice(0,4);
 }
 
+/* ONBOARDING */
+var ONB_TIPS=[
+  {target:'vsubt-buyer',text:'Explore top credit buyers, their retirement volumes, and procurement patterns.',pos:'below'},
+  {target:'vsubt-map',text:'View demand across sectors and regions with interactive heat maps.',pos:'below'},
+  {target:'vBTbody',text:'Click any buyer row to open their full intelligence profile in the side panel.',pos:'above'},
+  {target:'vcuPanelEmpty',text:'The detail panel opens here. Use Expand for full-screen analysis.',pos:'left'}
+];
+
+function showOnboardingTooltips(){
+  if(localStorage.getItem('cs_visited_v1'))return;
+  localStorage.setItem('cs_visited_v1','1');
+  setTimeout(function(){showOnbTip(0);},1500);
+}
+
+function showOnbTip(i){
+  var old=document.getElementById('onb-tip-el');if(old)old.remove();
+  if(i>=ONB_TIPS.length)return;
+  var t=ONB_TIPS[i];
+  var el=document.getElementById(t.target);
+  if(!el){showOnbTip(i+1);return;}
+  var rect=el.getBoundingClientRect();
+  var tip=document.createElement('div');
+  tip.id='onb-tip-el';
+  tip.className='onb-tip';
+  tip.innerHTML='<div class="onb-tip-text">'+t.text+'</div>'
+    +'<button class="onb-tip-btn" onclick="showOnbTip('+(i+1)+')">Got it</button>'
+    +'<span class="onb-tip-step">'+(i+1)+'/'+ONB_TIPS.length+'</span>';
+  document.body.appendChild(tip);
+  if(t.pos==='below'){tip.style.top=(rect.bottom+8)+'px';tip.style.left=Math.max(8,rect.left)+'px';}
+  else if(t.pos==='above'){tip.style.bottom=(window.innerHeight-rect.top+8)+'px';tip.style.left=Math.max(8,rect.left)+'px';}
+  else if(t.pos==='left'){tip.style.top=rect.top+'px';tip.style.right=(window.innerWidth-rect.left+8)+'px';}
+}
+
 /* BOOT */
 loadVCUPage();
 loadBuyers();
 window.vcuLoaded=true;
+showOnboardingTooltips();
 </script>
 </body>
 </html>
