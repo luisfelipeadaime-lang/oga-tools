@@ -45,7 +45,8 @@ html,body{height:100%;background:var(--bg0);color:var(--text0);font-family:'DM S
 /* PAGE LAYOUT */
 .page{display:none}
 .page.active{display:grid;grid-template-columns:210px 1fr 0px;overflow:hidden;grid-column:1/-1;transition:grid-template-columns .2s ease}
-.page.active.panel-split{grid-template-columns:210px 38fr 62fr}
+.page.active.panel-split{grid-template-columns:210px 0px 1fr}
+.page.active.panel-split>.main{overflow:hidden;max-width:0;min-width:0;padding:0}
 .page.active.panel-full{grid-template-columns:0px 0px 1fr}
 .page.active.panel-full .sidebar{display:none}
 .page.active.panel-full .main{display:none}
@@ -1048,7 +1049,7 @@ function renderPanelHTML(row){
     +(vcu?'<span class="chip ct">VCU data</span>':'')
     +'</div>'
     +'<div style="display:flex;gap:6px;margin-top:9px">'
-    +'<a href="'+row.url+'" target="_blank" rel="noopener" style="flex:1;text-decoration:none">'
+    +'<a href="'+(row.url||'https://registry.verra.org/app/projectDetail/VCS/'+id)+'" target="_blank" rel="noopener" style="flex:1;text-decoration:none" title="Opens Verra project page \u2014 click Documents tab to download PDD">'
     +'<button class="btn btn-primary" style="width:100%;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px">'
     +'<span style="font-size:14px">\u2193</span> Download PDF'
     +'</button></a>'
@@ -1331,7 +1332,7 @@ function renderVCUPanel(id){
       h+='</div>';
       if(!IS_EXTERNAL){
         h+='<div style="display:flex;gap:6px;margin-top:10px">';
-        h+='<a href="https://registry.verra.org/app/projectDetail/VCS/'+r.project_id+'" target="_blank" rel="noopener" style="flex:1;text-decoration:none"><button class="btn btn-primary" style="width:100%;font-size:11px;display:flex;align-items:center;justify-content:center;gap:5px"><span style="font-size:13px">\u2193</span> Download PDF</button></a>';
+        h+='<a href="https://registry.verra.org/app/projectDetail/VCS/'+r.project_id+'" target="_blank" rel="noopener" style="flex:1;text-decoration:none" title="Opens Verra project page \u2014 click Documents tab to download PDD"><button class="btn btn-primary" style="width:100%;font-size:11px;display:flex;align-items:center;justify-content:center;gap:5px"><span style="font-size:13px">\u2193</span> Download PDF</button></a>';
         h+='<button onclick="generateIntelReport(\''+r.project_id+'\')" id="intel-btn-'+r.project_id+'" class="btn btn-ghost" style="flex:1;font-size:11px;display:flex;align-items:center;justify-content:center;gap:5px">\u25C8 Intelligence Report</button>';
         h+='</div>';
         h+='<div id="intel-prog-'+r.project_id+'" style="display:none;margin-top:8px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:9px 11px">';
@@ -1416,6 +1417,7 @@ function setVCUSub(sub){
     if(buyerFilters)buyerFilters.style.display='none';
     document.getElementById('vcuPanelEmpty').style.display='flex';
     document.getElementById('vcuPanelDetail').style.display='none';
+    filterVCU();
   }else if(sub==='map'){
     if(projView)projView.style.display='none';
     if(buyerView)buyerView.style.display='none';
@@ -2281,17 +2283,25 @@ function openEntityPanel(renderFn){
 function goBack(){
   if(panelBreadcrumb.length<=1){
     setPanelState('hidden');
-    document.getElementById('vcuPanelEmpty').style.display='flex';
-    document.getElementById('vcuPanelDetail').style.display='none';
-    var nav=document.getElementById('entityNavBar');if(nav)nav.style.display='none';
+    var isVCU=document.getElementById('page-vcu').classList.contains('active');
+    if(isVCU){
+      document.getElementById('vcuPanelEmpty').style.display='flex';
+      document.getElementById('vcuPanelDetail').style.display='none';
+      var nav=document.getElementById('entityNavBar');if(nav)nav.style.display='none';
+    }else{
+      var pe=document.getElementById('panelEmpty');if(pe)pe.style.display='flex';
+      var pd=document.getElementById('panelDetail');if(pd)pd.style.display='none';
+    }
     panelBreadcrumb=[];
     selBuyer=null;
-    renderBuyers();
+    S.selectedId=null;
+    if(isVCU)renderBuyers();
     setEntityContext([]);
     return;
   }
   panelBreadcrumb.pop();
   var prev=panelBreadcrumb[panelBreadcrumb.length-1];
+  if(!prev){goBack();return;}
   if(prev.type==='buyer')selBuyerRow(prev.id);
   else if(prev.type==='project')openProjectCard(prev.id);
   else if(prev.type==='sector')expandSector(prev.id);
