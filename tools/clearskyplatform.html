@@ -146,7 +146,7 @@ td{padding:5px 8px;vertical-align:middle}
 .empty-s{padding:40px;text-align:center;color:var(--text3);font-size:12px}
 
 /* PANEL */
-.panel{background:var(--bg1);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.panel{background:var(--bg1);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;position:relative}
 .panel-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:24px;color:var(--text3)}
 .pe-icon{font-size:28px;opacity:.25}
 .ph{padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0;position:sticky;top:0;z-index:10;background:var(--bg1)}
@@ -212,6 +212,7 @@ td{padding:5px 8px;vertical-align:middle}
 .sp-hdr{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:5px;display:flex;justify-content:space-between}
 .sp-bars{display:flex;align-items:flex-end;gap:2px;height:42px}
 .sp-bar{flex:1;border-radius:2px 2px 0 0;min-height:2px}
+.panel.expanded .sp-bars{height:180px}
 .sp-yrs{display:flex;gap:2px;margin-top:2px}
 .sp-yr{flex:1;font-family:'DM Mono',monospace;font-size:8px;color:var(--text3);text-align:center}
 .buyer-row{display:flex;align-items:center;gap:7px;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px}
@@ -527,7 +528,7 @@ td{padding:5px 8px;vertical-align:middle}
 <div class="panel" id="vcuPanel">
   <div style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
     <div id="panelBreadcrumb" style="display:none;padding:5px 12px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:10.5px;color:var(--text2);align-items:center;gap:4px;flex-wrap:wrap;flex:1"></div>
-    <button id="panelExpandBtn" onclick="togglePanelExpand()" style="display:none;padding:3px 8px;background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--text3);font-size:10px;cursor:pointer;margin:3px 8px;flex-shrink:0" title="Expand panel">&#x2922;</button>
+    <button onclick="togglePanelExpand()" id="panelExpandBtn" style="display:none;position:absolute;top:10px;right:10px;background:var(--bg3);border:1px solid var(--border-hi);border-radius:6px;color:var(--text1);cursor:pointer;padding:4px 10px;font-size:10.5px;font-weight:500;align-items:center;gap:5px;z-index:20;transition:all .15s" onmouseover="this.style.borderColor='var(--teal)';this.style.color='var(--teal)'" onmouseout="this.style.borderColor='var(--border-hi)';this.style.color='var(--text1)'" title="Expand to full screen (Escape to close)"><span id="panelExpandIcon" style="font-size:11px">&#8599;</span><span id="panelExpandLabel">Expand</span></button>
   </div>
   <div class="panel-empty" id="vcuPanelEmpty">
     <div class="pe-icon">&#9678;</div>
@@ -1174,7 +1175,7 @@ function renderVCUPanel(id){
   pd.style.display='flex';pd.style.flexDirection='column';
   pd.style.transition='opacity .15s';pd.style.opacity='0';
   pd.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);font-size:12px">Loading...</div>';
-  var eb=document.getElementById('panelExpandBtn');if(eb)eb.style.display='inline-block';
+  var eb=document.getElementById('panelExpandBtn');if(eb)eb.style.display='flex';
   setTimeout(function(){pd.style.opacity='1';},50);
 
   fetch(API+'/api/primitives/vcu/project/'+id)
@@ -1263,14 +1264,17 @@ function renderVCUPanel(id){
       h+='<div class="psec-title" style="margin-top:10px">Top Buyers</div>';
       h+=bHtml;
 
-      /* F9: Find buyers section */
-      h+='<div style="margin-top:14px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
-       +'<div class="psec-title" style="margin:0">Find potential buyers</div>'
-       +'<button onclick="loadBuyerRecs(\''+r.project_id+'\')" style="padding:3px 10px;background:var(--teal-dim);border:1px solid rgba(45,212,191,.3);border-radius:6px;color:var(--teal);font-family:inherit;font-size:10px;cursor:pointer">Score buyers</button></div>'
-       +'<div id="buyerRecs-'+r.project_id+'" style="font-size:10.5px;color:var(--text3)">Click to find buyers whose history matches this project</div></div>';
+      /* F9: Find buyers section — auto-loads */
+      h+='<div style="margin-top:14px"><div class="psec-title" style="margin-bottom:6px">Potential buyers</div>'
+       +'<div id="buyerRecs-'+r.project_id+'">'
+       +'<div style="display:flex;align-items:center;gap:7px;padding:6px 0">'
+       +'<div style="width:10px;height:10px;border:1.5px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0"></div>'
+       +'<span style="font-size:10.5px;color:var(--text3)">Scoring buyers...</span>'
+       +'</div></div></div>';
 
       h+='</div>';
       pd.innerHTML=h;
+      setTimeout(function(){ loadBuyerRecs(r.project_id); }, 50);
     })
     .catch(function(e){
       pd.innerHTML='<div style="padding:20px;color:var(--red,#ef4444);font-size:12px">Failed to load: '+e.message+'</div>';
@@ -1414,7 +1418,7 @@ function renderBuyerPanelData(name,totalRetired,projects,methodologies,countries
   var pd=document.getElementById('vcuPanelDetail');
   pd.style.display='flex';pd.style.flexDirection='column';
   pd.style.transition='opacity .15s';pd.style.opacity='0';
-  var eb=document.getElementById('panelExpandBtn');if(eb)eb.style.display='inline-block';
+  var eb=document.getElementById('panelExpandBtn');if(eb)eb.style.display='flex';
 
   currentBuyerData={name:name,total_retired:totalRetired,projects:projects,methodologies:methodologies,countries:countries};
 
@@ -1422,10 +1426,12 @@ function renderBuyerPanelData(name,totalRetired,projects,methodologies,countries
 
   var topProjects=projects.slice(0,5).map(function(p){
     var pct=totalRetired>0?Math.round(p.vol/totalRetired*100):0;
-    return '<div class="buyer-row" onclick="openProjectCard(\''+p.project_id+'\')" style="cursor:pointer" title="Click to view project">'
-      +'<div class="b-name" title="'+esc(p.name||p.project_id)+'" style="font-size:11px;color:var(--teal);text-decoration:underline;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">'+esc(p.name||p.project_id)+'</div>'
-      +'<div class="b-bar" style="flex:1;height:8px;background:var(--bg4);border-radius:4px;margin:0 6px"><div style="height:100%;border-radius:4px;background:var(--teal);width:'+pct+'%"></div></div>'
-      +'<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text2);min-width:50px;text-align:right">'+fmtV(String(p.vol))+'</div>'
+    var sharePct=totalRetired>0?((p.vol/totalRetired)*100).toFixed(1):'0';
+    var barW=Math.max(pct,3);
+    return '<div class="buyer-row" onclick="openProjectCard(\''+p.project_id+'\')" style="cursor:pointer;padding:5px 0" title="Click to view project">'
+      +'<div class="b-name" title="'+esc(p.name||p.project_id)+'" style="font-size:11.5px;color:var(--teal);text-decoration:underline;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">'+esc(p.name||p.project_id)+'</div>'
+      +'<div class="b-bar" style="flex:1;height:8px;background:var(--bg4);border-radius:4px;margin:0 6px"><div style="height:100%;border-radius:4px;background:var(--teal);width:'+barW+'%"></div></div>'
+      +'<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text2);min-width:70px;text-align:right"><span style="font-weight:600">'+fmtV(String(p.vol))+'</span><span style="font-size:8.5px;color:var(--text3);margin-left:3px">'+sharePct+'%</span></div>'
       +'</div>';
   }).join('');
 
@@ -1491,10 +1497,12 @@ function renderBuyerPanelData(name,totalRetired,projects,methodologies,countries
     +methCardsHtml
     +'<div style="margin-top:14px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:6px">Countries</div>'
     +'<div style="font-size:11px;color:var(--text1)">'+countries.join(' \u00B7 ')+'</div></div>'
-    +'<div style="margin-top:14px"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
-    +'<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Recommended projects to pitch</div>'
-    +'<button id="rec-btn-'+esc(name)+'" onclick="event.stopPropagation();loadRecs(\''+escName+'\')" style="padding:3px 10px;background:var(--teal-dim);border:1px solid rgba(45,212,191,.3);border-radius:6px;color:var(--teal);font-family:inherit;font-size:10px;cursor:pointer">Load matches</button></div>'
-    +'<div id="rec-content-'+esc(name)+'" style="font-size:10.5px;color:var(--text3)">Click to score projects against this buyer\'s history</div></div>'
+    +'<div style="margin-top:14px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:6px">Recommended projects to pitch</div>'
+    +'<div id="rec-content-'+esc(name)+'" style="margin-top:6px">'
+    +'<div style="display:flex;align-items:center;gap:7px;padding:6px 0">'
+    +'<div style="width:10px;height:10px;border:1.5px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0"></div>'
+    +'<span style="font-size:10.5px;color:var(--text3)">Scoring projects...</span>'
+    +'</div></div></div>'
     +simHtml
     +'</div>';
   setTimeout(function(){pd.style.opacity='1';},50);
@@ -1561,12 +1569,12 @@ function renderBuyerYearly(d){
     var col=y.year>=2022?'var(--amber)':'var(--text3)';
     return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:1px">'
       +(y.quantity>0?'<div style="font-family:\'DM Mono\',monospace;font-size:7.5px;color:var(--text3)">'+fmtV(String(y.quantity))+'</div>':'<div style="height:10px"></div>')
-      +'<div class="sp-bar" style="height:'+pct+'%;background:'+col+';width:100%"></div></div>';
+      +'<div class="sp-bar" style="height:'+pct+'%;background:'+col+';width:100%;min-height:6px"></div></div>';
   }).join('');
   var yLabels=yearly.map(function(y){return '<div class="sp-yr">'+(String(y.year).slice(2))+'</div>';}).join('');
   el.innerHTML='<div class="sp-wrap">'
     +'<div class="sp-hdr"><span>Retirement volume by year</span><span style="color:var(--amber);font-size:9px">2022+ amber</span></div>'
-    +'<div style="position:relative"><div class="sp-bars" style="display:flex;align-items:flex-end;gap:2px">'+bars+'</div>'
+    +'<div style="position:relative"><div class="sp-bars" style="display:flex;align-items:flex-end;gap:2px;height:120px">'+bars+'</div>'
     +'<div style="position:absolute;left:0;right:0;bottom:'+avgPct+'%;border-top:1px dashed rgba(96,165,250,.4);pointer-events:none">'
     +'<span style="position:absolute;right:0;top:-10px;font-size:7.5px;color:var(--blue);font-family:\'DM Mono\',monospace">avg '+fmtV(String(avg))+'</span></div></div>'
     +'<div class="sp-yrs">'+yLabels+'</div>'
@@ -1705,7 +1713,7 @@ function renderDemandMap(data){
     html+='<td style="padding:6px 8px;border-bottom:1px solid rgba(99,130,191,.07);text-align:right;font-family:\'DM Mono\',monospace;font-size:11px;font-weight:500;color:var(--amber)">'+fmtV(String(rowTotal))+'<div style="font-size:8.5px;color:var(--text3);font-weight:400">'+rowPct+'%</div></td>';
     html+='</tr>';
     html+='<tr id="mexp-'+sk+'" data-sector="'+s+'" style="display:none"><td colspan="'+(meths.length+2)+'" style="padding:0;background:var(--bg2)">'
-      +'<div style="padding:10px 12px" id="mexp-table-'+sk+'"><div style="font-size:10.5px;color:var(--text3)">Click to load companies...</div></div></td></tr>';
+      +'<div style="padding:10px 12px" id="mexp-table-'+sk+'"><div style="display:flex;align-items:center;gap:7px;padding:6px 0"><div style="width:10px;height:10px;border:1.5px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0"></div><span style="font-size:10.5px;color:var(--text3)">Loading companies...</span></div></div></td></tr>';
   });
 
   html+='</tbody><tfoot><tr style="background:var(--bg2);border-top:1px solid var(--border-hi)">';
@@ -1843,13 +1851,14 @@ function gotoProject(id){hideGlobalResults();showPage('browser');setTimeout(func
 function gotoSector(name){hideGlobalResults();showPage('vcu');setTimeout(function(){setVCUSub('map');setTimeout(function(){expandSector(name);},400);},300);}
 function hideGlobalResults(){var el=document.getElementById('globalResults');if(el)el.style.display='none';var inp=document.getElementById('globalSearchInp');if(inp)inp.value='';}
 document.addEventListener('click',function(e){if(!e.target.closest('#globalSearchWrap'))hideGlobalResults();});
-/* T3-5: Cmd+K / Ctrl+K global search trigger */
+/* T3-5: Cmd+K / Ctrl+K global search + Escape to collapse panel */
 document.addEventListener('keydown',function(e){
   if((e.metaKey||e.ctrlKey)&&e.key==='k'){
     e.preventDefault();
     var inp=document.getElementById('globalSearchInp');
     if(inp){inp.focus();inp.select();}
   }
+  if(e.key==='Escape'&&panelExpanded){togglePanelExpand();}
 });
 
 /* T3-1: PANEL EXPAND/COLLAPSE */
@@ -1857,13 +1866,17 @@ var panelExpanded=false;
 function togglePanelExpand(){
   panelExpanded=!panelExpanded;
   var page=document.getElementById('page-vcu');
-  var btn=document.getElementById('panelExpandBtn');
+  var panel=document.getElementById('vcuPanel');
   if(panelExpanded){
     page.style.gridTemplateColumns='0px 0px 1fr';
-    if(btn){btn.innerHTML='&#x2923;';btn.title='Collapse panel';}
+    if(panel)panel.classList.add('expanded');
+    var il=document.getElementById('panelExpandIcon');if(il)il.innerHTML='\u2716';
+    var ll=document.getElementById('panelExpandLabel');if(ll)ll.textContent='Collapse';
   }else{
     page.style.gridTemplateColumns='210px 1fr 370px';
-    if(btn){btn.innerHTML='&#x2922;';btn.title='Expand panel';}
+    if(panel)panel.classList.remove('expanded');
+    var il=document.getElementById('panelExpandIcon');if(il)il.innerHTML='&#8599;';
+    var ll=document.getElementById('panelExpandLabel');if(ll)ll.textContent='Expand';
   }
 }
 
@@ -1924,45 +1937,63 @@ function expandSector(s){
   loadSectorCompanies(s,sk);
 }
 function loadSectorCompanies(sector,sk){
-  if(sectorCompanyCache[sector]){renderSectorCompanies(sector,sk,sectorCompanyCache[sector]);return;}
-  fetch(API+'/api/primitives/vcu/buyers?sector='+encodeURIComponent(sector)+'&limit=100&yearly=1')
-    .then(function(r){return r.json();})
-    .then(function(d){sectorCompanyCache[sector]=d.buyers||[];renderSectorCompanies(sector,sk,d.buyers||[]);});
+  if(sectorCompanyCache[sector]){renderSectorCompaniesWithYearly(sector,sk,sectorCompanyCache[sector].buyers,sectorCompanyCache[sector].yearlyData);return;}
+  var el=document.getElementById('mexp-table-'+sk);
+  if(el)el.innerHTML='<div style="display:flex;align-items:center;gap:7px;padding:10px 12px"><div style="width:10px;height:10px;border:1.5px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0"></div><span style="font-size:10.5px;color:var(--text3)">Loading companies...</span></div>';
+  Promise.all([
+    fetch(API+'/api/primitives/vcu/buyers?sector='+encodeURIComponent(sector)+'&limit=100').then(function(r){return r.json();}),
+    fetch(API+'/api/primitives/vcu/buyer-sector-yearly/'+encodeURIComponent(sector)).then(function(r){return r.json();})
+  ]).then(function(results){
+    var buyers=results[0].buyers||[];
+    var yearlyData=results[1];
+    sectorCompanyCache[sector]={buyers:buyers,yearlyData:yearlyData};
+    renderSectorCompaniesWithYearly(sector,sk,buyers,yearlyData);
+  }).catch(function(e){
+    if(el)el.innerHTML='<div style="padding:10px;color:var(--red)">Failed: '+e.message+'</div>';
+  });
 }
-function renderSectorCompanies(sector,sk,buyers){
+function renderSectorCompaniesWithYearly(sector,sk,buyers,yearlyData){
   var el=document.getElementById('mexp-table-'+sk);if(!el)return;
   if(!buyers.length){el.innerHTML='<div style="padding:10px 12px;font-size:10.5px;color:var(--text3)">No company data available</div>';return;}
+  var companies=(yearlyData&&yearlyData.companies)||[];
   var html='<table style="width:100%;border-collapse:collapse"><thead><tr style="font-size:9.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">'
     +'<th style="text-align:left;padding:4px 8px">Company</th>'
-    +'<th style="text-align:right;padding:4px 8px">Total Retired</th>'
-    +'<th style="text-align:right;padding:4px 8px">2024</th>'
-    +'<th style="text-align:right;padding:4px 8px">2025</th>'
+    +'<th style="text-align:right;padding:4px 8px">Lifetime</th>'
+    +'<th style="text-align:right;padding:4px 8px;color:var(--text2)">2024</th>'
+    +'<th style="text-align:right;padding:4px 8px;color:var(--amber)">2025</th>'
+    +'<th style="text-align:right;padding:4px 8px;color:var(--teal)">2026</th>'
     +'<th style="text-align:right;padding:4px 8px">Projects</th>'
     +'<th style="padding:4px 8px">Top Method</th>'
-    +'<th style="text-align:center;padding:4px 8px">Concentration</th>'
+    +'<th style="text-align:center;padding:4px 8px">Conc.</th>'
+    +'<th style="padding:4px 8px">Trend</th>'
     +'</tr></thead><tbody>';
   buyers.forEach(function(b){
-    /* T2-4: Concentration with percentage */
     var topVol=b.projects&&b.projects.length?b.projects[0].vol:0;
     var concPct=b.total_retired>0?Math.round(topVol/b.total_retired*100):0;
     var conc=b.project_count<=2?'\uD83D\uDD34':b.project_count<=5?'\uD83D\uDFE1':'\uD83D\uDFE2';
-    var concTitle=b.project_count<=2?'High concentration: top project '+concPct+'% ('+b.project_count+' projects)':b.project_count<=5?'Moderate: top project '+concPct+'% ('+b.project_count+' projects)':'Diversified: top project '+concPct+'% ('+b.project_count+' projects)';
-    /* T2-2: Show 2024/2025 columns (from yearly data if available) */
-    var y24='\u2014',y25='\u2014';
-    if(b.yearly&&b.yearly.length){
-      b.yearly.forEach(function(yd){
-        if(yd.year===2024)y24=fmtV(String(yd.quantity));
-        if(yd.year===2025)y25=fmtV(String(yd.quantity));
-      });
-    }
+    var concTitle=b.project_count<=2?'High: '+concPct+'% ('+b.project_count+' proj)':b.project_count<=5?'Moderate: '+concPct+'% ('+b.project_count+' proj)':'Diversified: '+concPct+'% ('+b.project_count+' proj)';
+    var compYearly={};
+    var yearlyMatch=companies.find(function(c){return c.name===b.name;});
+    if(yearlyMatch)compYearly=yearlyMatch.yearly||{};
+    var r2024=compYearly[2024]||0;
+    var r2025=compYearly[2025]||0;
+    var r2026=compYearly[2026]||0;
+    var trend=yearlyMatch?(yearlyMatch.trend||''):'';
+    var trendIcon=trend==='growing'
+      ?'<span style="color:var(--green);font-size:10px">\u2191</span>'
+      :trend==='declining'
+      ?'<span style="color:var(--red);font-size:10px">\u2193</span>'
+      :'<span style="color:var(--text3);font-size:10px">\u2192</span>';
     html+='<tr onclick="selBuyerFromSector(\''+esc(b.name).replace(/'/g,"\\'")+'\')" style="cursor:pointer" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
       +'<td style="padding:5px 8px;font-size:11px;font-weight:500;color:var(--teal);text-decoration:underline">'+esc(b.name)+'</td>'
       +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--amber)">'+fmtV(String(b.total_retired||0))+'</td>'
-      +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text2)">'+y24+'</td>'
-      +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text2)">'+y25+'</td>'
+      +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--text2)">'+(r2024?fmtV(String(r2024)):'\u2014')+'</td>'
+      +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:11px;font-weight:500;color:'+(r2025>0?'var(--amber)':'var(--text3)')+'">'+(r2025?fmtV(String(r2025)):'\u2014')+'</td>'
+      +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:11px;color:'+(r2026>0?'var(--teal)':'var(--text3)')+'">'+(r2026?fmtV(String(r2026)):'\u2014')+'</td>'
       +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--teal)">'+(b.project_count||0)+'</td>'
       +'<td style="padding:5px 8px"><span class="'+mCls(b.top_methodology||'')+'" style="font-size:9px" title="'+(METH_LABELS[b.top_methodology]||b.top_methodology||'')+'">'+(b.top_methodology||'\u2014')+'</span></td>'
       +'<td style="text-align:center;padding:5px 8px;font-size:12px" title="'+concTitle+'">'+conc+'</td>'
+      +'<td style="padding:5px 8px">'+trendIcon+'</td>'
       +'</tr>';
   });
   html+='</tbody></table>';
@@ -1974,10 +2005,8 @@ function selBuyerFromSector(name){selBuyerRow(name);}
 var currentBuyerData=null;
 var currentProjectBuyers=null;
 function loadRecs(name){
-  var btn=document.getElementById('rec-btn-'+CSS.escape(name));
-  if(btn){btn.textContent='Loading...';btn.disabled=true;}
   var el=document.getElementById('rec-content-'+CSS.escape(name));
-  if(el)el.innerHTML='<div style="padding:8px 0;font-size:10.5px;color:var(--text3)">Scoring projects against '+esc(name)+'\'s retirement history...</div>';
+  if(el)el.innerHTML='<div style="display:flex;align-items:center;gap:7px;padding:6px 0"><div style="width:10px;height:10px;border:1.5px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0"></div><span style="font-size:10.5px;color:var(--text3)">Scoring projects against '+esc(name)+'\'s history...</span></div>';
   fetch(API+'/api/primitives/vcu/match-projects/'+encodeURIComponent(name))
     .then(function(r){return r.json();})
     .then(function(d){renderRecs(name,d);})
@@ -2003,8 +2032,6 @@ function renderRecs(name,d){
   }
   if(!market.length&&!cs.length)html='<div style="font-size:10.5px;color:var(--text3);padding:6px 0">No matching projects found.</div>';
   el.innerHTML=html;
-  var btn=document.getElementById('rec-btn-'+CSS.escape(name));
-  if(btn){btn.textContent='Refresh';btn.disabled=false;}
 }
 function recRow(p,isCS){
   var scoreColor=p.score>=7?'var(--teal)':p.score>=5?'var(--green)':'var(--amber)';
