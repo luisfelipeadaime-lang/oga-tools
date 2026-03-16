@@ -332,9 +332,51 @@ REGISTRY INDEX (v78):
 
 74. showPage() tab switching — uses `.page.active` class (not inline display styles). Pattern: remove 'active' from all `.page` and `.ptab` elements, then add 'active' to the target. Lazy-load with `window.vcuLoaded` flag to avoid re-fetching data on tab switch. [v79d]
 
-75. vcu/search list vs detail split — List endpoint (vcu/search) returns `top_buyer_name` and `top_buyer_vol` (first buyer only), NO issuance_trend or full top_buyers array. Detail endpoint (vcu/project/:id) returns full data including issuance_trend and all top_buyers. Frontend filterVCU() must use `top_buyer_name` not `JSON.stringify(top_buyers)` for buyer search. [v79e]
+75. vcu/search list vs detail split — List endpoint (vcu/search) returns `top_buyer_name`, `top_buyer_vol` (first buyer), AND `all_buyers` (full parsed array). NO issuance_trend in list. Detail endpoint (vcu/project/:id) returns full data including issuance_trend and all top_buyers. Frontend filterVCU() uses `JSON.stringify(r.all_buyers||[]).toLowerCase().includes(buyer)` to search ALL buyers, not just #1. [v79e]
 
 76. vcu_market_cache — D1 table (key TEXT PK, value TEXT, updated_at TEXT). Populated on first miss (cache-on-read) and after vcu/import-aggregates. computeMarketTotals(env) is the shared helper. Cache hit: 0.2s, cache miss: 1.4s. Response includes `cached: true/false` field. [v79e]
+
+77. VCU tab limit — THREE places must all use the same limit (currently 2500): (1) worker vcu/search `Math.min(..., 2500)`, (2) frontend loadVCUPage `?limit=2500`, (3) renderVCU `Math.min(VFILT.length, 2500)`. If vcu_aggregates grows beyond 2500, update all three. [v79e-fix]
+
+78. filterVCU buyer check — must guard with `if(buyer){...}` before filtering. Empty search string must skip the buyer filter entirely, not apply it (which would exclude all rows). Same pattern applies to all optional text filters: project, country, meth. [v79e-fix]
+
+79. vcu/buyers aggregation — runs in JS after fetching all vcu_aggregates rows. Parses top_buyers JSON per row, groups by buyer name using buyerMap. Not in SQL. Returns top 200 by total_retired. Filter by buyer/meth/country applied after aggregation. Projects per buyer capped at 20 in list response, full list in detail endpoint. Methodology split on ';' for multi-methodology projects. [v79f]
+
+80. buyer sub-tab switching — VCU_SUB state ('project'|'buyer') controls which view is active. filterVCU() returns early and calls filterBuyers() when VCU_SUB==='buyer'. Buyers loaded lazily on first tab switch (buyersLoaded flag). vProjectOnlyFilters div hides status strip + year + retirement rate in buyer mode. Shared filters: buyer search, country, methodology. [v79f]
+
+81. supply pressure column — computed in renderVCU() as `(outstanding / (total_issued / years_active)) * 12`. Shows months of inventory remaining at average issuance rate. Color: <6mo red (scarce), <18mo amber, >=18mo green. sortVCU handles supply_months via inline smA() helper function. [v79f]
+
+82. buyer normalization — BUYER_NORM object (26 entries) in worker.js maps raw Verra buyer name variants to canonical names. normalizeBuyer(name) applies the map. Must be applied in ALL paths that parse top_buyers JSON: computeMarketTotals(), vcu/buyers aggregation, vcu/buyers/:name detail, vcu/demand-matrix. Data source: data/verra-registry/buyer_normalization.csv. [v79i]
+
+83. buyer sector classification — BUYER_SECTORS object (65 entries) maps canonical buyer names to 11 sectors. Applied after normalizeBuyer(). Unknown buyers default to 'Other'. sector field returned in vcu/buyers response, filterable via ?sector= param. Data source: data/verra-registry/buyer_sectors.csv. [v79i]
+
+84. demand-matrix aggregation — GET /api/primitives/vcu/demand-matrix fetches all vcu_aggregates, parses top_buyers JSON per row, normalizes buyer names, maps to sectors via BUYER_SECTORS, maps methodology codes to 10 groups via getMethGroup(). Returns matrix[sector][methGroup]=volume + top_buyers_by_sector. METH_GROUPS maps specific codes (VM0007→REDD+, ACM0002→Renewables, etc.), unmatched→'Other'. [v79i]
+
+85. tab lazy-loading pattern — VCU Intelligence (default, first tab) loads on boot via loadVCUPage(). Project Browser loads on first click via browserLoaded flag in showPage(). Demand Map loads on first sub-tab click via mapLoaded flag in setVCUSub('map'). Buyers load on first sub-tab click via buyersLoaded flag. Each flag prevents duplicate fetches. [v79i]
+
+86. top_buyer_by_cell — /vcu/demand-matrix returns nested object {sector→{methGroup→{name,vol}}} tracking the single highest-volume buyer in each cell. Frontend uses this for hover tooltips on demand map cells. Updated whenever vol > current max for that sector+methGroup combination. [v79j]
+
+87. avg_annual_retirement + last_activity_year — /vcu/buyers tracks min_year/max_year per buyer from first_issuance_year and last_issuance_year columns in vcu_aggregates. avg_annual_retirement = total_retired / max(max_year - min_year + 1, 1). last_activity_year = max_year. Both fields deleted from internal tracking (min_year, max_year) before response. [v79j]
+
+88. buyer table colspan — buyer table has 8 columns (Buyer, Total Retired, Velocity, Last Active, Projects, Top Methodology, Top Country, Methodologies). All loading/error/empty states must use colspan="8". [v79j]
+
+89. demand map sector pills — filterDemandSector(s) toggles data-sector attribute visibility on tbody rows. 'All' shows everything. Each sector pill is a span with onclick. Active pill gets teal background. Rows use data-sector attribute set during renderDemandMap(). [v79j]
+
+90. clearsky_project column — verra_registry_index.clearsky_project INTEGER DEFAULT 0. Seeded for 10 ClearSky portfolio project IDs. Used in /vcu/project/:id (boolean) and match-projects (clearsky_matches separated from market_matches). NOT a filter — all projects load, clearsky ones get priority treatment in recommendations. [v79l]
+
+91. computeVintageBreakdown(trend, totalRetired) — FIFO allocation from oldest vintage. Years array [2019..2026] mapped to issuance_trend slots. If vintage has credits and retirements remain, deducts min(issued, remaining). Returns [{year, issued, outstanding, retired}] only for non-zero vintages. Used in /vcu/project/:id and match-projects responses. [v79l]
+
+92. match-projects decay weights — buyer's historical retirements per-methodology weighted by recency: 2025×4, 2024×3, 2023×2, 2022×1, pre-2022×0.5. Weight comes from project's last_issuance_year. Score = meth(0-4) + country(0-2) + demand(0-2) + size(0-1) + recency(0-1). Returns sorted market_matches (limit 15) + clearsky_matches (no limit). [v79l]
+
+93. match-buyers reverse scoring — for a project, scores buyers by how well their history matches. meth_match(0-4): decay-weighted methodology volume. country_match(0-2): buyer active in project's country. recency(0-2): last_activity_year 2025+=2, 2024=1. size_fit(0-1): buyer volume between 10K-50M. demand_validation(0-1): total demand for this methodology across all buyers. Returns top 10 buyers with avg_annual_retirement, last_activity_year, sector, countries. [v79l]
+
+94. CSS.escape() in rec IDs — loadRecs() and renderRecs() use CSS.escape(name) for getElementById on rec-btn-{name} and rec-content-{name}. Required because buyer names contain spaces, quotes, and special chars that break querySelector. [v79l]
+
+95. currentBuyerData / currentProjectBuyers — global state set by renderBuyerPanelData() and renderVCUPanel() respectively. Used as context argument for exportCSV('buyer_profile', currentBuyerData) and exportCSV('project_buyers', currentProjectBuyers). Must be set BEFORE innerHTML assignment since export buttons reference these globals. [v79l]
+
+96. BUYER_NORM_REVERSE — auto-computed reverse map from canonical buyer name → array of raw Verra names. Built by iterating BUYER_NORM entries. Used in buyer-yearly/:name and buyer-sector-yearly/:sector to query vcu_buyer_year_totals (which stores RAW names) with IN clause across all variants. Without reverse normalization, "Eni SpA" would miss "Eni Upstream" and "Eni Plenitude" retirements. [v79m-fix2]
+
+97. vcu_buyer_year_totals stores RAW buyer names — never query by canonical name directly. Always build variants array: [canonical] + BUYER_NORM_REVERSE[canonical] + rawName, then use SQL IN clause. The /vcu/buyers endpoint already normalizes in JS (normalizeBuyer), but /vcu/buyer-yearly and /vcu/buyer-sector-yearly must aggregate across raw variants in SQL. [v79m-fix2]
 ```
 
 ---
