@@ -377,6 +377,18 @@ REGISTRY INDEX (v78):
 96. BUYER_NORM_REVERSE — auto-computed reverse map from canonical buyer name → array of raw Verra names. Built by iterating BUYER_NORM entries. Used in buyer-yearly/:name and buyer-sector-yearly/:sector to query vcu_buyer_year_totals (which stores RAW names) with IN clause across all variants. Without reverse normalization, "Eni SpA" would miss "Eni Upstream" and "Eni Plenitude" retirements. [v79m-fix2]
 
 97. vcu_buyer_year_totals stores RAW buyer names — never query by canonical name directly. Always build variants array: [canonical] + BUYER_NORM_REVERSE[canonical] + rawName, then use SQL IN clause. The /vcu/buyers endpoint already normalizes in JS (normalizeBuyer), but /vcu/buyer-yearly and /vcu/buyer-sector-yearly must aggregate across raw variants in SQL. [v79m-fix2]
+
+98. PANEL_STATE three-state system — 'hidden' (default, panel 0px), 'split' (38%/62% two-pane), 'full' (100% panel, sidebar+main hidden). setPanelState(state) toggles CSS classes (panel-split, panel-full) on .page.active. openEntityPanel(renderFn) auto-transitions hidden→split. togglePanelExpand() toggles split↔full. Escape: full→split, split→goBack(). [v79n]
+
+99. panel-body-top + panel-body-scroll — entity panel content is split into fixed header (panel-body-top: flex-shrink:0, padding, border-bottom) and scrollable body (panel-body-scroll: flex:1, overflow-y:auto). Parent vcuPanelDetail must have display:flex;flex-direction:column. Both renderBuyerPanelData and renderVCUPanel use this pattern. [v79n]
+
+100. Full-mode two-column layout — .page.active.panel-full .panel-body-scroll{column-count:2;column-gap:24px}. Uses CSS columns with break-inside:avoid on child divs. Requires content to be wrapped in block-level elements (divs) to avoid column breaks mid-content. [v79n]
+
+101. downloadPDFNow vs generateIntelReport — downloadPDFNow checks pdd-status first; if crawl_doc_id exists, opens R2 PDF directly; otherwise opens Verra registry page and silently queues background crawl. generateIntelReport always triggers full crawler/extract pipeline with 5-step progress (INTEL_STEPS). Both are guarded by IS_EXTERNAL check. [v79n]
+
+102. Onboarding tooltips — localStorage cs_visited_v1 prevents repeat showing. showOnboardingTooltips() called on boot, checks localStorage, shows 4 sequential tips with 1.5s delay. showOnbTip(i) positions fixed .onb-tip element relative to target using getBoundingClientRect(). "Got it" button advances to next tip. [v79n]
+
+103. Entity nav bar vs breadcrumb — entity-nav div (id=entityNavBar) with back-btn + entityContext + expand-btn replaces old panelBreadcrumb. entityNavBar starts hidden, shown by openEntityPanel(), hidden by goBack() when returning to root. setEntityContext(['By Buyer','Shell']) updates the context label text. [v79n]
 ```
 
 ---
