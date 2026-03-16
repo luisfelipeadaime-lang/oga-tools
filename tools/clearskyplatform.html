@@ -660,8 +660,13 @@ function isWS(r){return r.status==='Registered'&&r.meth.split(';').some(function
 function sCls(s){return s==='Registered'?'cg':s.indexOf('validation')>=0?'ca':s.indexOf('development')>=0?'cb':'cgr';}
 function dotCol(s){return s==='Registered'?'var(--green)':s.indexOf('validation')>=0?'var(--amber)':s.indexOf('development')>=0?'var(--blue)':'var(--text3)';}
 function cpCls(d){if(!d)return'tcp';var dt=new Date(d),now=new Date(),y27=new Date('2027-06-30');if(dt<now)return'tcp exd';if(dt<y27)return'tcp exp';return'tcp';}
-var _bootPhase=true,_bootReady=0;
-function _checkBootComplete(){_bootReady++;if(_bootReady>=2){_bootPhase=false;}}
+/* PRELOAD STATE (v79t) */
+var PRELOAD={registry:false,buyers:false,vcuAgg:false,demandMatrix:false,recs:false,market:false};
+var BUYER_YEARLY_CACHE={};
+var recCache={};
+function checkAllLoaded(){
+  if(PRELOAD.registry&&PRELOAD.buyers&&PRELOAD.vcuAgg)document.getElementById('loadingOverlay').classList.add('hidden');
+}
 function showPanelError(msg){
   var isVCU=document.getElementById('page-vcu').classList.contains('active');
   var pd=isVCU?document.getElementById('vcuPanelDetail'):document.getElementById('panelDetail');
@@ -704,7 +709,8 @@ function loadData(){
       document.getElementById('pb-badge').textContent=ALL.length.toLocaleString();
       document.getElementById('liveNote').textContent='Updated \u00b7 live';
       window.browserLoaded=true;
-      _checkBootComplete();
+      PRELOAD.registry=true;
+      checkAllLoaded();
       buildStatusCounts();
       buildMethDD();
       document.getElementById('loadingOverlay').classList.add('hidden');
@@ -971,6 +977,10 @@ function renderPanel(id){
     },500);
     return;
   }
+  renderPanelHTML(row);
+}
+function renderPanelHTML(row){
+  var id=row.id;
   var isVCU=document.getElementById('page-vcu').classList.contains('active');
   if(!isVCU)document.getElementById('panelEmpty').style.display='none';
   var pd=isVCU?document.getElementById('vcuPanelDetail'):document.getElementById('panelDetail');
@@ -1139,7 +1149,8 @@ function loadVCUPage(){
     .then(function(d){
       VDATA=(d.rows||[]).map(function(r){r.id=r.project_id;return r;});
       document.getElementById('vcu-badge').textContent=fmtK(VDATA.reduce(function(s,r){return s+(r.total_issued||0);},0));
-      document.getElementById('loadingOverlay').classList.add('hidden');
+      PRELOAD.vcuAgg=true;
+      checkAllLoaded();
       filterVCU();
     })
     .catch(function(e){showError('Could not load VCU data: '+e.message);});
@@ -1443,12 +1454,16 @@ function setVCUSub(sub){
 function loadBuyers(){
   buyersLoaded=true;
   document.getElementById('vBTbody').innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text3)">Loading buyer data...</td></tr>';
-  fetch(API+'/api/primitives/vcu/buyers?limit=2000')
+  fetch(API+'/api/primitives/vcu/buyers-full?limit=2000')
     .then(function(r){return r.json();})
     .then(function(data){
-      BUYER_DATA=data.buyers||[];
+      BUYER_DATA=(data.buyers||[]).map(function(b){
+        if(b.yearly){BUYER_YEARLY_CACHE[b.buyer_name||b.name]=b.yearly;}
+        return b;
+      });
       var bb=document.getElementById('vsubt-buyer-badge');if(bb)bb.textContent=BUYER_DATA.length.toLocaleString();
-      _checkBootComplete();
+      PRELOAD.buyers=true;
+      checkAllLoaded();
       filterBuyers();
       if(window._radarPending){window._radarPending=false;renderDealRadar();}
     })
@@ -1712,6 +1727,12 @@ function fetchActivityProjects(buyerName,year,containerId){
 }
 
 function fetchAndRenderYearlyChart(name,containerId){
+  if(BUYER_YEARLY_CACHE[name]){
+    var yearly=BUYER_YEARLY_CACHE[name];
+    var arr=Object.keys(yearly).sort().map(function(y){return{year:parseInt(y),quantity:yearly[y]};});
+    renderBuyerYearly({yearly:arr});
+    return;
+  }
   loadBuyerYearly(name);
 }
 
@@ -1949,10 +1970,17 @@ window.mapLoaded=false;
 
 function loadDemandMap(){
   window.mapLoaded=true;
-  fetch(API+'/api/primitives/vcu/demand-matrix')
+  if(DEMAND_MATRIX){
+    document.getElementById('vMapLoading').style.display='none';
+    document.getElementById('vMapContent').style.display='block';
+    renderDemandMap(DEMAND_MATRIX);
+    return;
+  }
+  fetch(API+'/api/primitives/vcu/demand-matrix-full')
     .then(function(r){return r.json();})
     .then(function(data){
       DEMAND_MATRIX=data;
+      PRELOAD.demandMatrix=true;
       document.getElementById('vMapLoading').style.display='none';
       document.getElementById('vMapContent').style.display='block';
       renderDemandMap(data);
@@ -2234,15 +2262,19 @@ function togglePanelExpand(){
   else if(PANEL_STATE==='split')setPanelState('full');
 }
 function openEntityPanel(renderFn){
-  if(_bootPhase)return;
-  var pd=document.getElementById('vcuPanelDetail');
+  var isVCU=document.getElementById('page-vcu').classList.contains('active');
+  var pd=isVCU?document.getElementById('vcuPanelDetail'):document.getElementById('panelDetail');
   if(pd){pd.style.transition='opacity .15s';pd.style.opacity='0';}
   setTimeout(function(){
     renderFn();
     if(pd)pd.style.opacity='1';
     if(PANEL_STATE==='hidden')setPanelState('split');
-    document.getElementById('vcuPanelEmpty').style.display='none';
-    var nav=document.getElementById('entityNavBar');if(nav)nav.style.display='flex';
+    if(isVCU){
+      document.getElementById('vcuPanelEmpty').style.display='none';
+      var nav=document.getElementById('entityNavBar');if(nav)nav.style.display='flex';
+    }else{
+      document.getElementById('panelEmpty').style.display='none';
+    }
     if(pd){pd.style.display='flex';pd.style.flexDirection='column';}
   },150);
 }
@@ -2394,11 +2426,12 @@ function selBuyerFromSector(name){selBuyerRow(name);}
 var currentBuyerData=null;
 var currentProjectBuyers=null;
 function loadRecs(name){
+  if(recCache[name]){renderRecs(name,recCache[name]);return;}
   var el=document.getElementById('rec-content-'+CSS.escape(name));
   if(el)el.innerHTML='<div style="display:flex;align-items:center;gap:7px;padding:6px 0"><div style="width:10px;height:10px;border:1.5px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0"></div><span style="font-size:10.5px;color:var(--text3)">Scoring projects against '+esc(name)+'\'s history...</span></div>';
   fetch(API+'/api/primitives/vcu/match-projects/'+encodeURIComponent(name))
     .then(function(r){return r.json();})
-    .then(function(d){renderRecs(name,d);})
+    .then(function(d){recCache[name]=d;renderRecs(name,d);})
     .catch(function(e){if(el)el.innerHTML='<div style="color:var(--red,#ef4444);font-size:10.5px">Failed: '+e.message+'</div>';});
 }
 function renderRecs(name,d){
@@ -2611,13 +2644,33 @@ function checkScrollIndicator(){
   }else if(existing){existing.classList.add('hidden');}
 }
 
-/* BOOT */
+/* PRELOAD FUNCTIONS (v79t) */
+function preloadDemandMatrix(){
+  fetch(API+'/api/primitives/vcu/demand-matrix-full')
+    .then(function(r){return r.json();})
+    .then(function(data){DEMAND_MATRIX=data;PRELOAD.demandMatrix=true;window.mapLoaded=false;})
+    .catch(function(){});
+}
+function preloadRecommendations(){
+  fetch(API+'/api/primitives/vcu/preload-recommendations')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var recs=data.recommendations||{};
+      Object.keys(recs).forEach(function(k){recCache[k]=recs[k];});
+      PRELOAD.recs=true;
+    })
+    .catch(function(){});
+}
+
+/* BOOT (v79t: 6 parallel loaders) */
 PANEL_STATE='hidden';
 panelBreadcrumb=[];
 setPanelState('hidden');
 loadData();
 loadVCUPage();
 loadBuyers();
+preloadDemandMatrix();
+preloadRecommendations();
 showOnboardingTooltips();
 </script>
 </body>
