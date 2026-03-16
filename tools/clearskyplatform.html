@@ -257,7 +257,7 @@ td{padding:5px 8px;vertical-align:middle}
 <div class="topbar">
   <div>
     <div class="topbar-brand">ClearSky</div>
-    <div class="topbar-title">Project Intelligence Platform</div>
+    <div class="topbar-title">Carbon Market Intelligence</div>
   </div>
   <div class="topbar-sep"></div>
   <div class="stat-pill"><span class="stat-pill-num">4,903</span><span class="stat-pill-label">projects</span></div>
@@ -273,15 +273,15 @@ td{padding:5px 8px;vertical-align:middle}
 
 <!-- PAGE TABS -->
 <div class="page-tabs">
-  <div class="ptab active" onclick="showPage('browser')">Project Browser <span class="ptab-badge" id="pb-badge">&mdash;</span></div>
-  <div class="ptab" onclick="showPage('vcu')">VCU Intelligence <span class="ptab-badge" id="vcu-badge">317K</span></div>
+  <div class="ptab active" onclick="showPage('vcu')">VCU Intelligence <span class="ptab-badge" id="vcu-badge">2,116</span></div>
+  <div class="ptab" onclick="showPage('browser')">Project Browser <span class="ptab-badge" id="pb-badge">4,903</span></div>
   <div class="ptab dim">RFP Tracker <span class="ptab-badge">1</span></div>
 </div>
 
 <button id="mobileFilterBtn" onclick="toggleMobileSidebar()" style="display:none;position:fixed;bottom:20px;right:20px;z-index:50;padding:10px 16px;background:var(--teal);color:var(--bg0);border:none;border-radius:99px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.3)">Filters</button>
 
 <!-- PROJECT BROWSER -->
-<div class="page active" id="page-browser">
+<div class="page" id="page-browser">
 
 <!-- SIDEBAR -->
 <div class="sidebar">
@@ -383,7 +383,7 @@ td{padding:5px 8px;vertical-align:middle}
 </div>
 
 <!-- VCU INTELLIGENCE -->
-<div class="page" id="page-vcu">
+<div class="page active" id="page-vcu">
 
 <!-- VCU SIDEBAR -->
 <div class="sidebar">
@@ -444,6 +444,7 @@ td{padding:5px 8px;vertical-align:middle}
   <div style="background:var(--bg1);border-bottom:1px solid var(--border);display:flex;padding:0 14px;flex-shrink:0">
     <div class="ptb on" id="vsubt-project" onclick="setVCUSub('project')" style="font-size:11px;padding:7px 14px">By Project</div>
     <div class="ptb" id="vsubt-buyer" onclick="setVCUSub('buyer')" style="font-size:11px;padding:7px 14px">By Buyer</div>
+    <div class="ptb" id="vsubt-map" onclick="setVCUSub('map')" style="font-size:11px;padding:7px 14px">Demand Map</div>
   </div>
   <div id="vProjectView" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
     <div class="topstrip">
@@ -464,6 +465,10 @@ td{padding:5px 8px;vertical-align:middle}
       <div class="th" style="width:52px" onclick="sortVCU('supply_months')">Supply</div>
     </div>
     <div class="rows" id="vcuRows"></div>
+  </div>
+  <div id="vMapView" style="display:none;flex:1;overflow-y:auto;padding:16px">
+    <div id="vMapLoading" style="text-align:center;padding:40px;color:var(--text3);font-size:12px">Loading demand matrix...</div>
+    <div id="vMapContent" style="display:none"></div>
   </div>
   <div id="vBuyerView" style="display:none;flex-direction:column;flex:1;overflow:hidden">
     <div class="results-bar">
@@ -575,8 +580,8 @@ function showPage(pg){
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.ptab').forEach(function(t){t.classList.remove('active');});
   var pages=document.querySelectorAll('.ptab');
-  if(pg==='browser'){document.getElementById('page-browser').classList.add('active');pages[0].classList.add('active');}
-  if(pg==='vcu'){document.getElementById('page-vcu').classList.add('active');pages[1].classList.add('active');if(!window.vcuLoaded)loadVCUPage();}
+  if(pg==='vcu'){document.getElementById('page-vcu').classList.add('active');pages[0].classList.add('active');if(!window.vcuLoaded)loadVCUPage();}
+  if(pg==='browser'){document.getElementById('page-browser').classList.add('active');pages[1].classList.add('active');if(!window.browserLoaded){window.browserLoaded=false;loadData();}}
 }
 
 /* HELPERS */
@@ -622,6 +627,7 @@ function loadData(){
       document.getElementById('sp-reg').textContent=regN.toLocaleString();
       document.getElementById('pb-badge').textContent=ALL.length.toLocaleString();
       document.getElementById('liveNote').textContent='Updated \u00b7 live';
+      window.browserLoaded=true;
       buildStatusCounts();
       buildMethDD();
       document.getElementById('loadingOverlay').classList.add('hidden');
@@ -1024,8 +1030,10 @@ function loadVCUPage(){
     .then(function(d){
       VDATA=(d.rows||[]).map(function(r){r.id=r.project_id;return r;});
       document.getElementById('vcu-badge').textContent=fmtK(VDATA.reduce(function(s,r){return s+(r.total_issued||0);},0));
+      document.getElementById('loadingOverlay').classList.add('hidden');
       filterVCU();
-    });
+    })
+    .catch(function(e){showError('Could not load VCU data: '+e.message);});
 }
 
 function filterVCU(){
@@ -1230,16 +1238,27 @@ function setVCUSub(sub){
   document.getElementById('vsubt-'+sub).classList.add('on');
   var projView=document.getElementById('vProjectView');
   var buyerView=document.getElementById('vBuyerView');
+  var mapView=document.getElementById('vMapView');
   var projFilters=document.getElementById('vProjectOnlyFilters');
   if(sub==='project'){
     if(projView)projView.style.display='flex';
     if(buyerView)buyerView.style.display='none';
+    if(mapView)mapView.style.display='none';
     if(projFilters)projFilters.style.display='';
     document.getElementById('vcuPanelEmpty').style.display='flex';
     document.getElementById('vcuPanelDetail').style.display='none';
+  }else if(sub==='map'){
+    if(projView)projView.style.display='none';
+    if(buyerView)buyerView.style.display='none';
+    if(mapView)mapView.style.display='block';
+    if(projFilters)projFilters.style.display='none';
+    document.getElementById('vcuPanelEmpty').style.display='flex';
+    document.getElementById('vcuPanelDetail').style.display='none';
+    if(!window.mapLoaded)loadDemandMap();
   }else{
     if(projView)projView.style.display='none';
     if(buyerView){buyerView.style.display='flex';buyerView.style.flexDirection='column';}
+    if(mapView)mapView.style.display='none';
     if(projFilters)projFilters.style.display='none';
     document.getElementById('vcuPanelEmpty').style.display='flex';
     document.getElementById('vcuPanelDetail').style.display='none';
@@ -1473,6 +1492,92 @@ function dualChart(trend,totalIssued,totalRetired){
     +'</div></div>';
 }
 
+/* ============ DEMAND MAP ============ */
+var DEMAND_MATRIX=null;
+window.mapLoaded=false;
+
+function loadDemandMap(){
+  window.mapLoaded=true;
+  fetch(API+'/api/primitives/vcu/demand-matrix')
+    .then(function(r){return r.json();})
+    .then(function(data){
+      DEMAND_MATRIX=data;
+      document.getElementById('vMapLoading').style.display='none';
+      document.getElementById('vMapContent').style.display='block';
+      renderDemandMap(data);
+    })
+    .catch(function(e){
+      document.getElementById('vMapLoading').textContent='Failed: '+e.message;
+    });
+}
+
+function renderDemandMap(data){
+  var sectors=data.sectors||[];
+  var meths=data.methodologies||[];
+  var matrix=data.matrix||{};
+  var topBySector=data.top_buyers_by_sector||{};
+  var maxVal=0;
+  sectors.forEach(function(s){meths.forEach(function(m){var v=(matrix[s]&&matrix[s][m])||0;if(v>maxVal)maxVal=v;});});
+
+  function cellColor(val){
+    if(!val||!maxVal)return'background:var(--bg2)';
+    var intensity=val/maxVal;
+    if(intensity>0.6)return'background:rgba(45,212,191,0.6)';
+    if(intensity>0.3)return'background:rgba(45,212,191,0.35)';
+    if(intensity>0.1)return'background:rgba(45,212,191,0.15)';
+    return'background:rgba(45,212,191,0.05)';
+  }
+
+  var html='<div style="margin-bottom:16px">'
+    +'<div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Carbon demand by sector × methodology</div>'
+    +'<div style="font-size:10.5px;color:var(--text2)">Volume of VCUs retired — darker = higher demand</div>'
+    +'</div>';
+
+  html+='<div style="overflow-x:auto;margin-bottom:24px"><table style="border-collapse:collapse;width:100%">';
+  html+='<thead><tr><th style="padding:6px 10px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);background:var(--bg1);white-space:nowrap;min-width:120px">Sector</th>';
+  meths.forEach(function(m){
+    html+='<th style="padding:6px 8px;text-align:center;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);background:var(--bg1);white-space:nowrap">'+m+'</th>';
+  });
+  html+='<th style="padding:6px 8px;text-align:right;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);background:var(--bg1)">Total</th></tr></thead><tbody>';
+
+  sectors.forEach(function(s){
+    if(!matrix[s])return;
+    var rowTotal=meths.reduce(function(sum,m){return sum+((matrix[s]&&matrix[s][m])||0);},0);
+    if(rowTotal===0)return;
+    var topB=topBySector[s]&&topBySector[s][0]?topBySector[s][0].name:'';
+    html+='<tr>';
+    html+='<td style="padding:8px 10px;border-bottom:1px solid rgba(99,130,191,.07)">'
+      +'<div style="font-size:11.5px;font-weight:500;color:var(--text0)">'+s+'</div>'
+      +(topB?'<div style="font-size:9.5px;color:var(--text3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px">'+esc(topB)+'</div>':'')
+      +'</td>';
+    meths.forEach(function(m){
+      var v=(matrix[s]&&matrix[s][m])||0;
+      var pct=rowTotal>0?Math.round(v/rowTotal*100):0;
+      html+='<td style="padding:6px 8px;border-bottom:1px solid rgba(99,130,191,.07);text-align:center">';
+      if(v>0){
+        html+='<div style="'+cellColor(v)+';border-radius:4px;padding:5px 4px">'
+          +'<div style="font-family:\'DM Mono\',monospace;font-size:10px;font-weight:500;color:var(--teal)">'+fmtV(String(v))+'</div>'
+          +'<div style="font-size:8.5px;color:var(--text3)">'+pct+'%</div>'
+          +'</div>';
+      }else{
+        html+='<div style="color:var(--text3);font-size:9px">\u2014</div>';
+      }
+      html+='</td>';
+    });
+    html+='<td style="padding:6px 8px;border-bottom:1px solid rgba(99,130,191,.07);text-align:right;font-family:\'DM Mono\',monospace;font-size:11px;font-weight:500;color:var(--amber)">'+fmtV(String(rowTotal))+'</td>';
+    html+='</tr>';
+  });
+
+  html+='</tbody></table></div>';
+
+  html+='<div style="background:rgba(45,212,191,.06);border:1px solid rgba(45,212,191,.2);border-radius:7px;padding:10px 12px;margin-bottom:16px">'
+    +'<div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-bottom:4px">How to read this</div>'
+    +'<div style="font-size:11px;color:var(--text1);line-height:1.6">Each cell shows total VCUs retired by that sector from that project type. Darker = stronger demand signal. Use this to match ClearSky projects to buyer sectors most likely to purchase.</div>'
+    +'</div>';
+
+  document.getElementById('vMapContent').innerHTML=html;
+}
+
 function resetVCU(){
   document.getElementById('vcuBuyerSearch').value='';
   document.getElementById('vcuProjectSearch').value='';
@@ -1492,7 +1597,8 @@ function resetVCU(){
 }
 
 /* BOOT */
-loadData();
+loadVCUPage();
+window.vcuLoaded=true;
 </script>
 </body>
 </html>
