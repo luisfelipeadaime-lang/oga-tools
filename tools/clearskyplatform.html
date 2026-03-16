@@ -433,6 +433,22 @@ td{padding:5px 8px;vertical-align:middle}
       <div class="section-label">Methodology</div>
       <input class="finput" id="vcuMethSearch" placeholder="VM0007, ACM0002..." oninput="filterVCU()">
     </div>
+    <div class="filter-section" id="vBuyerOnlyFilters" style="padding:8px 10px;display:none">
+      <div class="section-label">Buyer sector</div>
+      <select class="finput" id="vSectorQ" onchange="filterVCU()" style="cursor:pointer">
+        <option value="">All sectors</option>
+        <option value="Airlines">Airlines</option>
+        <option value="Oil &amp; Gas">Oil &amp; Gas</option>
+        <option value="Technology">Technology</option>
+        <option value="Banking &amp; Finance">Banking &amp; Finance</option>
+        <option value="Retail &amp; Consumer">Retail &amp; Consumer</option>
+        <option value="Energy &amp; Utilities">Energy &amp; Utilities</option>
+        <option value="Automotive">Automotive</option>
+        <option value="Industrial">Industrial</option>
+        <option value="Government">Government</option>
+        <option value="NGO &amp; Foundation">NGO &amp; Foundation</option>
+      </select>
+    </div>
     <div style="padding:8px 10px;">
       <button class="dl-step-btn" onclick="resetVCU()" style="width:100%;font-size:11px;padding:6px">Reset Filters</button>
     </div>
@@ -474,6 +490,7 @@ td{padding:5px 8px;vertical-align:middle}
     <div class="results-bar">
       <span class="rc" id="vBRc">&mdash;</span>
       <span class="rl">buyers</span>
+      <button onclick="exportBuyerCSV()" style="padding:4px 12px;background:transparent;border:1px solid var(--border-hi);border-radius:6px;color:var(--text1);font-family:inherit;font-size:10.5px;cursor:pointer;margin-left:8px">&darr; Export CSV</button>
       <div style="margin-left:auto;display:flex;gap:8px">
         <div style="text-align:center;padding:2px 10px;background:var(--bg3);border-radius:6px;border:1px solid var(--border)">
           <div style="font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--amber)" id="vBKTot">&mdash;</div>
@@ -486,6 +503,8 @@ td{padding:5px 8px;vertical-align:middle}
         <thead><tr>
           <th onclick="sortBuyers('name')" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border)">Buyer</th>
           <th onclick="sortBuyers('total_retired')" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">Total Retired</th>
+          <th onclick="sortBuyers('avg_annual_retirement')" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">Velocity</th>
+          <th onclick="sortBuyers('last_activity_year')" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">Last Active</th>
           <th onclick="sortBuyers('project_count')" style="cursor:pointer;padding:6px 8px;font-size:10.5px;text-align:right;color:var(--text2);border-bottom:1px solid var(--border)">Projects</th>
           <th style="padding:6px 8px;font-size:10.5px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border)">Top Methodology</th>
           <th style="padding:6px 8px;font-size:10.5px;text-align:left;color:var(--text2);border-bottom:1px solid var(--border)">Top Country</th>
@@ -1240,11 +1259,13 @@ function setVCUSub(sub){
   var buyerView=document.getElementById('vBuyerView');
   var mapView=document.getElementById('vMapView');
   var projFilters=document.getElementById('vProjectOnlyFilters');
+  var buyerFilters=document.getElementById('vBuyerOnlyFilters');
   if(sub==='project'){
     if(projView)projView.style.display='flex';
     if(buyerView)buyerView.style.display='none';
     if(mapView)mapView.style.display='none';
     if(projFilters)projFilters.style.display='';
+    if(buyerFilters)buyerFilters.style.display='none';
     document.getElementById('vcuPanelEmpty').style.display='flex';
     document.getElementById('vcuPanelDetail').style.display='none';
   }else if(sub==='map'){
@@ -1252,6 +1273,7 @@ function setVCUSub(sub){
     if(buyerView)buyerView.style.display='none';
     if(mapView)mapView.style.display='block';
     if(projFilters)projFilters.style.display='none';
+    if(buyerFilters)buyerFilters.style.display='none';
     document.getElementById('vcuPanelEmpty').style.display='flex';
     document.getElementById('vcuPanelDetail').style.display='none';
     if(!window.mapLoaded)loadDemandMap();
@@ -1260,6 +1282,7 @@ function setVCUSub(sub){
     if(buyerView){buyerView.style.display='flex';buyerView.style.flexDirection='column';}
     if(mapView)mapView.style.display='none';
     if(projFilters)projFilters.style.display='none';
+    if(buyerFilters)buyerFilters.style.display='';
     document.getElementById('vcuPanelEmpty').style.display='flex';
     document.getElementById('vcuPanelDetail').style.display='none';
     if(!buyersLoaded)loadBuyers();
@@ -1269,7 +1292,7 @@ function setVCUSub(sub){
 
 function loadBuyers(){
   buyersLoaded=true;
-  document.getElementById('vBTbody').innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)">Loading buyer data...</td></tr>';
+  document.getElementById('vBTbody').innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text3)">Loading buyer data...</td></tr>';
   fetch(API+'/api/primitives/vcu/buyers?limit=200')
     .then(function(r){return r.json();})
     .then(function(data){
@@ -1277,7 +1300,7 @@ function loadBuyers(){
       filterBuyers();
     })
     .catch(function(e){
-      document.getElementById('vBTbody').innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--red,#ef4444)">Failed: '+e.message+'</td></tr>';
+      document.getElementById('vBTbody').innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--red,#ef4444)">Failed: '+e.message+'</td></tr>';
     });
 }
 
@@ -1285,10 +1308,12 @@ function filterBuyers(){
   var bq=(document.getElementById('vcuBuyerSearch').value||'').toLowerCase().trim();
   var mq=(document.getElementById('vcuMethSearch').value||'').toUpperCase().trim();
   var cq=(document.getElementById('vcuCountrySearch').value||'').toLowerCase().trim();
+  var sq=(document.getElementById('vSectorQ').value||'').trim();
   BUYER_FILTERED=BUYER_DATA.filter(function(b){
     if(bq&&b.name.toLowerCase().indexOf(bq)<0)return false;
     if(mq&&b.methodologies.join(';').indexOf(mq)<0)return false;
     if(cq&&b.countries.join(';').toLowerCase().indexOf(cq)<0)return false;
+    if(sq&&b.sector!==sq)return false;
     return true;
   });
   renderBuyers();
@@ -1316,13 +1341,43 @@ function renderBuyers(){
     html+='<tr onclick="selBuyerRow(\''+esc(b.name).replace(/'/g,"\\'")+'\');"'+sel+'>'
       +'<td style="padding:5px 8px"><div style="font-size:12px;color:var(--text0);font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(b.name)+'">'+esc(b.name)+'</div></td>'
       +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--amber)">'+fmtV(String(b.total_retired||0))+'</td>'
+      +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text2);white-space:nowrap">'+(b.avg_annual_retirement?fmtV(String(Math.round(b.avg_annual_retirement)))+'/yr':'\u2014')+'</td>'
+      +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:10px;color:'+(parseInt(b.last_activity_year)>=2024?'var(--green)':'var(--text3)')+'">'+((b.last_activity_year||'\u2014'))+'</td>'
       +'<td style="text-align:right;padding:5px 8px;font-family:\'DM Mono\',monospace;font-size:11px;color:var(--teal)">'+(b.project_count||0)+'</td>'
       +'<td style="padding:5px 8px"><span class="'+mCls(b.top_methodology||'')+'" style="font-size:8.5px">'+(b.top_methodology||'\u2014')+'</span></td>'
       +'<td style="padding:5px 8px;font-size:11px;color:var(--text1)">'+(b.top_country||'\u2014')+'</td>'
       +'<td style="padding:5px 8px">'+methChips+'</td>'
       +'</tr>';
   });
-  document.getElementById('vBTbody').innerHTML=html||'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text3)">No buyers match</td></tr>';
+  document.getElementById('vBTbody').innerHTML=html||'<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text3)">No buyers match</td></tr>';
+}
+
+function exportBuyerCSV(){
+  var rows=BUYER_FILTERED;
+  var headers=['Buyer','Sector','Total Retired','Projects','Avg Annual','Last Active','Top Methodology','Top Country','Methodologies','Countries'];
+  var csv=headers.join(',')+'\n';
+  rows.forEach(function(b){
+    var row=[
+      '"'+(b.name||'').replace(/"/g,'""')+'"',
+      '"'+(b.sector||'')+'"',
+      b.total_retired||0,
+      b.project_count||0,
+      b.avg_annual_retirement||0,
+      b.last_activity_year||'',
+      '"'+(b.top_methodology||'')+'"',
+      '"'+(b.top_country||'')+'"',
+      '"'+(b.methodologies||[]).join('; ')+'"',
+      '"'+(b.countries||[]).join('; ')+'"'
+    ];
+    csv+=row.join(',')+'\n';
+  });
+  var blob=new Blob([csv],{type:'text/csv'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;
+  a.download='clearsky_buyer_intelligence_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function selBuyerRow(name){
@@ -1362,6 +1417,12 @@ function renderBuyerPanelData(name,totalRetired,projects,methodologies,countries
       +'</div>';
   }).join('');
 
+  var avgPerProject=projects.length?Math.round(totalRetired/(projects.length||1)):0;
+  var lastYear=0;
+  projects.forEach(function(p){var vcu=VCU[String(p.project_id)];if(vcu&&parseInt(vcu.li)>lastYear)lastYear=parseInt(vcu.li);});
+  var buyerFromList=BUYER_DATA.find(function(b){return b.name===name;});
+  if(buyerFromList&&buyerFromList.last_activity_year&&buyerFromList.last_activity_year>lastYear)lastYear=buyerFromList.last_activity_year;
+
   var buyerObj={name:name,total_retired:totalRetired,projects:projects,methodologies:methodologies,countries:countries,top_methodology:methodologies[0]||null,top_country:countries[0]||null};
   var sparkHtml=buyerSparkline(buyerObj);
 
@@ -1394,18 +1455,28 @@ function renderBuyerPanelData(name,totalRetired,projects,methodologies,countries
     +methChips
     +'</div></div>'
     +'<div style="padding:14px 16px;overflow-y:auto;flex:1">'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">'
     +'<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Total Retired</div><div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:600;color:var(--amber);margin-top:4px">'+fmtV(String(totalRetired))+'</div></div>'
     +'<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Projects</div><div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:600;color:var(--teal);margin-top:4px">'+projects.length+'</div></div>'
+    +'<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Avg per Project</div><div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:600;color:var(--teal);margin-top:4px">'+fmtV(String(avgPerProject))+'</div></div>'
     +'<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Methodologies</div><div style="font-size:14px;font-weight:600;color:var(--text0);margin-top:4px">'+methodologies.length+'</div></div>'
     +'<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Countries</div><div style="font-size:14px;font-weight:600;color:var(--text0);margin-top:4px">'+countries.length+'</div></div>'
+    +'<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;border:1px solid var(--border)"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3)">Last Activity</div><div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:600;color:'+(lastYear>=2024?'var(--green)':'var(--text0)')+';margin-top:4px">'+(lastYear>0?lastYear:'\u2014')+'</div></div>'
     +'</div>'
     +sparkHtml
     +'<div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:8px;margin-top:14px">Top projects retired from</div>'
     +topProjects
     +'<div style="margin-top:14px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:6px">Preferred methodologies</div>'
     +'<div style="display:flex;flex-wrap:wrap;gap:4px">'
-    +methodologies.map(function(m){return '<span class="'+mCls(m)+'">'+m+'</span>';}).join('')
+    +methodologies.map(function(m){return '<span class="'+mCls(m)+'" title="'+(METH_LABELS[m]||m)+'">'+m+'</span>';}).join('')
+    +'</div>'
+    +'<div style="margin-top:6px">'
+    +methodologies.slice(0,4).map(function(m){
+      return '<div style="font-size:9.5px;color:var(--text3);margin-bottom:2px">'
+        +'<span style="color:var(--teal);font-family:\'DM Mono\',monospace">'+m+'</span>'
+        +' \u2014 '+(METH_LABELS[m]||'Carbon project methodology')
+        +'</div>';
+    }).join('')
     +'</div></div>'
     +'<div style="margin-top:14px"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:6px">Countries</div>'
     +'<div style="font-size:11px;color:var(--text1)">'+countries.join(' \u00B7 ')+'</div></div>'
@@ -1511,13 +1582,31 @@ function loadDemandMap(){
     });
 }
 
+var activeDemandSector='All';
+function filterDemandSector(s){
+  activeDemandSector=s;
+  var tbody=document.querySelector('#vMapContent table tbody');
+  if(!tbody||!DEMAND_MATRIX)return;
+  Array.from(tbody.querySelectorAll('tr')).forEach(function(tr){
+    var rowSector=tr.getAttribute('data-sector');
+    tr.style.display=(s==='All'||rowSector===s)?'':'none';
+  });
+  document.querySelectorAll('[id^="dms-"]').forEach(function(el){el.style.background='var(--bg2)';el.style.color='var(--text2)';el.style.borderColor='var(--border)';});
+  var active=document.getElementById('dms-'+s.replace(/[^a-z0-9]/gi,'_'));
+  if(active){active.style.background='var(--teal-dim,rgba(45,212,191,.1))';active.style.color='var(--teal)';active.style.borderColor='rgba(45,212,191,.4)';}
+}
+
 function renderDemandMap(data){
   var sectors=data.sectors||[];
   var meths=data.methodologies||[];
   var matrix=data.matrix||{};
   var topBySector=data.top_buyers_by_sector||{};
+  var topByCell=data.top_buyer_by_cell||{};
   var maxVal=0;
-  sectors.forEach(function(s){meths.forEach(function(m){var v=(matrix[s]&&matrix[s][m])||0;if(v>maxVal)maxVal=v;});});
+  var grandTotal=0;
+  var colTotals={};
+  meths.forEach(function(m){colTotals[m]=0;});
+  sectors.forEach(function(s){meths.forEach(function(m){var v=(matrix[s]&&matrix[s][m])||0;if(v>maxVal)maxVal=v;grandTotal+=v;colTotals[m]+=v;});});
 
   function cellColor(val){
     if(!val||!maxVal)return'background:var(--bg2)';
@@ -1529,9 +1618,18 @@ function renderDemandMap(data){
   }
 
   var html='<div style="margin-bottom:16px">'
-    +'<div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Carbon demand by sector × methodology</div>'
-    +'<div style="font-size:10.5px;color:var(--text2)">Volume of VCUs retired — darker = higher demand</div>'
+    +'<div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:4px">Carbon demand by sector \u00d7 methodology</div>'
+    +'<div style="font-size:10.5px;color:var(--text2)">Volume of VCUs retired \u2014 darker = higher demand</div>'
     +'</div>';
+
+  var sectorPills=['All'].concat(sectors).map(function(s){
+    var isAll=s==='All';
+    return '<span onclick="filterDemandSector(\''+s.replace(/'/g,"\\'")+'\')" id="dms-'+s.replace(/[^a-z0-9]/gi,'_')+'" '
+      +'style="display:inline-flex;padding:3px 10px;border-radius:99px;font-size:10px;cursor:pointer;margin:2px;'
+      +'border:1px solid '+(isAll?'rgba(45,212,191,.4)':'var(--border)')+';color:'+(isAll?'var(--teal)':'var(--text2)')+';background:'+(isAll?'var(--teal-dim,rgba(45,212,191,.1))':'var(--bg2)')+'">'
+      +s+'</span>';
+  }).join('');
+  html+='<div style="margin-bottom:12px">'+sectorPills+'</div>';
 
   html+='<div style="overflow-x:auto;margin-bottom:24px"><table style="border-collapse:collapse;width:100%">';
   html+='<thead><tr><th style="padding:6px 10px;text-align:left;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);background:var(--bg1);white-space:nowrap;min-width:120px">Sector</th>';
@@ -1545,7 +1643,8 @@ function renderDemandMap(data){
     var rowTotal=meths.reduce(function(sum,m){return sum+((matrix[s]&&matrix[s][m])||0);},0);
     if(rowTotal===0)return;
     var topB=topBySector[s]&&topBySector[s][0]?topBySector[s][0].name:'';
-    html+='<tr>';
+    var rowPct=grandTotal>0?((rowTotal/grandTotal)*100).toFixed(1):'0';
+    html+='<tr data-sector="'+s+'">';
     html+='<td style="padding:8px 10px;border-bottom:1px solid rgba(99,130,191,.07)">'
       +'<div style="font-size:11.5px;font-weight:500;color:var(--text0)">'+s+'</div>'
       +(topB?'<div style="font-size:9.5px;color:var(--text3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px">'+esc(topB)+'</div>':'')
@@ -1553,7 +1652,9 @@ function renderDemandMap(data){
     meths.forEach(function(m){
       var v=(matrix[s]&&matrix[s][m])||0;
       var pct=rowTotal>0?Math.round(v/rowTotal*100):0;
-      html+='<td style="padding:6px 8px;border-bottom:1px solid rgba(99,130,191,.07);text-align:center">';
+      var cellBuyer=(topByCell[s]&&topByCell[s][m])?topByCell[s][m].name:'';
+      var tooltip=v>0?fmtV(String(v))+' VCUs \u00b7 '+s+' \u2192 '+m+(cellBuyer?' \u00b7 Top: '+cellBuyer:''):'';
+      html+='<td style="padding:6px 8px;border-bottom:1px solid rgba(99,130,191,.07);text-align:center"'+(tooltip?' title="'+tooltip.replace(/"/g,'&quot;')+'"':'')+'>';
       if(v>0){
         html+='<div style="'+cellColor(v)+';border-radius:4px;padding:5px 4px">'
           +'<div style="font-family:\'DM Mono\',monospace;font-size:10px;font-weight:500;color:var(--teal)">'+fmtV(String(v))+'</div>'
@@ -1564,15 +1665,21 @@ function renderDemandMap(data){
       }
       html+='</td>';
     });
-    html+='<td style="padding:6px 8px;border-bottom:1px solid rgba(99,130,191,.07);text-align:right;font-family:\'DM Mono\',monospace;font-size:11px;font-weight:500;color:var(--amber)">'+fmtV(String(rowTotal))+'</td>';
+    html+='<td style="padding:6px 8px;border-bottom:1px solid rgba(99,130,191,.07);text-align:right;font-family:\'DM Mono\',monospace;font-size:11px;font-weight:500;color:var(--amber)">'+fmtV(String(rowTotal))+'<div style="font-size:8.5px;color:var(--text3);font-weight:400">'+rowPct+'%</div></td>';
     html+='</tr>';
   });
 
-  html+='</tbody></table></div>';
+  html+='</tbody><tfoot><tr style="background:var(--bg2);border-top:1px solid var(--border-hi)">';
+  html+='<td style="padding:8px 10px;font-size:10px;font-weight:700;color:var(--teal)">Total</td>';
+  meths.forEach(function(m){
+    html+='<td style="padding:6px 8px;text-align:center;font-family:\'DM Mono\',monospace;font-size:10px;font-weight:500;color:var(--teal)">'+fmtV(String(colTotals[m]||0))+'</td>';
+  });
+  html+='<td style="padding:6px 8px;text-align:right;font-family:\'DM Mono\',monospace;font-size:11px;font-weight:600;color:var(--teal)">'+fmtV(String(grandTotal))+'</td>';
+  html+='</tr></tfoot></table></div>';
 
   html+='<div style="background:rgba(45,212,191,.06);border:1px solid rgba(45,212,191,.2);border-radius:7px;padding:10px 12px;margin-bottom:16px">'
     +'<div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-bottom:4px">How to read this</div>'
-    +'<div style="font-size:11px;color:var(--text1);line-height:1.6">Each cell shows total VCUs retired by that sector from that project type. Darker = stronger demand signal. Use this to match ClearSky projects to buyer sectors most likely to purchase.</div>'
+    +'<div style="font-size:11px;color:var(--text1);line-height:1.6">Each cell shows total VCUs retired by that sector from that project type. Darker = stronger demand signal. Hover any cell for top buyer. Use sector pills above to filter rows.</div>'
     +'</div>';
 
   document.getElementById('vMapContent').innerHTML=html;
@@ -1586,6 +1693,7 @@ function resetVCU(){
   document.getElementById('vcuYearFrom').value='';
   document.getElementById('vcuYearTo').value='';
   document.getElementById('vRetMin').value='';
+  document.getElementById('vSectorQ').value='';
   VS.status='all';VS.sortCol='issued';VS.sortDir='desc';VS.selectedId=null;
   selBuyer=null;
   document.querySelectorAll('#page-vcu .sstab').forEach(function(t){t.classList.remove('on');});
