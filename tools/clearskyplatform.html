@@ -181,14 +181,6 @@ td{padding:5px 8px;vertical-align:middle}
 .btn-loading{color:var(--teal);border-color:rgba(45,212,191,.3);background:var(--teal-dim);cursor:wait}
 .btn-done{color:var(--green);border-color:rgba(52,211,153,.3);background:var(--green-dim)}
 
-/* Download progress */
-.dl-progress{margin-top:8px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:10px 12px;display:none}
-.dl-progress.show{display:block}
-.dl-step{font-size:11px;color:var(--text1);margin-bottom:6px;font-weight:500}
-.dl-bar{height:4px;background:var(--bg3);border-radius:99px;overflow:hidden}
-.dl-fill{height:100%;border-radius:99px;background:var(--teal);transition:width 1.2s ease}
-.dl-note{font-size:10px;color:var(--text3);margin-top:5px}
-
 /* Panel tabs */
 .panel-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
 .vcu-subtabs{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;padding:0 14px;flex-shrink:0;position:sticky;top:0;z-index:10}
@@ -321,6 +313,11 @@ td{padding:5px 8px;vertical-align:middle}
 
 <!-- SIDEBAR -->
 <div class="sidebar">
+  <div class="cat-section" style="position:relative">
+    <div class="section-label">Quick find</div>
+    <input class="finput" id="projQuickFind" placeholder="Search by ID or name..." oninput="onProjectIDSearch(this.value)" autocomplete="off">
+    <div id="projQuickDrop" style="display:none;position:absolute;left:8px;right:8px;top:100%;background:var(--bg2);border:1px solid var(--border-hi);border-radius:0 0 7px 7px;max-height:280px;overflow-y:auto;z-index:120;box-shadow:0 8px 24px rgba(0,0,0,.4)"></div>
+  </div>
   <div class="cat-section">
     <div class="section-label">Project type</div>
     <div class="cat-pills">
@@ -497,6 +494,7 @@ td{padding:5px 8px;vertical-align:middle}
     <div class="ptb on" id="vsubt-buyer" onclick="setVCUSub('buyer')">Buyers <span class="ptab-badge" id="vsubt-buyer-badge">\u2014</span></div>
     <div class="ptb" id="vsubt-map" onclick="setVCUSub('map')">Demand Map</div>
     <div class="ptb" id="vsubt-project" onclick="setVCUSub('project')">Projects <span class="ptab-badge">2,116</span></div>
+    <div class="ptb" id="vsubt-radar" onclick="setVCUSub('radar')">Deal Radar</div>
   </div>
   <div id="vProjectView" style="display:none;flex-direction:column;flex:1;overflow:hidden">
     <div class="topstrip">
@@ -551,6 +549,7 @@ td{padding:5px 8px;vertical-align:middle}
       </table>
     </div>
   </div>
+  <div id="vRadarView" style="display:none;flex:1;overflow-y:auto;padding:16px"></div>
 </div>
 
 <!-- VCU PANEL -->
@@ -888,6 +887,40 @@ function render(){
   tbody.innerHTML=html;
 }
 
+/* PROJECT QUICK FIND */
+var _qfTimer=null;
+function onProjectIDSearch(val){
+  clearTimeout(_qfTimer);
+  var drop=document.getElementById('projQuickDrop');
+  val=(val||'').trim();
+  if(!val||val.length<2){drop.style.display='none';return;}
+  _qfTimer=setTimeout(function(){
+    var q=val.toLowerCase();
+    var isNum=/^\d+$/.test(q);
+    var hits=ALL.filter(function(p){
+      if(isNum)return p.id.indexOf(q)===0;
+      return p.name.toLowerCase().indexOf(q)>=0||p.id.indexOf(q)===0;
+    }).slice(0,8);
+    if(!hits.length){drop.innerHTML='<div style="padding:10px 12px;font-size:11px;color:var(--text3)">No matches</div>';drop.style.display='block';return;}
+    var h='';
+    hits.forEach(function(p){
+      h+='<div onclick="jumpToProject(\''+p.id+'\')" style="padding:7px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s" onmouseenter="this.style.background=\'var(--bg3)\'" onmouseleave="this.style.background=\'transparent\'">'
+        +'<div style="font-size:11.5px;font-weight:500;color:var(--text0)">'+esc(p.name.length>45?p.name.slice(0,43)+'\u2026':p.name)+'</div>'
+        +'<div style="font-size:10px;color:var(--text3)">VCS #'+p.id+(p.country?' \u00b7 '+p.country:'')+(p.status?' \u00b7 '+p.status:'')+'</div>'
+        +'</div>';
+    });
+    drop.innerHTML=h;drop.style.display='block';
+  },180);
+}
+function jumpToProject(id){
+  document.getElementById('projQuickDrop').style.display='none';
+  document.getElementById('projQuickFind').value='';
+  selRow(id);
+  var tr=document.getElementById('tr-'+id);
+  if(tr)tr.scrollIntoView({block:'center',behavior:'smooth'});
+}
+document.addEventListener('click',function(e){if(!e.target.closest('#projQuickFind')&&!e.target.closest('#projQuickDrop')){var d=document.getElementById('projQuickDrop');if(d)d.style.display='none';}});
+
 /* PANEL */
 function selRow(id){
   if(S.selectedId){var o=document.getElementById('tr-'+S.selectedId);if(o)o.classList.remove('sel');}
@@ -989,9 +1022,6 @@ function renderPanel(id){
     vcuHtml='<div class="no-vcu"><div style="font-size:18px;opacity:.3;margin-bottom:5px">\u25ce</div><div style="font-size:12px">No credit issuance data</div><div style="font-size:10.5px;margin-top:3px">This project has not yet issued credits on Verra</div></div>';
   }
 
-  var dlBtn=IS_EXTERNAL?''
-    :'<button class="btn btn-ghost" id="dlBtn-'+id+'" onclick="startDownload(\''+id+'\')" style="flex:1.2">Get Project Document</button>';
-
   var vcuCorner=vcu
     ?'<div style="text-align:right;flex-shrink:0;margin-left:8px"><div style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--teal)">'+fmtV(String(vcu.ti))+'</div><div style="font-size:9.5px;color:var(--text3)">VCUs issued</div><div style="font-family:\'DM Mono\',monospace;font-size:11px;color:var(--amber);margin-top:2px">'+vcu.rr+'% retired</div></div>'
     :'';
@@ -1007,14 +1037,17 @@ function renderPanel(id){
     +(wsElig?'<span class="chip ct">Watershed</span>':'')
     +(vcu?'<span class="chip ct">VCU data</span>':'')
     +'</div>'
-    +'<div class="ph-actions">'
-    +'<a href="'+row.url+'" target="_blank" style="text-decoration:none;flex:1"><button class="btn btn-primary" style="width:100%">Open in Verra</button></a>'
-    +dlBtn
+    +'<div style="display:flex;gap:6px;margin-top:9px">'
+    +'<a href="'+row.url+'" target="_blank" rel="noopener" style="flex:1;text-decoration:none">'
+    +'<button class="btn btn-primary" style="width:100%;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px">'
+    +'<span style="font-size:14px">\u2193</span> Download PDF'
+    +'</button></a>'
+    +(IS_EXTERNAL?'':'<button onclick="generateIntelReport(\''+id+'\')" id="intel-btn-'+id+'" class="btn btn-ghost" style="flex:1;font-size:11.5px;display:flex;align-items:center;justify-content:center;gap:5px" title="Extract and analyze project document using AI"><span style="font-size:12px">\u25C8</span> Intelligence Report</button>')
     +'</div>'
-    +'<div id="dlProg-'+id+'" class="dl-progress">'
-    +'<div class="dl-step" id="dlStep-'+id+'"></div>'
-    +'<div class="dl-bar"><div class="dl-fill" id="dlFill-'+id+'" style="width:0%"></div></div>'
-    +'<div class="dl-note" id="dlNote-'+id+'"></div>'
+    +'<div id="intel-prog-'+id+'" style="display:none;margin-top:8px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:9px 11px">'
+    +'<div id="intel-step-'+id+'" style="font-size:10.5px;color:var(--text1);font-weight:500;margin-bottom:5px"></div>'
+    +'<div style="height:3px;background:var(--bg3);border-radius:99px;overflow:hidden"><div id="intel-fill-'+id+'" style="height:100%;border-radius:99px;background:var(--teal);transition:width 1.5s ease;width:0%"></div></div>'
+    +'<div id="intel-note-'+id+'" style="font-size:9.5px;color:var(--text3);margin-top:4px"></div>'
     +'</div>'
     +'</div>'
     +'<div class="panel-tabs">'
@@ -1025,171 +1058,68 @@ function renderPanel(id){
     +'<div class="pb" id="pt-vcu" style="display:none">'+vcuHtml+'</div>';
 }
 
-/* DOWNLOAD DOCUMENT */
-var DL_STEPS=[
-  {pct:15,text:'Locating project document on Verra registry...',note:'This usually takes 30\u201390 seconds.'},
-  {pct:40,text:'Downloading document from Verra...',note:'Retrieving the project file. You can keep browsing.'},
-  {pct:65,text:'Reading and processing document content...',note:'Extracting text from the PDF.'},
-  {pct:85,text:'Saving document to ClearSky document library...',note:'Almost done.'},
-  {pct:100,text:'Document saved and ready',note:'Click the button to open it.'}
-];
-var dlTimers={};
-
-function startDownload(id){
-  var btn=document.getElementById('dlBtn-'+id);
-  if(!btn||dlTimers[id])return;
-  var prog=document.getElementById('dlProg-'+id);
-  if(prog)prog.classList.add('show');
-  if(btn){btn.className='btn btn-ghost btn-loading';btn.textContent='Requesting document...';}
-  fetch(API+'/api/primitives/crawler/run',{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({registry:'verra',project_id:id,max_projects:1,download_documents:true,pd_only:true})
-  }).then(function(r){return r.json();})
-  .then(function(data){
-    if(!data.run_id)throw new Error('no run_id');
-    animateDlSteps(id,0);
-    pollDlStatus(id,data.run_id,btn);
-  }).catch(function(){
-    animateDlSteps(id,0);
-    var totalMs=DL_STEPS.length*2000;
-    setTimeout(function(){finishDl(id,btn,null);},totalMs);
-  });
-}
-function animateDlSteps(id,i){
-  if(i>=DL_STEPS.length)return;
-  var s=DL_STEPS[i];
-  var stepEl=document.getElementById('dlStep-'+id);
-  var fillEl=document.getElementById('dlFill-'+id);
-  var noteEl=document.getElementById('dlNote-'+id);
-  if(stepEl)stepEl.textContent=s.text;
-  if(fillEl)fillEl.style.width=s.pct+'%';
-  if(noteEl)noteEl.textContent=s.note;
-  dlTimers[id]=setTimeout(function(){animateDlSteps(id,i+1);},2000);
-}
-function pollDlStatus(id,runId,btn){
-  var attempts=0;
-  var timer=setInterval(function(){
-    attempts++;
-    if(attempts>36){clearInterval(timer);return;}
-    fetch(API+'/api/primitives/registry-index/project/'+id+'/pdd-status')
-      .then(function(r){return r.json();})
-      .then(function(d){
-        if(d.status==='complete'&&d.knowledge_doc_id){
-          clearInterval(timer);
-          if(dlTimers[id]){clearTimeout(dlTimers[id]);delete dlTimers[id];}
-          finishDl(id,btn,d.knowledge_doc_id,d.crawl_doc_id);
-        }
-      }).catch(function(){});
-  },5000);
-}
-function finishDl(id,btn,docId,crawlDocId){
-  var fillEl=document.getElementById('dlFill-'+id);if(fillEl)fillEl.style.width='100%';
-  var stepEl=document.getElementById('dlStep-'+id);if(stepEl)stepEl.textContent='Document saved and ready';
-  var noteEl=document.getElementById('dlNote-'+id);if(noteEl)noteEl.textContent='';
-  if(btn){
-    var html='';
-    if(crawlDocId)html+='<a class="btn btn-ghost" href="'+API+'/api/primitives/crawler/download/'+crawlDocId+'" target="_blank" style="font-size:10.5px;margin-right:6px;text-decoration:none">\u2B07 Download PDF</a>';
-    if(docId)html+='<button class="btn btn-ghost" onclick="viewText(\''+docId+'\')" style="font-size:10.5px">\u2630 View Text</button>';
-    if(!html)html='<span style="font-size:11px;color:var(--text2)">Document processed</span>';
-    btn.outerHTML=html;
-  }
-}
-function viewText(docId){
-  fetch(API+'/api/knowledge/docs/'+docId).then(function(r){return r.json();}).then(function(d){
-    var md=(d.markdown||'No text available').replace(/</g,'&lt;');
-    var w=window.open('','_blank');
-    w.document.write('<html><head><title>'+(d.title||'Extracted Text')+'</title><style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;line-height:1.6;color:#1a1a2e}pre{white-space:pre-wrap;word-break:break-word}</style></head><body><h2>'+(d.title||'Extracted Text')+'</h2><pre>'+md+'</pre></body></html>');
-    w.document.close();
-  });
-}
-
-/* DOWNLOAD PDF + INTELLIGENCE REPORT */
-function downloadPDFNow(projectId){
-  fetch(API+'/api/primitives/registry-index/project/'+projectId+'/pdd-status')
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.status==='complete'&&d.crawl_doc_id){
-        window.open(API+'/api/primitives/crawler/download/'+d.crawl_doc_id,'_blank');
-      }else{
-        window.open('https://registry.verra.org/app/projectDetail/VCS/'+projectId,'_blank');
-        fetch(API+'/api/primitives/crawler/run',{
-          method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({registry:'verra',project_id:projectId,max_projects:1,download_documents:true,pd_only:true})
-        });
-      }
-    })
-    .catch(function(){window.open('https://registry.verra.org/app/projectDetail/VCS/'+projectId,'_blank');});
-}
-
-var INTEL_STEPS=[
-  {pct:15,text:'Locating project document on Verra registry...',note:'Searching for the project design document.'},
-  {pct:35,text:'Downloading document from Verra...',note:'This may take 30\u201390 seconds.'},
-  {pct:60,text:'Extracting text from document...',note:'Processing the PDF content.'},
-  {pct:80,text:'Generating intelligence report...',note:'Analyzing document with AI.'},
-  {pct:100,text:'Intelligence report ready',note:'Click to view the report.'}
-];
-
+/* INTELLIGENCE REPORT */
 function generateIntelReport(projectId){
+  var btn=document.getElementById('intel-btn-'+projectId);
   var prog=document.getElementById('intel-prog-'+projectId);
-  if(prog)prog.classList.add('show');
-  var btn=document.getElementById('intelBtn-'+projectId);
-  if(btn){btn.className='btn btn-ghost btn-loading';btn.textContent='Generating...';}
+  var step=document.getElementById('intel-step-'+projectId);
+  var fill=document.getElementById('intel-fill-'+projectId);
+  var note=document.getElementById('intel-note-'+projectId);
+  if(btn)btn.style.display='none';
+  if(prog)prog.style.display='block';
+  var steps=[
+    {pct:20,text:'Finding project document on Verra...',note:'Locating the Project Description Document.'},
+    {pct:45,text:'Downloading document...',note:'Retrieving PDF from registry.'},
+    {pct:70,text:'Reading document content...',note:'Extracting text from PDF.'},
+    {pct:90,text:'Generating intelligence summary...',note:'Compiling project analysis.'},
+    {pct:100,text:'Report ready',note:''}
+  ];
+  var si=0;
+  function nextStep(){
+    if(si>=steps.length)return;
+    var s=steps[si++];
+    if(step)step.textContent=s.text;
+    if(fill)fill.style.width=s.pct+'%';
+    if(note)note.textContent=s.note;
+    if(si<steps.length)setTimeout(nextStep,2800);
+  }
+  nextStep();
   fetch(API+'/api/primitives/crawler/run',{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({registry:'verra',project_id:projectId,max_projects:1,download_documents:true,pd_only:true})
   }).then(function(r){return r.json();})
-  .then(function(data){
-    if(!data.run_id)throw new Error('no run_id');
-    animateIntelSteps(projectId,0);
-    pollIntelStatus(projectId,data.run_id,btn);
+  .then(function(d){
+    if(d.run_id)pollIntelStatus(projectId,d.run_id,fill,step,note,btn,prog);
+    else{if(step)step.textContent='Processing queued \u2014 check back shortly';if(note)note.textContent='Document will be available in your document library.';}
   }).catch(function(){
-    animateIntelSteps(projectId,0);
-    var totalMs=INTEL_STEPS.length*2000;
-    setTimeout(function(){finishIntel(projectId,btn,null,null);},totalMs);
+    if(step)step.textContent='Queued for background processing';
+    if(note)note.textContent='Document will be processed and available shortly.';
   });
 }
-
-function animateIntelSteps(id,i){
-  if(i>=INTEL_STEPS.length)return;
-  var s=INTEL_STEPS[i];
-  var stepEl=document.getElementById('intelStep-'+id);
-  var fillEl=document.getElementById('intelFill-'+id);
-  var noteEl=document.getElementById('intelNote-'+id);
-  if(stepEl)stepEl.textContent=s.text;
-  if(fillEl)fillEl.style.width=s.pct+'%';
-  if(noteEl)noteEl.textContent=s.note;
-  dlTimers['intel-'+id]=setTimeout(function(){animateIntelSteps(id,i+1);},2000);
-}
-
-function pollIntelStatus(id,runId,btn){
+function pollIntelStatus(projectId,runId,fill,step,note,btn,prog){
   var attempts=0;
   var timer=setInterval(function(){
     attempts++;
-    if(attempts>36){clearInterval(timer);return;}
-    fetch(API+'/api/primitives/registry-index/project/'+id+'/pdd-status')
+    if(attempts>40){clearInterval(timer);return;}
+    fetch(API+'/api/primitives/registry-index/project/'+projectId+'/pdd-status')
       .then(function(r){return r.json();})
       .then(function(d){
-        if(d.status==='complete'&&d.knowledge_doc_id){
+        if(d.status==='complete'){
           clearInterval(timer);
-          if(dlTimers['intel-'+id]){clearTimeout(dlTimers['intel-'+id]);delete dlTimers['intel-'+id];}
-          finishIntel(id,btn,d.knowledge_doc_id,d.crawl_doc_id);
+          if(fill)fill.style.width='100%';
+          if(step)step.textContent='\u2713 Intelligence report ready';
+          if(note)note.textContent='';
+          if(prog)prog.insertAdjacentHTML('beforeend',
+            '<div style="display:flex;gap:6px;margin-top:8px">'
+            +(d.crawl_doc_id?'<button onclick="downloadProcessedDoc(\''+d.crawl_doc_id+'\')" class="btn btn-ghost" style="flex:1;font-size:11px">\uD83D\uDCC4 Download PDF</button>':'')
+            +(d.crawl_doc_id?'<button onclick="viewExtractedText(\''+d.crawl_doc_id+'\')" class="btn btn-ghost" style="flex:1;font-size:11px">\uD83D\uDCDD View Text</button>':'')
+            +'</div>');
         }
       }).catch(function(){});
   },5000);
 }
-
-function finishIntel(id,btn,docId,crawlDocId){
-  var fillEl=document.getElementById('intelFill-'+id);if(fillEl)fillEl.style.width='100%';
-  var stepEl=document.getElementById('intelStep-'+id);if(stepEl)stepEl.textContent='Intelligence report ready';
-  var noteEl=document.getElementById('intelNote-'+id);if(noteEl)noteEl.textContent='';
-  if(btn){
-    var html='';
-    if(crawlDocId)html+='<a class="btn btn-ghost" href="'+API+'/api/primitives/crawler/download/'+crawlDocId+'" target="_blank" style="font-size:10.5px;margin-right:6px;text-decoration:none">\u2B07 Download PDF</a>';
-    if(docId)html+='<button class="btn btn-ghost" onclick="viewText(\''+docId+'\')" style="font-size:10.5px">\u2630 View Report</button>';
-    if(!html)html='<span style="font-size:11px;color:var(--text2)">Report processed</span>';
-    btn.outerHTML=html;
-  }
-}
+function downloadProcessedDoc(docId){window.open(API+'/api/primitives/crawler/download/'+docId,'_blank');}
+function viewExtractedText(docId){window.open(API+'/api/primitives/crawler/download/'+docId+'?format=text','_blank');}
 
 function addToRfp(id){
   var row=ALL.find(function(r){return r.id===id;});if(!row)return;
@@ -1390,13 +1320,13 @@ function renderVCUPanel(id){
       h+='</div>';
       if(!IS_EXTERNAL){
         h+='<div style="display:flex;gap:6px;margin-top:10px">';
-        h+='<button class="btn btn-ghost" onclick="downloadPDFNow(\''+r.project_id+'\')" style="flex:1;font-size:11px">\u2193 Download PDF</button>';
-        h+='<button class="btn btn-primary" id="intelBtn-'+r.project_id+'" onclick="generateIntelReport(\''+r.project_id+'\')" style="flex:1;font-size:11px">\u25C8 Intelligence Report</button>';
+        h+='<a href="https://registry.verra.org/app/projectDetail/VCS/'+r.project_id+'" target="_blank" rel="noopener" style="flex:1;text-decoration:none"><button class="btn btn-primary" style="width:100%;font-size:11px;display:flex;align-items:center;justify-content:center;gap:5px"><span style="font-size:13px">\u2193</span> Download PDF</button></a>';
+        h+='<button onclick="generateIntelReport(\''+r.project_id+'\')" id="intel-btn-'+r.project_id+'" class="btn btn-ghost" style="flex:1;font-size:11px;display:flex;align-items:center;justify-content:center;gap:5px">\u25C8 Intelligence Report</button>';
         h+='</div>';
-        h+='<div id="intel-prog-'+r.project_id+'" class="dl-progress">';
-        h+='<div class="dl-step" id="intelStep-'+r.project_id+'"></div>';
-        h+='<div class="dl-bar"><div class="dl-fill" id="intelFill-'+r.project_id+'" style="width:0%"></div></div>';
-        h+='<div class="dl-note" id="intelNote-'+r.project_id+'"></div>';
+        h+='<div id="intel-prog-'+r.project_id+'" style="display:none;margin-top:8px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:9px 11px">';
+        h+='<div id="intel-step-'+r.project_id+'" style="font-size:10.5px;color:var(--text1);font-weight:500;margin-bottom:5px"></div>';
+        h+='<div style="height:3px;background:var(--bg3);border-radius:99px;overflow:hidden"><div id="intel-fill-'+r.project_id+'" style="height:100%;border-radius:99px;background:var(--teal);transition:width 1.5s ease;width:0%"></div></div>';
+        h+='<div id="intel-note-'+r.project_id+'" style="font-size:9.5px;color:var(--text3);margin-top:4px"></div>';
         h+='</div>';
       }
       h+='</div><div class="panel-body-scroll">';
@@ -1463,12 +1393,14 @@ function setVCUSub(sub){
   var projView=document.getElementById('vProjectView');
   var buyerView=document.getElementById('vBuyerView');
   var mapView=document.getElementById('vMapView');
+  var radarView=document.getElementById('vRadarView');
   var projFilters=document.getElementById('vProjectOnlyFilters');
   var buyerFilters=document.getElementById('vBuyerOnlyFilters');
   if(sub==='project'){
     if(projView)projView.style.display='flex';
     if(buyerView)buyerView.style.display='none';
     if(mapView)mapView.style.display='none';
+    if(radarView)radarView.style.display='none';
     if(projFilters)projFilters.style.display='';
     if(buyerFilters)buyerFilters.style.display='none';
     document.getElementById('vcuPanelEmpty').style.display='flex';
@@ -1477,15 +1409,28 @@ function setVCUSub(sub){
     if(projView)projView.style.display='none';
     if(buyerView)buyerView.style.display='none';
     if(mapView)mapView.style.display='block';
+    if(radarView)radarView.style.display='none';
     if(projFilters)projFilters.style.display='none';
     if(buyerFilters)buyerFilters.style.display='none';
     document.getElementById('vcuPanelEmpty').style.display='flex';
     document.getElementById('vcuPanelDetail').style.display='none';
     if(!window.mapLoaded)loadDemandMap();
+  }else if(sub==='radar'){
+    if(projView)projView.style.display='none';
+    if(buyerView)buyerView.style.display='none';
+    if(mapView)mapView.style.display='none';
+    if(radarView)radarView.style.display='block';
+    if(projFilters)projFilters.style.display='none';
+    if(buyerFilters)buyerFilters.style.display='none';
+    document.getElementById('vcuPanelEmpty').style.display='flex';
+    document.getElementById('vcuPanelDetail').style.display='none';
+    if(!buyersLoaded){loadBuyers();window._radarPending=true;}
+    else renderDealRadar();
   }else{
     if(projView)projView.style.display='none';
     if(buyerView){buyerView.style.display='flex';buyerView.style.flexDirection='column';}
     if(mapView)mapView.style.display='none';
+    if(radarView)radarView.style.display='none';
     if(projFilters)projFilters.style.display='none';
     if(buyerFilters)buyerFilters.style.display='';
     document.getElementById('vcuPanelEmpty').style.display='flex';
@@ -1505,6 +1450,7 @@ function loadBuyers(){
       var bb=document.getElementById('vsubt-buyer-badge');if(bb)bb.textContent=BUYER_DATA.length.toLocaleString();
       _checkBootComplete();
       filterBuyers();
+      if(window._radarPending){window._radarPending=false;renderDealRadar();}
     })
     .catch(function(e){
       document.getElementById('vBTbody').innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--red,#ef4444)">Failed: '+e.message+'</td></tr>';
@@ -1618,6 +1564,114 @@ function methCategory(code){
   if(c.indexOf('ACM0002')>=0||c.indexOf('ACM0016')>=0||c.indexOf('AMS-I')>=0)return 'Renewable Energy';
   if(c.indexOf('ACM0012')>=0||c.indexOf('AM0073')>=0)return 'Energy Efficiency';
   return 'Other';
+}
+
+function renderDealRadar(){
+  var el=document.getElementById('vRadarView');
+  if(!el)return;
+  if(!BUYER_DATA.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);font-size:12px">Loading buyer data...</div>';return;}
+
+  /* ClearSky portfolio project IDs */
+  var csIds={};
+  Object.keys(VCU).forEach(function(k){if(VCU[k].cs)csIds[k]=1;});
+
+  /* Section 1: Active 2026 buyers */
+  var active26=BUYER_DATA.filter(function(b){return b.activity_status==='active_2026';})
+    .sort(function(a,b){return(b.retired_2026||0)-(a.retired_2026||0);});
+
+  /* Section 2: Strong 2025 buyers (≥200K retired in 2025, NOT already active_2026) */
+  var strong25=BUYER_DATA.filter(function(b){return b.activity_status==='active_2025'&&(b.retired_2025||0)>=200000;})
+    .sort(function(a,b){return(b.retired_2025||0)-(a.retired_2025||0);});
+
+  /* Section 3: Methodology demand trends */
+  var methVols={};
+  active26.concat(strong25).forEach(function(b){
+    (b.projects||[]).forEach(function(p){
+      var m=p.methodology||'';var first=m.split(';')[0].trim();
+      var cat=methCategory(first);
+      if(!methVols[cat])methVols[cat]={vol:0,buyers:{}};
+      methVols[cat].vol+=(p.vol||0);
+      methVols[cat].buyers[b.name]=1;
+    });
+  });
+  var methTrends=Object.entries(methVols).sort(function(a,b){return b[1].vol-a[1].vol;}).slice(0,8);
+  var methMax=methTrends.length?methTrends[0][1].vol:1;
+
+  function radarCard(b,yearKey,yearLabel){
+    var vol=b[yearKey]||0;
+    var m=b.recent_methodology||b.top_methodology||'';
+    var first=m.split(';')[0].trim();
+    var cat=methCategory(first);
+    var csMatch=0;
+    (b.projects||[]).forEach(function(p){if(csIds[p.id])csMatch++;});
+    return '<div onclick="selBuyerRow(\''+esc(b.name).replace(/'/g,"\\'")+'\');" style="cursor:pointer;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:7px;transition:border-color .2s" onmouseenter="this.style.borderColor=\'var(--teal)\'" onmouseleave="this.style.borderColor=\'var(--border)\'">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+      +'<div style="font-size:12px;font-weight:600;color:var(--text0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px" title="'+esc(b.name)+'">'+esc(b.name)+'</div>'
+      +'<div style="font-family:\'DM Mono\',monospace;font-size:12px;font-weight:600;color:var(--teal)">'+fmtV(String(vol))+'</div>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+      +(b.sector?'<span style="font-size:9.5px;padding:2px 7px;border-radius:99px;background:var(--bg3);color:var(--text2);border:1px solid var(--border)">'+esc(b.sector)+'</span>':'')
+      +'<span style="font-size:9.5px;padding:2px 7px;border-radius:99px;background:var(--teal-dim);color:var(--teal);border:1px solid rgba(45,212,191,.2)">'+esc(cat)+'</span>'
+      +'<span style="font-size:9.5px;color:var(--text3)">'+b.project_count+' projects</span>'
+      +(csMatch?'<span style="font-size:9px;padding:2px 7px;border-radius:99px;background:rgba(96,165,250,.1);color:var(--blue);border:1px solid rgba(96,165,250,.2)">\u2605 '+csMatch+' ClearSky match'+(csMatch>1?'es':'')+'</span>':'')
+      +'</div>'
+      +'</div>';
+  }
+
+  var h='';
+  /* Header */
+  h+='<div style="margin-bottom:16px">';
+  h+='<div style="font-family:\'Syne\',sans-serif;font-weight:700;font-size:15px;color:var(--text0);margin-bottom:4px">Deal Radar</div>';
+  h+='<div style="font-size:11px;color:var(--text3);line-height:1.5">High-value buyers with recent activity. Click any card to open full profile.</div>';
+  h+='</div>';
+
+  /* Active 2026 */
+  h+='<div style="margin-bottom:20px">';
+  h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
+  h+='<span style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--green)">Active 2026</span>';
+  h+='<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text3)">'+active26.length+' buyers</span>';
+  h+='</div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px">';
+  active26.slice(0,12).forEach(function(b){h+=radarCard(b,'retired_2026','2026');});
+  h+='</div>';
+  if(!active26.length)h+='<div style="font-size:11px;color:var(--text3);padding:8px 0">No active 2026 buyers detected yet</div>';
+  h+='</div>';
+
+  /* Strong 2025 */
+  h+='<div style="margin-bottom:20px">';
+  h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
+  h+='<span style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--amber)">Strong 2025</span>';
+  h+='<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text3)">\u2265 200K retired \u00b7 '+strong25.length+' buyers</span>';
+  h+='</div>';
+  h+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px">';
+  strong25.slice(0,12).forEach(function(b){h+=radarCard(b,'retired_2025','2025');});
+  h+='</div>';
+  if(!strong25.length)h+='<div style="font-size:11px;color:var(--text3);padding:8px 0">No strong 2025 buyers above threshold</div>';
+  h+='</div>';
+
+  /* Methodology trends */
+  h+='<div style="margin-bottom:20px">';
+  h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">';
+  h+='<span style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--blue)">Methodology Demand</span>';
+  h+='<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text3)">across active buyers</span>';
+  h+='</div>';
+  methTrends.forEach(function(mt){
+    var pct=Math.round(mt[1].vol/methMax*100);
+    var bCount=Object.keys(mt[1].buyers).length;
+    h+='<div style="margin-bottom:8px">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">';
+    h+='<span style="font-size:11px;color:var(--text0);font-weight:500">'+esc(mt[0])+'</span>';
+    h+='<span style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text2)">'+fmtV(String(mt[1].vol))+' <span style="color:var(--text3)">\u00b7 '+bCount+' buyer'+(bCount!==1?'s':'')+'</span></span>';
+    h+='</div>';
+    h+='<div style="height:6px;background:var(--bg3);border-radius:99px;overflow:hidden">';
+    h+='<div style="width:'+pct+'%;height:100%;background:var(--blue);border-radius:99px;transition:width .4s ease"></div>';
+    h+='</div>';
+    h+='</div>';
+  });
+  if(!methTrends.length)h+='<div style="font-size:11px;color:var(--text3);padding:8px 0">No methodology data available</div>';
+  h+='</div>';
+
+  el.innerHTML=h;
 }
 
 function renderTopProjectBars(projects,totalRetired){
