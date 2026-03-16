@@ -874,7 +874,6 @@ function render(){
   });
   if(rows.length>400)html+='<tr><td colspan="7" style="text-align:center;padding:10px;color:var(--text3);font-size:11px">Showing 400 of '+rows.length.toLocaleString()+' \u2014 refine filters to see more</td></tr>';
   tbody.innerHTML=html;
-  if(!S.selectedId&&rows.length)selRow(rows[0].id);
 }
 
 /* PANEL */
@@ -2527,6 +2526,9 @@ function checkScrollIndicator(){
 }
 
 /* BOOT */
+PANEL_STATE='hidden';
+panelBreadcrumb=[];
+setPanelState('hidden');
 loadData();
 loadVCUPage();
 loadBuyers();
