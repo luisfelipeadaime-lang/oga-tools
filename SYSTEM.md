@@ -389,6 +389,18 @@ REGISTRY INDEX (v78):
 102. Onboarding tooltips — localStorage cs_visited_v1 prevents repeat showing. showOnboardingTooltips() called on boot, checks localStorage, shows 4 sequential tips with 1.5s delay. showOnbTip(i) positions fixed .onb-tip element relative to target using getBoundingClientRect(). "Got it" button advances to next tip. [v79n]
 
 103. Entity nav bar vs breadcrumb — entity-nav div (id=entityNavBar) with back-btn + entityContext + expand-btn replaces old panelBreadcrumb. entityNavBar starts hidden, shown by openEntityPanel(), hidden by goBack() when returning to root. setEntityContext(['By Buyer','Shell']) updates the context label text. [v79n]
+
+119. activity_status classification — computed per buyer: active_2026 (retired_2026>0), active_2025 (retired_2025>0 but not 2026), active_2024, dormant (recent 3yr < 5% of total AND total > 500K), historical (everything else). Uses bulk vcu_buyer_year_totals query with normalizeBuyer(). [v79o]
+
+120. renderBuyerPanelData signature — takes single buyer object `b` (was: name, totalRetired, projects, methodologies, countries). renderBuyerPanel builds fakeBuyer object for API fallback case. All properties accessed via b.name, b.total_retired, b.activity_status, b.retired_2024/2025/2026, b.recent_methodology, etc. [v79o]
+
+121. methCategory(code) — maps methodology codes to 11 plain English categories (Forest Protection, Afforestation, Improved Forest Mgmt, Cookstoves, Grassland, Renewables, Waste/Landfill, Methane Avoidance, Blue Carbon, Biochar, Other). Used in buyer card "What they buy" section. [v79o]
+
+122. fetchActivityProjects(buyerName, year, containerId) — fetches /vcu/buyer-yearly/:name, filters rows by year, renders inline project list into containerId. Results cached in activityProjectCache[name+year]. [v79o]
+
+123. selRow() now calls openEntityPanel — Project Browser selRow() uses pushBreadcrumb + setEntityContext + openEntityPanel(function(){renderPanel(id);}). Previously just called renderPanel() directly without entity panel integration. [v79o]
+
+124. checkScrollIndicator() — appends .scroll-fade div (sticky gradient) to panel-body-scroll. Shows fade when content overflows (scrollHeight > clientHeight + 20). Hides when user scrolls to bottom (<10px from end). el.onscroll bound for live detection. [v79o]
 ```
 
 ---
