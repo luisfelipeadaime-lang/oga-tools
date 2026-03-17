@@ -2760,7 +2760,8 @@ function hsDisplayName(raw) {
   return CLEARSKY_CONTACTS[key] || CLEARSKY_CONTACTS[key.split('.')[0]] || raw;
 }
 function isLuisThread(thread) {
-  return parseInt(thread.involves_luis) === 1;
+  const v = thread.involves_luis;
+  return v === 1 || v === true || v === '1';
 }
 let hsThreads = [], hsTasks = [], hsActiveThread = null, hsTaskView = 'list', hsSyncedAt = null, hsMineOnly = false;
 
@@ -2852,13 +2853,16 @@ function hsFilterThreads() {
   const q = (document.getElementById('hs-search').value || '').toLowerCase();
   const cf = document.getElementById('hs-filter-contact').value;
   const pf = document.getElementById('hs-filter-project').value;
-  hsRenderThreadList(hsDedupThreads(hsThreads).filter(t => {
+  const TYPE_ORDER = { commercial: 0, unknown: 1, operational: 2, internal: 3 };
+  let filtered = hsDedupThreads(hsThreads).filter(t => {
     if (hsMineOnly && !isLuisThread(t)) return false;
     if (q && !(t.subject || '').toLowerCase().includes(q) && !(t.contact_name || '').toLowerCase().includes(q) && !(t.preview || '').toLowerCase().includes(q)) return false;
     if (cf && t.contact_name !== cf) return false;
     if (pf && t.pablo_project_id !== pf) return false;
     return true;
-  }));
+  });
+  if (hsMineOnly) filtered.sort((a, b) => (TYPE_ORDER[a.thread_type] ?? 1) - (TYPE_ORDER[b.thread_type] ?? 1));
+  hsRenderThreadList(filtered);
 }
 
 function hsRenderThreadList(threads) {
@@ -2877,16 +2881,17 @@ function hsRenderThreadList(threads) {
       : t.luis_role === 'recipient' ? '<span style="font-size:7.5px;background:rgba(100,149,237,.12);color:var(--blue);padding:1px 4px;border-radius:2px;margin-left:4px">\u2193 received</span>'
       : t.luis_role === 'both' ? '<span style="font-size:7.5px;background:rgba(255,193,7,.12);color:var(--amber);padding:1px 4px;border-radius:2px;margin-left:4px">\u2194 CC\u2019d</span>'
       : '';
-    const INTERNAL_DOMAINS = ['clearskyltd.com', 'leadingcarbon.com', 'maboroshi.com'];
-    const isInternal = (() => { try { const r = JSON.parse(t.recipients_json || '[]'); return r.length > 0 && r.every(e => INTERNAL_DOMAINS.some(d => e.endsWith('@' + d))); } catch { return false; } })();
-    const internalBadge = isInternal ? '<span style="font-size:7.5px;background:rgba(150,150,150,.12);color:var(--txt3);padding:1px 4px;border-radius:2px;margin-left:4px">internal</span>' : '';
+    const isInternal = t.thread_type === 'internal';
+    const typeBadge = t.thread_type === 'internal' ? '<span style="font-size:7.5px;background:rgba(150,150,150,.12);color:var(--txt3);padding:1px 4px;border-radius:2px;margin-left:4px">internal</span>'
+      : t.thread_type === 'commercial' ? '<span style="font-size:7.5px;background:rgba(0,200,150,.08);color:var(--teal);padding:1px 4px;border-radius:2px;margin-left:4px">commercial</span>'
+      : t.thread_type === 'unknown' ? '' : '';
     const dimStyle = (hsMineOnly && isInternal) ? 'opacity:0.45;' : '';
     const projBadge = t.pablo_project_id ? `<span style="font-size:8px;background:var(--teal-glow);color:var(--teal);padding:1px 4px;border-radius:2px;margin-left:4px">linked</span>` : '';
     return `<div onclick="hsSelectThread('${t.id}')" style="display:flex;gap:6px;padding:8px;border:1px solid var(--border1);border-radius:5px;margin-bottom:3px;cursor:pointer;${dimStyle}${active}">
       ${dot}
       <div style="flex:1;min-width:0">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
-          <span style="font-size:11px;color:var(--txt0);${bold};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${hsEsc(dispName)}${roleBadge}${internalBadge}</span>
+          <span style="font-size:11px;color:var(--txt0);${bold};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${hsEsc(dispName)}${roleBadge}${typeBadge}</span>
           <span style="font-size:9px;color:var(--txt3);flex-shrink:0;margin-left:4px">${dt}</span>
         </div>
         <div style="font-size:10px;color:var(--txt1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${hsEsc(t.subject || '(no subject)')}${projBadge}</div>
@@ -2939,7 +2944,7 @@ async function hsSelectThread(threadId) {
     // QA debug row — permanent infrastructure
     const threadMeta = hsThreads.find(t => t.id === threadId);
     const recipSnip = (threadMeta?.recipients_json || '').substring(0, 120);
-    body.innerHTML += `<div style="opacity:0.5;font-size:9px;font-family:monospace;color:var(--txt3);padding:8px 4px;margin-top:6px;border-top:1px solid var(--border1)">involves_luis=${threadMeta?.involves_luis ?? '?'} | luis_role=${threadMeta?.luis_role ?? 'null'} | recipients=${hsEsc(recipSnip)}${recipSnip.length >= 120 ? '...' : ''}</div>`;
+    body.innerHTML += `<div style="opacity:0.5;font-size:9px;font-family:monospace;color:var(--txt3);padding:8px 4px;margin-top:6px;border-top:1px solid var(--border1)">involves_luis=${threadMeta?.involves_luis ?? '?'} | luis_role=${threadMeta?.luis_role ?? 'null'} | thread_type=${threadMeta?.thread_type ?? '?'} | recipients=${hsEsc(recipSnip)}${recipSnip.length >= 120 ? '...' : ''}</div>`;
     acts.style.display = 'flex';
     const hsLink = document.getElementById('hs-hubspot-link');
     if (data.contact_email) {
