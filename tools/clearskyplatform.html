@@ -1114,41 +1114,29 @@ function downloadPDDNow(id){
 function generateIntelReport(projectId){
   var btn=document.getElementById('intel-btn-'+projectId);
   var prog=document.getElementById('intel-prog-'+projectId);
-  var step=document.getElementById('intel-step-'+projectId);
-  var fill=document.getElementById('intel-fill-'+projectId);
-  var note=document.getElementById('intel-note-'+projectId);
   if(!prog)return;
   if(btn)btn.style.display='none';
   prog.style.display='block';
-  var steps=[
-    {pct:20,text:'Finding project document on Verra...',note:'Locating the Project Description Document.'},
-    {pct:45,text:'Downloading and reading document...',note:'Extracting text content from the PDF.'},
-    {pct:70,text:'Analysing project data...',note:'Cross-referencing with registry and buyer data.'},
-    {pct:90,text:'Generating intelligence summary...',note:'Compiling findings into structured report.'},
-    {pct:100,text:'Report ready',note:''}
-  ];
-  var si=0,stepTimers=[];
-  function advanceStep(){
-    if(si>=steps.length)return;
-    var s=steps[si++];
-    if(step)step.textContent=s.text;
-    if(fill)fill.style.width=s.pct+'%';
-    if(note)note.textContent=s.note;
-    if(si<steps.length)stepTimers.push(setTimeout(advanceStep,2800));
-  }
-  advanceStep();
+  var stepEl=document.getElementById('intel-step-'+projectId);
+  var fillEl=document.getElementById('intel-fill-'+projectId);
+  var noteEl=document.getElementById('intel-note-'+projectId);
+  if(stepEl)stepEl.textContent='Finding project document on Verra...';
+  if(fillEl)fillEl.style.width='15%';
+  if(noteEl)noteEl.textContent='Locating the Project Description Document.';
   fetch(API+'/api/primitives/crawler/run',{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({registry:'verra',project_id:projectId,max_projects:1,download_documents:true,pd_only:true})
   }).then(function(r){return r.json();})
   .then(function(d){
-    if(d.run_id)pollIntelStatus(projectId,d.run_id,fill,step,note,prog,stepTimers);
-    else{if(step)setTimeout(function(){step.textContent='Processing queued \u2014 check back shortly';},12000);}
+    if(stepEl)stepEl.textContent='Downloading and reading document...';
+    if(fillEl)fillEl.style.width='35%';
+    if(noteEl)noteEl.textContent='Extracting text content from the PDF.';
+    pollForIntelReport(projectId);
   }).catch(function(){
-    if(step)setTimeout(function(){step.textContent='Processing queued \u2014 check back shortly';},8000);
+    if(stepEl)stepEl.textContent='Processing queued \u2014 check back shortly';
   });
 }
-function pollIntelStatus(projectId,runId,fill,step,note,prog,stepTimers){
+function pollForIntelReport(projectId){
   var attempts=0;
   var timer=setInterval(function(){
     attempts++;
@@ -1156,33 +1144,70 @@ function pollIntelStatus(projectId,runId,fill,step,note,prog,stepTimers){
     fetch(API+'/api/primitives/registry-index/project/'+projectId+'/pdd-status')
       .then(function(r){return r.json();})
       .then(function(d){
-        if(d.status==='complete'){
-          clearInterval(timer);
-          if(stepTimers)stepTimers.forEach(function(t){clearTimeout(t);});
-          var progEl=document.getElementById('intel-prog-'+projectId);
-          var fillEl=document.getElementById('intel-fill-'+projectId);
-          var stepEl=document.getElementById('intel-step-'+projectId);
-          var noteEl=document.getElementById('intel-note-'+projectId);
-          if(!progEl) return;
-          if(fillEl)fillEl.style.width='100%';
-          if(stepEl)stepEl.textContent='\u2713 Document ready';
-          if(noteEl)noteEl.textContent='';
-          if(d.crawl_doc_id){
-            progEl.insertAdjacentHTML('beforeend',
-              '<div style="display:flex;gap:6px;margin-top:8px">'
-              +'<a href="'+API+'/api/primitives/crawler/download/'+d.crawl_doc_id+'" target="_blank" download style="text-decoration:none">'
-              +'<button style="padding:5px 12px;border-radius:6px;font-size:11px;font-weight:500;'
-              +'cursor:pointer;border:1px solid rgba(45,212,191,.35);background:rgba(45,212,191,.08);'
-              +'color:var(--teal)">\uD83D\uDCC4 Download PDF</button></a>'
-              +'<button onclick="window.open(\''+API+'/api/primitives/crawler/download/'+d.crawl_doc_id+'?format=text\',\'_blank\')" '
-              +'style="padding:5px 12px;border-radius:6px;font-size:11px;font-weight:500;'
-              +'cursor:pointer;border:1px solid var(--border-hi);background:transparent;color:var(--text1)">'
-              +'\uD83D\uDCDD View Text</button>'
-              +'</div>');
-          }else{
-            progEl.insertAdjacentHTML('beforeend','<div style="font-size:11px;color:var(--green);margin-top:6px">\u2713 Saved to ClearSky library</div>');
-          }
-        }
+        if(d.status!=='complete')return;
+        clearInterval(timer);
+        var progEl=document.getElementById('intel-prog-'+projectId);
+        var fillEl=document.getElementById('intel-fill-'+projectId);
+        var stepEl=document.getElementById('intel-step-'+projectId);
+        var noteEl=document.getElementById('intel-note-'+projectId);
+        if(!progEl)return;
+        if(fillEl)fillEl.style.width='60%';
+        if(stepEl)stepEl.textContent='Analysing project data...';
+        if(noteEl)noteEl.textContent='Running intelligence analysis.';
+        if(!d.crawl_doc_id){if(stepEl)stepEl.textContent='Document processing incomplete \u2014 try again shortly';return;}
+        var row=null;
+        if(ALL)for(var i=0;i<ALL.length;i++)if(ALL[i].id===projectId){row=ALL[i];break;}
+        fetch(API+'/api/primitives/registry-index/project/'+projectId+'/intel-report',{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            project_name:row?(row.name||projectId):projectId,
+            country:row?(row.country||''):'',
+            methodology:row?(row.meth||''):'',
+            issued:row?(row.total_issued||''):'',
+            retired:row?(row.total_retired||''):'',
+          })
+        }).then(function(r){return r.json();})
+        .then(function(ai){
+          var progEl2=document.getElementById('intel-prog-'+projectId);
+          var fillEl2=document.getElementById('intel-fill-'+projectId);
+          var stepEl2=document.getElementById('intel-step-'+projectId);
+          var noteEl2=document.getElementById('intel-note-'+projectId);
+          if(!progEl2)return;
+          if(fillEl2)fillEl2.style.width='100%';
+          if(stepEl2)stepEl2.textContent='\u2713 Intelligence report ready';
+          if(noteEl2)noteEl2.textContent='';
+          var reportText=ai.report||'Report generation failed.';
+          var html='<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">';
+          var sections=reportText.split('## ').filter(function(s){return s.trim();});
+          sections.forEach(function(section){
+            var lines=section.trim().split('\n');
+            var title=lines[0].trim();
+            var body=lines.slice(1).join('\n').trim()
+              .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+              .replace(/\n[-\u2022] /g,'</li><li>').replace(/^[-\u2022] /,'<li>');
+            if(body.indexOf('<li>')>-1)body='<ul style="margin:4px 0 0 12px;padding:0;list-style:disc;font-size:11px;line-height:1.5">'+body+'</li></ul>';
+            else body='<div style="font-size:11px;line-height:1.5">'+body.replace(/\n/g,'<br>')+'</div>';
+            html+='<div style="margin-bottom:10px">'
+              +'<div style="font-size:10px;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">'+title+'</div>'
+              +body+'</div>';
+          });
+          html+='<div style="display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">'
+            +'<a href="'+API+'/api/primitives/crawler/download/'+d.crawl_doc_id+'" target="_blank" download style="text-decoration:none">'
+            +'<button style="padding:5px 12px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;'
+            +'border:1px solid rgba(45,212,191,.35);background:rgba(45,212,191,.08);color:var(--teal)">\uD83D\uDCC4 Download PDD</button></a>'
+            +'<button onclick="window.open(\''+API+'/api/primitives/crawler/download/'+d.crawl_doc_id+'?format=text\',\'_blank\')" '
+            +'style="padding:5px 12px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;'
+            +'border:1px solid var(--border-hi);background:transparent;color:var(--text1)">\uD83D\uDCDD View Text</button>'
+            +'</div></div>';
+          progEl2.insertAdjacentHTML('beforeend',html);
+        }).catch(function(){
+          var progEl3=document.getElementById('intel-prog-'+projectId);
+          if(progEl3)progEl3.insertAdjacentHTML('beforeend',
+            '<div style="font-size:11px;color:var(--text3);margin-top:6px">Report generation failed \u2014 PDF available below</div>'
+            +'<a href="'+API+'/api/primitives/crawler/download/'+d.crawl_doc_id+'" target="_blank" download style="text-decoration:none">'
+            +'<button style="margin-top:6px;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;'
+            +'border:1px solid rgba(45,212,191,.35);background:rgba(45,212,191,.08);color:var(--teal)">\uD83D\uDCC4 Download PDD</button></a>');
+        });
       }).catch(function(){});
   },5000);
 }
