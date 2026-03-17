@@ -1,11 +1,11 @@
 # PABLO — HubSpot Integration Reference
-**Last updated:** 2026-03-17 | **Author:** Luis Felipe Adaime
+**Last updated:** 2026-03-17 (v79x thread classification) | **Author:** Luis Felipe Adaime
 
 ---
 
 ## 1. D1 Table Schemas
 
-### `hubspot_threads` (25 columns)
+### `hubspot_threads` (29 columns)
 | # | Column | Type | Default | Notes |
 |---|--------|------|---------|-------|
 | 0 | `id` | TEXT PK | | MD5 hash thread ID |
@@ -33,6 +33,10 @@
 | 22 | `r2_key` | TEXT | | R2 object key: `hubspot/threads/{id}.json` |
 | 23 | `sync_status` | TEXT | 'active' | 'active' or 'archived' |
 | 24 | `hubspot_contact_id` | TEXT | | HubSpot CRM contact ID |
+| 25 | `thread_type` | TEXT | 'unknown' | Classification: commercial_active/commercial_prospecting/legal_ops/financial_ops/project_ops/market_intel/admin/internal/noise/unknown |
+| 26 | `project_tag` | TEXT | | ClearSky portfolio project: amoedo/bosquia/naturebrain/marakoa/elysium/redenor/enersol/aperam |
+| 27 | `classification_method` | TEXT | | subject_pattern/participant_check/claude_api/no_pattern_match |
+| 28 | `classification_confidence` | TEXT | | high/medium/low |
 
 ### `hubspot_contacts_cache` (20 columns)
 | # | Column | Type | Default | Notes |
@@ -282,7 +286,105 @@ The original `extractThreadParticipants()` function only checked `ownerId === 82
 
 ---
 
-## 7. Contact Classification Engine (v79w)
+## 7. Thread Classification Engine (v79x)
+
+### thread_type values (9 categories + unknown)
+| thread_type | Description | Confidence |
+|-------------|-------------|------------|
+| `commercial_active` | Live deal signals: pricing, offtake, LOI, term sheet, contract signing | high |
+| `commercial_prospecting` | Early stage: intro, meeting, follow-up, partnership, opportunity | medium |
+| `legal_ops` | NDA, contracts, legal review, amendments, liability | high |
+| `financial_ops` | Invoices, payments, wire transfers, billing | high |
+| `project_ops` | Registry, verification, methodology, PDD, site visits | high |
+| `market_intel` | Forwarded research, reports, market updates | medium |
+| `admin` | Scheduling, calendar, logistics, travel, expenses | medium |
+| `internal` | ALL participants have internal domain emails | high |
+| `noise` | Newsletters, automated, out-of-office, no-reply | high |
+| `unknown` | No pattern match — needs manual review or future Claude pass | low |
+
+### classifyThreadBySubject() — subject-line regex classifier
+9-rule priority chain applied to `subject`, `sender_email`, `sender_name`, `recipients_json`:
+1. Noise patterns (newsletter, unsubscribe, noreply, out of office)
+2. Internal check (all participants from `INTERNAL_DOMAINS_HS`)
+3. Commercial active (pricing, offtake, LOI, term sheet, deal, credit, tonne, contract sign)
+4. Commercial prospecting (intro, meeting, follow-up, collaboration, opportunity)
+5. Legal ops (NDA, agreement, contract, terms, amendment, liability)
+6. Financial ops (invoice, payment, wire, billing, commission)
+7. Project ops (verra, puro, methodology, verification, PDD, audit)
+8. Market intel (fw:, report, research, analysis, market update)
+9. Admin (schedule, calendar, travel, expense)
+10. Fallback: `unknown` with `no_pattern_match`
+
+### tagProject() — ClearSky portfolio tagging
+| project_tag | Pattern matches |
+|-------------|----------------|
+| `amoedo` | amoedo, miteco |
+| `bosquia` | bosquia, asturias |
+| `naturebrain` | naturebrain, nature brain, sierra leone |
+| `marakoa` | marakoa, colombia, lignum |
+| `elysium` | elysium, cerrado, brazil, brasil |
+| `redenor` | redenor |
+| `enersol` | enersol, pontevedra |
+| `aperam` | aperam, setu, setu |
+
+### Claude API fallback
+- **Scope:** Only `involves_luis=1` threads still `unknown` after rules pass
+- **Model:** `claude-haiku-4-5-20251001` (max_tokens=50)
+- **Input:** Subject + sender + first email body (600 char excerpt from R2 JSON)
+- **Prompt:** Returns exactly one label from the 9 valid types
+- **Rate limit:** 200ms delay between calls
+- **Cost:** ~$0.001/thread
+- **Worker timeout:** Sequential R2 reads + Claude calls may exceed 30s CPU limit — ~50 threads processed per invocation
+
+### POST /api/hubspot/classify-threads
+Re-run after any new sync. Processes all 1,128 threads:
+1. Rules-based pass on all threads (classifyThreadBySubject + tagProject)
+2. Write results to D1 in batches of 100
+3. Claude fallback for remaining `unknown` + `involves_luis=1` threads
+4. Returns full breakdown counts + Claude stats
+
+### classification_method values
+| Method | Meaning | Count (2026-03-17) |
+|--------|---------|-------------------|
+| `subject_pattern` | Regex matched in subject line | 617 |
+| `participant_check` | All participants internal | 275 |
+| `claude_api` | Claude Haiku classified from body | 50 |
+| `no_pattern_match` | No signal found | 386 (includes 67 mine) |
+
+### Thread type distribution (2026-03-17 v79x)
+| thread_type | all | mine (involves_luis=1) | pct |
+|------------|-----|----------------------|-----|
+| unknown | 386 | 67 | 34.2% |
+| internal | 276 | 103 | 24.5% |
+| commercial_prospecting | 210 | 84 | 18.6% |
+| commercial_active | 108 | 33 | 9.6% |
+| legal_ops | 46 | 17 | 4.1% |
+| project_ops | 42 | 10 | 3.7% |
+| market_intel | 36 | 24 | 3.2% |
+| financial_ops | 11 | 2 | 1.0% |
+| noise | 8 | 2 | 0.7% |
+| admin | 5 | 1 | 0.4% |
+
+### Project tag distribution (2026-03-17)
+| project_tag | threads |
+|-------------|---------|
+| amoedo | 17 |
+| naturebrain | 10 |
+| aperam | 10 |
+| bosquia | 7 |
+| enersol | 6 |
+| elysium | 6 |
+| marakoa | 2 |
+| redenor | 1 |
+
+### When to re-run
+- After `POST /api/hubspot/sync-inbox` syncs new threads
+- After `GET /api/hubspot/sync` refreshes contacts cache
+- `POST /api/hubspot/classify-threads` is idempotent — safe to re-run anytime
+
+---
+
+## 8. Contact Classification Engine (v79w)
 
 ### classifyContact() — 5-tier priority
 | Priority | Signal | Types Assigned |
@@ -291,8 +393,7 @@ The original `extractThreadParticipants()` function only checked `ownerId === 82
 | 2 | HubSpot `lifecyclestage` = customer/opportunity/SQL/MQL | `commercial_buyer` |
 | 3 | HubSpot `lead_status` = open_deal/in_progress/connected | `commercial_buyer` |
 | 4 | Operational domain (verra.org, dnv.com, ey.com, etc.) or title keywords | `operational` |
-| 5 | Title keywords: sustainability/ESG/carbon → buyer, developer/forest → seller | `commercial_buyer` / `commercial_seller` |
-| 6 | Industry match (oil/utilities → buyer, environmental/forestry → seller, law → operational) | varies |
+| 5 | Title/industry keywords | `commercial_buyer` / `commercial_seller` / `operational` |
 | fallback | No signal | `unknown` |
 
 ### Contact type distribution (2026-03-17)
@@ -304,63 +405,77 @@ The original `extractThreadParticipants()` function only checked `ownerId === 82
 | commercial_seller | 16 |
 | internal | 13 |
 
-### D1 columns added
-- `hubspot_contacts_cache`: `contact_type`, `classification_method`, `lifecyclestage`, `lead_status`
-- `hubspot_companies_cache`: `contact_type`, `lifecyclestage`
-- `hubspot_threads`: `thread_type`
+---
 
-### POST /api/hubspot/classify
-Classifies all contacts via `classifyContact()`, then derives `thread_type` for all threads:
-- `internal` — ALL participants have internal domain emails
-- `commercial` — any participant is `commercial_buyer` or `commercial_seller`
-- `operational` — sender is operational, no commercial participants
-- `unknown` — no classification signals
+## 9. Commercial Intelligence Endpoints (v79x)
 
-### Thread type distribution (2026-03-17)
-| thread_type | involves_luis=0 | involves_luis=1 | total |
-|------------|----------------|----------------|-------|
-| unknown | 522 | 207 | 729 |
-| internal | 178 | 103 | 281 |
-| commercial | 85 | 33 | 118 |
+### GET /api/hubspot/commercial-activity
+**Query params:** `?days=180` (default)
 
-### When to re-run
-- After `GET /api/hubspot/sync` refreshes contacts cache
-- After new threads synced via `POST /api/hubspot/sync-inbox`
+Returns commercial email activity for `revenues.html`:
+```json
+{
+  "summary": {
+    "total_commercial_threads": 116,
+    "active_deals": 33,
+    "prospecting": 83,
+    "unique_counterparties": 25,
+    "date_range": { "from": "...", "to": "..." }
+  },
+  "by_month": [
+    { "month": "2026-03", "active": 2, "prospecting": 6, "counterparties": 5 }
+  ],
+  "by_counterparty": [
+    {
+      "company_name": "...",
+      "sender_email": "...",
+      "thread_count": 10,
+      "last_contact": "2026-03-10",
+      "thread_types": { "commercial_active": 3, "commercial_prospecting": 7 },
+      "involves_luis": 8
+    }
+  ],
+  "by_project": [
+    { "project_tag": "amoedo", "thread_count": 17, "last_activity": "..." }
+  ]
+}
+```
+
+### GET /api/hubspot/buyer-threads/:company
+**Param:** Company name or email domain (URL encoded)
+
+Returns for `clearskyplatform.html` buyer panel:
+```json
+{
+  "company": "Shell",
+  "found": true,
+  "summary": {
+    "total_threads": 3,
+    "commercial_active": 1,
+    "last_commercial_contact": "2026-03-10",
+    "first_contact": "2025-09-01",
+    "involves_luis": 2,
+    "projects_discussed": ["naturebrain", "elysium"]
+  },
+  "threads": [
+    {
+      "id": "...", "subject": "...", "thread_type": "commercial_active",
+      "project_tag": "naturebrain", "sender_email": "...",
+      "last_email_at": "...", "involves_luis": 1,
+      "classification_confidence": "high"
+    }
+  ]
+}
+```
+Searches by `company_name LIKE %param%` OR `sender_email LIKE %param%`. Limit 20 threads.
+
+**Known limitation:** 911/1128 threads have `company_name = NULL` — search by company name has low coverage. Search by email domain is more reliable.
 
 ---
 
-## 8. The Bobbie Problem — Root Cause and Fix
+## 9b. The Bobbie Problem — Root Cause (v79w)
 
-### Symptom
-Bobbie Armstrong threads appeared in Mine view. User expected "Char Samples" (emailed to 3 chartechnologies.com addresses, Luis NOT involved) to NOT appear.
-
-### Root cause
-The "Char Samples" thread correctly had `involves_luis=0` in D1 and was NOT returned by server-side Mine filter. It never appeared in Mine.
-
-The Bobbie threads that DID appear in Mine were **different threads** where Luis IS a legitimate participant (CC'd or recipient). Examples: "Strategic CDR Reserve", "Re: Commercial presentation ahead of all hands call", "Re: Milkywire submission". These are real threads where `recipients_json` contains `luis.adaime@clearskyltd.com`.
-
-### Why it seemed wrong
-Most Bobbie-Luis threads are internal (Bobbie at Leading Carbon, Luis at ClearSky — both internal companies). They cluttered the Mine view alongside commercial threads.
-
-### Fix
-1. `classifyContact()` identifies Bobbie as `internal` (leadingcarbon.com domain)
-2. Thread classification tags Bobbie-only-internal threads as `thread_type='internal'`
-3. Mine view sorts: commercial first, unknown second, internal last (dimmed 45% opacity)
-4. QA-2 confirms: "Char Samples" has `involves_luis=0` — never in Mine
-
----
-
-## 9. Classification TODO (Next Steps)
-
-**Thread content taxonomy** (future — uses AI):
-- `buyer_inquiry` — inbound interest from potential credit buyers
-- `supplier_outreach` — outreach to project developers / suppliers
-- `deal_negotiation` — active deal terms, pricing, contract discussions
-- `market_intel` — market reports, competitor info, industry news
-- `admin` — expense reports, signatures, internal logistics
-- `internal` — team coordination, project updates
-
-**Implementation approach:** Claude Haiku on thread subject + first email body (< 500 chars). Store in `thread_category` column. Separate from `thread_type` (which is participant-based, not content-based).
+"Char Samples" thread correctly had `involves_luis=0` — never appeared in Mine. The Bobbie threads that DID appear were legitimate (Luis CC'd). Internal threads now sorted last + dimmed 45% in Mine view.
 
 ---
 
@@ -377,3 +492,5 @@ Most Bobbie-Luis threads are internal (Bobbie at Leading Carbon, Luis at ClearSk
 | 2026-03-17 | Contact classification engine (v79w) | `classifyContact()` with 5-tier priority (domain→lifecycle→lead_status→title→industry). `POST /api/hubspot/classify` endpoint. D1 columns: `contact_type`+`classification_method`+`lifecyclestage`+`lead_status` on contacts, `contact_type`+`lifecyclestage` on companies, `thread_type` on threads. Results: 265 commercial_buyer, 16 commercial_seller, 17 operational, 13 internal, 1357 unknown contacts. 118 commercial, 281 internal, 729 unknown threads. |
 | 2026-03-17 | Bobbie/Mine bug diagnosed | "Char Samples" thread correctly has involves_luis=0 — never in Mine. Other Bobbie threads in Mine are legitimate (Luis CC'd). Fix: thread_type classification sorts commercial first, dims internal. |
 | 2026-03-17 | pablo.html thread_type grouping | Mine view sorts: commercial (teal badge) → unknown → operational → internal (dimmed 45%, gray badge). `isLuisThread()` now type-safe (handles int/bool/string). QA debug row shows thread_type. Server-side `thread_type` replaces client-side recipients_json parsing. |
+| 2026-03-17 | Thread classification engine (v79x) | `classifyThreadBySubject()` — 9-category rules-based classifier (commercial_active/prospecting/legal_ops/financial_ops/project_ops/market_intel/admin/internal/noise). `tagProject()` links threads to ClearSky portfolio (amoedo/bosquia/naturebrain/marakoa/elysium/redenor/enersol/aperam). Claude Haiku fallback for ambiguous `involves_luis=1` threads (50 processed, 67 errors from worker timeout). `POST /api/hubspot/classify-threads` backfilled all 1,128 threads. D1 columns added: `project_tag`, `classification_method`, `classification_confidence`. Distribution: unknown=386 (34.2%), internal=276 (24.5%), commercial_prospecting=210 (18.6%), commercial_active=108 (9.6%), legal_ops=46 (4.1%), project_ops=42 (3.7%), market_intel=36 (3.2%), financial_ops=11 (1.0%), noise=8 (0.7%), admin=5 (0.4%). Project tags: amoedo=17, naturebrain=10, aperam=10, bosquia=7, enersol=6, elysium=6, marakoa=2, redenor=1. Worker: v79x-thread-classify. |
+| 2026-03-17 | Commercial intelligence endpoints (v79x) | `GET /api/hubspot/commercial-activity` — by_month + by_counterparty + by_project for revenues.html. `GET /api/hubspot/buyer-threads/:company` — thread list for clearskyplatform buyer panel. Both endpoints tested and working. 116 commercial threads involving Luis, 25 unique counterparties, 8 projects tagged. |
