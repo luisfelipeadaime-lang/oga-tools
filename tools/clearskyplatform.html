@@ -1091,14 +1091,25 @@ function renderPanelHTML(row){
    CTA 1: downloadPDDNow() — instant Verra URL + silent queue
    CTA 2: generateIntelReport() — Pablo pipeline with progress
    ============================================================ */
-function downloadPDDNow(projectId){
-  var verraUrl='https://registry.verra.org/app/projectDetail/VCS/'+projectId;
-  if(ALL){for(var i=0;i<ALL.length;i++){if(ALL[i].id===projectId&&ALL[i].url){verraUrl=ALL[i].url;break;}}}
-  window.open(verraUrl,'_blank');
-  fetch(API+'/api/primitives/crawler/run',{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({registry:'verra',project_id:projectId,max_projects:1,download_documents:true,pd_only:true})
-  }).catch(function(){});
+function downloadPDDNow(id){
+  fetch(API+'/api/primitives/registry-index/project/'+id+'/pdd-status')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d.status==='complete'&&d.crawl_doc_id){
+        window.open(API+'/api/primitives/crawler/download/'+d.crawl_doc_id,'_blank');
+      }else{
+        var verraUrl='https://registry.verra.org/app/projectDetail/VCS/'+id;
+        if(ALL)for(var i=0;i<ALL.length;i++)if(ALL[i].id===id&&ALL[i].url){verraUrl=ALL[i].url;break;}
+        window.open(verraUrl,'_blank');
+        fetch(API+'/api/primitives/crawler/run',{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({registry:'verra',project_id:id,max_projects:1,download_documents:true,pd_only:true})
+        }).catch(function(){});
+      }
+    })
+    .catch(function(){
+      window.open('https://registry.verra.org/app/projectDetail/VCS/'+id,'_blank');
+    });
 }
 function generateIntelReport(projectId){
   var btn=document.getElementById('intel-btn-'+projectId);
@@ -1147,20 +1158,24 @@ function pollIntelStatus(projectId,runId,fill,step,note,prog,stepTimers){
       .then(function(d){
         if(d.status==='complete'){
           clearInterval(timer);
-          stepTimers.forEach(function(t){clearTimeout(t);});
+          if(stepTimers)stepTimers.forEach(function(t){clearTimeout(t);});
           if(fill)fill.style.width='100%';
-          if(step)step.textContent='\u2713 Intelligence report ready';
+          if(step)step.textContent='\u2713 Document ready';
           if(note)note.textContent='';
-          var docId=d.crawl_doc_id||'';
-          if(prog&&docId){
+          if(prog&&d.crawl_doc_id){
             prog.insertAdjacentHTML('beforeend',
               '<div style="display:flex;gap:6px;margin-top:8px">'
-              +'<a href="'+API+'/api/primitives/crawler/download/'+docId+'" target="_blank" style="text-decoration:none">'
-              +'<button class="btn btn-ghost" style="font-size:11px;padding:5px 12px">\uD83D\uDCC4 Download PDF</button></a>'
-              +'<button onclick="viewIntelText(\''+docId+'\')" class="btn btn-ghost" style="font-size:11px;padding:5px 12px">\uD83D\uDCDD View Text</button>'
+              +'<a href="'+API+'/api/primitives/crawler/download/'+d.crawl_doc_id+'" target="_blank" download style="text-decoration:none">'
+              +'<button style="padding:5px 12px;border-radius:6px;font-size:11px;font-weight:500;'
+              +'cursor:pointer;border:1px solid rgba(45,212,191,.35);background:rgba(45,212,191,.08);'
+              +'color:var(--teal)">\uD83D\uDCC4 Download PDF</button></a>'
+              +'<button onclick="window.open(\''+API+'/api/primitives/crawler/download/'+d.crawl_doc_id+'?format=text\',\'_blank\')" '
+              +'style="padding:5px 12px;border-radius:6px;font-size:11px;font-weight:500;'
+              +'cursor:pointer;border:1px solid var(--border-hi);background:transparent;color:var(--text1)">'
+              +'\uD83D\uDCDD View Text</button>'
               +'</div>');
           }else if(prog){
-            prog.insertAdjacentHTML('beforeend','<div style="font-size:11px;color:var(--green);margin-top:6px">\u2713 Document saved to ClearSky library</div>');
+            prog.insertAdjacentHTML('beforeend','<div style="font-size:11px;color:var(--green);margin-top:6px">\u2713 Saved to ClearSky library</div>');
           }
         }
       }).catch(function(){});
