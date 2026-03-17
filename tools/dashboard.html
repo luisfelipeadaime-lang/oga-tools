@@ -345,7 +345,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="panel-body" id="callTargets">
         <!-- Rendered by JS -->
       </div>
-      <div class="panel-note">Calls logged in HubSpot. Targets: 15/wk sales, 10 origination, 5 CEO. Resets Monday.</div>
+      <div class="panel-note">Commercial threads (7d) from HubSpot. Targets: 15/wk sales, 10 origination, 5 CEO.</div>
     </div>
   </div>
 
@@ -640,20 +640,49 @@ function switchTab(tab) {
 }
 
 // ============================================================
-// CALL TARGETS
+// CALL TARGETS — live from /api/hubspot/rep-summary?days=7
 // ============================================================
-const callData = [
-  { name: 'Ana Avramovic', initials: 'AA', color: 'var(--blue)', done: 4, target: 15 },
-  { name: 'Carolina Martinez', initials: 'CM', color: 'var(--purple)', done: 3, target: 15 },
-  { name: 'Luis Adaime', initials: 'LA', color: 'var(--teal)', done: 5, target: 10 },
-  { name: 'Bobbie Armstrong', initials: 'BA', color: 'var(--amber)', done: 3, target: 15 },
-  { name: 'Brian Katz', initials: 'BK', color: '#64748b', done: 1, target: 5 },
-];
+const API = 'https://api-tools.oga.earth';
+const REP_TARGETS = { ana: 15, carolina: 15, luis: 10, bobbie: 15, brian: 5, emmanuel: 10, keith: 10 };
+const REP_INITIALS = { ana: 'AA', carolina: 'CM', luis: 'LA', bobbie: 'BA', brian: 'BK', emmanuel: 'EM', keith: 'KD' };
+const REP_COLORS = { ana: 'var(--blue)', carolina: 'var(--purple)', luis: 'var(--teal)', bobbie: 'var(--amber)', brian: '#64748b', emmanuel: '#f59e0b', keith: '#94a3b8' };
 
-function renderCallTargets() {
+async function loadCallTargets() {
+  const el = document.getElementById('callTargets');
+  try {
+    const res = await fetch(`${API}/api/hubspot/rep-summary?days=7`);
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    const data = await res.json();
+    const reps = data.reps || [];
+    const callData = reps.map(r => {
+      const key = (r.name || '').toLowerCase();
+      return {
+        name: r.name, initials: REP_INITIALS[key] || key.slice(0,2).toUpperCase(),
+        color: REP_COLORS[key] || '#64748b',
+        done: (r.commercial_active || 0) + (r.commercial_prospecting || 0),
+        target: REP_TARGETS[key] || 10
+      };
+    }).filter(r => r.done > 0 || REP_TARGETS[(r.name||'').toLowerCase()]);
+    renderCallData(callData);
+    // Update week badge
+    const weekNum = Math.ceil((new Date() - new Date(new Date().getFullYear(), 0, 1)) / 604800000);
+    const badge = document.querySelector('.panel-badge');
+    if (badge) badge.textContent = `Week ${weekNum}`;
+  } catch (e) {
+    console.warn('Rep summary failed, using fallback:', e.message);
+    renderCallData([
+      { name: 'Ana', initials: 'AA', color: 'var(--blue)', done: 0, target: 15 },
+      { name: 'Carolina', initials: 'CM', color: 'var(--purple)', done: 0, target: 15 },
+      { name: 'Luis', initials: 'LA', color: 'var(--teal)', done: 0, target: 10 },
+      { name: 'Brian', initials: 'BK', color: '#64748b', done: 0, target: 5 },
+    ]);
+  }
+}
+
+function renderCallData(callData) {
   const el = document.getElementById('callTargets');
   el.innerHTML = callData.map(p => {
-    const pct = Math.round((p.done / p.target) * 100);
+    const pct = p.target > 0 ? Math.round((p.done / p.target) * 100) : 0;
     const clr = pct >= 50 ? 'var(--green-text)' : pct >= 25 ? 'var(--amber-text)' : 'var(--red-text)';
     const bar = pct >= 50 ? 'var(--green)' : pct >= 25 ? 'var(--amber)' : 'var(--red)';
     return `<div style="margin-bottom:12px">
@@ -663,13 +692,13 @@ function renderCallTargets() {
         <span style="margin-left:auto;font-family:var(--mono);font-size:13px;font-weight:700;color:${clr}">${p.done} / ${p.target}</span>
       </div>
       <div class="prog-wrap">
-        <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${bar}"></div></div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${Math.min(pct,100)}%;background:${bar}"></div></div>
         <span class="prog-text" style="color:${clr}">${pct}%</span>
       </div>
     </div>`;
-  }).join('');
+  }).join('') + '<div style="font-size:9px;color:var(--text-muted);margin-top:8px;opacity:0.6">Source: HubSpot thread classifications (7d) • commercial_active + commercial_prospecting</div>';
 }
-renderCallTargets();
+loadCallTargets();
 
 // ============================================================
 // MOCK RAW ACTIVITY DATA (50 sample rows)

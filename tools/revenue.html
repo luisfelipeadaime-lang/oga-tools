@@ -637,6 +637,7 @@ body {
       <button class="filter-pill" data-action-owner="luis">Luis</button>
       <button class="filter-pill" data-action-owner="brian">Brian</button>
     </div>
+    <div class="rep-stats-strip" id="repStatsStrip" style="display:none;padding:6px 12px;background:var(--surface);border-radius:8px;margin-bottom:8px;font-size:11px;color:var(--text-muted);display:flex;gap:16px;flex-wrap:wrap"></div>
     <div class="action-list" id="actionList">
       <div class="loading"><div class="spinner"></div>Loading contacts...</div>
     </div>
@@ -786,7 +787,7 @@ let bulkSelected = new Set();
 let cache = {
   deals: [], projects: [], buyers: [], activeContacts: [],
   hubspotContacts: [], hubspotCompanies: [], hubspotDeals: [],
-  owners: [], lastSync: null
+  owners: [], lastSync: null, repSummary: null
 };
 
 // ============================================================
@@ -855,6 +856,16 @@ async function loadHubSpotCache() {
     }
   } catch (e) {
     console.warn('HubSpot cache empty — run sync first:', e.message);
+  }
+}
+
+async function loadRepSummary(days = 30) {
+  try {
+    const result = await api(`/hubspot/rep-summary?days=${days}`);
+    cache.repSummary = result;
+  } catch (e) {
+    console.warn('Rep summary failed:', e.message);
+    cache.repSummary = null;
   }
 }
 
@@ -976,8 +987,12 @@ async function syncHubSpot() {
 function updateSyncStatus() {
   const el = document.getElementById('syncStatus');
   if (cache.lastSync) {
-    el.textContent = `Last sync: ${timeSince(cache.lastSync)}`;
-    el.className = 'sync-status';
+    const syncAge = Math.floor((Date.now() - new Date(cache.lastSync).getTime()) / 86400000);
+    const stale = syncAge > 3 ? ` (${syncAge}d old — thread data may be stale)` : '';
+    el.textContent = `Last sync: ${timeSince(cache.lastSync)}${stale}`;
+    el.className = syncAge > 3 ? 'sync-status' : 'sync-status';
+    if (syncAge > 3) el.style.color = 'var(--red)';
+    else el.style.color = '';
   } else {
     el.textContent = 'Not synced';
     el.className = 'sync-status';
@@ -1186,8 +1201,13 @@ async function loadActionList() {
     pipeline: pipeline.slice(0, 15)
   };
 
-  // Stats
-  const engagedCount = contacts.filter(c => (c.engagement_score || 0) > 0).length;
+  // Stats — use rep-summary for commercial thread counts (Primitive 3)
+  const rs = cache.repSummary;
+  const commercialActive = rs?.totals?.commercial_active ?? activeConvos.length;
+  const commercialProspecting = rs?.totals?.commercial_prospecting ?? 0;
+  const now90d = new Date(); now90d.setDate(now90d.getDate() - 90);
+  const engaged90d = contacts.filter(c => c.last_commercial_touch && new Date(c.last_commercial_touch) >= now90d).length;
+  const engagedFallback = engaged90d > 0 ? engaged90d : contacts.filter(c => (c.engagement_score || 0) > 0).length;
   const inboundCount = contacts.filter(c => c.has_inbound_reply === 1).length;
   const profiledCount = contacts.filter(c => buyerByHsId[c.hubspot_id] || buyerByEmail[(c.email || '').toLowerCase()]).length;
   const profiledPct = contacts.length > 0 ? Math.round(profiledCount / contacts.length * 100) : 0;
@@ -1197,13 +1217,14 @@ async function loadActionList() {
   const allGroupedCount = actionListCache.active.length + actionListCache.reengage.length + actionListCache.pipeline.length;
   document.getElementById('actionStats').innerHTML = `
     <div class="stat-card"><div class="stat-label">Showing</div><div class="stat-value">${allGroupedCount}</div><div class="stat-delta">of ${contacts.length} active contacts</div></div>
-    <div class="stat-card"><div class="stat-label">Active Conversations</div><div class="stat-value green">${activeConvos.length}</div><div class="stat-delta">two-way in 14d</div></div>
-    <div class="stat-card"><div class="stat-label">Engaged (90d)</div><div class="stat-value">${engagedCount}</div><div class="stat-delta">${inboundCount} with inbound replies</div></div>
+    <div class="stat-card"><div class="stat-label">Active Conversations</div><div class="stat-value green">${commercialActive}</div><div class="stat-delta">${commercialProspecting} prospecting</div></div>
+    <div class="stat-card"><div class="stat-label">Engaged (90d)</div><div class="stat-value">${engagedFallback}</div><div class="stat-delta">${inboundCount} with inbound replies</div></div>
     <div class="stat-card"><div class="stat-label">Pipeline Value</div><div class="stat-value gold">$${formatNum(pipelineValue)}</div><div class="stat-delta">${activePipeline.length} active deals</div></div>
     <div class="stat-card"><div class="stat-label">AI Profiled</div><div class="stat-value">${profiledCount}</div><div class="stat-delta">${profiledPct}% of ${contacts.length}</div></div>
   `;
 
   renderBrianKpis();
+  renderRepStatsStrip();
 
   const allGrouped = [...actionListCache.active, ...actionListCache.reengage, ...actionListCache.pipeline];
   document.getElementById('actionsBadge').textContent = allGrouped.length;
@@ -1628,6 +1649,20 @@ function renderBrianKpis() {
       <div class="kpi-card"><div class="kpi-label">Pipeline Value</div><div class="kpi-value gold">$${formatNum(pipelineValue)}</div><div class="kpi-target">${brianDeals.length} active deals</div></div>
       <div class="kpi-card"><div class="kpi-label">Progressed This Week</div><div class="kpi-value" style="color:var(--green)">${progressed}</div><div class="kpi-target">deals moved forward</div></div>
     </div>`;
+}
+
+function renderRepStatsStrip() {
+  const strip = document.getElementById('repStatsStrip');
+  if (!strip) return;
+  const rs = cache.repSummary;
+  if (!rs || !rs.reps) { strip.style.display = 'none'; return; }
+  strip.style.display = 'flex';
+  const repColors = { ana: '#a78bfa', carolina: '#60a5fa', luis: '#C8A951', brian: '#34d399', emmanuel: '#f59e0b', bobbie: '#fb923c', keith: '#94a3b8' };
+  strip.innerHTML = rs.reps.map(r => {
+    const key = (r.name || '').toLowerCase();
+    const clr = repColors[key] || 'var(--text-muted)';
+    return `<span style="color:${clr};font-weight:600">${r.name}</span> <span>${r.commercial_active}A</span> <span>${r.commercial_prospecting}P</span> <span style="opacity:0.5">${r.unique_counterparties}cp</span>`;
+  }).join('<span style="opacity:0.3">|</span>');
 }
 
 // ============================================================
@@ -2464,7 +2499,7 @@ document.getElementById('headerDate').textContent = new Date().toLocaleDateStrin
 
 (async function init() {
   showOnboarding();
-  await Promise.all([loadAll(), loadHubSpotCache(), loadOwners()]);
+  await Promise.all([loadAll(), loadHubSpotCache(), loadOwners(), loadRepSummary()]);
   updateSyncStatus();
   checkAutoSync();
   loadActionList();
