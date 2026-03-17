@@ -282,23 +282,89 @@ The original `extractThreadParticipants()` function only checked `ownerId === 82
 
 ---
 
-## 7. Classification TODO
+## 7. Contact Classification Engine (v79w)
 
-Next step: email intent taxonomy for automated thread categorization.
+### classifyContact() — 5-tier priority
+| Priority | Signal | Types Assigned |
+|----------|--------|----------------|
+| 1 | Internal domain (`clearskyltd.com`, `leadingcarbon.com`, `maboroshi.com`) | `internal` |
+| 2 | HubSpot `lifecyclestage` = customer/opportunity/SQL/MQL | `commercial_buyer` |
+| 3 | HubSpot `lead_status` = open_deal/in_progress/connected | `commercial_buyer` |
+| 4 | Operational domain (verra.org, dnv.com, ey.com, etc.) or title keywords | `operational` |
+| 5 | Title keywords: sustainability/ESG/carbon → buyer, developer/forest → seller | `commercial_buyer` / `commercial_seller` |
+| 6 | Industry match (oil/utilities → buyer, environmental/forestry → seller, law → operational) | varies |
+| fallback | No signal | `unknown` |
 
-**Proposed categories:**
+### Contact type distribution (2026-03-17)
+| contact_type | count |
+|-------------|-------|
+| unknown | 1,357 |
+| commercial_buyer | 265 |
+| operational | 17 |
+| commercial_seller | 16 |
+| internal | 13 |
+
+### D1 columns added
+- `hubspot_contacts_cache`: `contact_type`, `classification_method`, `lifecyclestage`, `lead_status`
+- `hubspot_companies_cache`: `contact_type`, `lifecyclestage`
+- `hubspot_threads`: `thread_type`
+
+### POST /api/hubspot/classify
+Classifies all contacts via `classifyContact()`, then derives `thread_type` for all threads:
+- `internal` — ALL participants have internal domain emails
+- `commercial` — any participant is `commercial_buyer` or `commercial_seller`
+- `operational` — sender is operational, no commercial participants
+- `unknown` — no classification signals
+
+### Thread type distribution (2026-03-17)
+| thread_type | involves_luis=0 | involves_luis=1 | total |
+|------------|----------------|----------------|-------|
+| unknown | 522 | 207 | 729 |
+| internal | 178 | 103 | 281 |
+| commercial | 85 | 33 | 118 |
+
+### When to re-run
+- After `GET /api/hubspot/sync` refreshes contacts cache
+- After new threads synced via `POST /api/hubspot/sync-inbox`
+
+---
+
+## 8. The Bobbie Problem — Root Cause and Fix
+
+### Symptom
+Bobbie Armstrong threads appeared in Mine view. User expected "Char Samples" (emailed to 3 chartechnologies.com addresses, Luis NOT involved) to NOT appear.
+
+### Root cause
+The "Char Samples" thread correctly had `involves_luis=0` in D1 and was NOT returned by server-side Mine filter. It never appeared in Mine.
+
+The Bobbie threads that DID appear in Mine were **different threads** where Luis IS a legitimate participant (CC'd or recipient). Examples: "Strategic CDR Reserve", "Re: Commercial presentation ahead of all hands call", "Re: Milkywire submission". These are real threads where `recipients_json` contains `luis.adaime@clearskyltd.com`.
+
+### Why it seemed wrong
+Most Bobbie-Luis threads are internal (Bobbie at Leading Carbon, Luis at ClearSky — both internal companies). They cluttered the Mine view alongside commercial threads.
+
+### Fix
+1. `classifyContact()` identifies Bobbie as `internal` (leadingcarbon.com domain)
+2. Thread classification tags Bobbie-only-internal threads as `thread_type='internal'`
+3. Mine view sorts: commercial first, unknown second, internal last (dimmed 45% opacity)
+4. QA-2 confirms: "Char Samples" has `involves_luis=0` — never in Mine
+
+---
+
+## 9. Classification TODO (Next Steps)
+
+**Thread content taxonomy** (future — uses AI):
 - `buyer_inquiry` — inbound interest from potential credit buyers
 - `supplier_outreach` — outreach to project developers / suppliers
 - `deal_negotiation` — active deal terms, pricing, contract discussions
 - `market_intel` — market reports, competitor info, industry news
 - `admin` — expense reports, signatures, internal logistics
-- `internal` — team coordination, project updates between ClearSky/Leading Carbon staff
+- `internal` — team coordination, project updates
 
-**Implementation approach:** Use Claude Haiku on thread subject + first email body (< 500 chars) for classification. Store in new `thread_category` column on `hubspot_threads`. Could be run during `backfill-participants` or as a separate backfill endpoint.
+**Implementation approach:** Claude Haiku on thread subject + first email body (< 500 chars). Store in `thread_category` column. Separate from `thread_type` (which is participant-based, not content-based).
 
 ---
 
-## 8. Changelog
+## 10. Changelog
 
 | Date | Change | Details |
 |------|--------|---------|
@@ -308,3 +374,6 @@ Next step: email intent taxonomy for automated thread categorization.
 | 2026-03-17 | `extractThreadParticipants()` rewritten | Now scans all from/to/cc emails instead of ownerId. Populates `recipients_json` at sync time. `syncHubSpotBatch()` also resolves `company_name` from contacts cache. |
 | 2026-03-17 | D1 data cleanup | Lowercased 278 `sender_email` + 196 `contact_email` values. Zero wrongly-tagged `involves_luis` found. |
 | 2026-03-17 | pablo.html arrow badges + internal dimming | Role badges: ↑ sent / ↓ received / ↔ CC'd. Internal thread detection (all participants from ClearSky/LC/Maboroshi). Dimmed to 45% in Mine view + "internal" badge. QA debug row expanded to 120 chars, opacity 0.5. |
+| 2026-03-17 | Contact classification engine (v79w) | `classifyContact()` with 5-tier priority (domain→lifecycle→lead_status→title→industry). `POST /api/hubspot/classify` endpoint. D1 columns: `contact_type`+`classification_method`+`lifecyclestage`+`lead_status` on contacts, `contact_type`+`lifecyclestage` on companies, `thread_type` on threads. Results: 265 commercial_buyer, 16 commercial_seller, 17 operational, 13 internal, 1357 unknown contacts. 118 commercial, 281 internal, 729 unknown threads. |
+| 2026-03-17 | Bobbie/Mine bug diagnosed | "Char Samples" thread correctly has involves_luis=0 — never in Mine. Other Bobbie threads in Mine are legitimate (Luis CC'd). Fix: thread_type classification sorts commercial first, dims internal. |
+| 2026-03-17 | pablo.html thread_type grouping | Mine view sorts: commercial (teal badge) → unknown → operational → internal (dimmed 45%, gray badge). `isLuisThread()` now type-safe (handles int/bool/string). QA debug row shows thread_type. Server-side `thread_type` replaces client-side recipients_json parsing. |
