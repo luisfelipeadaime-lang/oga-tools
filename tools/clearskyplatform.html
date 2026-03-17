@@ -1157,14 +1157,15 @@ function pollForIntelReport(projectId){
         if(!d.crawl_doc_id){if(stepEl)stepEl.textContent='Document processing incomplete \u2014 try again shortly';return;}
         var row=null;
         if(ALL)for(var i=0;i<ALL.length;i++)if(ALL[i].id===projectId){row=ALL[i];break;}
+        var vcu=(typeof VCU!=='undefined'&&VCU[projectId])?VCU[projectId]:null;
         fetch(API+'/api/primitives/registry-index/project/'+projectId+'/intel-report',{
           method:'POST',headers:{'Content-Type':'application/json'},
           body:JSON.stringify({
             project_name:row?(row.name||projectId):projectId,
             country:row?(row.country||''):'',
             methodology:row?(row.meth||''):'',
-            issued:row?(row.total_issued||''):'',
-            retired:row?(row.total_retired||''):'',
+            issued:vcu?(vcu.ti||''):'',
+            retired:vcu?(vcu.tr||''):'',
           })
         }).then(function(r){return r.json();})
         .then(function(ai){
