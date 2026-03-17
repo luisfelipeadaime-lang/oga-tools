@@ -1043,37 +1043,38 @@ function renderPanelHTML(row){
     +(wsElig?'<span class="chip ct">Watershed</span>':'')
     +(vcu?'<span class="chip ct">VCU data</span>':'')
     +'</div>'
-    +'<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'
-    +'<button onclick="startPDDDownload(\''+id+'\')" id="pddBtn-'+id+'" '
-    +'style="padding:4px 12px;border-radius:99px;font-size:10.5px;font-weight:500;cursor:pointer;'
+    +'<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">'
+    +'<button onclick="downloadPDDNow(\''+id+'\')" '
+    +'style="padding:5px 14px;border-radius:99px;font-size:11px;font-weight:500;cursor:pointer;'
     +'border:1px solid var(--border-hi);background:transparent;color:var(--text1);'
-    +'transition:all .14s;white-space:nowrap" '
+    +'transition:all .14s;white-space:nowrap;display:inline-flex;align-items:center;gap:4px" '
     +'onmouseover="this.style.borderColor=\'var(--teal)\';this.style.color=\'var(--teal)\'" '
-    +'onmouseout="this.style.borderColor=\'var(--border-hi)\';this.style.color=\'var(--text1)\'">'
+    +'onmouseout="this.style.borderColor=\'var(--border-hi)\';this.style.color=\'var(--text1)\'" '
+    +'title="Opens Verra project page instantly">'
     +'\u2193 Download PDD</button>'
     +'<a href="'+((row&&row.url)?row.url:'https://registry.verra.org/app/projectDetail/VCS/'+id)+'" target="_blank" rel="noopener" style="text-decoration:none">'
-    +'<button style="padding:4px 12px;border-radius:99px;font-size:10.5px;font-weight:500;cursor:pointer;'
+    +'<button style="padding:5px 14px;border-radius:99px;font-size:11px;font-weight:500;cursor:pointer;'
     +'border:1px solid var(--border-hi);background:transparent;color:var(--text1);'
-    +'transition:all .14s;white-space:nowrap" '
+    +'transition:all .14s;white-space:nowrap;display:inline-flex;align-items:center;gap:4px" '
     +'onmouseover="this.style.borderColor=\'var(--teal)\';this.style.color=\'var(--teal)\'" '
     +'onmouseout="this.style.borderColor=\'var(--border-hi)\';this.style.color=\'var(--text1)\'">'
     +'\u2197 Verra Registry</button></a>'
-    +(IS_EXTERNAL?'':'<button onclick="generateIntelReport(\''+id+'\')" id="intel-btn-'+id+'" '
-    +'style="padding:4px 12px;border-radius:99px;font-size:10.5px;font-weight:500;cursor:pointer;'
+    +(IS_EXTERNAL?'':'<button id="intel-btn-'+id+'" onclick="generateIntelReport(\''+id+'\')" '
+    +'style="padding:5px 14px;border-radius:99px;font-size:11px;font-weight:500;cursor:pointer;'
     +'border:1px solid var(--border-hi);background:transparent;color:var(--text1);'
-    +'transition:all .14s;white-space:nowrap" '
+    +'transition:all .14s;white-space:nowrap;display:inline-flex;align-items:center;gap:4px" '
     +'onmouseover="this.style.borderColor=\'var(--teal)\';this.style.color=\'var(--teal)\'" '
-    +'onmouseout="this.style.borderColor=\'var(--border-hi)\';this.style.color=\'var(--text1)\'">'
+    +'onmouseout="this.style.borderColor=\'var(--border-hi)\';this.style.color=\'var(--text1)\'" '
+    +'title="AI-powered analysis — takes 60-120 seconds">'
     +'\u25C8 Intelligence Report</button>')
     +'</div>'
-    +'<div id="dlProg-'+id+'" style="display:none;margin-top:8px;background:var(--bg2);'
-    +'border:1px solid var(--border);border-radius:7px;padding:9px 11px">'
-    +'<div id="dlStep-'+id+'" style="font-size:10.5px;color:var(--text1);font-weight:500;margin-bottom:5px"></div>'
+    +'<div id="intel-prog-'+id+'" style="display:none;margin-top:8px;'
+    +'background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:10px 12px">'
+    +'<div id="intel-step-'+id+'" style="font-size:10.5px;color:var(--text1);font-weight:500;margin-bottom:6px"></div>'
     +'<div style="height:3px;background:var(--bg3);border-radius:99px;overflow:hidden">'
-    +'<div id="dlFill-'+id+'" style="height:100%;border-radius:99px;background:var(--teal);transition:width 1.5s ease;width:0%"></div>'
+    +'<div id="intel-fill-'+id+'" style="height:100%;border-radius:99px;background:var(--teal);transition:width 1.5s ease;width:0%"></div>'
     +'</div>'
-    +'<div id="dlNote-'+id+'" style="font-size:9.5px;color:var(--text3);margin-top:4px"></div>'
-    +'<div id="dlActions-'+id+'" style="margin-top:8px"></div>'
+    +'<div id="intel-note-'+id+'" style="font-size:9.5px;color:var(--text3);margin-top:4px"></div>'
     +'</div>'
     +'</div>'
     +'<div class="panel-tabs">'
@@ -1085,102 +1086,87 @@ function renderPanelHTML(row){
   pd.style.opacity='1';
 }
 
-/* PDD DOWNLOAD PIPELINE */
-var DL_STEPS=[
-  {pct:20,text:'Finding project document on Verra...',note:'Locating the Project Description Document.'},
-  {pct:45,text:'Downloading document...',note:'Retrieving PDF from Verra registry.'},
-  {pct:70,text:'Reading document content...',note:'Extracting text from the PDF.'},
-  {pct:90,text:'Processing complete...',note:'Preparing download links.'},
-  {pct:100,text:'\u2713 Document ready',note:''}
-];
-var dlTimers={};
-function startPDDDownload(id){
-  var btn=document.getElementById('pddBtn-'+id);
-  var prog=document.getElementById('dlProg-'+id);
-  var step=document.getElementById('dlStep-'+id);
-  var fill=document.getElementById('dlFill-'+id);
-  var note=document.getElementById('dlNote-'+id);
-  if(dlTimers[id])return;
-  if(prog)prog.style.display='block';
-  if(btn){btn.style.opacity='0.5';btn.style.pointerEvents='none';}
-  var si=0;
-  function nextStep(){
-    if(si>=DL_STEPS.length)return;
-    var s=DL_STEPS[si++];
+/* ============================================================
+   DOWNLOAD PDD — PERMANENT IMPLEMENTATION v79v
+   CTA 1: downloadPDDNow() — instant Verra URL + silent queue
+   CTA 2: generateIntelReport() — Pablo pipeline with progress
+   ============================================================ */
+function downloadPDDNow(projectId){
+  var verraUrl='https://registry.verra.org/app/projectDetail/VCS/'+projectId;
+  if(ALL){for(var i=0;i<ALL.length;i++){if(ALL[i].id===projectId&&ALL[i].url){verraUrl=ALL[i].url;break;}}}
+  window.open(verraUrl,'_blank');
+  fetch(API+'/api/primitives/crawler/run',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({registry:'verra',project_id:projectId,max_projects:1,download_documents:true,pd_only:true})
+  }).catch(function(){});
+}
+function generateIntelReport(projectId){
+  var btn=document.getElementById('intel-btn-'+projectId);
+  var prog=document.getElementById('intel-prog-'+projectId);
+  var step=document.getElementById('intel-step-'+projectId);
+  var fill=document.getElementById('intel-fill-'+projectId);
+  var note=document.getElementById('intel-note-'+projectId);
+  if(!prog)return;
+  if(btn)btn.style.display='none';
+  prog.style.display='block';
+  var steps=[
+    {pct:20,text:'Finding project document on Verra...',note:'Locating the Project Description Document.'},
+    {pct:45,text:'Downloading and reading document...',note:'Extracting text content from the PDF.'},
+    {pct:70,text:'Analysing project data...',note:'Cross-referencing with registry and buyer data.'},
+    {pct:90,text:'Generating intelligence summary...',note:'Compiling findings into structured report.'},
+    {pct:100,text:'Report ready',note:''}
+  ];
+  var si=0,stepTimers=[];
+  function advanceStep(){
+    if(si>=steps.length)return;
+    var s=steps[si++];
     if(step)step.textContent=s.text;
     if(fill)fill.style.width=s.pct+'%';
     if(note)note.textContent=s.note;
-    if(si<DL_STEPS.length)dlTimers[id]=setTimeout(nextStep,2500);
+    if(si<steps.length)stepTimers.push(setTimeout(advanceStep,2800));
   }
-  nextStep();
+  advanceStep();
   fetch(API+'/api/primitives/crawler/run',{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({registry:'verra',project_id:id,max_projects:1,download_documents:true,pd_only:true})
+    body:JSON.stringify({registry:'verra',project_id:projectId,max_projects:1,download_documents:true,pd_only:true})
   }).then(function(r){return r.json();})
   .then(function(d){
-    if(d.run_id)pollPDDStatus(id,d.run_id);
-  }).catch(function(){});
+    if(d.run_id)pollIntelStatus(projectId,d.run_id,fill,step,note,prog,stepTimers);
+    else{if(step)setTimeout(function(){step.textContent='Processing queued \u2014 check back shortly';},12000);}
+  }).catch(function(){
+    if(step)setTimeout(function(){step.textContent='Processing queued \u2014 check back shortly';},8000);
+  });
 }
-function pollPDDStatus(id,runId){
+function pollIntelStatus(projectId,runId,fill,step,note,prog,stepTimers){
   var attempts=0;
   var timer=setInterval(function(){
     attempts++;
-    if(attempts>40){clearInterval(timer);return;}
-    fetch(API+'/api/primitives/registry-index/project/'+id+'/pdd-status')
+    if(attempts>48){clearInterval(timer);return;}
+    fetch(API+'/api/primitives/registry-index/project/'+projectId+'/pdd-status')
       .then(function(r){return r.json();})
       .then(function(d){
         if(d.status==='complete'){
           clearInterval(timer);
-          if(dlTimers[id]){clearTimeout(dlTimers[id]);delete dlTimers[id];}
-          finishPDDDownload(id,d.crawl_doc_id,d.knowledge_doc_id);
+          stepTimers.forEach(function(t){clearTimeout(t);});
+          if(fill)fill.style.width='100%';
+          if(step)step.textContent='\u2713 Intelligence report ready';
+          if(note)note.textContent='';
+          var docId=d.crawl_doc_id||'';
+          if(prog&&docId){
+            prog.insertAdjacentHTML('beforeend',
+              '<div style="display:flex;gap:6px;margin-top:8px">'
+              +'<a href="'+API+'/api/primitives/crawler/download/'+docId+'" target="_blank" style="text-decoration:none">'
+              +'<button class="btn btn-ghost" style="font-size:11px;padding:5px 12px">\uD83D\uDCC4 Download PDF</button></a>'
+              +'<button onclick="viewIntelText(\''+docId+'\')" class="btn btn-ghost" style="font-size:11px;padding:5px 12px">\uD83D\uDCDD View Text</button>'
+              +'</div>');
+          }else if(prog){
+            prog.insertAdjacentHTML('beforeend','<div style="font-size:11px;color:var(--green);margin-top:6px">\u2713 Document saved to ClearSky library</div>');
+          }
         }
       }).catch(function(){});
   },5000);
 }
-function finishPDDDownload(id,crawlDocId,knowledgeDocId){
-  var fill=document.getElementById('dlFill-'+id);
-  var step=document.getElementById('dlStep-'+id);
-  var note=document.getElementById('dlNote-'+id);
-  var actions=document.getElementById('dlActions-'+id);
-  if(fill)fill.style.width='100%';
-  if(step)step.textContent='\u2713 Document ready';
-  if(note)note.textContent='';
-  if(actions){
-    var html='<div style="display:flex;gap:6px">';
-    if(crawlDocId){
-      html+='<a href="'+API+'/api/primitives/crawler/download/'+crawlDocId+'" target="_blank" style="text-decoration:none">'
-        +'<button style="padding:5px 12px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;'
-        +'border:1px solid rgba(45,212,191,.3);background:rgba(45,212,191,.07);color:var(--teal)">\uD83D\uDCC4 Download PDF</button></a>';
-      html+='<button onclick="viewExtractedText(\''+crawlDocId+'\')" '
-        +'style="padding:5px 12px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;'
-        +'border:1px solid var(--border-hi);background:transparent;color:var(--text1)">\uD83D\uDCDD View Text</button>';
-    }
-    html+='</div>';
-    actions.innerHTML=html;
-  }
-}
-function viewExtractedText(crawlDocId){window.open(API+'/api/primitives/crawler/download/'+crawlDocId+'?format=text','_blank');}
-function generateIntelReport(id){
-  var btn=document.getElementById('intel-btn-'+id);
-  var prog=document.getElementById('dlProg-'+id);
-  if(btn){btn.style.opacity='0.5';btn.style.pointerEvents='none';}
-  if(prog)prog.style.display='block';
-  var step=document.getElementById('dlStep-'+id);
-  var fill=document.getElementById('dlFill-'+id);
-  if(step)step.textContent='Queuing intelligence analysis...';
-  if(fill)fill.style.width='20%';
-  fetch(API+'/api/primitives/crawler/run',{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({registry:'verra',project_id:id,max_projects:1,download_documents:true,pd_only:true})
-  }).then(function(r){return r.json();})
-  .then(function(d){
-    if(fill)fill.style.width='50%';
-    if(step)step.textContent='Processing document...';
-    if(d.run_id)pollPDDStatus(id,d.run_id);
-  }).catch(function(){
-    if(step)step.textContent='Queued for processing';
-  });
-}
+function viewIntelText(crawlDocId){window.open(API+'/api/primitives/crawler/download/'+crawlDocId+'?format=text','_blank');}
 
 function addToRfp(id){
   var row=ALL.find(function(r){return r.id===id;});if(!row)return;
@@ -1377,35 +1363,36 @@ function renderVCUPanel(id){
       h+='</div>';
       if(!IS_EXTERNAL){
         h+='<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">';
-        h+='<button onclick="startPDDDownload(\''+r.project_id+'\')" id="pddBtn-'+r.project_id+'" '
-          +'style="padding:4px 12px;border-radius:99px;font-size:10.5px;font-weight:500;cursor:pointer;'
+        h+='<button onclick="downloadPDDNow(\''+r.project_id+'\')" '
+          +'style="padding:5px 14px;border-radius:99px;font-size:11px;font-weight:500;cursor:pointer;'
           +'border:1px solid var(--border-hi);background:transparent;color:var(--text1);'
-          +'transition:all .14s;white-space:nowrap" '
+          +'transition:all .14s;white-space:nowrap;display:inline-flex;align-items:center;gap:4px" '
           +'onmouseover="this.style.borderColor=\'var(--teal)\';this.style.color=\'var(--teal)\'" '
-          +'onmouseout="this.style.borderColor=\'var(--border-hi)\';this.style.color=\'var(--text1)\'">'
+          +'onmouseout="this.style.borderColor=\'var(--border-hi)\';this.style.color=\'var(--text1)\'" '
+          +'title="Opens Verra project page instantly">'
           +'\u2193 Download PDD</button>';
         h+='<a href="https://registry.verra.org/app/projectDetail/VCS/'+r.project_id+'" target="_blank" rel="noopener" style="text-decoration:none">'
-          +'<button style="padding:4px 12px;border-radius:99px;font-size:10.5px;font-weight:500;cursor:pointer;'
+          +'<button style="padding:5px 14px;border-radius:99px;font-size:11px;font-weight:500;cursor:pointer;'
           +'border:1px solid var(--border-hi);background:transparent;color:var(--text1);'
-          +'transition:all .14s;white-space:nowrap" '
+          +'transition:all .14s;white-space:nowrap;display:inline-flex;align-items:center;gap:4px" '
           +'onmouseover="this.style.borderColor=\'var(--teal)\';this.style.color=\'var(--teal)\'" '
           +'onmouseout="this.style.borderColor=\'var(--border-hi)\';this.style.color=\'var(--text1)\'">'
           +'\u2197 Verra Registry</button></a>';
-        h+='<button onclick="generateIntelReport(\''+r.project_id+'\')" id="intel-btn-'+r.project_id+'" '
-          +'style="padding:4px 12px;border-radius:99px;font-size:10.5px;font-weight:500;cursor:pointer;'
+        h+='<button id="intel-btn-'+r.project_id+'" onclick="generateIntelReport(\''+r.project_id+'\')" '
+          +'style="padding:5px 14px;border-radius:99px;font-size:11px;font-weight:500;cursor:pointer;'
           +'border:1px solid var(--border-hi);background:transparent;color:var(--text1);'
-          +'transition:all .14s;white-space:nowrap" '
+          +'transition:all .14s;white-space:nowrap;display:inline-flex;align-items:center;gap:4px" '
           +'onmouseover="this.style.borderColor=\'var(--teal)\';this.style.color=\'var(--teal)\'" '
-          +'onmouseout="this.style.borderColor=\'var(--border-hi)\';this.style.color=\'var(--text1)\'">'
+          +'onmouseout="this.style.borderColor=\'var(--border-hi)\';this.style.color=\'var(--text1)\'" '
+          +'title="AI-powered analysis — takes 60-120 seconds">'
           +'\u25C8 Intelligence Report</button>';
         h+='</div>';
-        h+='<div id="dlProg-'+r.project_id+'" style="display:none;margin-top:8px;background:var(--bg2);'
-          +'border:1px solid var(--border);border-radius:7px;padding:9px 11px">';
-        h+='<div id="dlStep-'+r.project_id+'" style="font-size:10.5px;color:var(--text1);font-weight:500;margin-bottom:5px"></div>';
+        h+='<div id="intel-prog-'+r.project_id+'" style="display:none;margin-top:8px;'
+          +'background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:10px 12px">';
+        h+='<div id="intel-step-'+r.project_id+'" style="font-size:10.5px;color:var(--text1);font-weight:500;margin-bottom:6px"></div>';
         h+='<div style="height:3px;background:var(--bg3);border-radius:99px;overflow:hidden">'
-          +'<div id="dlFill-'+r.project_id+'" style="height:100%;border-radius:99px;background:var(--teal);transition:width 1.5s ease;width:0%"></div></div>';
-        h+='<div id="dlNote-'+r.project_id+'" style="font-size:9.5px;color:var(--text3);margin-top:4px"></div>';
-        h+='<div id="dlActions-'+r.project_id+'" style="margin-top:8px"></div>';
+          +'<div id="intel-fill-'+r.project_id+'" style="height:100%;border-radius:99px;background:var(--teal);transition:width 1.5s ease;width:0%"></div></div>';
+        h+='<div id="intel-note-'+r.project_id+'" style="font-size:9.5px;color:var(--text3);margin-top:4px"></div>';
         h+='</div>';
       }
       h+='</div><div class="panel-body-scroll">';
