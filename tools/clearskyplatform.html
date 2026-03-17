@@ -1645,8 +1645,9 @@ function selBuyerRow(name){openBuyer(name);}
 function renderBuyerPanel(name){
   var buyer=BUYER_FILTERED.find(function(b){return b.name===name;})||BUYER_DATA.find(function(b){return b.name===name;});
   if(!buyer){
-    var pd=document.getElementById('vcuPanelDetail');
-    if(pd)pd.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);font-size:12px">Loading...</div>';
+    var els=_panelEls();
+    if(els.empty)els.empty.style.display='none';
+    if(els.detail){els.detail.style.display='flex';els.detail.style.flexDirection='column';els.detail.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);font-size:12px">Loading...</div>';els.detail.style.opacity='1';}
     fetch(API+'/api/primitives/vcu/buyers/'+encodeURIComponent(name))
       .then(function(r){return r.json();})
       .then(function(d){
@@ -1786,7 +1787,7 @@ function renderTopProjectBars(projects,totalRetired){
     var pct=totalRetired>0?Math.round(p.vol/totalRetired*100):0;
     var sharePct=totalRetired>0?((p.vol/totalRetired)*100).toFixed(1):'0';
     var barW=Math.max(pct,3);
-    return '<div class="buyer-row" onclick="safeOpenProject(\''+p.project_id+'\',\'vcu\')" style="cursor:pointer;padding:5px 0" title="Click to view project">'
+    return '<div class="buyer-row" onclick="safeOpenProject(\''+p.project_id+'\')" style="cursor:pointer;padding:5px 0" title="Click to view project">'
       +'<div class="b-name" title="'+esc(p.name||p.project_id)+'" style="font-size:11.5px;color:var(--teal);text-decoration:underline;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">'+esc(p.name||p.project_id)+'</div>'
       +'<div class="b-bar" style="flex:1;height:8px;background:var(--bg4);border-radius:4px;margin:0 6px"><div style="height:100%;border-radius:4px;background:var(--teal);width:'+barW+'%"></div></div>'
       +'<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text2);min-width:70px;text-align:right"><span style="font-weight:600">'+fmtV(String(p.vol))+'</span><span style="font-size:8.5px;color:var(--text3);margin-left:3px">'+sharePct+'%</span></div>'
@@ -1810,7 +1811,7 @@ function fetchActivityProjects(buyerName,year,containerId){
       });
       yearProjects.sort(function(a,b){return b.qty-a.qty;});
       var html=yearProjects.length
-        ?yearProjects.slice(0,3).map(function(p){return '<span onclick="safeOpenProject(\''+esc(p.id)+'\',\'vcu\')" style="cursor:pointer;color:var(--teal);text-decoration:underline;font-size:10px;margin-right:8px" title="'+esc(p.name||p.id)+' \u2014 '+fmtV(String(p.qty))+'">'+esc((p.name||p.id).toString().slice(0,25))+'</span>';}).join(' \u00B7 ')
+        ?yearProjects.slice(0,3).map(function(p){return '<span onclick="safeOpenProject(\''+esc(p.id)+'\')" style="cursor:pointer;color:var(--teal);text-decoration:underline;font-size:10px;margin-right:8px" title="'+esc(p.name||p.id)+' \u2014 '+fmtV(String(p.qty))+'">'+esc((p.name||p.id).toString().slice(0,25))+'</span>';}).join(' \u00B7 ')
          +(yearProjects.length>3?'<span style="color:var(--text3);font-size:9.5px">+'+(yearProjects.length-3)+' more</span>':'')
         :'<span style="color:var(--text3);font-size:10px">No projects identified</span>';
       activityProjectCache[ckey]=html;
@@ -1829,8 +1830,9 @@ function fetchAndRenderYearlyChart(name,containerId){
 }
 
 function renderBuyerPanelData(b){
-  document.getElementById('vcuPanelEmpty').style.display='none';
-  var pd=document.getElementById('vcuPanelDetail');
+  var els=_panelEls();
+  if(els.empty)els.empty.style.display='none';
+  var pd=els.detail;
   pd.style.display='flex';pd.style.flexDirection='column';
 
   var name=b.name;
@@ -2593,7 +2595,7 @@ function vintageBar(breakdown){
     return '<div title="'+b.year+': '+fmtV(String(b.outstanding||0))+' outstanding" style="flex:1;height:'+h+'%;background:linear-gradient(to top,var(--teal) '+outPct+'%,var(--bg4) '+outPct+'%);border-radius:1px;min-width:4px"></div>';
   }).join('')+'</div>';
 }
-function safeOpenProject(id,context){var sid=String(id).replace(/^VCS-?/i,'');openProject(sid,context||'vcu');}
+function safeOpenProject(id){var sid=String(id).replace(/^VCS-?/i,'');openProject(sid,_isVCU()?'vcu':'browser');}
 function selRow_fromRec(id){openProjectCard(id);}
 function openProjectCard(id){
   if(VCU_SUB==='buyer'||VCU_SUB==='map'){
