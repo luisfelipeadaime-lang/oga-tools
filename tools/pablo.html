@@ -2760,7 +2760,7 @@ function hsDisplayName(raw) {
   return CLEARSKY_CONTACTS[key] || CLEARSKY_CONTACTS[key.split('.')[0]] || raw;
 }
 function isLuisThread(thread) {
-  return thread.involves_luis === 1 || thread.involves_luis === true;
+  return parseInt(thread.involves_luis) === 1;
 }
 let hsThreads = [], hsTasks = [], hsActiveThread = null, hsTaskView = 'list', hsSyncedAt = null, hsMineOnly = false;
 
@@ -2869,16 +2869,20 @@ function hsRenderThreadList(threads) {
     const active = hsActiveThread === t.id ? 'background:var(--teal-glow);border-color:rgba(0,200,150,.18)' : '';
     const dot = t.has_unread ? '<div style="width:6px;height:6px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:4px"></div>' : '<div style="width:6px;flex-shrink:0"></div>';
     const dt = t.last_email_at ? new Date(t.last_email_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
-    const dispName = t.involves_luis
+    const dispName = (t.luis_role === 'sender')
       ? (t.contact_name || t.contact_email || 'Unknown')
       : (t.sender_name || hsDisplayName(t.sender_email || t.contact_email || 'Unknown'));
     const bold = t.has_unread ? 'font-weight:700' : '';
+    const roleBadge = t.luis_role === 'sender' ? '<span style="font-size:7.5px;background:rgba(0,200,150,.12);color:var(--teal);padding:1px 4px;border-radius:2px;margin-left:4px">sent</span>'
+      : t.luis_role === 'recipient' ? '<span style="font-size:7.5px;background:rgba(100,149,237,.12);color:var(--blue);padding:1px 4px;border-radius:2px;margin-left:4px">received</span>'
+      : t.luis_role === 'both' ? '<span style="font-size:7.5px;background:rgba(255,193,7,.12);color:var(--amber);padding:1px 4px;border-radius:2px;margin-left:4px">CC\u2019d</span>'
+      : '';
     const projBadge = t.pablo_project_id ? `<span style="font-size:8px;background:var(--teal-glow);color:var(--teal);padding:1px 4px;border-radius:2px;margin-left:4px">linked</span>` : '';
     return `<div onclick="hsSelectThread('${t.id}')" style="display:flex;gap:6px;padding:8px;border:1px solid var(--border1);border-radius:5px;margin-bottom:3px;cursor:pointer;${active}">
       ${dot}
       <div style="flex:1;min-width:0">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
-          <span style="font-size:11px;color:var(--txt0);${bold};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${hsEsc(dispName)}</span>
+          <span style="font-size:11px;color:var(--txt0);${bold};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${hsEsc(dispName)}${roleBadge}</span>
           <span style="font-size:9px;color:var(--txt3);flex-shrink:0;margin-left:4px">${dt}</span>
         </div>
         <div style="font-size:10px;color:var(--txt1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${hsEsc(t.subject || '(no subject)')}${projBadge}</div>
@@ -2928,6 +2932,10 @@ async function hsSelectThread(threadId) {
         '<div style="font-size:11.5px;color:var(--txt1);line-height:1.55;margin-top:8px;white-space:pre-wrap;word-break:break-word">' + hsEsc(e.body || '(empty)') + '</div>' +
         '</div>';
     }).join('');
+    // QA debug row — permanent infrastructure
+    const threadMeta = hsThreads.find(t => t.id === threadId);
+    const recipSnip = (threadMeta?.recipients_json || '').substring(0, 80);
+    body.innerHTML += `<div style="opacity:0.4;font-size:9px;font-family:monospace;color:var(--txt3);padding:8px 4px;margin-top:6px;border-top:1px solid var(--border1)">involves_luis=${threadMeta?.involves_luis ?? '?'} | luis_role=${threadMeta?.luis_role ?? 'null'} | recipients=${hsEsc(recipSnip)}${recipSnip.length >= 80 ? '...' : ''}</div>`;
     acts.style.display = 'flex';
     const hsLink = document.getElementById('hs-hubspot-link');
     if (data.contact_email) {
