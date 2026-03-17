@@ -966,7 +966,7 @@ function renderPanel(id){
   if(!row){
     var _isV=document.getElementById('page-vcu').classList.contains('active');
     var _pd=_isV?document.getElementById('vcuPanelDetail'):document.getElementById('panelDetail');
-    if(_pd)_pd.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);font-size:12px">Loading project...</div>';
+    if(_pd){_pd.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);font-size:12px">Loading project...</div>';_pd.style.opacity='1';}
     var _rc=0;var _pi=setInterval(function(){
       _rc++;for(var j=0;j<ALL.length;j++){if(ALL[j].id===id){clearInterval(_pi);renderPanel(id);return;}}
       if(_rc>20){clearInterval(_pi);showPanelError('Project '+id+' not found');}
@@ -1062,6 +1062,7 @@ function renderPanelHTML(row){
     +'</div>'
     +'<div class="pb" id="pt-ov">'+ovHtml+'</div>'
     +'<div class="pb" id="pt-vcu" style="display:none">'+vcuHtml+'</div>';
+  pd.style.opacity='1';
 }
 
 /* INTELLIGENCE REPORT */
@@ -1264,6 +1265,7 @@ function renderVCUPanel(id){
   var pd=document.getElementById('vcuPanelDetail');
   pd.style.display='flex';pd.style.flexDirection='column';
   pd.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);font-size:12px">Loading...</div>';
+  pd.style.opacity='1';
 
   fetch(API+'/api/primitives/vcu/project/'+id)
     .then(function(res){return res.json();})
