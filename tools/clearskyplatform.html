@@ -1010,7 +1010,9 @@ function renderPanelHTML(row){
     var rrDesc=vcu.rr>=80?'High demand \u2014 most credits have been retired':vcu.rr>=50?'Moderate retirement rate':'Low retirement rate \u2014 most credits still available';
     var bmax=vcu.buyers&&vcu.buyers.length?vcu.buyers[0][1]:1;
     var buyers=vcu.buyers?vcu.buyers.map(function(b){
-      return '<div class="buyer-row"><div class="b-name" title="'+b[0]+'">'+b[0]+'</div>'
+      var bn=esc(b[0]).replace(/'/g,"\\'");
+      return '<div class="buyer-row"><div class="b-name" title="'+esc(b[0])+'">'
+        +'<span onclick="openBuyer(\''+bn+'\')" style="cursor:pointer;color:var(--teal)" onmouseover="this.style.textDecoration=\'underline\'" onmouseout="this.style.textDecoration=\'none\'">'+esc(b[0])+'</span></div>'
         +'<div class="b-bar"><div class="b-fill" style="width:'+Math.round(b[1]/bmax*100)+'%"></div></div>'
         +'<div class="b-vol">'+fmtV(String(b[1]))+'</div></div>';
     }).join(''):'';
@@ -1784,7 +1786,7 @@ function renderTopProjectBars(projects,totalRetired){
     var pct=totalRetired>0?Math.round(p.vol/totalRetired*100):0;
     var sharePct=totalRetired>0?((p.vol/totalRetired)*100).toFixed(1):'0';
     var barW=Math.max(pct,3);
-    return '<div class="buyer-row" onclick="openProjectCard(\''+p.project_id+'\')" style="cursor:pointer;padding:5px 0" title="Click to view project">'
+    return '<div class="buyer-row" onclick="safeOpenProject(\''+p.project_id+'\',\'vcu\')" style="cursor:pointer;padding:5px 0" title="Click to view project">'
       +'<div class="b-name" title="'+esc(p.name||p.project_id)+'" style="font-size:11.5px;color:var(--teal);text-decoration:underline;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">'+esc(p.name||p.project_id)+'</div>'
       +'<div class="b-bar" style="flex:1;height:8px;background:var(--bg4);border-radius:4px;margin:0 6px"><div style="height:100%;border-radius:4px;background:var(--teal);width:'+barW+'%"></div></div>'
       +'<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text2);min-width:70px;text-align:right"><span style="font-weight:600">'+fmtV(String(p.vol))+'</span><span style="font-size:8.5px;color:var(--text3);margin-left:3px">'+sharePct+'%</span></div>'
@@ -1808,7 +1810,7 @@ function fetchActivityProjects(buyerName,year,containerId){
       });
       yearProjects.sort(function(a,b){return b.qty-a.qty;});
       var html=yearProjects.length
-        ?yearProjects.slice(0,3).map(function(p){return '<span onclick="gotoProject(\''+esc(p.id)+'\')" style="cursor:pointer;color:var(--teal);text-decoration:underline;font-size:10px;margin-right:8px" title="'+esc(p.name||p.id)+' \u2014 '+fmtV(String(p.qty))+'">'+esc((p.name||p.id).toString().slice(0,25))+'</span>';}).join(' \u00B7 ')
+        ?yearProjects.slice(0,3).map(function(p){return '<span onclick="safeOpenProject(\''+esc(p.id)+'\',\'vcu\')" style="cursor:pointer;color:var(--teal);text-decoration:underline;font-size:10px;margin-right:8px" title="'+esc(p.name||p.id)+' \u2014 '+fmtV(String(p.qty))+'">'+esc((p.name||p.id).toString().slice(0,25))+'</span>';}).join(' \u00B7 ')
          +(yearProjects.length>3?'<span style="color:var(--text3);font-size:9.5px">+'+(yearProjects.length-3)+' more</span>':'')
         :'<span style="color:var(--text3);font-size:10px">No projects identified</span>';
       activityProjectCache[ckey]=html;
@@ -2591,6 +2593,7 @@ function vintageBar(breakdown){
     return '<div title="'+b.year+': '+fmtV(String(b.outstanding||0))+' outstanding" style="flex:1;height:'+h+'%;background:linear-gradient(to top,var(--teal) '+outPct+'%,var(--bg4) '+outPct+'%);border-radius:1px;min-width:4px"></div>';
   }).join('')+'</div>';
 }
+function safeOpenProject(id,context){var sid=String(id).replace(/^VCS-?/i,'');openProject(sid,context||'vcu');}
 function selRow_fromRec(id){openProjectCard(id);}
 function openProjectCard(id){
   if(VCU_SUB==='buyer'||VCU_SUB==='map'){
