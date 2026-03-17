@@ -494,3 +494,77 @@ Searches by `company_name LIKE %param%` OR `sender_email LIKE %param%`. Limit 20
 | 2026-03-17 | pablo.html thread_type grouping | Mine view sorts: commercial (teal badge) → unknown → operational → internal (dimmed 45%, gray badge). `isLuisThread()` now type-safe (handles int/bool/string). QA debug row shows thread_type. Server-side `thread_type` replaces client-side recipients_json parsing. |
 | 2026-03-17 | Thread classification engine (v79x) | `classifyThreadBySubject()` — 9-category rules-based classifier (commercial_active/prospecting/legal_ops/financial_ops/project_ops/market_intel/admin/internal/noise). `tagProject()` links threads to ClearSky portfolio (amoedo/bosquia/naturebrain/marakoa/elysium/redenor/enersol/aperam). Claude Haiku fallback for ambiguous `involves_luis=1` threads (50 processed, 67 errors from worker timeout). `POST /api/hubspot/classify-threads` backfilled all 1,128 threads. D1 columns added: `project_tag`, `classification_method`, `classification_confidence`. Distribution: unknown=386 (34.2%), internal=276 (24.5%), commercial_prospecting=210 (18.6%), commercial_active=108 (9.6%), legal_ops=46 (4.1%), project_ops=42 (3.7%), market_intel=36 (3.2%), financial_ops=11 (1.0%), noise=8 (0.7%), admin=5 (0.4%). Project tags: amoedo=17, naturebrain=10, aperam=10, bosquia=7, enersol=6, elysium=6, marakoa=2, redenor=1. Worker: v79x-thread-classify. |
 | 2026-03-17 | Commercial intelligence endpoints (v79x) | `GET /api/hubspot/commercial-activity` — by_month + by_counterparty + by_project for revenues.html. `GET /api/hubspot/buyer-threads/:company` — thread list for clearskyplatform buyer panel. Both endpoints tested and working. 116 commercial threads involving Luis, 25 unique counterparties, 8 projects tagged. |
+| 2026-03-17 | Architecture decision + Primitive 3 spec | pablo.html is internal OS shell. Standing Rules #25-27 added. Tool fragmentation root cause documented. HubSpot Primitive 3 spec written (enrich-contacts + rep-summary endpoints). |
+
+---
+
+## 11. Commercial Tools — Current Wiring State
+
+### revenue.html (Revenue Command Center)
+- **Endpoint calls:** /api/hubspot/contacts/active|all, /api/hubspot/companies/all, /api/hubspot/deals/all, /api/hubspot/owners, /api/hubspot/sync, /api/hubspot/contacts/:id/engagements, /api/revenue/deals, /api/revenue/projects, /api/revenue/buyers, /api/revenue/extract-intelligence, /api/revenue/exclude-contact, /api/revenue/reassign-contact
+- **KPI cards use:** `hubspot_contacts_cache.engagement_score`, `activity_count_30d`, `has_inbound_reply`
+- **Active Conversations** = contacts with two-way email in 14d (raw HubSpot activity, no thread_type filter)
+- **Rep ownership** = hubspot_owners_cache.owner_id on contact record → color-coded badges (Ana=purple, Carolina=blue, Luis=gold, Brian=green)
+- **v79x endpoints NOT yet called:** /api/hubspot/commercial-activity, /api/hubspot/buyer-threads/:company
+- **Data freshness:** sync last ran ~2026-02-25 (19d stale as of 2026-03-17). Root cause: unknown — nightly cron (0 2 * * *) may be failing silently or HubSpot token expired.
+
+### dashboard.html (Sales Command Center = dashboard-v3.html)
+- **Endpoint calls:** /api/revenue/deals, /api/revenue/projects, /api/revenue/buyers
+- Deal pipeline and weekly call targets per rep
+- Thread classification NOT wired
+- Candidate for absorption into pablo.html as a tab
+
+### What v79x unlocked (not yet consumed by revenue/dashboard):
+- 108 commercial_active + 210 commercial_prospecting threads in D1
+- 25 unique commercial counterparties via /api/hubspot/commercial-activity
+- 59 threads tagged to portfolio projects
+- Per-rep attribution partially derivable from sender_email patterns
+
+---
+
+## 12. HubSpot Primitive 3 — Thread→Contact Enrichment (NEXT BUILD)
+
+### Goal
+Bridge v79x thread classifications into revenue.html and dashboard.html KPIs. Make "Active Conversations" mean commercial_active threads, not raw HubSpot activity counts.
+
+### New D1 columns on hubspot_contacts_cache:
+- `commercial_thread_count` INTEGER DEFAULT 0 — count of commercial_active + commercial_prospecting threads involving this contact
+- `last_commercial_touch` TEXT — date of most recent commercial_active/prospecting thread
+- `assigned_rep_email` TEXT — most frequent ClearSky sender_email in this contact's threads (inferred rep ownership)
+- `contact_project_tag` TEXT — project_tag from most recent tagged thread for this contact
+
+### New Worker endpoints:
+
+**POST /api/hubspot/enrich-contacts**
+- Walks all hubspot_threads grouped by contact_email (matched to hubspot_contacts_cache.email)
+- Counts thread_type IN ('commercial_active','commercial_prospecting') per contact
+- Finds last thread_date where thread_type is commercial
+- Infers assigned_rep_email: most frequent sender_email from CLEARSKY_TEAM domains across contact's threads
+- Extracts project_tag from most recent tagged thread
+- Writes back to hubspot_contacts_cache
+- Returns: `{enriched: N, skipped: N, errors: N}`
+
+**GET /api/hubspot/rep-summary?days=30**
+- Groups hubspot_threads by inferred rep (sender_email matching clearskyltd.com, leadingcarbon.com)
+- Filters to last N days via thread_date
+- Returns per rep: `{email, name, commercial_active, commercial_prospecting, market_intel, legal_ops, project_ops, unique_counterparties, last_activity}`
+- CLEARSKY_TEAM map: luis.adaime→Luis, ana.avramovic→Ana, carolina.martinez→Carolina, brian.katz→Brian, emmanuel.mendoza→Emmanuel
+
+### Frontend changes (after endpoints built):
+
+**revenue.html:**
+- Active Conversations card: reads `commercial_thread_count` from enriched contacts instead of raw activity
+- Engaged 90D card: contacts with `last_commercial_touch` within 90 days
+- Rep filter pills (Ana/Carolina/Luis/Brian) call /api/hubspot/rep-summary and filter contact list by assigned_rep_email
+
+**dashboard.html:**
+- Weekly Call Targets panel: reads /api/hubspot/rep-summary?days=7 for live rep activity vs targets
+- Replace hardcoded target numbers with real thread counts
+
+### Build sequence:
+1. Diagnose sync staleness (check cron health, HubSpot token) — prerequisite
+2. Build POST /api/hubspot/enrich-contacts in worker.js
+3. Build GET /api/hubspot/rep-summary in worker.js
+4. Wire into revenue.html KPI cards
+5. Wire into dashboard.html call targets
+6. Update pablo.html Mine view to show assigned_rep_email on thread rows
