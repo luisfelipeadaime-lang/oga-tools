@@ -1784,11 +1784,12 @@ function renderDealRadar(){
 
 function renderTopProjectBars(projects,totalRetired){
   return projects.slice(0,5).map(function(p){
+    var pid=p.project_id||p.id||'';
     var pct=totalRetired>0?Math.round(p.vol/totalRetired*100):0;
     var sharePct=totalRetired>0?((p.vol/totalRetired)*100).toFixed(1):'0';
     var barW=Math.max(pct,3);
-    return '<div class="buyer-row" onclick="safeOpenProject(\''+p.project_id+'\')" style="cursor:pointer;padding:5px 0" title="Click to view project">'
-      +'<div class="b-name" title="'+esc(p.name||p.project_id)+'" style="font-size:11.5px;color:var(--teal);text-decoration:underline;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">'+esc(p.name||p.project_id)+'</div>'
+    return '<div class="buyer-row" onclick="safeOpenProject(\''+pid+'\')" style="cursor:pointer;padding:5px 0" title="Click to view project">'
+      +'<div class="b-name" title="'+esc(p.name||pid)+'" style="font-size:11.5px;color:var(--teal);text-decoration:underline;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">'+esc(p.name||pid)+'</div>'
       +'<div class="b-bar" style="flex:1;height:8px;background:var(--bg4);border-radius:4px;margin:0 6px"><div style="height:100%;border-radius:4px;background:var(--teal);width:'+barW+'%"></div></div>'
       +'<div style="font-family:\'DM Mono\',monospace;font-size:10px;color:var(--text2);min-width:70px;text-align:right"><span style="font-weight:600">'+fmtV(String(p.vol))+'</span><span style="font-size:8.5px;color:var(--text3);margin-left:3px">'+sharePct+'%</span></div>'
       +'</div>';
@@ -2595,7 +2596,11 @@ function vintageBar(breakdown){
     return '<div title="'+b.year+': '+fmtV(String(b.outstanding||0))+' outstanding" style="flex:1;height:'+h+'%;background:linear-gradient(to top,var(--teal) '+outPct+'%,var(--bg4) '+outPct+'%);border-radius:1px;min-width:4px"></div>';
   }).join('')+'</div>';
 }
-function safeOpenProject(id){var sid=String(id).replace(/^VCS-?/i,'');openProject(sid,_isVCU()?'vcu':'browser');}
+function safeOpenProject(id){
+  var pid=String(id||'').replace(/^VCS-?/i,'').trim();
+  if(!pid||pid==='undefined'||pid==='null')return;
+  openProject(pid,_isVCU()?'vcu':'browser');
+}
 function selRow_fromRec(id){openProjectCard(id);}
 function openProjectCard(id){
   if(VCU_SUB==='buyer'||VCU_SUB==='map'){
@@ -2676,7 +2681,7 @@ function exportCSV(type,context){
     filename='clearsky_buyers_'+new Date().toISOString().slice(0,10)+'.csv';
   }else if(type==='buyer_profile'&&context){
     headers=['Project ID','Project Name','Methodology','Meth Label','Country','Vol Retired'];
-    rows=(context.projects||[]).map(function(p){return[p.project_id,'"'+esc(p.name||'')+'"','"'+(p.methodology||'')+'"','"'+methPlainFE(p.methodology||'')+'"','"'+(p.country||'')+'"',p.vol||0];});
+    rows=(context.projects||[]).map(function(p){return[p.project_id||p.id,'"'+esc(p.name||'')+'"','"'+(p.methodology||'')+'"','"'+methPlainFE(p.methodology||'')+'"','"'+(p.country||'')+'"',p.vol||0];});
     filename='clearsky_buyer_'+(context.name||'').replace(/[^a-z0-9]/gi,'_').slice(0,20)+'_'+new Date().toISOString().slice(0,10)+'.csv';
   }else if(type==='demand_matrix'){
     if(!DEMAND_MATRIX)return;
