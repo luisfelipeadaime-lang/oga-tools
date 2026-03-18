@@ -266,6 +266,31 @@ td{padding:5px 8px;vertical-align:middle}
   .app{grid-template-rows:auto auto 1fr}
   .page.active{height:calc(100vh - 82px)}
 }
+/* CRM tab (v79z3) */
+.crm-bar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.crm-search{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:5px 9px;color:var(--text0);font-size:11px;font-family:inherit;outline:none;width:200px}
+.crm-search:focus{border-color:var(--teal)}
+.crm-filter{background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text1);font-size:10.5px;font-family:inherit;cursor:pointer}
+.crm-filter.on{border-color:var(--teal);color:var(--teal)}
+.crm-list{overflow-y:auto;flex:1;padding:0}
+.crm-co{border-bottom:1px solid var(--border)}
+.crm-co-hdr{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;transition:background .1s}
+.crm-co-hdr:hover{background:var(--bg3)}
+.crm-co-name{font-size:12px;font-weight:600;color:var(--text0);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crm-co-meta{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace}
+.crm-co-body{display:none;padding:0 12px 8px 28px}
+.crm-co.open .crm-co-body{display:block}
+.crm-contact{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(99,130,191,.05);cursor:pointer;transition:background .1s}
+.crm-contact:hover{background:var(--bg3);border-radius:4px}
+.crm-contact-name{font-size:11.5px;font-weight:500;color:var(--text0);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crm-contact-meta{font-size:10px;color:var(--text3)}
+.crm-idle{font-size:9px;padding:2px 6px;border-radius:99px;font-family:'DM Mono',monospace}
+.crm-idle.fresh{background:rgba(74,222,128,.1);color:var(--green)}
+.crm-idle.warm{background:rgba(251,191,36,.1);color:var(--amber)}
+.crm-idle.cold{background:rgba(248,113,113,.1);color:var(--red,#f87171)}
+.crm-deal-badge{font-size:9px;padding:2px 6px;border-radius:99px;background:rgba(96,165,250,.1);color:var(--blue);font-family:'DM Mono',monospace}
+.crm-rep{font-size:9px;padding:2px 6px;border-radius:99px;background:var(--bg3);color:var(--text2)}
+.crm-sel{background:var(--bg4) !important}
 /* VCU Projects tab — div-based table */
 .topstrip{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-bottom:1px solid var(--border)}
 .ts-left{display:flex;align-items:center;gap:8px}
@@ -318,12 +343,41 @@ td{padding:5px 8px;vertical-align:middle}
 
 <!-- PAGE TABS -->
 <div class="page-tabs">
-  <div class="ptab active" onclick="showPage('vcu')">Buyer Intelligence <span class="ptab-badge" id="vcu-badge">2,116</span></div>
+  <div class="ptab active" onclick="showPage('crm')">CRM <span class="ptab-badge" id="crm-badge">&middot;&middot;&middot;</span></div>
+  <div class="ptab" onclick="showPage('vcu')">Buyer Intelligence <span class="ptab-badge" id="vcu-badge">2,116</span></div>
   <div class="ptab" onclick="showPage('browser')">Project Browser <span class="ptab-badge" id="pb-badge">&middot;&middot;&middot;</span></div>
   <div class="ptab dim">RFP Tracker <span class="ptab-badge">1</span></div>
 </div>
 
 <button id="mobileFilterBtn" onclick="toggleMobileSidebar()" style="display:none;position:fixed;bottom:20px;right:20px;z-index:50;padding:10px 16px;background:var(--teal);color:var(--bg0);border:none;border-radius:99px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.3)">Filters</button>
+
+<!-- CRM (v79z3) -->
+<div class="page active" id="page-crm">
+  <div class="main" style="display:flex;flex-direction:column;overflow:hidden">
+    <div class="crm-bar">
+      <input class="crm-search" id="crmSearch" placeholder="Search company or contact..." oninput="filterCRM()">
+      <div class="crm-filter on" id="crmFAll" onclick="setCRMStatus('all')">All</div>
+      <div class="crm-filter" id="crmFActive" onclick="setCRMStatus('active')">Active</div>
+      <div class="crm-filter" id="crmFDeal" onclick="setCRMStatus('deal')">With Deals</div>
+      <div class="crm-filter" id="crmFIdle" onclick="setCRMStatus('idle')">Idle 30d+</div>
+      <select class="crm-filter" id="crmOwner" onchange="setCRMOwner(this.value)" style="min-width:80px">
+        <option value="">All reps</option>
+      </select>
+      <span style="font-size:10px;color:var(--text3);margin-left:auto" id="crmCount"></span>
+    </div>
+    <div class="crm-list" id="crmList"></div>
+  </div>
+  <div class="panel" id="crmPanel">
+    <div class="panel-header" id="crmPanelHeader">
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="ph-btn" onclick="closePanel()" title="Close">&times;</button>
+        <span class="panel-title" id="crmPanelTitle"></span>
+      </div>
+      <button class="ph-btn" onclick="togglePanelExpand()" title="Expand">&#x26F6;</button>
+    </div>
+    <div class="panel-detail" id="crmPanelDetail"></div>
+  </div>
+</div>
 
 <!-- PROJECT BROWSER -->
 <div class="page" id="page-browser">
@@ -433,7 +487,7 @@ td{padding:5px 8px;vertical-align:middle}
 </div>
 
 <!-- VCU INTELLIGENCE -->
-<div class="page active" id="page-vcu">
+<div class="page" id="page-vcu">
 
 <!-- VCU SIDEBAR -->
 <div class="sidebar">
@@ -662,13 +716,14 @@ var API='https://api-tools.oga.earth';
 var IS_EXTERNAL=new URLSearchParams(window.location.search).get('mode')==='external';
 
 function showPage(pg){
-  /* v79u: close panel on page switch */
+  /* v79z3: close panel on page switch */
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active','panel-open','panel-expanded');});
   PANEL_OPEN=false;PANEL_EXPANDED=false;
   document.querySelectorAll('.ptab').forEach(function(t){t.classList.remove('active');});
   var pages=document.querySelectorAll('.ptab');
-  if(pg==='vcu'){document.getElementById('page-vcu').classList.add('active');pages[0].classList.add('active');if(!window.vcuLoaded)loadVCUPage();}
-  if(pg==='browser'){document.getElementById('page-browser').classList.add('active');pages[1].classList.add('active');if(!window.browserLoaded){window.browserLoaded=false;loadData();}}
+  if(pg==='crm'){document.getElementById('page-crm').classList.add('active');pages[0].classList.add('active');if(CRM_DATA&&Object.keys(CRM_DATA).length)renderCRM();}
+  if(pg==='vcu'){document.getElementById('page-vcu').classList.add('active');pages[1].classList.add('active');if(!window.vcuLoaded)loadVCUPage();}
+  if(pg==='browser'){document.getElementById('page-browser').classList.add('active');pages[2].classList.add('active');if(!window.browserLoaded){window.browserLoaded=false;loadData();}}
 }
 
 /* HELPERS */
@@ -680,7 +735,7 @@ function sCls(s){return s==='Registered'?'cg':s.indexOf('validation')>=0?'ca':s.
 function dotCol(s){return s==='Registered'?'var(--green)':s.indexOf('validation')>=0?'var(--amber)':s.indexOf('development')>=0?'var(--blue)':'var(--text3)';}
 function cpCls(d){if(!d)return'tcp';var dt=new Date(d),now=new Date(),y27=new Date('2027-06-30');if(dt<now)return'tcp exd';if(dt<y27)return'tcp exp';return'tcp';}
 /* PRELOAD STATE (v79t) */
-var PRELOAD={registry:false,buyers:false,vcuAgg:false,demandMatrix:false,recs:false,market:false};
+var PRELOAD={registry:false,buyers:false,vcuAgg:false,demandMatrix:false,recs:false,market:false,crm:false};
 var BUYER_YEARLY_CACHE={};
 var recCache={};
 function checkAllLoaded(){
@@ -1739,6 +1794,7 @@ function renderDealRadar(){
       +'<span style="font-size:9.5px;padding:2px 7px;border-radius:99px;background:var(--teal-dim);color:var(--teal);border:1px solid rgba(45,212,191,.2)">'+esc(cat)+'</span>'
       +'<span style="font-size:9.5px;color:var(--text3)">'+b.project_count+' projects</span>'
       +(csMatch?'<span style="font-size:9px;padding:2px 7px;border-radius:99px;background:rgba(96,165,250,.1);color:var(--blue);border:1px solid rgba(96,165,250,.2)">\u2605 '+csMatch+' ClearSky match'+(csMatch>1?'es':'')+'</span>':'')
+      +(function(){var cc=getCRMData(b.name);return cc?'<span style="font-size:9px;padding:2px 7px;border-radius:99px;background:rgba(45,212,191,.1);color:var(--teal);border:1px solid rgba(45,212,191,.2)">CRM \u00B7 '+cc.contacts.length+'c'+(cc.has_deal?' \u00B7 $'+fmtDeal(cc.deal_value):'')+'</span>':'';}())
       +'</div>'
       +'</div>';
   }
@@ -1927,6 +1983,27 @@ function renderBuyerPanelData(b){
       +'</div>';
   }).join('');
 
+  /* CRM SECTION (v79z3) — inject HubSpot CRM data if available */
+  var crmHtml='';
+  var crmCo=getCRMData(name);
+  if(crmCo){
+    var cTotal=crmCo.contacts.length;
+    var cThreads=crmCo.total_threads;
+    var cIdleDays=crmCo.max_idle_days;
+    var cReps={};
+    crmCo.contacts.forEach(function(c){var r=repName(c.assigned_rep_email||'')||repName(c.owner_id||'');if(r&&r.indexOf('@')<0)cReps[r]=1;});
+    var repList=Object.keys(cReps).join(', ')||'Unassigned';
+    crmHtml='<div style="margin-bottom:14px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:8px">'
+      +'<div style="font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--teal);margin-bottom:6px">ClearSky CRM</div>'
+      +'<div style="display:flex;gap:12px;flex-wrap:wrap">'
+      +'<div><span style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700;color:var(--text0)">'+cTotal+'</span><span style="font-size:10px;color:var(--text3);margin-left:4px">contacts</span></div>'
+      +'<div><span style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700;color:var(--text0)">'+cThreads+'</span><span style="font-size:10px;color:var(--text3);margin-left:4px">threads</span></div>'
+      +(crmCo.has_deal?'<div><span style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700;color:var(--blue)">$'+fmtDeal(crmCo.deal_value)+'</span><span style="font-size:10px;color:var(--text3);margin-left:4px">pipeline</span></div>':'')
+      +'</div>'
+      +'<div style="margin-top:6px;font-size:10px;color:var(--text2)">Rep: '+esc(repList)+' \u00B7 Last touch: '+(cIdleDays<=0?'Today':cIdleDays+'d ago')+'</div>'
+      +'</div>';
+  }
+
   pd.innerHTML=
     '<div class="panel-body-scroll" style="flex:1;overflow-y:auto;padding:14px 16px">'
     /* BUYER NAME + STATUS */
@@ -1939,6 +2016,8 @@ function renderBuyerPanelData(b){
     +'</div>'
     /* DORMANT WARNING */
     +dormantWarning
+    /* CRM DATA (v79z3) */
+    +crmHtml
     /* WHAT THEY BUY */
     +(!isDormant&&methBarsHtml?'<div style="margin-bottom:14px"><div style="font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">What they buy</div>'+methBarsHtml+'</div>':'')
     /* RECENT ACTIVITY */
@@ -2781,6 +2860,222 @@ function checkScrollIndicator(){
   }else if(existing){existing.classList.add('hidden');}
 }
 
+/* ===== CRM TAB (v79z3) ===== */
+var CRM_DATA={};
+var CRM_STATUS='all';
+var CRM_OWNER='';
+var CRM_SEL={};
+
+function preloadCRM(){
+  fetch(API+'/api/hubspot/contacts-view')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      CRM_DATA={};
+      (d.companies||[]).forEach(function(co){
+        CRM_DATA[co.company]=co;
+      });
+      PRELOAD.crm=true;
+      var badge=document.getElementById('crm-badge');
+      if(badge)badge.textContent=d.total_contacts||0;
+      renderCRM();
+    })
+    .catch(function(e){console.error('CRM preload failed',e);PRELOAD.crm=true;});
+}
+
+function setCRMOwner(v){CRM_OWNER=v;renderCRM();}
+function setCRMStatus(s){
+  CRM_STATUS=s;
+  document.querySelectorAll('.crm-filter[id^="crmF"]').forEach(function(f){f.classList.remove('on');});
+  var el=document.getElementById('crmF'+s.charAt(0).toUpperCase()+s.slice(1));
+  if(el)el.classList.add('on');
+  renderCRM();
+}
+
+function filterCRM(){renderCRM();}
+
+function getCRMVisible(){
+  var q=(document.getElementById('crmSearch')||{}).value||'';
+  q=q.toLowerCase().trim();
+  var all=Object.values(CRM_DATA);
+  return all.filter(function(co){
+    /* status filter */
+    if(CRM_STATUS==='active'&&co.max_idle_days>30)return false;
+    if(CRM_STATUS==='deal'&&!co.has_deal)return false;
+    if(CRM_STATUS==='idle'&&co.max_idle_days<30)return false;
+    /* owner filter */
+    if(CRM_OWNER){
+      var hasOwner=co.contacts.some(function(c){return repName(c.assigned_rep_email||'')===CRM_OWNER||repName(c.owner_id||'')===CRM_OWNER;});
+      if(!hasOwner)return false;
+    }
+    /* text search */
+    if(q){
+      var hay=(co.company+' '+co.contacts.map(function(c){return(c.firstname||'')+' '+(c.lastname||'')+' '+(c.email||'')+' '+(c.jobtitle||'');}).join(' ')).toLowerCase();
+      if(hay.indexOf(q)<0)return false;
+    }
+    return true;
+  });
+}
+
+function repName(v){
+  var REP_NAMES={'82916631':'Luis','30909325':'Ana','31091907':'Carolina','30080717':'Brian','30233968':'Keith','30233941':'Bobbie','30233972':'Bart','31199673':'Emmanuel'};
+  if(REP_NAMES[v])return REP_NAMES[v];
+  /* email-based */
+  var map={'luis.adaime@clearskyltd.com':'Luis','ana.avramovic@clearskyltd.com':'Ana','carolina.martinez@clearskyltd.com':'Carolina','brian.katz@clearskyltd.com':'Brian','emmanuel.mendoza@clearskyltd.com':'Emmanuel','bobbie.armstrong@leadingcarbon.com':'Bobbie','keith.driver@leadingcarbon.com':'Keith','bart.simmons@leadingcarbon.com':'Bart','eamon.doonan@clearskyltd.com':'Eamon'};
+  return map[(v||'').toLowerCase()]||v||'';
+}
+
+function renderCRM(){
+  var list=document.getElementById('crmList');
+  if(!list)return;
+  var visible=getCRMVisible();
+  var countEl=document.getElementById('crmCount');
+  if(countEl)countEl.textContent=visible.length+' companies';
+
+  /* populate owner dropdown once */
+  var ownerSel=document.getElementById('crmOwner');
+  if(ownerSel&&ownerSel.options.length<=1){
+    var reps={};
+    Object.values(CRM_DATA).forEach(function(co){
+      co.contacts.forEach(function(c){
+        var r=repName(c.assigned_rep_email||'')||repName(c.owner_id||'');
+        if(r&&r.indexOf('@')<0)reps[r]=1;
+      });
+    });
+    Object.keys(reps).sort().forEach(function(r){
+      var o=document.createElement('option');o.value=r;o.textContent=r;ownerSel.appendChild(o);
+    });
+  }
+
+  var h='';
+  visible.forEach(function(co){
+    var open=CRM_SEL[co.company]?'open':'';
+    var idleCls=co.max_idle_days<=7?'crm-idle fresh':co.max_idle_days<=30?'crm-idle warm':'crm-idle cold';
+    var idleLabel=co.max_idle_days<=0?'Today':co.max_idle_days+'d';
+    h+='<div class="crm-co '+open+'" id="crm-co-'+esc(co.company).replace(/[^a-zA-Z0-9]/g,'_')+'">'
+      +'<div class="crm-co-hdr" onclick="toggleCRMCo(\''+esc(co.company).replace(/'/g,"\\'")+'\')">'
+      +'<span style="font-size:10px;color:var(--text3);transition:transform .2s;transform:rotate('+(open?'90':'0')+'deg)">\u25B6</span>'
+      +'<span class="crm-co-name">'+esc(co.company)+'</span>'
+      +(co.has_deal?'<span class="crm-deal-badge">$'+fmtDeal(co.deal_value)+'</span>':'')
+      +'<span class="crm-co-meta">'+co.contacts.length+' contacts</span>'
+      +'<span class="crm-co-meta">'+co.total_threads+' threads</span>'
+      +'<span class="'+idleCls+'">'+idleLabel+'</span>'
+      +'</div>'
+      +'<div class="crm-co-body">';
+    co.contacts.forEach(function(c){
+      var name=(c.firstname||'')+' '+(c.lastname||'');name=name.trim()||c.email||'Unknown';
+      var rep=repName(c.assigned_rep_email||'')||repName(c.owner_id||'');
+      var cIdle=c.idle_days<=7?'crm-idle fresh':c.idle_days<=30?'crm-idle warm':'crm-idle cold';
+      h+='<div class="crm-contact" onclick="openBuyerFromCRM(\''+esc(co.company).replace(/'/g,"\\'")+'\')">'
+        +'<span class="crm-contact-name" title="'+esc(c.email||'')+'">'+esc(name)+'</span>'
+        +(c.jobtitle?'<span class="crm-contact-meta">'+esc(c.jobtitle)+'</span>':'')
+        +(rep?'<span class="crm-rep">'+esc(rep)+'</span>':'')
+        +(c.commercial_thread_count?'<span class="crm-co-meta">'+c.commercial_thread_count+' threads</span>':'')
+        +'<span class="'+cIdle+'">'+(c.idle_days<=0?'Today':c.idle_days+'d')+'</span>'
+        +'</div>';
+    });
+    h+='</div></div>';
+  });
+  list.innerHTML=h||'<div style="text-align:center;padding:40px;color:var(--text3);font-size:12px">No contacts match filters</div>';
+}
+
+function fmtDeal(v){if(!v)return'0';var n=parseFloat(v)||0;if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(0)+'K';return n.toFixed(0);}
+
+function toggleCRMCo(name){
+  CRM_SEL[name]=!CRM_SEL[name];
+  var id='crm-co-'+esc(name).replace(/[^a-zA-Z0-9]/g,'_');
+  var el=document.getElementById(id);
+  if(el)el.classList.toggle('open');
+}
+
+function toggleCRMSel(email){
+  /* future: multi-select for list creation */
+}
+
+function openBuyerFromCRM(companyName){
+  /* Try to find buyer in BUYER_DATA by company name match */
+  var match=null;
+  var cn=companyName.toLowerCase().replace(/\s*(ltd|llc|inc|corp|gmbh|sa|srl|plc|limited|co\.|company|group|holdings)\s*/gi,'').trim();
+  if(BUYER_DATA&&BUYER_DATA.length){
+    match=BUYER_DATA.find(function(b){
+      var bn=(b.name||'').toLowerCase().replace(/\s*(ltd|llc|inc|corp|gmbh|sa|srl|plc|limited|co\.|company|group|holdings)\s*/gi,'').trim();
+      return bn===cn||bn.indexOf(cn)>=0||cn.indexOf(bn)>=0;
+    });
+  }
+  if(match){
+    showPage('vcu');
+    setTimeout(function(){openBuyer(match.name);},300);
+  }else{
+    /* No VCU buyer match — show CRM-only panel */
+    var co=CRM_DATA[companyName];
+    if(!co)return;
+    var pg=document.getElementById('page-crm');
+    if(pg){pg.classList.add('panel-open');PANEL_OPEN=true;}
+    var pd=document.getElementById('crmPanelDetail');
+    var pt=document.getElementById('crmPanelTitle');
+    if(pt)pt.textContent=companyName;
+    if(pd){
+      var h='<div style="padding:14px 16px;overflow-y:auto;flex:1">';
+      h+='<div style="font-size:16px;font-weight:700;color:var(--text0);margin-bottom:10px">'+esc(companyName)+'</div>';
+      h+='<div style="font-size:10px;color:var(--text3);margin-bottom:14px">'+co.contacts.length+' contacts \u00B7 '+co.total_threads+' threads'+(co.has_deal?' \u00B7 Deal: $'+fmtDeal(co.deal_value):'')+'</div>';
+      h+='<div style="font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:8px">Contacts</div>';
+      co.contacts.forEach(function(c){
+        var name=(c.firstname||'')+' '+(c.lastname||'');name=name.trim()||c.email||'Unknown';
+        var rep=repName(c.assigned_rep_email||'')||repName(c.owner_id||'');
+        h+='<div style="padding:6px 0;border-bottom:1px solid var(--border)">';
+        h+='<div style="font-size:12px;font-weight:500;color:var(--text0)">'+esc(name)+'</div>';
+        h+='<div style="font-size:10px;color:var(--text3)">'+esc(c.email||'')+(c.jobtitle?' \u00B7 '+esc(c.jobtitle):'')+'</div>';
+        if(rep)h+='<div style="font-size:9.5px;color:var(--text2);margin-top:2px">Rep: '+esc(rep)+'</div>';
+        if(c.commercial_thread_count)h+='<div style="font-size:9.5px;color:var(--text3);margin-top:1px">'+c.commercial_thread_count+' commercial threads</div>';
+        h+='</div>';
+      });
+      h+='</div>';
+      pd.innerHTML=h;
+    }
+  }
+}
+
+function createCRMList(){
+  var name=prompt('List name:');
+  if(!name)return;
+  var emails=[];
+  Object.values(CRM_SEL).forEach(function(v,i){
+    if(v){
+      var co=Object.values(CRM_DATA)[i];
+      if(co)co.contacts.forEach(function(c){if(c.email)emails.push(c.email);});
+    }
+  });
+  if(!emails.length){alert('Select companies first');return;}
+  fetch(API+'/api/hubspot/contact-lists',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,contact_emails:emails})})
+    .then(function(r){return r.json();})
+    .then(function(d){if(d.ok)alert('List "'+name+'" saved ('+emails.length+' contacts)');else alert('Error: '+(d.error||'unknown'));})
+    .catch(function(e){alert('Error: '+e.message);});
+}
+
+function exportCRMCSV(){
+  var visible=getCRMVisible();
+  var rows=[['Company','Contact','Email','Job Title','Rep','Threads','Idle Days','Deal Value']];
+  visible.forEach(function(co){
+    co.contacts.forEach(function(c){
+      var name=(c.firstname||'')+' '+(c.lastname||'');
+      var rep=repName(c.assigned_rep_email||'')||repName(c.owner_id||'');
+      rows.push([co.company,name.trim(),c.email||'',c.jobtitle||'',rep,c.commercial_thread_count||0,c.idle_days||0,co.deal_value||0]);
+    });
+  });
+  var csv=rows.map(function(r){return r.map(function(v){return'"'+String(v).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+  var blob=new Blob([csv],{type:'text/csv'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='crm_export_'+new Date().toISOString().split('T')[0]+'.csv';a.click();
+}
+
+function getCRMData(buyerName){
+  if(!buyerName||!Object.keys(CRM_DATA).length)return null;
+  var bn=buyerName.toLowerCase().replace(/\s*(ltd|llc|inc|corp|gmbh|sa|srl|plc|limited|co\.|company|group|holdings)\s*/gi,'').trim();
+  for(var co in CRM_DATA){
+    var cn=co.toLowerCase().replace(/\s*(ltd|llc|inc|corp|gmbh|sa|srl|plc|limited|co\.|company|group|holdings)\s*/gi,'').trim();
+    if(cn===bn||cn.indexOf(bn)>=0||bn.indexOf(cn)>=0)return CRM_DATA[co];
+  }
+  return null;
+}
+
 /* PRELOAD FUNCTIONS (v79t) */
 function preloadDemandMatrix(){
   fetch(API+'/api/primitives/vcu/demand-matrix-full')
@@ -2799,9 +3094,10 @@ function preloadRecommendations(){
     .catch(function(){});
 }
 
-/* BOOT (v79u: clean nav + 5 parallel loaders) */
+/* BOOT (v79z3: clean nav + 6 parallel loaders) */
 PANEL_OPEN=false;PANEL_EXPANDED=false;
 panelBreadcrumb=[];
+preloadCRM();
 loadData();
 loadVCUPage();
 loadBuyers();
