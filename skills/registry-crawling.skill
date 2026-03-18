@@ -1,0 +1,215 @@
+# SKILL: Registry Crawling Pipeline
+*Portable skill for crawling carbon registries (Verra VCS, Puro.earth, Isometric).*
+*Tested on: clearsky-api Worker, 4,903 Verra projects, 2,116 with VCU data*
+
+## Verra VCS OData API
+```
+POST https://registry.verra.org/uiapi/resource/resource/search?$count=true&$skip=N&$top=N&$filter=...
+Body: {"program":"VCS"}
+Response: { totalCount, value: [{ resourceIdentifier, resourceName, resourceStatusId, country, region, ... }] }
+```
+
+### OData Filter Construction
+```javascript
+function buildVerraFilter(params) {
+  // Verra OData: NO toLower() support. Use eq for exact, contains() for partial.
+  const clauses = [];
+
+  // Status — normalize to exact Verra Title Case strings
+  const STATUS_MAP = {
+    'registered': 'Registered',
+    'under_validation': 'Under validation',
+    'under_development': 'Under development',
+    'registration_requested': 'Registration and verification approval requested'
+  };
+  if (params.status) clauses.push(`resourceStatus eq '${STATUS_MAP[params.status.toLowerCase()] || params.status}'`);
+
+  // Country — exact match, Title Case
+  if (params.country) clauses.push(`country eq '${titleCase(params.country)}'`);
+
+  // Project type — contains match on methodology subcategories
+  if (params.projectType) clauses.push(`contains(protocolSubCategories, '${params.projectType}')`);
+
+  // Name search — contains match
+  if (params.query) clauses.push(`contains(resourceName, '${params.query}')`);
+
+  // Project ID — exact match on resourceIdentifier
+  if (params.project_id) clauses.push(`resourceIdentifier eq ${params.project_id}`);
+
+  return clauses.join(' and ') || null;
+}
+```
+
+**OData Gotchas:**
+- `toLower()` is NOT supported — always use Title Case for country/status
+- `contains()` works for partial string matching
+- `eq` works for exact match (no quotes for numbers)
+- Status values: "Under development", "Under validation", "Registration and verification approval requested", "Registered"
+
+### Pagination
+```javascript
+async function crawlVerra(runId, config, env) {
+  const pageSize = Math.min(config.page_size || 50, 250);
+  let skip = 0, projectsFound = 0;
+  while (projectsFound < maxProjects) {
+    const url = `https://registry.verra.org/uiapi/resource/resource/search?$count=true&$skip=${skip}&$top=${pageSize}&$filter=${filter}`;
+    const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"program":"VCS"}' });
+    const data = await resp.json();
+    // Process data.value array → INSERT into crawl_projects
+    skip += pageSize;
+    if (data.value.length < pageSize) break;
+  }
+}
+```
+
+## Document Classification — 25 patterns
+```javascript
+function classifyVerraDoc(fileName) {
+  const fl = (fileName || '').toLowerCase();
+  // Registry-level documents (15 types)
+  if (/methodology|^vm\d|^ams-|^acm\d/i.test(fl)) return 'core_methodology';
+  if (/validation.*report|vali.*rep/i.test(fl)) return 'validation_report';
+  if (/verification.*report|veri.*rep/i.test(fl)) return 'verification_report';
+  if (/monitoring.*report|monitor.*rep/i.test(fl)) return 'monitoring_report';
+  if (/registration.*request|reg.*req/i.test(fl)) return 'registration_request';
+  if (/issuance.*request|iss.*req/i.test(fl)) return 'issuance_request';
+  if (/issuance.*rep/i.test(fl)) return 'issuance_representation';
+  if (/listing.*rep/i.test(fl)) return 'listing_representation';
+  if (/completion/i.test(fl)) return 'completion_representation';
+  if (/afolu.*pool/i.test(fl)) return 'afolu_pool_description';
+  if (/buffer.*determination/i.test(fl)) return 'buffer_determination';
+  if (/ccb|ccba|sd.*vista/i.test(fl)) return 'ccb_document';
+  if (/stakeholder|consultation/i.test(fl)) return 'stakeholder_consultation';
+  if (/prior.*consideration/i.test(fl)) return 'prior_consideration';
+  if (/withdrawal/i.test(fl)) return 'withdrawal_request';
+
+  // Project-level documents (10 types)
+  if (/proj(ect)?[\s_.-]*desc|^pdd\b|^pd\b.*\d{4}|project.*design/i.test(fl)) return 'project_description';
+  if (/draft.?pdd/i.test(fl)) return 'project_description';
+  // ... etc.
+
+  return 'other_document';
+}
+```
+
+## PD-Only Filter (Project Description documents)
+```javascript
+const PD_PATTERNS = [
+  /proj(ect)?[\s_.-]*desc/i,
+  /\bpdd\b/i,
+  /\bpd\b.*\d{4}/i,
+  /project.*design/i,
+  /design.*document/i,
+  /draft.?pdd/i,
+];
+
+function isPdDocument(fileName) {
+  return PD_PATTERNS.some(p => p.test(fileName || ''));
+}
+```
+
+## D1 Schema
+```sql
+-- crawl_runs: id, registry, status, config(JSON), projects_found, docs_found, created_at, completed_at
+-- crawl_projects: id, crawl_run_id(!), registry, registry_project_id(!), project_name, project_status, country, methodology, created_at
+-- crawl_documents: id, crawl_project_id, crawl_run_id, registry, registry_project_id, filename, file_url, file_size, content_type, r2_key, extracted_markdown, word_count, registry_doc_type, version, document_role, knowledge_doc_id, created_at
+```
+
+**D1 Gotchas:**
+- crawl_projects uses `crawl_run_id` (NOT `run_id`)
+- crawl_projects uses `registry_project_id` (NOT `project_id`)
+- Always deduplicate by registry_id + filename before inserting crawl_documents
+
+## Quality Badges
+```javascript
+function assignQuality(doc) {
+  if (!doc.word_count) return 'pending';  // not yet extracted
+  if (doc.word_count < 50) return 'red';  // likely failed extraction
+  if (doc.word_count < 500) return 'amber'; // may be partial
+  if (hasBinaryGarbage(doc.extracted_markdown)) return 'red';
+  return 'green';  // good extraction
+}
+// 6 states: pending, green, amber, red, error, skip, boundary
+```
+
+## Geographic File Handling
+```javascript
+const BOUNDARY_EXTS = ['kml', 'kmz', 'shp', 'dbf', 'prj', 'shx', 'geojson', 'gpx'];
+const SKIP_EXTS = ['zip', 'gdb', 'dwg', 'dxf'];
+
+// Geographic files → project_boundaries table (not extraction candidates)
+// Binary files → skip entirely
+```
+
+## Extraction Pipeline (crawler docs)
+```
+POST /api/primitives/crawler/extract
+  → reads r2_key from crawl_documents
+  → runs extractDocument() (native → Mistral OCR → Claude fallback)
+  → writes extracted_markdown + word_count to crawl_documents
+  → inserts into knowledge_docs with source_type='crawler'
+  → links knowledge_doc_id
+  → fire-and-forget enrichKnowledgeDocAI for tags/doc_class
+  → dedup: returns already_synced if knowledge_doc_id exists
+```
+
+## Auto-Extract for Registered Projects
+When `pd_only=true`:
+```javascript
+// crawlVerra auto-extracts first PD document
+// Sets is_registered_example=1 if project_status === 'Registered'
+// Sets project column to registry_project_id (not 'unassociated')
+```
+
+## Key Endpoints
+```
+POST /api/primitives/crawler/run         — start crawl (registry, project_id, max_projects, download_documents, pd_only)
+GET  /api/primitives/crawler/status      — list past runs
+GET  /api/primitives/crawler/status/:id  — run detail + projects + documents
+POST /api/primitives/crawler/extract     — extract single crawl document
+GET  /api/primitives/crawler/download/:crawl_doc_id — serve PDF from R2
+```
+
+## crawler/run Correct Field Names
+```json
+{
+  "project_id": 1234,          // NOT "query"
+  "max_projects": 50,          // NOT "max"
+  "download_documents": true,  // NOT "downloadFiles"
+  "pd_only": true              // NOT "pdOnly"
+}
+```
+
+## Category Derivation (for registry browser)
+```javascript
+function deriveCat(row) {
+  // project_category column is ALWAYS 'ALL' (import batch label) — NEVER use
+  if (row.afolu && row.afolu.trim()) return 'AFOLU';  // Nature-based
+  if (/waste|landfill|methane.*avoid/i.test(row.methodology)) return 'Waste';
+  if (/transport/i.test(row.methodology)) return 'Transport';
+  if (/carbon.*capture|ccs|ccus|direct.*air/i.test(row.methodology)) return 'CCS';
+  return 'Energy';  // Default
+}
+// Distribution: AFOLU 1752 / Energy 2682 / Waste 368 / Transport 100 / CCS 1
+```
+
+## Buyer Normalization
+```javascript
+const BUYER_NORM = {
+  'Eni Upstream': 'Eni SpA',
+  'Marke VW Pkw': 'Volkswagen AG',
+  'CHEVRON PETROLEUM COMPANY': 'Chevron Corporation',
+  'Netflix': 'Netflix Inc.',
+  // ... 26 entries total
+};
+function normalizeBuyer(name) { return BUYER_NORM[name] || name; }
+```
+
+## Gotchas
+- Verra API rejects toLower() in OData filters — always use Title Case
+- ZIP files must be preserved as ArrayBuffer — do not stringify
+- KML and GeoJSON → boundary file, not extraction candidate
+- Always deduplicate by registry_id + filename before inserting crawl_documents
+- Puro.earth and Isometric: API credentials required, stub endpoints in place
+- PDF async threshold: 1MB+ → queue extraction
+- Verra details API: /resource/resource/details returns 404 — use search POST with filter instead

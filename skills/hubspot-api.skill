@@ -1,0 +1,176 @@
+# SKILL: HubSpot API Integration
+*Portable skill for HubSpot v1/v3 email sync, contact classification, thread classification, and rep attribution.*
+*Tested on: clearsky-api Worker (v79y), 1,128 threads, 1,668 contacts*
+
+## HubSpot API — Email Engagements (v1)
+```javascript
+// Paginated fetch — v1 engagements/paged (deprecated but still works)
+const url = `https://api.hubapi.com/engagements/v1/engagements/paged?hapikey=${env.HUBSPOT_API_KEY}&limit=250&offset=${offset}`;
+// Returns: { results: [{ engagement: { id, type, timestamp, ownerId }, associations: { contactIds, dealIds }, metadata: { from, to, cc, subject, text, html } }], hasMore, offset }
+
+// Thread grouping — group by threadId or normalized subject
+function groupEmailThreads(engagements) {
+  const threads = {};
+  for (const e of engagements) {
+    const meta = e.metadata || {};
+    const threadId = meta.threadId || normalizeSubject(meta.subject || '');
+    if (!threads[threadId]) threads[threadId] = { id: md5(threadId), subject: meta.subject, emails: [] };
+    threads[threadId].emails.push({
+      id: e.engagement.id,
+      from: (meta.from?.email || '').toLowerCase(),
+      fromName: meta.from?.firstName ? `${meta.from.firstName} ${meta.from.lastName || ''}`.trim() : meta.from?.email,
+      to: (meta.to || []).map(t => (t.email || '').toLowerCase()),
+      cc: (meta.cc || []).map(c => (c.email || '').toLowerCase()),
+      subject: meta.subject,
+      body: meta.text || stripHtml(meta.html || ''),
+      bodyHtml: meta.html,
+      timestamp: new Date(e.engagement.timestamp).toISOString(),
+      direction: e.metadata?.from?.email?.endsWith('@clearskyltd.com') ? 'outbound' : 'inbound',
+      ownerId: e.engagement.ownerId
+    });
+  }
+  return Object.values(threads);
+}
+```
+
+## R2 Thread Storage
+```
+Bucket: clearsky-files
+Path: hubspot/threads/{md5_thread_id}.json
+Shape: { id, subject, contact_name, contact_email, company, pablo_project_id, last_activity, emails[] }
+```
+- D1 hubspot_threads stores lean metadata index (no thread_json for new syncs)
+- Full email bodies stored in R2 only
+- Thread detail: read from R2, fallback to D1 thread_json (legacy)
+
+## Contact Classification — 5-tier Priority Engine
+```javascript
+function classifyContact(email, jobTitle, industry, lifecyclestage, leadStatus) {
+  // Priority order:
+  // 1. Domain match → internal (clearskyltd.com, leadingcarbon.com, maboroshi.com)
+  // 2. Lifecycle stage → commercial_buyer (customer, opportunity, SQL, MQL)
+  // 3. Lead status → commercial_buyer (open_deal, in_progress, connected)
+  // 4. Domain match → operational (verra.org, dnv.com, bureauveritas.com, ey.com, etc.)
+  // 5. Title keywords → operational/commercial_buyer/commercial_seller
+  // 6. Industry match → commercial_buyer (oil/airlines/automotive) or seller (environmental/forestry)
+  // 7. Fallback → unknown
+  return { contact_type, method };
+}
+```
+
+**Contact types:** `internal`, `commercial_buyer`, `commercial_seller`, `operational`, `unknown`
+
+**Keyword lists:**
+- OPERATIONAL_DOMAINS: verra.org, puro.earth, goldstandard.org, dnv.com, bureauveritas.com, sgs.com, deloitte.com, pwc.com, kpmg.com, ey.com, garrigues.com, cuatrecasas.com
+- BUYER_TITLE_KW: sustainability, esg, carbon, climate, environment, procurement, offset, net zero, csr, responsibility
+- SELLER_TITLE_KW: developer, origination, forest, reforestation, project manager, land use, conservation
+- OPERATIONAL_TITLE_KW: lawyer, attorney, legal, notary, auditor, accountant, tax, counsel, solicitor, registrar, verifier, validator
+
+## Thread Classification — 9-category Rules Engine
+```javascript
+function classifyThreadBySubject(subject, senderEmail, senderName, recipientsJson) {
+  // Rule 1: noise — newsletters, automated, OOO (regex on subject)
+  // Rule 2: internal — all participants from internal domains
+  // Rule 3: commercial_active — pricing, offtake, LOI, contract, deal terms
+  // Rule 4: commercial_prospecting — intro, meeting, follow-up, partnership
+  // Rule 5: legal_ops — NDA, contract, agreement, clause, amendment
+  // Rule 6: financial_ops — invoice, payment, wire, billing
+  // Rule 7: project_ops — verra, puro, verification, methodology, PDD
+  // Rule 8: market_intel — forwarded research, reports, analysis
+  // Rule 9: admin — schedule, logistics, travel, expense
+  // Fallback: unknown (needs Claude Haiku for ambiguous threads)
+  return { thread_type, confidence: 'high'|'medium'|'low', method: 'subject_pattern'|'participant_check'|'no_pattern_match' };
+}
+```
+
+**Thread types:** `commercial_active`, `commercial_prospecting`, `legal_ops`, `financial_ops`, `project_ops`, `market_intel`, `admin`, `internal`, `noise`, `unknown`
+
+## Project Tagging
+```javascript
+const CLEARSKY_PROJECTS = [
+  { tag: 'amoedo',       patterns: ['amoedo', 'miteco'] },
+  { tag: 'bosquia',      patterns: ['bosquia', 'asturias'] },
+  { tag: 'naturebrain',  patterns: ['naturebrain', 'nature brain', 'sierra leone'] },
+  { tag: 'marakoa',      patterns: ['marakoa', 'colombia', 'lignum'] },
+  { tag: 'elysium',      patterns: ['elysium', 'cerrado', 'brazil', 'brasil'] },
+  { tag: 'redenor',      patterns: ['redenor'] },
+  { tag: 'enersol',      patterns: ['enersol', 'pontevedra'] },
+  { tag: 'aperam',       patterns: ['aperam', 'setu', 'setú'] },
+];
+// Scan subject + email bodies for pattern matches
+```
+
+## Rep Attribution
+```javascript
+const CLEARSKY_TEAM_EMAILS = {
+  'luis.adaime@clearskyltd.com': 'Luis Adaime',
+  'ana.avramovic@clearskyltd.com': 'Ana Avramovic',
+  'carolina.martinez@clearskyltd.com': 'Carolina Martinez',
+  'brian.katz@leadingcarbon.com': 'Brian Katz',
+  'keith.driver@leadingcarbon.com': 'Keith Driver',
+  'bobbie.armstrong@leadingcarbon.com': 'Bobbie Armstrong',
+  'emmanuel.mendoza@clearskyltd.com': 'Emmanuel Mendoza',
+  'bart.alexander@leadingcarbon.com': 'Bart Alexander',
+  'nahomi@maboroshi.com': 'Nahomi'
+};
+// Rep inferred from: sender_email if ClearSky domain, or scan recipients_json for ClearSky emails
+```
+
+## Participant Extraction
+```javascript
+function extractThreadParticipants(thread) {
+  // Scans ALL from/to/cc emails across every email in thread
+  // Returns: { sender_email, sender_name, involves_luis (0|1), luis_role ('sender'|'recipient'|'both'|null), recipients_json (JSON array of all lowercase participant emails, deduped) }
+  // Luis detection: checks LUIS_EMAILS array against all from/to/cc
+}
+```
+
+## D1 Schema
+```sql
+-- hubspot_threads (29 columns) — lean metadata index
+-- Key fields: id (MD5), contact_email, company_name, subject, thread_type, project_tag,
+--   involves_luis, luis_role, sender_email, recipients_json, r2_key, classification_method
+
+-- hubspot_contacts_cache (24 columns) — HubSpot contact mirror + enrichment
+-- Key fields: hubspot_id, email, company, contact_type, classification_method,
+--   commercial_thread_count, last_commercial_touch, assigned_rep_email, contact_project_tag,
+--   engagement_score, activity_count_30d/60d, email_count_60d, call_count_60d, meeting_count_60d
+
+-- hubspot_companies_cache (10 columns) — company mirror
+-- hubspot_deals_cache (9 columns) — deal mirror
+-- hubspot_owners_cache — HubSpot owner list (24h TTL)
+-- hubspot_sync_state — backfill progress tracking
+-- hubspot_tasks — manual tasks linked to threads
+```
+
+## Key Endpoints
+```
+POST /api/hubspot/sync-inbox          — incremental sync (latest 100 engagements)
+POST /api/hubspot/backfill            — resumable historical archive (250/batch)
+POST /api/hubspot/backfill-participants — re-extract involves_luis, recipients_json from R2
+POST /api/hubspot/classify            — classify all contacts → derive thread types
+POST /api/hubspot/classify-threads    — 9-category thread classification backfill
+POST /api/hubspot/enrich-contacts     — write commercial_thread_count, last_commercial_touch, assigned_rep
+GET  /api/hubspot/rep-summary?days=   — per-rep aggregation (commercial counts + counterparties)
+GET  /api/hubspot/inbox?days=14       — D1 thread metadata list
+GET  /api/hubspot/thread/:id          — full thread from R2
+GET  /api/hubspot/search              — search by q, contact, company, from, to, mine
+GET  /api/hubspot/commercial-activity — by_month + by_counterparty + by_project
+GET  /api/hubspot/buyer-threads/:company — threads for a specific company
+```
+
+## Owner ID Mapping
+```
+Luis=82916631, Ana=30909325, Carolina=31091907, Brian=30080717,
+Keith=30233968, Bobbie=30233941, Bart=30233972, Emmanuel=31199673
+```
+**IMPORTANT:** 146823759 is WRONG for Luis. Correct: 82916631.
+
+## Gotchas
+- HubSpot v1 engagements/paged API is deprecated — may return stale data
+- `GET /api/hubspot/sync` (full contact/company/deal sync) does INSERT OR REPLACE → resets engagement_score to NULL — MUST run `POST /api/hubspot/enrich-contacts` after every sync
+- scheduled() cron only syncs threads — contacts/companies/deals caches go stale without manual trigger
+- Thread dedup: normalize subjects (strip Re:/Fwd:, lowercase, trim) before MD5 hashing
+- Recipients with typos (e.g. mcgillidray vs mcgillivray) create duplicate threads — deduplicate by normalized subject + contact within 24h window
+- involves_luis uses integer (0/1) in D1 — frontend must parseInt() for comparison
+- Internal domains: clearskyltd.com, leadingcarbon.com, maboroshi.com

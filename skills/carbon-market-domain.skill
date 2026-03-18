@@ -1,0 +1,78 @@
+# SKILL: Carbon Market Domain Knowledge
+*Portable context for AI agents working on carbon market tools.*
+*Prevents re-explaining carbon market basics in every session.*
+
+## Registry Types
+| Registry | Type | Notes |
+|----------|------|-------|
+| Verra VCS | Voluntary | Largest voluntary registry. Projects get VCUs (Verified Carbon Units). OData API available. |
+| Gold Standard | Voluntary | Premium voluntary credits. Focus on SDG co-benefits. |
+| Puro.earth | Voluntary CDR | Carbon Dioxide Removal only. TSB (Tonne of Stored Biochar), CORC (Carbon Removal Certificate). API requires credentials. |
+| Isometric | Voluntary CDR | New CDR registry. Rigorous methodology. API requires credentials. |
+| MITECO | Compliance (Spain) | Spanish government registry. Type A (reforestation) and Type B (forest management). Submitted via OECC. |
+| Alberta TIER | Compliance (Canada) | Technology Innovation and Emissions Reduction. |
+| BC OBPS | Compliance (Canada) | Output-Based Pricing System, British Columbia. |
+| CFR | Compliance (Canada) | Clean Fuel Regulation. |
+
+## Credit Types
+| Code | Full Name | Registry | Notes |
+|------|-----------|----------|-------|
+| VCU | Verified Carbon Unit | Verra VCS | 1 tCO2e per credit |
+| CORC | Carbon Removal Certificate | Puro.earth | 1 tCO2e CDR |
+| TSB | Tonne of Stored Biochar | Puro.earth | Biochar-specific CDR |
+| CDR | Carbon Dioxide Removal | Generic | Category term |
+| CORSIA | Carbon Offsetting and Reduction Scheme for International Aviation | ICAO | Aviation compliance |
+
+## Key Methodology Codes (Verra)
+| Code | Description |
+|------|-------------|
+| VM0047 | Afforestation, Reforestation, Revegetation |
+| VM0044 | Improved Forest Management |
+| VM0042 | Improved Agricultural Land Management |
+| VM0048 | Reducing Emissions from Deforestation and Forest Degradation (REDD+) |
+| VM0010 | Improved Forest Management |
+| VM0026 | Sustainable Grassland Management |
+
+## Methodology Groups (for aggregation)
+REDD+, ARR (Afforestation/Reforestation), IFM (Improved Forest Management), Blue Carbon, Biochar, Landfill Gas, Methane, Renewables, Savanna/Grassland, Other
+
+## Key Concepts
+- **Vintage**: Year the carbon reduction/removal occurred. Buyers often specify vintage requirements.
+- **Retirement**: When a credit is permanently removed from circulation (used for offsetting claim).
+- **Issuance**: When registry issues credits to project developer.
+- **Outstanding**: Issued but not yet retired.
+- **Retirement rate**: retired/issued — measure of demand vs supply.
+- **Buffer pool**: % of credits held back as insurance against project failure.
+- **Additionality**: Would the emission reduction have happened without carbon finance?
+- **Permanence**: How long is the carbon stored? Key risk for forestry projects.
+
+## ClearSky Portfolio Projects
+| ID | Name | Registry | Methodology | Country |
+|----|------|----------|-------------|---------|
+| amoedo | Amoedo TSB | Puro.earth | TSB Biochar | Spain (Galicia) |
+| bosquia | Bosquia Asturias | Puro.earth | TSB | Spain (Asturias) |
+| naturebrain | NatureBrain Sierra Leone | Verra | VM0047 | Sierra Leone |
+| marakoa | Marakoa Colombia | Puro.earth | TSB | Colombia |
+| elysium | Elysium Cerrado | Verra | VM0042 | Brazil |
+| enersol | Enersol Pontevedra | MITECO | Type A | Spain |
+| aperam | Aperam | Various | Various | Various |
+| redenor | REDENOR | MITECO | Type A/B | Spain |
+
+## Buyer Sectors (for classification)
+Oil & Gas (Shell, BP, Chevron, Glencore, Gunvor, Mercuria, Vitol), Airlines (Delta, CORSIA buyers), Automotive (Volkswagen), Technology (Microsoft, ecobee), Banking & Finance (RBC, SCB, EDF Trading), Retail & Consumer, Energy & Utilities, Industrial, Government, NGO & Foundation
+
+## Buyer Intelligence Signals
+- **T1**: Named strategic target with active relationship or deal
+- **Hot**: Active deal conversation, responded recently
+- **Warm**: Has responded, interest confirmed, not yet in deal
+- **Cold**: No recent response (10+ days)
+- **commercial_active**: Live deal thread (offtake, pricing, contract)
+- **commercial_prospecting**: Outreach and interest thread
+
+## Market Context (March 2026)
+- VCM recovery underway after 2023-2024 credibility crisis
+- CORSIA Phase 1 creating compliance demand from aviation
+- Canadian compliance markets (CFR, OBPS, TIER) opening
+- Microsoft ARR offtake at $43/credit (ClearSky reference price)
+- REDD+ under pressure; ARR/CDR methodology premium justified
+- Biochar (TSB/CORC) gaining traction as durable CDR

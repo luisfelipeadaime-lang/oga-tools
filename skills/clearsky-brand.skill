@@ -1,0 +1,139 @@
+# SKILL: ClearSky Branding & Design System
+*Portable skill for building ClearSky-branded tools and documents.*
+*Applies to: tools.oga.earth tools, PPTX presentations, DOCX documents, email templates*
+
+## Brand Identity
+- Company: ClearSky Limited (UK) / ClearSky Carbono S.L. (Spain)
+- Position: Carbon market intelligence + project development + buyer services
+- Tone: Professional, data-driven, direct. Not greenwashing language. Not fluffy.
+- Address Spain: Calle O'Donnell, 18 - Piso 7 I J, 28009 Madrid
+
+## Color Palette
+```css
+/* Primary */
+--cs-teal: #4ade80;        /* primary action, positive values, commercial */
+--cs-teal-dim: #22c55e;    /* secondary teal */
+--cs-amber: #f59e0b;       /* warnings, pipeline, prospecting */
+--cs-red: #ef4444;         /* alerts, going cold, errors */
+--cs-blue: #3b82f6;        /* info, received/inbound */
+
+/* Dark theme backgrounds */
+--cs-bg-primary: #0a0f1a;   /* page background */
+--cs-bg-surface: #111827;   /* card/panel background */
+--cs-bg-surface2: #1f2937;  /* elevated surface, hover states */
+--cs-bg-surface3: #374151;  /* borders, dividers */
+
+/* Text */
+--cs-text-primary: #f9fafb;   /* primary text */
+--cs-text-secondary: #9ca3af; /* secondary/metadata text */
+--cs-text-dim: #6b7280;       /* very dim, timestamps, labels */
+
+/* Rep colors */
+--cs-rep-ana: #a855f7;        /* purple */
+--cs-rep-carolina: #3b82f6;   /* blue */
+--cs-rep-luis: #f59e0b;       /* gold */
+--cs-rep-brian: #22c55e;      /* green */
+--cs-rep-emmanuel: #f97316;   /* orange */
+--cs-rep-bobbie: #ec4899;     /* pink */
+--cs-rep-keith: #6366f1;      /* indigo */
+```
+
+## Typography
+```css
+font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+font-size: 13px;  /* base for dense data tables */
+font-size: 14px;  /* base for readable content */
+
+/* Monospace for data/numbers */
+font-family: 'SF Mono', 'Fira Code', monospace;
+```
+
+## Component Patterns
+
+### KPI Card
+```html
+<div class="kpi-card">
+  <div class="kpi-label">ACTIVE CONVERSATIONS</div>
+  <div class="kpi-value" style="color: var(--cs-teal)">45</div>
+  <div class="kpi-sub">83 prospecting</div>
+</div>
+```
+```css
+.kpi-card { background: var(--cs-bg-surface); border-radius: 8px; padding: 20px; }
+.kpi-label { font-size: 11px; color: var(--cs-text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+.kpi-value { font-size: 32px; font-weight: 700; margin: 8px 0 4px; }
+.kpi-sub { font-size: 12px; color: var(--cs-text-secondary); }
+```
+
+### Stats Strip
+```html
+<div class="stats-strip">
+  <span>EMAILS SYNCED: <b>275</b></span>
+  <span>THREADS: <b>200</b></span>
+  <span>LAST SYNC: <b>8m ago</b></span>
+</div>
+```
+```css
+.stats-strip { display: flex; gap: 24px; padding: 8px 16px; background: var(--cs-bg-surface);
+  font-size: 11px; color: var(--cs-text-dim); text-transform: uppercase; }
+.stats-strip b { color: var(--cs-text-primary); }
+```
+
+### Thread/Contact Row
+```html
+<div class="thread-row" onclick="selectRow(id)">
+  <div class="thread-name">Mario Ramos</div>
+  <div class="thread-company">StoneX Group</div>
+  <div class="thread-badge commercial">commercial</div>
+  <div class="thread-date">1d</div>
+</div>
+```
+
+### Rep Badge
+```html
+<span class="rep-badge rep-ana">ANA</span>
+<span class="rep-badge rep-carolina">CAROLINA</span>
+<span class="rep-badge rep-luis">LUIS</span>
+```
+```css
+.rep-badge { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 3px; }
+.rep-ana { background: rgba(168,85,247,0.2); color: #a855f7; }
+.rep-carolina { background: rgba(59,130,246,0.2); color: #3b82f6; }
+.rep-luis { background: rgba(245,158,11,0.2); color: #f59e0b; }
+.rep-brian { background: rgba(34,197,94,0.2); color: #22c55e; }
+```
+
+### Status Badge
+```html
+<span class="badge-hot">hot</span>
+<span class="badge-warm">warm</span>
+<span class="badge-cold">cold</span>
+<span class="badge-commercial">commercial</span>
+<span class="badge-internal">internal</span>
+```
+
+### Staleness Warning Banner
+```html
+<div class="stale-banner" id="stale-banner">
+  Warning: Data is Xh stale — last synced Xd ago.
+  <button onclick="syncNow()">Sync Now</button>
+</div>
+```
+```css
+.stale-banner { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3);
+  color: #f59e0b; padding: 10px 16px; border-radius: 6px; margin-bottom: 16px; }
+```
+
+## PPTX/DOCX Branding
+- Cover slide: dark background (#0a0f1a), ClearSky logo top-left, title in white, subtitle in teal
+- Section headers: teal accent bar left side
+- Data tables: alternating row shading (surface / surface2)
+- Charts: teal primary, amber secondary, red tertiary
+- Footer: "ClearSky Limited — Confidential" + date
+
+## Tone Rules for Written Content
+- Never: "We are committed to sustainability" (greenwashing)
+- Never: "Exciting opportunity" (hype)
+- Always: specific numbers, specific methodologies, specific registries
+- Always: direct action language ("ClearSky retires credits and delivers documentation")
+- Carbon market vocabulary: VCU, CORC, TSB, CDR, tCO2e, vintage, retirement, issuance

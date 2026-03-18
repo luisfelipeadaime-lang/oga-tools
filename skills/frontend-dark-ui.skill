@@ -1,0 +1,195 @@
+# SKILL: Dark Theme Frontend Architecture
+*Portable skill for building dense, data-rich dark theme frontends.*
+*Pattern from: pablo.html, revenue.html, dashboard.html, clearskyplatform.html*
+
+## Page Structure
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CLEARSKY | Tool Name</title>
+  <style>/* All CSS inline — no external stylesheets */</style>
+</head>
+<body>
+  <div id="app">
+    <!-- 1. Topbar -->
+    <div class="topbar">
+      <span class="brand">CLEARSKY</span>
+      <span class="page-title">Tool Name</span>
+      <div class="topbar-right">
+        <span class="sync-status">Last sync: <span id="sync-ago">—</span></span>
+        <button onclick="syncNow()">Sync</button>
+        <span class="date-display" id="date-display"></span>
+      </div>
+    </div>
+
+    <!-- 2. Stats strip -->
+    <div class="stats-strip" id="stats-strip">Loading...</div>
+
+    <!-- 3. Tab navigation (if multi-tab) -->
+    <div class="tab-nav">
+      <button class="tab active" onclick="showTab('tab1')">Tab 1</button>
+      <button class="tab" onclick="showTab('tab2')">Tab 2 <span class="badge">3</span></button>
+    </div>
+
+    <!-- 4. Main content area -->
+    <div class="main-content">
+      <!-- Sidebar + content split, or full width -->
+    </div>
+  </div>
+  <script>/* All JS inline */</script>
+</body>
+</html>
+```
+
+## Three-Column Layout (pablo.html pattern)
+```css
+.layout-3col {
+  display: grid;
+  grid-template-columns: 280px 1fr 320px;
+  height: calc(100vh - topbar_height);
+  overflow: hidden;
+}
+.col-left { overflow-y: auto; border-right: 1px solid var(--border); }
+.col-center { overflow-y: auto; }
+.col-right { overflow-y: auto; border-left: 1px solid var(--border); }
+```
+
+## Sidebar + Detail Panel (revenue.html pattern)
+```css
+.layout-sidebar {
+  display: flex;
+  height: calc(100vh - topbar_height);
+}
+.sidebar { width: 260px; overflow-y: auto; border-right: 1px solid var(--border); padding: 16px; }
+.main-panel { flex: 1; overflow-y: auto; padding: 24px; }
+```
+
+## View Switching
+```css
+/* CRITICAL: Use CSS classes, NEVER inline display styles */
+.view { display: none; }
+.view.on { display: block; }
+.view.on#v-documents { display: flex; flex-direction: column; }
+.view.on#v-methodology { display: flex; flex-direction: column; }
+```
+**Standing Rule:** NEVER add inline `style="display:..."` to `.view` divs — use CSS class rules.
+
+## Sync Timestamp Pattern (required on all team tools)
+```javascript
+function updateSyncDisplay(lastSyncTimestamp) {
+  const el = document.getElementById('sync-ago');
+  if (!el || !lastSyncTimestamp) return;
+  const mins = Math.floor((Date.now() - new Date(lastSyncTimestamp)) / 60000);
+  el.textContent = mins < 1 ? 'just now' :
+                   mins < 60 ? `${mins}m ago` :
+                   `${Math.floor(mins/60)}h ago`;
+}
+// Call on page load and after every sync — always visible without clicking
+```
+
+## Loading States
+```javascript
+function showLoading(containerId, message = 'Loading...') {
+  document.getElementById(containerId).innerHTML =
+    `<div class="loading-state"><div class="spinner"></div><span>${message}</span></div>`;
+}
+function showError(containerId, message) {
+  document.getElementById(containerId).innerHTML =
+    `<div class="error-state">Warning: ${message}</div>`;
+}
+```
+
+## Lazy Loading Pattern
+```javascript
+let tabLoaded = false;
+function showTab(tabName) {
+  if (tabName === 'buyers' && !tabLoaded) {
+    tabLoaded = true;
+    loadBuyers(); // fetch data only now
+  }
+  // toggle visibility
+}
+```
+
+## Filter Pills Pattern
+```javascript
+let activeFilter = 'all';
+function setFilter(value, el) {
+  activeFilter = value;
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderList();
+}
+```
+
+## Sortable Table Pattern
+```javascript
+let sortCol = 'date', sortDir = -1;
+function sortBy(col) {
+  sortDir = (sortCol === col) ? -sortDir : -1;
+  sortCol = col;
+  renderTable();
+}
+function renderTable() {
+  const sorted = [...DATA].sort((a,b) => {
+    const av = a[sortCol], bv = b[sortCol];
+    return typeof av === 'number' ? (av-bv)*sortDir : String(av).localeCompare(String(bv))*sortDir;
+  });
+}
+```
+
+## Export CSV
+```javascript
+function exportCSV(data, filename) {
+  const headers = Object.keys(data[0]);
+  const rows = data.map(r => headers.map(h => `"${(r[h]||'').toString().replace(/"/g,'""')}"`).join(','));
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+```
+
+## Panel Expand/Collapse
+```javascript
+function togglePanelExpand() {
+  PANEL_EXPANDED = !PANEL_EXPANDED;
+  if (PANEL_EXPANDED) {
+    sidebar.style.display = 'none';
+    mainArea.style.display = 'none';
+    panel.style.flex = '1';
+  } else {
+    sidebar.style.display = '';
+    mainArea.style.display = '';
+    panel.style.flex = '';
+  }
+}
+```
+
+## Breadcrumb Navigation
+```javascript
+const breadcrumbs = [];
+function pushBreadcrumb(label, action) {
+  breadcrumbs.push({ label: label.substring(0, 20), action });
+  renderBreadcrumbs();
+}
+function navBreadcrumb(index) {
+  const entry = breadcrumbs[index];
+  breadcrumbs.length = index; // trim
+  entry.action();
+}
+```
+
+## Gotchas
+- Never use React — plain JS only (Standing Rule)
+- Never external CSS/JS files — everything inline in single HTML file
+- Always include sync timestamp — team won't trust tool without it
+- Dense tables: font-size 12-13px, padding 8px 12px per cell
+- Mobile: most tools are desktop-only — don't over-optimize for mobile
+- CSS specificity: `.view{display:none}` + `.view.on{display:block}` — NEVER use inline styles
+- NEVER create `functions/` folder in Pages repo — breaks Cloudflare Pages deployment

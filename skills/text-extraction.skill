@@ -1,0 +1,160 @@
+# SKILL: Text Extraction Pipeline
+*Portable skill for extracting text from PDFs, DOCX, XLSX, ODT, RTF, and images.*
+*Tested on: clearsky-api Worker, 200+ documents, Mistral OCR + Claude fallback*
+
+## extractDocument() — Central Contract
+```javascript
+async function extractDocument(bytes, filename, contentType, env, mode = 'full') {
+  // mode: 'full'     = no cap (methodology library, wiki RAG, export context)
+  //       'classify'  = 50K cap after extraction (workflow ingest classification)
+  //       'preview'   = 5K cap after extraction (UI display)
+  // Returns: { markdown, word_count, model_used, method, page_count? }
+  // Throws on: missing ANTHROPIC_API_KEY, file too large, all extraction paths failed
+}
+```
+
+**CRITICAL:** This is the ONLY extraction function. All callers (wiki/ingest, crawler/extract, pablo/extract, workflow/ingest) go through this single function. Never duplicate extraction logic.
+
+## Extraction Routing (priority order)
+
+### 1. Text/CSV/JSON — Direct (free, instant)
+```
+contentType starts with text/ OR includes json/csv
+AND NOT officedocument/msword/ms-excel/ms-powerpoint
+→ Return raw text, model_used='direct-text', method='native'
+→ Cap: 300K chars
+```
+
+### 2. PDF — 4-step cascade
+```
+Step 1: Native text extraction (free, instant)
+  - countPdfPages() + extractPdfText() from binary streams
+  - Skip if isLikelyScannedPdf() (bytes/page < 50KB AND > 30 pages)
+  - Accept if text.length >= max(200, pageCount * 20) AND !hasBinaryGarbage(text)
+  - cleanPdfText() post-processing
+  → model_used='pdf_native', method='pdf_native'
+
+Step 2: Mistral OCR (primary OCR, $0.002/page)
+  - POST https://api.mistral.ai/v1/ocr, model: mistral-ocr-latest
+  - Document as base64 data URL: data:application/pdf;base64,{content}
+  - Accept if result.text.length >= 50 AND !hasBinaryGarbage
+  → model_used='mistral_ocr', method='mistral_ocr'
+
+Step 3: Claude OCR fallback (small PDFs ≤100 pages)
+  - ocrPdfSingle() for ≤100 pages
+  - ocrPdfMultiPage() for >100 pages (delegates to extractPdfText)
+  → model_used='pdf_ocr_haiku', method='pdf_ocr_haiku'
+
+Step 4: Sonnet base64 (last resort, ≤100 pages only)
+  - Send full PDF as base64 document to Claude Sonnet
+  - Strict verbatim prompt: "do NOT summarize"
+  - Max tokens: 16,000
+  → model_used='claude-sonnet-4-fallback'
+```
+
+### 3. DOCX — 3-layer fallback (no AI needed)
+```javascript
+function extractDocx(bytes) {
+  // Layer 1: fflate unzipSync → word/document.xml → w:t regex per paragraph
+  // Paragraphs separated by \n\n
+}
+function extractDocxLayer2(bytes) {
+  // Layer 2: all word/*.xml files → aggressive tag strip
+}
+function extractDocxLayer3(bytes) {
+  // Layer 3: raw UTF-8 decode → printable character runs (≥5 chars)
+}
+// → model_used='docx_native', method='docx_native'
+```
+
+### 4. XLSX — parseZipEntries (xl/ paths only)
+```
+parseZipEntries extracts xl/sharedStrings.xml + xl/worksheets/sheet*.xml
+Combine shared strings + cell values
+→ model_used='xlsx_native'
+```
+**WARNING:** parseZipEntries only extracts `xl/` and `docProps/` paths — CANNOT be used for DOCX.
+
+### 5. ODT/RTF — Dedicated extractors
+```
+ODT: unzip → content.xml → strip tags
+RTF: strip control words + decode hex/unicode
+```
+
+### 6. Images — Claude Haiku vision
+```
+Send as base64 image to Claude Haiku with transcription prompt
+```
+
+## PDF Text Cleaning Pipeline
+```javascript
+function cleanPdfText(text) {
+  // Step 0: Line-level filter for cross-reference garbage
+  //   (RuleCounter, Hfootnote, cite.0@, glo:, Doc-Start, long blob lines)
+  // Step 1: joinBrokenWords() — repair column-layout word breaks
+  //   (hyphen-split, newline-split, number-range TPA patterns)
+  // Step 2: Skip font program streams (Type1C, CIDFontType0C, OpenType, TrueType, CMap)
+  // Step 3: Per-line printable ratio filter (< 0.60 for lines > 20 chars → discard)
+  // Step 4: Per-line word-char ratio filter (< 0.50 for lines > 30 chars → discard)
+  // Step 5: Hex/binary line discard
+  // Step 6: CMap/font metadata line discard
+  // Step 7: MIT license block skip (15 lines)
+  // Step 8: ESRI/GIS metadata truncation
+  // Step 9: Blank line collapse
+}
+```
+
+## Scanned PDF Detection
+```javascript
+function isLikelyScannedPdf(byteLength, pageCount) {
+  // bytes/page < 50KB AND > 30 pages → likely scanned
+  // Scanned PDFs skip native text extraction (Step 1) → go straight to Mistral OCR
+}
+```
+
+## Binary Garbage Detection
+```javascript
+function hasBinaryGarbage(text) {
+  // Check for: control characters, high-byte sequences, font program remnants
+  // Returns true if text is likely corrupted/binary
+}
+```
+
+## Size Limits
+| Type | Max Size | Notes |
+|------|----------|-------|
+| PDF | 200 MB | MITECO memorias can be huge |
+| Non-PDF | 19 MB | DOCX/XLSX are smaller |
+| Text output | 400K chars | PDF/OCR cap |
+| Text/CSV | 300K chars | Direct text cap |
+
+## Claude API PDF Constraints
+- Rejects PDFs > 100 pages when sent as base64
+- Fix: countPdfPages() + extractPdfText() for large PDFs
+- **CRITICAL:** Truncating PDF bytes (slice) creates INVALID PDFs — use extractPdfText() instead
+
+## Content-Type Ordering
+Office MIME types contain "xml" — check Office formats BEFORE generic text/xml check:
+```javascript
+// WRONG: if (contentType.includes('xml')) → catches DOCX/XLSX
+// RIGHT: Check officedocument/msword/ms-excel FIRST, then fall through to text/xml
+```
+
+## Async Extraction (Queue)
+For files > 1MB:
+```
+POST /api/primitives/extract → creates extraction_job → enqueues to EXTRACTION_QUEUE
+Queue consumer: processExtractionJob(jobId, env)
+Poll: GET /api/primitives/jobs/:id → { status, progress_pct, total_chunks, completed_chunks }
+Cancel: POST /api/primitives/jobs/:id/cancel
+```
+
+## Gotchas
+- knowledge_docs column is `markdown` NOT `content` (caused SQLITE_ERROR on early versions)
+- FileList is a live DOM reference — `Array.from(fileInput.files)` BEFORE any async work
+- Geographic files (KML/SHP/KMZ/geojson/gpx) should be skipped, word_count=0
+- fflate zipSync with compression on 30MB+ exceeds Cloudflare Workers CPU limit — use `{ level: 0 }` (store mode)
+- DecompressionStream: 'raw' is NOT valid — use 'deflate-raw' for RFC 1951
+- Strip trailing \r\n from stream bytes before decompressing
+- Mistral OCR cost: $0.002/page. No page limit. No chunking needed.
+- MISTRAL_API_KEY stored as Cloudflare Worker secret

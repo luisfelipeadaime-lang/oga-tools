@@ -1,0 +1,174 @@
+# SKILL: Cloudflare Workers + D1 + R2 Architecture
+*Portable skill for building Cloudflare Workers with D1 database and R2 object storage.*
+*Tested on: clearsky-api Worker (873KB), oga-tools Pages project*
+
+## Worker Structure
+```javascript
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    const path = url.pathname;
+    const method = request.method;
+
+    // CORS headers (add to ALL responses)
+    if (method === 'OPTIONS') return new Response(null, { headers: corsHeaders() });
+
+    // Route matching
+    if (path === '/health') return jsonResponse({ status: 'ok', version: 'v1-name' });
+    if (path.startsWith('/api/...') && method === 'GET') { ... }
+
+    return new Response('Not found', { status: 404 });
+  },
+
+  async scheduled(event, env, ctx) {
+    // Cron handler — runs on schedule defined in wrangler.toml
+    ctx.waitUntil(runScheduledTasks(env));
+  },
+
+  async queue(batch, env) {
+    // Queue consumer — each message gets own CPU budget
+    for (const msg of batch.messages) {
+      await processQueueMessage(msg.body, env);
+      msg.ack();
+    }
+  }
+};
+```
+
+## Standard Helpers
+```javascript
+function jsonResponse(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders(), 'Content-Type': 'application/json' }
+  });
+}
+
+function corsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+  };
+}
+```
+
+## D1 Patterns
+```javascript
+// Single row query
+const row = await env.DB.prepare('SELECT * FROM table WHERE id = ?').bind(id).first();
+
+// Multiple rows
+const { results } = await env.DB.prepare('SELECT * FROM table WHERE x = ?').bind(val).all();
+
+// Upsert pattern (preferred over INSERT + UPDATE)
+await env.DB.prepare(`
+  INSERT INTO table (id, col1, col2, updated_at)
+  VALUES (?, ?, ?, datetime('now'))
+  ON CONFLICT(id) DO UPDATE SET
+    col1=excluded.col1, col2=excluded.col2, updated_at=excluded.updated_at
+`).bind(id, col1, col2).run();
+
+// Batch insert (max 1000 statements per batch)
+const stmts = rows.map(r => env.DB.prepare('INSERT OR REPLACE INTO table VALUES (?,?)').bind(r.a, r.b));
+await env.DB.batch(stmts);
+
+// Pagination
+const { results } = await env.DB.prepare(
+  'SELECT * FROM table ORDER BY created_at DESC LIMIT ? OFFSET ?'
+).bind(limit, offset).all();
+```
+
+## R2 Patterns
+```javascript
+// Write
+await env.FILES.put(key, bytes, { httpMetadata: { contentType: 'application/json' } });
+
+// Read
+const obj = await env.FILES.get(key);
+if (!obj) return null;
+const text = await obj.text();
+const json = JSON.parse(text);
+
+// List with prefix
+const listed = await env.FILES.list({ prefix: 'hubspot/threads/', limit: 1000 });
+const keys = listed.objects.map(o => o.key);
+
+// Delete
+await env.FILES.delete(key);
+
+// Check existence
+const head = await env.FILES.head(key);
+const exists = head !== null;
+```
+
+## wrangler.toml Patterns
+```toml
+name = "clearsky-api"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "clearsky-tools-db"
+database_id = "YOUR_DB_ID"
+
+# R2 Bucket
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "clearsky-files"
+
+# Cron triggers (multiple supported)
+[triggers]
+crons = ["0 2 * * *", "0 */4 * * *"]  # 2am daily + every 4 hours
+
+# Queue producer
+[[queues.producers]]
+queue = "extraction-queue"
+binding = "EXTRACTION_QUEUE"
+
+# Queue consumer
+[[queues.consumers]]
+queue = "extraction-queue"
+max_batch_size = 1
+max_retries = 3
+```
+
+## Deploy Commands
+```bash
+# Deploy worker
+cd C:\brand-presentations\infrastructure\clearsky-api
+npx wrangler deploy
+
+# Check health
+curl https://api-tools.oga.earth/health
+
+# D1 query directly
+npx wrangler d1 execute clearsky-tools-db --command "SELECT COUNT(*) FROM hubspot_threads"
+
+# Tail logs
+npx wrangler tail --format=pretty
+
+# Set secret
+npx wrangler secret put SECRET_NAME
+```
+
+## CPU Limit Awareness
+- Synchronous CPU limit: ~50ms per request
+- AI calls (Claude, Mistral): must be async — use ctx.waitUntil() or Queue
+- Large D1 queries: paginate, never load all rows at once
+- Subrequest limit: 1000 per Worker invocation
+- R2 reads within Worker: count as subrequests
+
+## Gotchas
+- NEVER create functions/ folder in Pages repo — breaks Cloudflare Pages deployment
+- NEVER store large blobs in D1 (SQLITE_TOOBIG) — use R2 for anything >1MB
+- Always add corsHeaders() to every response including errors
+- D1 batch() limit: 1000 statements — paginate large inserts
+- Secrets: never commit to git, use wrangler secret put
+- Worker size limit: no hard cap but keep under 1MB for fast cold starts
+- D1 JOINs with aliases: non-JOIN branch must NOT use aliases — D1/SQLite throws `no such column`
+- Main fetch handler has no `method` variable — use `request.method` directly
+- Exact string match routes MUST come BEFORE regex wildcard routes
+- Worker propagation: 1-15 minutes. Preview URLs reflect new code immediately.
