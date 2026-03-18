@@ -166,14 +166,31 @@ Keith=30233968, Bobbie=30233941, Bart=30233972, Emmanuel=31199673
 ```
 **IMPORTANT:** 146823759 is WRONG for Luis. Correct: 82916631.
 
-## contacts-view aggregation pattern
-Groups hubspot_contacts_cache by company with enrichment data.
-Returns: {companies[], total_companies, total_contacts, active, cold, generated_at}
-Per company: {company, contacts[], total_threads, max_idle_days, has_deal, deal_value}
+## contacts-view aggregation pattern (v79z4 — company-first)
+Company-first grouping: prefers associated_company_id (HubSpot association), falls back to company text field.
+Returns: {companies[], total_companies, total_contacts, generated_at}
+Per company: {company, company_id, domain, industry, city, country, segment, tier, website, contacts[], total_threads, max_idle_days, has_deal, deal_value}
 Per contact: {firstname, lastname, email, jobtitle, phone, idle_days, assigned_rep_email,
-owner_id, commercial_thread_count, last_commercial_touch}
+owner_id, commercial_thread_count, last_commercial_touch, associated_company_id, buying_role, linkedin_url, lifecyclestage}
+Grouping key: `hs:` + company_id (association), `text:` + company name (fallback), `__orphan__` (no company)
 Status derivation (frontend): max_idle_days ≤7d → active, 8-30d → warm, >30d or null → cold
 Sort default: commercial_thread_count DESC, then idle_days ASC
+
+## syncHubSpotCompanies() (v79z4)
+Fetches 18 company properties: name, domain, industry, city, country, description, website, lifecyclestage,
+hs_ideal_customer_profile (ICP Tier 1/2/3), hs_is_target_account, focus_area, sustainability_rating,
+annual_carbon_offset_capacity, numberofemployees, annualrevenue, hubspot_owner_id, num_associated_contacts.
+ICP tier stored in `tier` column. focus_area stored in `products_of_interest` column.
+
+## syncHubSpotContacts() (v79z4 — with associations)
+Now passes `associations: 'companies'` in list endpoint.
+Stores associated_company_id from `c.associations.companies.results[0].id`.
+Also fetches contact_role (custom), hs_buying_role, linkedin_url, hs_linkedin_url.
+
+## discover-properties endpoint (temp — v79z4)
+GET /api/hubspot/discover-properties/:type (contacts|companies|deals)
+Returns all HubSpot properties with name, label, type, fieldType, groupName, options.
+Custom properties filtered separately. Use to find custom fields for segment/tier mapping.
 
 Key gotcha: company name matching between HubSpot (company field on contact)
 and Verra VCU buyers is fuzzy. Strip legal suffixes for matching:
@@ -203,7 +220,7 @@ Failure mode: PRELOAD.crm = true on catch (don't block load on CRM failure).
 ## Gotchas
 - HubSpot v1 engagements/paged API is deprecated — replaced by v3 POST /crm/v3/objects/emails/search in v79z2-unified
 - `GET /api/hubspot/sync` (full contact/company/deal sync) does INSERT OR REPLACE → resets engagement_score to NULL — MUST run `POST /api/hubspot/enrich-contacts` after every sync
-- scheduled() cron now runs 4 phases every 4h: (1) email threads v3, (2) syncHubSpotContacts, (3) syncHubSpotDeals, (4) enrichContactsFromThreads
+- scheduled() cron now runs 5 phases every 4h: (1) email threads v3, (2) syncHubSpotContacts, (3) syncHubSpotDeals, (4) enrichContactsFromThreads, (5) syncHubSpotCompanies
 - Thread dedup: normalize subjects (strip Re:/Fwd:, lowercase, trim) before MD5 hashing
 - Recipients with typos (e.g. mcgillidray vs mcgillivray) create duplicate threads — deduplicate by normalized subject + contact within 24h window
 - involves_luis uses integer (0/1) in D1 — frontend must parseInt() for comparison

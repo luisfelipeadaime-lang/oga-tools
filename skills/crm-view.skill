@@ -129,9 +129,18 @@ function fuzzyMatch(a, b) {
 .crm-idle-r { color:#ef4444; font-weight:600; } /* >14d or null */
 ```
 
+## Company-first data model (v79z4)
+- API returns company_id (HubSpot association ID), domain, industry, city, country, tier, website per company
+- Contacts include associated_company_id, buying_role, linkedin_url, lifecyclestage
+- Grouping: associated_company_id → companyMap lookup, fallback to company text field, orphan bucket
+- Company row: tier badge (purple), industry badge (gray), domain text
+- Contact row: lifecycle badge (blue), buying_role badge (amber), LinkedIn "in" button
+- Lists viewer: toggleCRMLists() dropdown, loadCRMLists() fetches from API, applyCRMList() filters by email set
+- window._CRM_LIST_FILTER: dict of lowercase emails, checked in getCRMVisible(), cleared by filter/owner/status interactions
+
 ## Gotchas
 - CRM div MUST be in main content area, NOT inside sidebar (see CLEARSKY_PLATFORM.md #160)
-- showPage('crm') must set display='flex' not 'block' (CRM is flex column layout)
+- showPage('crm') — use CSS rule `.page.active#page-crm{display:flex;flex-direction:column}`, NEVER inline style
 - Company name matching to Verra: strip legal suffixes before indexOf comparison
 - PRELOAD.crm must not block platform load on failure — catch and set to true
 - SheetJS CDN: cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js
@@ -139,3 +148,5 @@ function fuzzyMatch(a, b) {
 - idle_days >= 999 means NULL in the DB — display as "—" not "999d"
 - Avatar initials: co.company.split(/\s+/).map(w => w[0]).join('').slice(0,2)
 - Avatar color: deterministic from charCodeAt(0) % palette.length
+- HubSpot hs_ideal_customer_profile has values "Tier 1"/"Tier 2"/"Tier 3" (not just "1"/"2"/"3")
+- contact_role is a custom HubSpot property (not hs_buying_role) — check both
