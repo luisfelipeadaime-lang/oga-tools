@@ -1,0 +1,164 @@
+# SKILL: ClearSky Presentation Engine
+*Portable skill for generating branded ClearSky presentations via presentations-v3.html.*
+*Tested on: tools.oga.earth/tools/presentations-v3.html · API: api-tools.oga.earth*
+
+## Architecture
+Single HTML file (1,168 lines). No build step. No framework.
+Three output types generated client-side via pptxgenjs 3.12.0 from cdnjs.
+
+## File locations
+- Frontend: C:\brand-presentations\repos\oga-tools\tools\presentations-v3.html
+- Worker endpoint: worker.js → POST /api/presentations/v2/generate
+- Worker endpoint: worker.js → POST /api/presentations/v2/ingest-pds
+- Live URL: https://tools.oga.earth/tools/presentations-v3.html
+- API base: https://api-tools.oga.earth
+
+## Three output types
+
+### 1. Project Tearsheet (tearsheet)
+3 pages, A4 portrait (8.27×11.69")
+Fields: projectName, country, creditType, verraId, methodology, overview(500ch),
+wccYear, wrcYear, totalCp1, jobsCreated, creditingPeriod, materialType,
+output, vvb, sdgs(comma-separated), additionality(200ch), traceability(200ch),
+impact(200ch), cobenefits[{title,desc}×4], contactName, contactEmail, contactPhone, counterparty
+
+### 2. Presentation Deck (deck)
+16:9 landscape (10×5.625")
+Slides: Cover → Exec Summary → Market Context → Per-Project(×N) → Comparison → Contact
+Fields: title, subtitle, summary(400ch), marketContext(400ch),
+stats[{num,label}×4], projects[{name,country,type,metric,desc(250ch)}×3],
+contactName, contactEmail, counterparty
+
+### 3. White Paper (whitepaper)
+A4 portrait. Section placeholders only — content edited in PowerPoint.
+Fields: title, subtitle, sections[{header}×10]
+
+## API endpoints
+
+### POST /api/presentations/v2/generate
+Generates AI brief from prompt + optional project context.
+Request:
+```json
+{
+  "prompt": "Build a deck for Shell targeting VM0047 ARR projects",
+  "type": "deck",
+  "project_ids": ["985", "1477"],
+  "buyer_name": "Shell"
+}
+```
+Response: JSON brief matching field schema above.
+AI: Claude Sonnet via Anthropic API (ANTHROPIC_API_KEY worker secret).
+Fallback: If API unavailable, frontend uses MOCK_PROJECTS data.
+Timeout: 30s — wrap in try/catch (Standing Rule #28).
+
+### POST /api/presentations/v2/ingest-pds
+Ingests project document into knowledge base for context.
+Request: FormData with file + project_id + owner='clearsky'
+Response: {doc_id, word_count, status}
+
+### GET /api/wiki/docs?type=project_dossier&owner=clearsky
+Loads available project list for the project selector dropdown.
+Response: {docs:[{id, title, project_id}]}
+Fallback: var docs = MOCK_PROJECTS (line 660) — hardcoded fallback.
+
+## Brand tokens for generated slides
+
+### Dark theme (current presentations-v3.html)
+Background: #0D1B3E (dark navy)
+Accent: #5B9BD5 (light blue)
+Gold: #D4A843
+White text: #FFFFFF
+Off-white cards: #F5F7FA
+Font headings: Georgia
+Font body: Calibri / Segoe UI
+
+### Official ClearSky brand (use for new templates)
+Primary Navy: #1A237E
+Secondary Blue: #3949AB
+Yellow accent: #F9A825
+Body text: #424242
+Font: Roboto (fallback Arial/Calibri)
+Logo white: https://clearskyltd.com/assets/logos/logo-white.png
+Logo navy: https://clearskyltd.com/assets/logos/logo-dark-blue.png
+Logo yellow: https://clearskyltd.com/assets/logos/logo-yellow.png
+
+## Generating a presentation based on brand guide
+Step 1: Read CLEARSKY_DESIGN_GUIDE.md for color/font/layout specs
+Step 2: Select output type (tearsheet/deck/whitepaper)
+Step 3: POST to /api/presentations/v2/generate with prompt + type
+Step 4: Parse response JSON into field schema
+Step 5: Call buildBuf(brief, imageBase64, imageExt) → ArrayBuffer
+Step 6: Download via Blob URL
+
+## pptxgenjs patterns
+```javascript
+// Setup
+const pptx = new PptxGenJS();
+pptx.layout = 'LAYOUT_WIDE'; // or 'LAYOUT_A4'
+pptx.author = 'ClearSky Limited';
+
+// Slide
+const slide = pptx.addSlide();
+
+// Text with brand colors
+slide.addText('Title', {
+  x: 0.5, y: 0.3, w: 9, h: 0.8,
+  fontSize: 32, bold: true,
+  color: 'FFFFFF',
+  fontFace: 'Georgia'
+});
+
+// Colored rectangle
+slide.addShape(pptx.ShapeType.rect, {
+  x: 0, y: 0, w: 10, h: 5.625,
+  fill: { color: '0D1B3E' }
+});
+
+// Always use shrinkText:true on text boxes
+slide.addText(longText, {
+  x: 0.5, y: 1.5, w: 8, h: 2,
+  shrinkText: true,
+  fontSize: 14,
+  color: '2C3E50'
+});
+
+// Generate buffer (for download)
+const buf = await pptx.write({ outputType: 'arraybuffer' });
+```
+
+## AI-optional fallback (Standing Rule #28)
+```javascript
+async function generateBrief(prompt, type) {
+  try {
+    const res = await Promise.race([
+      fetch(API + '/api/presentations/v2/generate', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({prompt, type})
+      }),
+      new Promise((_,r) => setTimeout(() => r(new Error('timeout')), 30000))
+    ]);
+    if (!res.ok) throw new Error('API error ' + res.status);
+    return await res.json();
+  } catch(e) {
+    console.warn('AI brief failed, using fallback:', e.message);
+    // Degrade to MOCK_PROJECTS or manual input
+    showDegradedBanner('AI brief unavailable — fill fields manually or paste text');
+    return buildFallbackBrief(prompt, type);
+  }
+}
+```
+
+## URL parameter integration (pending Week 2)
+presentations-v3.html will read:
+- ?buyer=Shell → pre-populate counterparty field + search wiki for Shell context
+- ?project=985 → pre-populate project selector + auto-ingest PD if available
+- ?type=tearsheet → pre-select output type
+
+## Gotchas
+- pptxgenjs 3.12.0 from cdnjs — do NOT upgrade without testing (breaking API changes)
+- shrinkText:true is mandatory — different OS render fonts differently
+- Georgia font may not render on all systems — always specify fallback
+- Image fetch (line 949) uses generic fetch() for base64 — may fail on CORS
+- MOCK_PROJECTS fallback is stale — update when adding new portfolio projects
+- Worker endpoint ANTHROPIC_API_KEY must be set via wrangler secret put

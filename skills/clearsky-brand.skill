@@ -8,35 +8,85 @@
 - Tone: Professional, data-driven, direct. Not greenwashing language. Not fluffy.
 - Address Spain: Calle O'Donnell, 18 - Piso 7 I J, 28009 Madrid
 
-## Color Palette
-```css
-/* Primary */
---cs-teal: #4ade80;        /* primary action, positive values, commercial */
---cs-teal-dim: #22c55e;    /* secondary teal */
---cs-amber: #f59e0b;       /* warnings, pipeline, prospecting */
---cs-red: #ef4444;         /* alerts, going cold, errors */
---cs-blue: #3b82f6;        /* info, received/inbound */
+## Color Systems — Three Distinct Contexts
 
-/* Dark theme backgrounds */
---cs-bg-primary: #0a0f1a;   /* page background */
---cs-bg-surface: #111827;   /* card/panel background */
---cs-bg-surface2: #1f2937;  /* elevated surface, hover states */
---cs-bg-surface3: #374151;  /* borders, dividers */
+### System 1: Official ClearSky Brand (PPTX/DOCX/Print outputs)
+Source: ClearSky_Brand_Guide_v10.md + CLEARSKY_DESIGN_GUIDE.md
+Use for: presentations-v3.html generated slides, DOCX reports, external deliverables
 
-/* Text */
---cs-text-primary: #f9fafb;   /* primary text */
---cs-text-secondary: #9ca3af; /* secondary/metadata text */
---cs-text-dim: #6b7280;       /* very dim, timestamps, labels */
+| Token | Hex | Usage |
+|-------|-----|-------|
+| Primary Navy | #1A237E | Titles, headers, table headers, slide backgrounds |
+| Secondary Blue | #3949AB | Subtitles, links, highlights |
+| Pale Blue | #E8EAF6 | Backgrounds, card fills |
+| Yellow Accent | #F9A825 | CTA buttons, accent circles (sparingly) |
+| Body Text | #424242 | Body text, secondary text |
+| White | #FFFFFF | Primary background, text on dark |
+| Light Grey | #F5F5F5 | Alternate backgrounds |
+| Eligible Green | #4CAF50 | Positive/eligible areas |
+| Warning Orange | #FF9800 | Caution areas |
+| Alert Red | #F44336 | Excluded areas |
 
-/* Rep colors */
---cs-rep-ana: #a855f7;        /* purple */
---cs-rep-carolina: #3b82f6;   /* blue */
---cs-rep-luis: #f59e0b;       /* gold */
---cs-rep-brian: #22c55e;      /* green */
---cs-rep-emmanuel: #f97316;   /* orange */
---cs-rep-bobbie: #ec4899;     /* pink */
---cs-rep-keith: #6366f1;      /* indigo */
-```
+Font: Roboto (fallback Arial/Calibri)
+Logo URLs:
+  White: https://clearskyltd.com/assets/logos/logo-white.png
+  Dark Blue: https://clearskyltd.com/assets/logos/logo-dark-blue.png
+  Yellow: https://clearskyltd.com/assets/logos/logo-yellow.png
+
+### System 2: Tools Dark UI Theme (tools.oga.earth web tools)
+Source: clearskyplatform.html, revenue.html, dashboard.html, pablo.html
+Use for: all internal web tools, CRM tab, buyer intelligence
+
+| Token | Hex/Value | Usage |
+|-------|-----------|-------|
+| Page BG | #0a0f1a | Page background |
+| Surface | #111827 | Card/panel background |
+| Surface2 | #1f2937 | Elevated surface, hover |
+| Surface3 | #374151 | Borders, dividers |
+| Teal | #4ade80 | Primary action, positive, commercial |
+| Amber | #f59e0b | Warnings, pipeline, prospecting |
+| Red | #ef4444 | Alerts, going cold, errors |
+| Blue | #3b82f6 | Info, received/inbound |
+| Text | #f9fafb | Primary text |
+| Text2 | #9ca3af | Secondary text |
+| Text3 | #6b7280 | Dim text, timestamps |
+
+Rep colors:
+  Ana: #a855f7 (purple)
+  Carolina: #3b82f6 (blue)
+  Luis: #f59e0b (gold)
+  Brian: #22c55e (green)
+  Emmanuel: #f97316 (orange)
+  Bobbie: #ec4899 (pink)
+  Keith: #6366f1 (indigo)
+
+Font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif (system)
+
+### System 3: Presentation Engine Theme (generated slides — current v3 templates)
+Source: ClearSky_Presentation_Engine_Arch.txt, presentations-v3.html
+Use for: pptxgenjs slide generation, buildBuf() output
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| Dark Navy | #0D1B3E | Backgrounds, title bars |
+| Light Blue | #5B9BD5 | Subtitles, stat accents |
+| Gold | #D4A843 | Accent bars, badges |
+| White | #FFFFFF | Text on dark |
+| Off White | #F5F7FA | Card backgrounds |
+| Dark Text | #2C3E50 | Body text |
+| Mid Gray | #6B7B8D | Captions, secondary |
+| Light Gray | #E8ECF1 | Borders, dividers |
+
+Fonts: Georgia (headings), Calibri/Segoe UI (body)
+NOTE: System 3 is a legacy template. New templates should migrate to System 1.
+
+## Logo placement rules
+- Dark backgrounds (tools): use logo-white.png
+- Light backgrounds (documents/decks): use logo-dark-blue.png
+- Yellow accent moments: use logo-yellow.png
+- Never stretch, rotate, or recolor
+- Minimum clear space = logo height
+- Position: top-left for presentations, top-right for documents
 
 ## Typography
 ```css
