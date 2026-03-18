@@ -299,6 +299,7 @@ Mirror to: C:\brand-presentations\PLATFORM.md
 ### Changelog
 | Date | Entry |
 |------|-------|
+| 2026-03-18 | v79z3-crm-platform: CRM tab added as first tab on clearskyplatform.html. Worker endpoints: contacts-view (company-grouped, idle_days, deals), contact-lists CRUD. Frontend: preloadCRM boot, company accordion, status/owner/text filters, buyer panel CRM section, radarCard CRM badge, openBuyerFromCRM fuzzy match, CSV export. 513 companies, 1,168 contacts loaded. |
 | 2026-03-18 | v79z2-unified: Week 1 technical debt completed. v1→v3 HubSpot email migration, cron every 4h with contacts+deals+enrich, sync timestamps on frontends, pipeline value fallback. Thread gap closed (Mar 12 → Mar 18). |
 | 2026-03-17 | File created. Three-layer architecture defined. OpenClaw adoption decision for personal OS. Multi-tenant migration plan for Week 2. Proprietary layer inventory. Full gameplan Weeks 1-4. |
 
