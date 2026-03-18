@@ -343,7 +343,7 @@ td{padding:5px 8px;vertical-align:middle}
   <div class="ptab active" onclick="showPage('crm')">CRM <span class="ptab-badge" id="crm-badge">&middot;&middot;&middot;</span></div>
   <div class="ptab" onclick="showPage('vcu')">Buyer Intelligence <span class="ptab-badge" id="vcu-badge">2,116</span></div>
   <div class="ptab" onclick="showPage('browser')">Project Browser <span class="ptab-badge" id="pb-badge">&middot;&middot;&middot;</span></div>
-  <div class="ptab dim">RFP Tracker <span class="ptab-badge">1</span></div>
+  <div class="ptab dim" onclick="window.open('https://tools.oga.earth/tools/rfp-tracker.html','_blank')" style="cursor:pointer" title="Watershed 2026 + ClimeFi CDR 2026 — opens RFP Tracker">RFP Tracker <span class="ptab-badge">2</span></div>
 </div>
 
 <button id="mobileFilterBtn" onclick="toggleMobileSidebar()" style="display:none;position:fixed;bottom:20px;right:20px;z-index:50;padding:10px 16px;background:var(--teal);color:var(--bg0);border:none;border-radius:99px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.3)">Filters</button>
@@ -2901,8 +2901,8 @@ var CRM_FILTER_STATUS='all';
 var CRM_SEARCH_TERM='';
 var CRM_SELECTED={};
 var CRM_EXPANDED={};
-var CRM_SORT_COL='threads';
-var CRM_SORT_DIR=-1;
+var CRM_SORT_COL='status';
+var CRM_SORT_DIR=1;
 
 function preloadCRM(){
   fetch(API+'/api/hubspot/contacts-view')
@@ -3012,6 +3012,9 @@ function getCRMVisible(){
     return matchOwner&&matchStatus&&matchSearch;
   });
   filtered.sort(function(a,b){
+    /* Junk rows always at bottom (v79z5) */
+    var ja=crmJunk(a.company),jb=crmJunk(b.company);
+    if(ja!==jb)return ja-jb;
     var av,bv;
     switch(CRM_SORT_COL){
       case'name':
@@ -3037,6 +3040,12 @@ function getCRMVisible(){
     }
   });
   return filtered;
+}
+
+function crmJunk(name){
+  if(!name||name==='(No company)')return 2;
+  if(/^\d+$/.test(name.trim()))return 1;
+  return 0;
 }
 
 function crmRepClass(rep){
@@ -3086,13 +3095,15 @@ function renderCRM(){
   var active=visible.filter(function(co){return crmDeriveStatus(co).status==='active';}).length;
   var cold=visible.filter(function(co){return crmDeriveStatus(co).status==='cold';}).length;
   var selN=Object.keys(CRM_SELECTED).length;
+  var withDeals=visible.filter(function(co){return co.has_deal;}).length;
 
   if(strip){
     strip.innerHTML=
       '<span style="padding:0 12px;border-right:1px solid rgba(255,255,255,0.07)">Companies <b style="color:#f9fafb">'+visible.length+'</b></span>'+
       '<span style="padding:0 12px;border-right:1px solid rgba(255,255,255,0.07)">Contacts <b style="color:#f9fafb">'+totalCts+'</b></span>'+
       '<span style="padding:0 12px;border-right:1px solid rgba(255,255,255,0.07)">Active <b style="color:#4ade80">'+active+'</b></span>'+
-      '<span style="padding:0 12px">Going cold <b style="color:#ef4444">'+cold+'</b></span>'+
+      '<span style="padding:0 12px;border-right:1px solid rgba(255,255,255,0.07)">Going cold <b style="color:#ef4444">'+cold+'</b></span>'+
+      '<span style="padding:0 12px">With deals <b style="color:#3b82f6">'+withDeals+'</b></span>'+
       (selN>0?'<span style="margin-left:auto;color:#f59e0b;font-weight:600">'+selN+' selected</span>':'');
   }
 
@@ -3132,7 +3143,7 @@ function renderCRM(){
             '<span style="font-size:9px;color:#6b7280">'+(exp?'\u25BE':'\u25B8')+'</span>'+
           '</div>'+
           '<div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">'+
-            (co.has_deal?'<span style="font-size:10px;color:#3b82f6">Deal: $'+fmtDeal(co.deal_value)+'</span>':'')+
+            (co.has_deal?'<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:rgba(59,130,246,0.12);color:#3b82f6;border:1px solid rgba(59,130,246,0.15)">Deal'+(co.deal_value>0&&co.deal_value!==5500000?' · $'+fmtDeal(co.deal_value):'')+'</span>':'')+
             (co.tier?'<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(168,85,247,0.12);color:#a855f7;border:1px solid rgba(168,85,247,0.2)">'+esc(co.tier)+'</span>':'')+
             (co.industry?'<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(255,255,255,0.04);color:#6b7280">'+esc(co.industry.replace(/_/g,' '))+'</span>':'')+
             (co.domain?'<span style="font-size:9px;color:#4b5563">'+esc(co.domain)+'</span>':'')+

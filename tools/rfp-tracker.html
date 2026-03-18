@@ -570,8 +570,13 @@ function renderRfpHeader() {
           '<div class="rfp-buyer">' + esc(r.buyer_name) + '</div>' +
         '</div>' +
         '<div style="display:flex;gap:6px">' +
-          '<button class="btn btn-secondary btn-sm" onclick="window.open(\'https://watershed.com/blog/carbon-rfp-2026\')">&#x2197; View RFP</button>' +
-          '<button class="btn btn-secondary btn-sm" onclick="window.open(\'https://form.typeform.com/to/INiLJu1D\')">Apply Form &#x2197;</button>' +
+          (r.id === 'watershed-2026' ?
+            '<button class="btn btn-secondary btn-sm" onclick="window.open(\'https://watershed.com/blog/carbon-rfp-2026\')">&#x2197; View RFP</button>' +
+            '<button class="btn btn-secondary btn-sm" onclick="window.open(\'https://form.typeform.com/to/INiLJu1D\')">Apply Form &#x2197;</button>'
+          : r.id === 'climefi-cdr-2026' ?
+            '<button class="btn btn-secondary btn-sm" onclick="window.open(\'https://www.cdr.fyi/\')">&#x2197; CDR.FYI</button>' +
+            '<button class="btn btn-secondary btn-sm" onclick="window.open(\'https://climefi.com\')">ClimeFi &#x2197;</button>'
+          : '') +
         '</div>' +
       '</div>' +
       '<div class="rfp-header-chips">' +
