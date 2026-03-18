@@ -267,6 +267,7 @@ td{padding:5px 8px;vertical-align:middle}
   .page.active{height:calc(100vh - 82px)}
 }
 /* CRM tab — Apollo-style (v79z3-apollo) */
+.page.active#page-crm{display:flex;flex-direction:column;overflow:hidden;grid-template-columns:none}
 .crm-pill{padding:3px 10px;border-radius:12px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:#9ca3af;font-size:11px;cursor:pointer;transition:all 0.12s;white-space:nowrap}
 .crm-pill:hover{border-color:#4ade80;color:#4ade80}
 .crm-pill.active{background:rgba(74,222,128,0.12);border-color:#4ade80;color:#4ade80}
@@ -348,7 +349,7 @@ td{padding:5px 8px;vertical-align:middle}
 <button id="mobileFilterBtn" onclick="toggleMobileSidebar()" style="display:none;position:fixed;bottom:20px;right:20px;z-index:50;padding:10px 16px;background:var(--teal);color:var(--bg0);border:none;border-radius:99px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.3)">Filters</button>
 
 <!-- CRM (v79z3) -->
-<div class="page active" id="page-crm" style="display:flex;flex-direction:column;overflow:hidden">
+<div class="page active" id="page-crm">
 
   <!-- TOOLBAR ROW -->
   <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,0.07);flex-wrap:wrap;flex-shrink:0">
@@ -381,7 +382,13 @@ td{padding:5px 8px;vertical-align:middle}
       <button onclick="exportCRMExcel()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#9ca3af;padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer">Export Excel</button>
       <button onclick="exportCRMCSV()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#9ca3af;padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer">Export CSV</button>
       <button id="crm-list-btn" onclick="createCRMList()" disabled style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:#f59e0b;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;opacity:0.4">+ Create List</button>
+      <button onclick="toggleCRMLists()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#9ca3af;padding:5px 12px;border-radius:6px;font-size:11px;cursor:pointer">Lists</button>
     </div>
+  </div>
+
+  <!-- LISTS DROPDOWN (v79z4) -->
+  <div id="crm-lists-panel" style="display:none;padding:8px 16px;background:rgba(255,255,255,0.02);border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0">
+    <div id="crm-lists-content" style="font-size:12px;color:#9ca3af">Loading lists...</div>
   </div>
 
   <!-- STATS STRIP -->
@@ -2951,6 +2958,7 @@ function crmDeriveTouch(co){
 
 function setCRMOwner(o,el){
   CRM_FILTER_OWNER=o;
+  window._CRM_LIST_FILTER=null;
   document.querySelectorAll('#crm-owner-pills .crm-pill').forEach(function(p){p.classList.remove('active');});
   if(el)el.classList.add('active');
   renderCRM();
@@ -2958,6 +2966,7 @@ function setCRMOwner(o,el){
 
 function setCRMStatus(s,el){
   CRM_FILTER_STATUS=s;
+  window._CRM_LIST_FILTER=null;
   document.querySelectorAll('#crm-status-pills .crm-pill').forEach(function(p){p.classList.remove('active');});
   if(el)el.classList.add('active');
   renderCRM();
@@ -2965,6 +2974,7 @@ function setCRMStatus(s,el){
 
 function filterCRM(){
   CRM_SEARCH_TERM=(document.getElementById('crm-search')||{value:''}).value.toLowerCase();
+  window._CRM_LIST_FILTER=null;
   renderCRM();
 }
 
@@ -2980,7 +2990,13 @@ function sortCRM(col){
 
 function getCRMVisible(){
   var all=Object.values(CRM_DATA);
+  var listFilter=window._CRM_LIST_FILTER||null;
   var filtered=all.filter(function(co){
+    /* List filter: company must have at least one email from the list */
+    if(listFilter){
+      var hasMatch=(co.contacts||[]).some(function(c){return listFilter[(c.email||'').toLowerCase()];});
+      if(!hasMatch)return false;
+    }
     var st=crmDeriveStatus(co);
     var owner=crmDeriveOwner(co);
     var matchOwner=CRM_FILTER_OWNER==='all'||owner===CRM_FILTER_OWNER;
@@ -3115,7 +3131,12 @@ function renderCRM(){
             '<span style="font-size:10px;background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:8px;color:#9ca3af;white-space:nowrap">'+co.contacts.length+'</span>'+
             '<span style="font-size:9px;color:#6b7280">'+(exp?'\u25BE':'\u25B8')+'</span>'+
           '</div>'+
-          (co.has_deal?'<div style="font-size:10px;color:#3b82f6">Deal: $'+fmtDeal(co.deal_value)+'</div>':'')
+          '<div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">'+
+            (co.has_deal?'<span style="font-size:10px;color:#3b82f6">Deal: $'+fmtDeal(co.deal_value)+'</span>':'')+
+            (co.tier?'<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(168,85,247,0.12);color:#a855f7;border:1px solid rgba(168,85,247,0.2)">'+esc(co.tier)+'</span>':'')+
+            (co.industry?'<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(255,255,255,0.04);color:#6b7280">'+esc(co.industry.replace(/_/g,' '))+'</span>':'')+
+            (co.domain?'<span style="font-size:9px;color:#4b5563">'+esc(co.domain)+'</span>':'')+
+          '</div>'
         +'</div>'+
         '<button onclick="openBuyerFromCRM(\''+coKey+'\',event)" style="margin-left:auto;font-size:9px;padding:2px 7px;border-radius:4px;border:1px solid rgba(74,222,128,0.2);color:#4ade80;background:transparent;cursor:pointer;white-space:nowrap;flex-shrink:0">Market Intel \u2192</button>'+
       '</div>'+
@@ -3139,16 +3160,21 @@ function renderCRM(){
               '<div style="width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:#9ca3af;flex-shrink:0">'+esc(ci)+'</div>'+
               '<div style="overflow:hidden">'+
                 '<div style="font-size:12px;font-weight:500;color:#f9fafb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(cname)+'</div>'+
-                '<div style="font-size:10px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(c.jobtitle||'')+'</div>'+
+                '<div style="display:flex;gap:4px;align-items:center">'+
+                  '<span style="font-size:10px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(c.jobtitle||'')+'</span>'+
+                  (c.lifecyclestage?'<span style="font-size:8px;padding:0 4px;border-radius:6px;background:rgba(59,130,246,0.1);color:#3b82f6;border:1px solid rgba(59,130,246,0.15)">'+esc(c.lifecyclestage)+'</span>':'')+
+                  (c.buying_role?'<span style="font-size:8px;padding:0 4px;border-radius:6px;background:rgba(245,158,11,0.1);color:#f59e0b;border:1px solid rgba(245,158,11,0.15)">'+esc(c.buying_role)+'</span>':'')+
+                '</div>'+
               '</div>'+
             '</div>'+
             '<div></div>'+
-            '<div style="font-size:11px;color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(c.email||'')+'</div>'+
+            '<div title="'+esc(c.email||'')+'" style="font-size:11px;color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(c.email||'')+'</div>'+
             '<div></div><div></div>'+
             '<div>'+(crep?'<span class="'+crmRepClass(crep)+'">'+esc(crep)+'</span>':'')+'</div>'+
             '<div style="display:flex;gap:4px">'+
               (c.email?'<a href="mailto:'+esc(c.email)+'" onclick="event.stopPropagation()" style="font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid rgba(74,222,128,0.2);color:#4ade80;text-decoration:none">Email</a>':'')+
               (c.phone?'<a href="tel:'+esc(c.phone)+'" onclick="event.stopPropagation()" style="font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid rgba(59,130,246,0.2);color:#3b82f6;text-decoration:none">Call</a>':'')+
+              (c.linkedin_url?'<a href="'+esc(c.linkedin_url)+'" target="_blank" onclick="event.stopPropagation()" style="font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid rgba(107,114,128,0.2);color:#9ca3af;text-decoration:none">in</a>':'')+
             '</div>'+
           '</div>';
         }).join('')+
@@ -3207,6 +3233,55 @@ function createCRMList(){
       else alert('Error: '+(d.error||'unknown'));
     })
     .catch(function(e){alert('Error: '+e.message);});
+}
+
+/* Lists viewer (v79z4) */
+var CRM_LISTS_VISIBLE=false;
+function toggleCRMLists(){
+  CRM_LISTS_VISIBLE=!CRM_LISTS_VISIBLE;
+  var panel=document.getElementById('crm-lists-panel');
+  if(!panel)return;
+  panel.style.display=CRM_LISTS_VISIBLE?'block':'none';
+  if(CRM_LISTS_VISIBLE)loadCRMLists();
+}
+function loadCRMLists(){
+  var el=document.getElementById('crm-lists-content');
+  if(!el)return;
+  el.innerHTML='<span style="color:#6b7280">Loading...</span>';
+  fetch(API+'/api/hubspot/contact-lists')
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var lists=d.lists||[];
+      if(!lists.length){el.innerHTML='<span style="color:#6b7280">No saved lists yet</span>';return;}
+      el.innerHTML=lists.map(function(l){
+        var emails=l.contact_emails||[];
+        var dt=l.created_at?new Date(l.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'';
+        return'<div style="display:flex;align-items:center;gap:10px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04)">'+
+          '<span style="font-weight:600;color:#f9fafb">'+esc(l.name)+'</span>'+
+          '<span style="font-size:10px;background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:8px">'+emails.length+' contacts</span>'+
+          '<span style="font-size:10px;color:#6b7280">'+dt+'</span>'+
+          '<button onclick="applyCRMList('+JSON.stringify(JSON.stringify(emails))+')" style="font-size:10px;padding:2px 8px;border-radius:4px;border:1px solid rgba(74,222,128,0.2);color:#4ade80;background:transparent;cursor:pointer;margin-left:auto">Apply filter</button>'+
+        '</div>';
+      }).join('');
+    })
+    .catch(function(e){el.innerHTML='<span style="color:#ef4444">Error: '+esc(e.message)+'</span>';});
+}
+function applyCRMList(emailsJson){
+  var emails=JSON.parse(emailsJson);
+  var emailSet={};
+  emails.forEach(function(e){emailSet[e.toLowerCase()]=true;});
+  /* Filter CRM_DATA to only companies containing at least one email from the list */
+  CRM_SEARCH_TERM='';
+  var input=document.getElementById('crm-search');
+  if(input)input.value='';
+  /* Temporarily override getCRMVisible to use list filter */
+  CRM_FILTER_OWNER='all';
+  CRM_FILTER_STATUS='all';
+  document.querySelectorAll('#crm-owner-pills .crm-pill').forEach(function(p,i){p.classList.toggle('active',i===0);});
+  document.querySelectorAll('#crm-status-pills .crm-pill').forEach(function(p,i){p.classList.toggle('active',i===0);});
+  /* Use search term as a marker: set it to a special value and filter by email set */
+  window._CRM_LIST_FILTER=emailSet;
+  renderCRM();
 }
 
 function exportCRMCSV(){
