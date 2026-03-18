@@ -359,15 +359,9 @@ td{padding:5px 8px;vertical-align:middle}
     </div>
 
     <span style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px">Owner:</span>
-    <div style="display:flex;gap:5px" id="crm-owner-pills">
-      <button class="crm-pill active" onclick="setCRMOwner('all',this)">All</button>
-      <button class="crm-pill" onclick="setCRMOwner('Ana',this)">Ana</button>
-      <button class="crm-pill" onclick="setCRMOwner('Carolina',this)">Carolina</button>
-      <button class="crm-pill" onclick="setCRMOwner('Luis',this)">Luis</button>
-      <button class="crm-pill" onclick="setCRMOwner('Brian',this)">Brian</button>
-      <button class="crm-pill" onclick="setCRMOwner('Bobbie',this)">Bobbie</button>
-      <button class="crm-pill" onclick="setCRMOwner('Keith',this)">Keith</button>
-    </div>
+    <select id="crm-owner-select" onchange="setCRMOwner(this.value)" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:#f9fafb;padding:4px 8px;border-radius:6px;font-size:11px;cursor:pointer;outline:none">
+      <option value="all">All</option>
+    </select>
 
     <span style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-left:4px">Status:</span>
     <div style="display:flex;gap:5px" id="crm-status-pills">
@@ -2904,6 +2898,17 @@ var CRM_EXPANDED={};
 var CRM_SORT_COL='status';
 var CRM_SORT_DIR=1;
 
+function loadTeamDropdown(){
+  fetch(API+'/api/hubspot/team').then(function(r){return r.json();}).then(function(d){
+    var sel=document.getElementById('crm-owner-select');if(!sel)return;
+    (d.team||[]).forEach(function(m){
+      var opt=document.createElement('option');
+      opt.value=m.name.split(' ')[0];opt.textContent=m.name.split(' ')[0];
+      sel.appendChild(opt);
+    });
+  }).catch(function(e){console.error('Team load failed',e);});
+}
+
 function preloadCRM(){
   fetch(API+'/api/hubspot/contacts-view')
     .then(function(r){return r.json();})
@@ -2956,11 +2961,9 @@ function crmDeriveTouch(co){
   return latest||null;
 }
 
-function setCRMOwner(o,el){
+function setCRMOwner(o){
   CRM_FILTER_OWNER=o;
   window._CRM_LIST_FILTER=null;
-  document.querySelectorAll('#crm-owner-pills .crm-pill').forEach(function(p){p.classList.remove('active');});
-  if(el)el.classList.add('active');
   renderCRM();
 }
 
@@ -2999,7 +3002,7 @@ function getCRMVisible(){
     }
     var st=crmDeriveStatus(co);
     var owner=crmDeriveOwner(co);
-    var matchOwner=CRM_FILTER_OWNER==='all'||owner===CRM_FILTER_OWNER;
+    var matchOwner=CRM_FILTER_OWNER==='all'||(owner||'').toLowerCase()===CRM_FILTER_OWNER.toLowerCase();
     var matchStatus=CRM_FILTER_STATUS==='all'||st.status===CRM_FILTER_STATUS;
     var q=CRM_SEARCH_TERM;
     var matchSearch=!q||
@@ -3056,6 +3059,14 @@ function crmRepClass(rep){
 function crmIdleClass(d){
   if(d===null||d===undefined||d>=999)return'crm-idle-r';
   return d<=5?'crm-idle-g':d<=14?'crm-idle-a':'crm-idle-r';
+}
+
+function crmLastActivityBadge(dt){
+  if(!dt)return'';
+  var d=new Date(dt);var now=new Date();var days=Math.floor((now-d)/(1000*60*60*24));
+  var col=days<=7?'#4ade80':days<=30?'#f59e0b':days<=90?'#f97316':'#ef4444';
+  var label=d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  return'<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:'+col+'18;color:'+col+';border:1px solid '+col+'30">'+label+'</span>';
 }
 
 function crmStatusBadge(co){
@@ -3148,6 +3159,7 @@ function renderCRM(){
             (co.tier?'<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(168,85,247,0.12);color:#a855f7;border:1px solid rgba(168,85,247,0.2)">'+esc(co.tier)+'</span>':'')+
             (co.industry?'<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(255,255,255,0.04);color:#6b7280">'+esc(co.industry.replace(/_/g,' '))+'</span>':'')+
             (co.domain?'<span style="font-size:9px;color:#4b5563">'+esc(co.domain)+'</span>':'')+
+            crmLastActivityBadge(co.last_activity)+
           '</div>'
         +'</div>'+
         '<button onclick="openBuyerFromCRM(\''+coKey+'\',event)" style="margin-left:auto;font-size:9px;padding:2px 7px;border-radius:4px;border:1px solid rgba(74,222,128,0.2);color:#4ade80;background:transparent;cursor:pointer;white-space:nowrap;flex-shrink:0">Market Intel \u2192</button>'+
@@ -3289,7 +3301,7 @@ function applyCRMList(emailsJson){
   /* Temporarily override getCRMVisible to use list filter */
   CRM_FILTER_OWNER='all';
   CRM_FILTER_STATUS='all';
-  document.querySelectorAll('#crm-owner-pills .crm-pill').forEach(function(p,i){p.classList.toggle('active',i===0);});
+  var ownerSel=document.getElementById('crm-owner-select');if(ownerSel)ownerSel.value='all';
   document.querySelectorAll('#crm-status-pills .crm-pill').forEach(function(p,i){p.classList.toggle('active',i===0);});
   /* Use search term as a marker: set it to a special value and filter by email set */
   window._CRM_LIST_FILTER=emailSet;
@@ -3368,6 +3380,7 @@ function preloadRecommendations(){
 /* BOOT (v79z3: clean nav + 6 parallel loaders) */
 PANEL_OPEN=false;PANEL_EXPANDED=false;
 panelBreadcrumb=[];
+loadTeamDropdown();
 preloadCRM();
 loadData();
 loadVCUPage();
