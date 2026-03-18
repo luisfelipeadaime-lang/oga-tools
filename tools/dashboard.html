@@ -246,8 +246,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <button>30d</button>
       <button>90d</button>
     </div>
-    <button class="refresh-btn">↻ Refresh</button>
-    <div class="data-source"><span class="live-dot"></span>HubSpot Live</div>
+    <button class="refresh-btn" onclick="location.reload()">↻ Refresh</button>
+    <div class="data-source"><span class="live-dot"></span><span id="syncLabel">HubSpot Live</span></div>
   </div>
 </div>
 
@@ -699,6 +699,24 @@ function renderCallData(callData) {
   }).join('') + '<div style="font-size:9px;color:var(--text-muted);margin-top:8px;opacity:0.6">Source: HubSpot thread classifications (7d) • commercial_active + commercial_prospecting</div>';
 }
 loadCallTargets();
+
+// Sync status indicator (v79z2)
+(async function updateSyncLabel() {
+  try {
+    const res = await fetch(`${API}/api/hubspot/sync-state`);
+    if (!res.ok) return;
+    const state = await res.json();
+    const el = document.getElementById('syncLabel');
+    if (!el) return;
+    const ts = state.last_cron_sync;
+    if (ts) {
+      const ago = Math.floor((Date.now() - new Date(ts).getTime()) / 60000);
+      const label = ago < 60 ? `${ago}m ago` : ago < 1440 ? `${Math.floor(ago/60)}h ago` : `${Math.floor(ago/1440)}d ago`;
+      el.textContent = `Synced ${label}`;
+      if (ago > 4320) el.style.color = '#ef4444'; // red if >3 days
+    }
+  } catch (_) {}
+})();
 
 // ============================================================
 // MOCK RAW ACTIVITY DATA (50 sample rows)

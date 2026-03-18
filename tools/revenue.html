@@ -984,18 +984,30 @@ async function syncHubSpot() {
   }
 }
 
-function updateSyncStatus() {
+async function updateSyncStatus() {
   const el = document.getElementById('syncStatus');
-  if (cache.lastSync) {
-    const syncAge = Math.floor((Date.now() - new Date(cache.lastSync).getTime()) / 86400000);
-    const stale = syncAge > 3 ? ` (${syncAge}d old — thread data may be stale)` : '';
-    el.textContent = `Last sync: ${timeSince(cache.lastSync)}${stale}`;
-    el.className = syncAge > 3 ? 'sync-status' : 'sync-status';
-    if (syncAge > 3) el.style.color = 'var(--red)';
-    else el.style.color = '';
-  } else {
-    el.textContent = 'Not synced';
-    el.className = 'sync-status';
+  try {
+    const state = await api('/hubspot/sync-state');
+    const ts = state.last_cron_sync || cache.lastSync;
+    if (ts) {
+      const syncAge = Math.floor((Date.now() - new Date(ts).getTime()) / 86400000);
+      const stale = syncAge > 3 ? ` (${syncAge}d old — data may be stale)` : '';
+      const threadDate = state.latest_thread_date ? ` · Latest thread: ${state.latest_thread_date.split('T')[0]}` : '';
+      el.textContent = `Last sync: ${timeSince(ts)}${stale}${threadDate}`;
+      el.style.color = syncAge > 3 ? 'var(--red)' : '';
+    } else {
+      el.textContent = 'Not synced';
+      el.style.color = 'var(--red)';
+    }
+  } catch (e) {
+    // Fallback to cache-based sync status
+    if (cache.lastSync) {
+      const syncAge = Math.floor((Date.now() - new Date(cache.lastSync).getTime()) / 86400000);
+      el.textContent = `Last sync: ${timeSince(cache.lastSync)}${syncAge > 3 ? ' (stale)' : ''}`;
+      el.style.color = syncAge > 3 ? 'var(--red)' : '';
+    } else {
+      el.textContent = 'Not synced';
+    }
   }
 }
 
@@ -1212,7 +1224,13 @@ async function loadActionList() {
   const profiledCount = contacts.filter(c => buyerByHsId[c.hubspot_id] || buyerByEmail[(c.email || '').toLowerCase()]).length;
   const profiledPct = contacts.length > 0 ? Math.round(profiledCount / contacts.length * 100) : 0;
   const activePipeline = deals.filter(d => !['closed_won','closed_lost','dead'].includes(d.stage));
-  const pipelineValue = activePipeline.reduce((s, d) => s + (d.value_usd || 0), 0);
+  let pipelineValue = activePipeline.reduce((s, d) => s + (d.value_usd || 0), 0);
+  // Fallback to HubSpot deals cache if deal_sprint has $0 pipeline (v79z2)
+  if (pipelineValue === 0 && cache.hubspotDeals && cache.hubspotDeals.length > 0) {
+    const hsActive = cache.hubspotDeals.filter(d => !['closedwon','closedlost'].includes((d.dealstage||'').toLowerCase()));
+    pipelineValue = hsActive.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0);
+    if (pipelineValue > 0) activePipeline.length || (activePipeline.push(...hsActive.map(d => ({stage: d.dealstage, value_usd: parseFloat(d.amount)||0}))));
+  }
 
   const allGroupedCount = actionListCache.active.length + actionListCache.reengage.length + actionListCache.pipeline.length;
   document.getElementById('actionStats').innerHTML = `

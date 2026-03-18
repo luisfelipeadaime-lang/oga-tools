@@ -241,10 +241,10 @@ domain context. Protect and keep building:
 ## 8. GAMEPLAN (sequenced)
 
 ### Week 1 — Technical debt + data trust
-- [ ] v79z2: v3 HubSpot API migration (close 5-day thread gap)
-- [ ] v79z2: cron every 4 hours (0 */4 * * *)
-- [ ] v79z2: visible sync timestamp on revenue.html + dashboard.html
-- [ ] v79z2: pipeline/deal sync fix (revenue.html $0 -> real pipeline value)
+- [x] v79z2: v3 HubSpot API migration (close 5-day thread gap) — DONE 2026-03-18
+- [x] v79z2: cron every 4 hours (0 */4 * * *) — DONE 2026-03-18
+- [x] v79z2: visible sync timestamp on revenue.html + dashboard.html — DONE 2026-03-18
+- [x] v79z2: pipeline/deal sync fix (revenue.html $0 -> real pipeline value) — DONE 2026-03-18
 - [ ] Ana/Carolina walkthrough (30 min, show existing tools)
 
 ### Week 2 — Multi-tenant foundation
@@ -290,6 +290,7 @@ Mirror to: C:\brand-presentations\PLATFORM.md
 ### Changelog
 | Date | Entry |
 |------|-------|
+| 2026-03-18 | v79z2-unified: Week 1 technical debt completed. v1→v3 HubSpot email migration, cron every 4h with contacts+deals+enrich, sync timestamps on frontends, pipeline value fallback. Thread gap closed (Mar 12 → Mar 18). |
 | 2026-03-17 | File created. Three-layer architecture defined. OpenClaw adoption decision for personal OS. Multi-tenant migration plan for Week 2. Proprietary layer inventory. Full gameplan Weeks 1-4. |
 
 ---
