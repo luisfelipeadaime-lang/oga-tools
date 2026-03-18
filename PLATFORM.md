@@ -262,6 +262,15 @@ domain context. Protect and keep building:
 - [ ] Build custody-calendar skill (calls personal calendar)
 - [ ] lfa.oga.earth = OpenClaw management dashboard
 
+### Week 3b — presentations-v3.html hardening (after OpenClaw install)
+- [ ] Add manual text paste input path (toggle: Upload / Paste text)
+- [ ] Wrap all Mistral OCR calls in try/catch with 30s timeout + native fallback
+- [ ] Wrap all Claude calls in try/catch with 30s timeout + raw text fallback
+- [ ] Add degradation banner component (reusable for all tools)
+- [ ] Add platform_state table to D1 + credits-exhausted detection in Worker
+- [ ] Add POST /api/admin/reset-ai-status endpoint
+- [ ] Test all three input paths end-to-end
+
 ### Week 4+ — Team-facing improvements
 - [ ] Daily email briefing (Ana + Carolina, 7am Mon-Fri)
 - [ ] Simplified company table (T1/T2/New, Excel export)

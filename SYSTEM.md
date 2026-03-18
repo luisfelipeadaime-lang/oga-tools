@@ -206,6 +206,17 @@ knowledge_docs.source_type values: [v75 updated]
   workflow_input | workflow_result | crawler | rfp_supply
 ```
 
+```
+platform_state (global flags):                 [v79z2 spec — not yet created]
+  key             → TEXT PRIMARY KEY ('ai_status', 'sync_status')
+  value           → TEXT ('ok', 'unavailable', 'degraded')
+  reason          → TEXT ('credits_exhausted', 'api_outage', 'manual')
+  set_at          → TEXT DEFAULT datetime('now')
+  cleared_at      → TEXT
+  Used by: all tools (read on load), Worker (write on API errors)
+  Key values: ai_status ('ok'|'unavailable'|'degraded')
+```
+
 ---
 
 ## SECTION 4: INTEGRATION GOTCHAS
@@ -654,6 +665,17 @@ GET    /api/hubspot/recent/:contactId
 POST   /api/hubspot/contacts/search
 POST   /api/hubspot/log-call
 POST   /api/hubspot/log-meeting
+POST   /api/hubspot/sync-contacts          [v79z2]
+POST   /api/hubspot/sync-deals             [v79z2]
+GET    /api/hubspot/sync-state             [v79z2]
+GET    /api/hubspot/sync-inbox-v3-test     [v79z2]
+```
+
+### Admin (affects: all tools — platform-wide flags)
+```
+GET    /api/admin/platform-state           → current platform flags (planned)
+POST   /api/admin/set-ai-status            → {status, reason} — set by Worker on error (planned)
+POST   /api/admin/reset-ai-status          → clear ai_unavailable flag (planned)
 ```
 
 ---
@@ -669,6 +691,7 @@ POST   /api/hubspot/log-meeting
 | `knowledge_docs` schema | All knowledge endpoints + wiki + pablo + presentations-v3 + rfp-screener + goodcarbon + methodology_documents (via doc_id FK) |
 | `/api/files/upload` | rfp-screener.html, goodcarbon.html |
 | `/api/hubspot/*` | revenue.html, projects.html, call-logger |
+| `platform_state` table | All tools (read ai_status on load) + Worker (write on credits error) |
 | `pablo_projects` schema | pablo.html + any tool with pablo_project_id FK + methodology_bundles (via methodology_bundle_id) |
 | RFP extraction prompt | rfp-screener.html AND goodcarbon.html (always update both) |
 | ClearSky DOCX branding | pablo.html, rfp-screener.html, goodcarbon.html |
