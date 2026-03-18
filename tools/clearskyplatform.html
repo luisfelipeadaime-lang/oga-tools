@@ -1828,7 +1828,7 @@ function renderDealRadar(){
       +'<span style="font-size:9.5px;padding:2px 7px;border-radius:99px;background:var(--teal-dim);color:var(--teal);border:1px solid rgba(45,212,191,.2)">'+esc(cat)+'</span>'
       +'<span style="font-size:9.5px;color:var(--text3)">'+b.project_count+' projects</span>'
       +(csMatch?'<span style="font-size:9px;padding:2px 7px;border-radius:99px;background:rgba(96,165,250,.1);color:var(--blue);border:1px solid rgba(96,165,250,.2)">\u2605 '+csMatch+' ClearSky match'+(csMatch>1?'es':'')+'</span>':'')
-      +(function(){var cc=getCRMData(b.name);return cc?'<span style="font-size:9px;padding:2px 7px;border-radius:99px;background:rgba(45,212,191,.1);color:var(--teal);border:1px solid rgba(45,212,191,.2)">CRM \u00B7 '+cc.contacts.length+'c'+(cc.has_deal?' \u00B7 $'+fmtDeal(cc.deal_value):'')+'</span>':'';}())
+      +(function(){var cc=getCRMData(b.name);return cc?'<span style="font-size:9px;padding:2px 7px;border-radius:99px;background:rgba(45,212,191,.1);color:var(--teal);border:1px solid rgba(45,212,191,.2)">CRM \u00B7 '+cc.contacts.length+'c'+(cc.has_deal?' \u00B7 Deal':'')+'</span>':'';}())
       +'</div>'
       +'</div>';
   }
@@ -2032,7 +2032,7 @@ function renderBuyerPanelData(b){
       +'<div style="display:flex;gap:12px;flex-wrap:wrap">'
       +'<div><span style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700;color:var(--text0)">'+cTotal+'</span><span style="font-size:10px;color:var(--text3);margin-left:4px">contacts</span></div>'
       +'<div><span style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700;color:var(--text0)">'+cThreads+'</span><span style="font-size:10px;color:var(--text3);margin-left:4px">threads</span></div>'
-      +(crmCo.has_deal?'<div><span style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700;color:var(--blue)">$'+fmtDeal(crmCo.deal_value)+'</span><span style="font-size:10px;color:var(--text3);margin-left:4px">pipeline</span></div>':'')
+      +(crmCo.has_deal?'<div><span style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:700;color:var(--blue)">Deal</span><span style="font-size:10px;color:var(--text3);margin-left:4px">in pipeline</span></div>':'')
       +'</div>'
       +'<div style="margin-top:6px;font-size:10px;color:var(--text2)">Rep: '+esc(repList)+' \u00B7 Last touch: '+(cIdleDays>=999?'Unknown':cIdleDays<=0?'Today':cIdleDays+'d ago')+'</div>'
       +'</div>';
@@ -3103,7 +3103,8 @@ function renderCRM(){
       '<span style="padding:0 12px;border-right:1px solid rgba(255,255,255,0.07)">Contacts <b style="color:#f9fafb">'+totalCts+'</b></span>'+
       '<span style="padding:0 12px;border-right:1px solid rgba(255,255,255,0.07)">Active <b style="color:#4ade80">'+active+'</b></span>'+
       '<span style="padding:0 12px;border-right:1px solid rgba(255,255,255,0.07)">Going cold <b style="color:#ef4444">'+cold+'</b></span>'+
-      '<span style="padding:0 12px">With deals <b style="color:#3b82f6">'+withDeals+'</b></span>'+
+      '<span style="padding:0 12px">Deals <b style="color:#3b82f6">'+withDeals+'</b></span>'+
+      (window._CRM_LIST_FILTER?'<span style="margin-left:8px;font-size:10px;padding:2px 8px;border-radius:10px;border:1px solid rgba(74,222,128,0.3);color:#4ade80;cursor:pointer" onclick="window._CRM_LIST_FILTER=null;renderCRM()">List active \u00D7</span>':'')+
       (selN>0?'<span style="margin-left:auto;color:#f59e0b;font-weight:600">'+selN+' selected</span>':'');
   }
 
@@ -3143,7 +3144,7 @@ function renderCRM(){
             '<span style="font-size:9px;color:#6b7280">'+(exp?'\u25BE':'\u25B8')+'</span>'+
           '</div>'+
           '<div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">'+
-            (co.has_deal?'<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:rgba(59,130,246,0.12);color:#3b82f6;border:1px solid rgba(59,130,246,0.15)">Deal'+(co.deal_value>0&&co.deal_value!==5500000?' · $'+fmtDeal(co.deal_value):'')+'</span>':'')+
+            (co.has_deal?'<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:rgba(59,130,246,0.12);color:#3b82f6;border:1px solid rgba(59,130,246,0.15)">Deal</span>':'')+
             (co.tier?'<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(168,85,247,0.12);color:#a855f7;border:1px solid rgba(168,85,247,0.2)">'+esc(co.tier)+'</span>':'')+
             (co.industry?'<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(255,255,255,0.04);color:#6b7280">'+esc(co.industry.replace(/_/g,' '))+'</span>':'')+
             (co.domain?'<span style="font-size:9px;color:#4b5563">'+esc(co.domain)+'</span>':'')+
