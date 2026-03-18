@@ -341,7 +341,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </div>
 
     <div class="panel">
-      <div class="panel-head"><div class="panel-title">📞 Weekly Call Targets <span class="panel-badge">Week 10</span></div></div>
+      <div class="panel-head"><div class="panel-title">📞 Weekly Call Targets <span class="panel-badge" id="callTargetsBadge">Week 10</span></div></div>
       <div class="panel-body" id="callTargets">
         <!-- Rendered by JS -->
       </div>
@@ -640,9 +640,19 @@ function switchTab(tab) {
 }
 
 // ============================================================
-// CALL TARGETS — live from /api/hubspot/rep-summary?days=7
+// SHARED — API + ISO WEEK
 // ============================================================
 const API = 'https://api-tools.oga.earth';
+function getISOWeek() {
+  const d = new Date(); d.setHours(0,0,0,0);
+  d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7));
+  const jan4 = new Date(d.getFullYear(), 0, 4);
+  return 1 + Math.round(((d - jan4) / 86400000 - 3 + ((jan4.getDay() + 6) % 7)) / 7);
+}
+
+// ============================================================
+// CALL TARGETS — live from /api/hubspot/rep-summary?days=7
+// ============================================================
 const REP_TARGETS = { ana: 15, carolina: 15, luis: 10, bobbie: 15, brian: 5, emmanuel: 10, keith: 10 };
 const REP_INITIALS = { ana: 'AA', carolina: 'CM', luis: 'LA', bobbie: 'BA', brian: 'BK', emmanuel: 'EM', keith: 'KD' };
 const REP_COLORS = { ana: 'var(--blue)', carolina: 'var(--purple)', luis: 'var(--teal)', bobbie: 'var(--amber)', brian: '#64748b', emmanuel: '#f59e0b', keith: '#94a3b8' };
@@ -664,9 +674,9 @@ async function loadCallTargets() {
       };
     }).filter(r => r.done > 0 || REP_TARGETS[(r.name||'').toLowerCase()]);
     renderCallData(callData);
-    // Update week badge
-    const weekNum = Math.ceil((new Date() - new Date(new Date().getFullYear(), 0, 1)) / 604800000);
-    const badge = document.querySelector('.panel-badge');
+    // Update week badge — target specific ID to avoid overwriting Deal Pipeline $265K badge
+    const weekNum = getISOWeek();
+    const badge = document.getElementById('callTargetsBadge');
     if (badge) badge.textContent = `Week ${weekNum}`;
   } catch (e) {
     console.warn('Rep summary failed, using fallback:', e.message);
@@ -699,6 +709,46 @@ function renderCallData(callData) {
   }).join('') + '<div style="font-size:9px;color:var(--text-muted);margin-top:8px;opacity:0.6">Source: HubSpot thread classifications (7d) • commercial_active + commercial_prospecting</div>';
 }
 loadCallTargets();
+
+// ============================================================
+// TEAM PERFORMANCE — inject COMMERCIAL column from rep-summary?days=30
+// ============================================================
+(async function loadTeamCommercial() {
+  try {
+    const res = await fetch(`${API}/api/hubspot/rep-summary?days=30`);
+    if (!res.ok) return;
+    const data = await res.json();
+    const reps = data.reps || [];
+    const repMap = {};
+    for (const r of reps) repMap[(r.name || '').toLowerCase()] = r;
+    // Add header
+    const thead = document.querySelector('.tbl thead tr');
+    if (thead && !thead.querySelector('.col-commercial')) {
+      const th = document.createElement('th');
+      th.className = 'r col-commercial';
+      th.textContent = 'Commercial';
+      th.style.color = '#4ade80';
+      thead.appendChild(th);
+    }
+    // Add data to each row — match by name text
+    const nameMap = { 'ana': 'ana', 'carolina': 'carolina', 'luis': 'luis', 'bobbie': 'bobbie', 'brian': 'brian' };
+    document.querySelectorAll('.tbl tbody tr').forEach(row => {
+      const nameCell = row.querySelector('.name');
+      if (!nameCell) return;
+      const text = nameCell.textContent.trim().toLowerCase();
+      const key = Object.keys(nameMap).find(k => text.includes(k));
+      const rep = key ? repMap[key] : null;
+      if (!row.querySelector('.col-commercial')) {
+        const td = document.createElement('td');
+        td.className = 'num col-commercial';
+        const val = rep ? (rep.commercial_active || 0) : 0;
+        td.textContent = val;
+        td.style.color = val > 0 ? '#4ade80' : '#666';
+        row.appendChild(td);
+      }
+    });
+  } catch (_) {}
+})();
 
 // Sync status indicator (v79z2)
 (async function updateSyncLabel() {
