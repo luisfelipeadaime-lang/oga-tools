@@ -1,0 +1,141 @@
+# SKILL: Apollo-style CRM Contact View
+*Portable skill for building HubSpot contact/company views in the Apollo.io UX pattern.*
+*Benchmarked against: Apollo.io (UX pattern), HubSpot (data source)*
+*Decision: copy Apollo UX, use own HubSpot+Verra data — that's the differentiator*
+
+## What Apollo does right (copy these patterns)
+- Company-first accordion: companies as primary rows, contacts nested inside
+- Horizontal filter pills: Owner filter + Status filter in one toolbar row
+- Full-width sortable table: every column header is clickable (A-Z/Z-A)
+- Activity dots: 8 dots showing relative engagement intensity
+- Status badges: color-coded (green=active, amber=warm, gray=cold)
+- Rep badges: color-coded per person (Ana=purple, Carolina=blue, etc.)
+- Idle days: prominent colored number showing days since last contact
+- Excel/CSV export: real .xlsx via SheetJS, CSV as fallback
+- List builder: checkbox selection + named list save
+- One-click email/call actions: inline Email/Call buttons on contact rows
+
+## What we add that Apollo doesn't have
+- "Market Intel →" button: opens buyer's Verra retirement history in clearskyplatform
+- Commercial thread count: classified HubSpot thread count (not raw activity)
+- Last commercial touch: derived from classified thread_type='commercial_*'
+- Verra cross-reference: company name fuzzy-matched to VCU buyer database
+
+## Grid column pattern
+```css
+grid-template-columns: 28px minmax(0,2fr) 120px 100px 60px 100px 90px 110px;
+/* checkbox | company/contact | status | last touch | idle | activity | owner | actions */
+```
+
+## Sort state management
+```javascript
+var SORT_COL = 'threads'; // default: most active first
+var SORT_DIR = -1;        // -1=DESC
+
+// Sort dispatch
+switch(SORT_COL) {
+  case 'name':    // string, ASC default
+  case 'owner':   // string, ASC default
+  case 'status':  // enum: active=0, warm=1, cold=2
+  case 'last_touch': // date string, DESC default (most recent first)
+  case 'idle':    // number, ASC default (least idle first), null=9999
+  case 'threads': // number, DESC default (most active first)
+}
+```
+
+## Status derivation (from idle_days)
+```javascript
+// Derive on frontend from contacts-view API response
+function crmDeriveStatus(co) {
+  var d = co.max_idle_days;
+  if (d === null || d === undefined || d >= 999) return {status:'cold', label:'Cold'};
+  if (co.has_deal) return {status:'active', label:'Deal'};
+  if (d <= 7)  return {status:'active', label:'Active'};
+  if (d <= 30) return {status:'warm', label:'Warm'};
+  return {status:'cold', label:'Cold'};
+}
+```
+
+## Activity dots render
+```javascript
+function actDots(n, max) {
+  max = max || 20;
+  var filled = Math.min(Math.round((n/max)*8), 8);
+  var h = '<div style="display:flex;gap:2px;align-items:center">';
+  for(var i=0;i<8;i++){
+    h += '<div style="width:5px;height:5px;border-radius:50%;background:'+
+         (i<filled?'#4ade80':'rgba(255,255,255,0.08)')+'"></div>';
+  }
+  return h + '</div>';
+}
+```
+
+## Owner derivation (from contacts)
+```javascript
+function crmDeriveOwner(co) {
+  var reps = {};
+  (co.contacts || []).forEach(function(c) {
+    var r = repName(c.assigned_rep_email || '') || repName(c.owner_id || '');
+    if (r && r.indexOf('@') < 0) reps[r] = (reps[r] || 0) + 1;
+  });
+  var best = '', bestN = 0;
+  for (var r in reps) { if (reps[r] > bestN) { best = r; bestN = reps[r]; } }
+  return best;
+}
+```
+
+## Last touch derivation (from contacts)
+```javascript
+function crmDeriveTouch(co) {
+  var latest = '';
+  (co.contacts || []).forEach(function(c) {
+    if (c.last_commercial_touch && c.last_commercial_touch > latest)
+      latest = c.last_commercial_touch;
+  });
+  return latest || null;
+}
+```
+
+## Fuzzy company name matching
+```javascript
+var LEGAL_SUFFIXES = /\s*(ltd|llc|inc|corp|gmbh|sa|srl|plc|limited|co\.|company|group|holdings|ag|spa|nv|bv|pty)\s*/gi;
+function normCompany(name) {
+  return (name || '').toLowerCase().replace(LEGAL_SUFFIXES, '').trim();
+}
+// Match: exact, includes, or reverse includes
+function fuzzyMatch(a, b) {
+  var na = normCompany(a), nb = normCompany(b);
+  return na === nb || na.indexOf(nb) >= 0 || nb.indexOf(na) >= 0;
+}
+```
+
+## CSS classes
+```css
+.crm-pill { padding:3px 10px; border-radius:12px; border:1px solid rgba(255,255,255,0.12);
+  background:transparent; color:#9ca3af; font-size:11px; cursor:pointer; }
+.crm-pill.active { background:rgba(74,222,128,0.12); border-color:#4ade80; color:#4ade80; }
+.crm-co-row { display:grid; grid-template-columns:28px minmax(0,2fr) 120px 100px 60px 100px 90px 110px;
+  align-items:center; padding:8px; border-radius:6px; cursor:pointer; }
+.crm-co-row:hover { background:rgba(255,255,255,0.03); }
+.crm-co-row.expanded { background:rgba(74,222,128,0.03); border-color:rgba(74,222,128,0.12); }
+.crm-ct-row { display:grid; grid-template-columns:28px minmax(0,2fr) 120px 100px 60px 100px 90px 110px;
+  align-items:center; padding:5px 8px; border-top:1px solid rgba(255,255,255,0.04); }
+.crm-sbadge { display:inline-flex; padding:2px 8px; border-radius:10px; font-size:10px; }
+.crm-s-active { background:rgba(74,222,128,0.12); color:#4ade80; }
+.crm-s-warm { background:rgba(245,158,11,0.12); color:#f59e0b; }
+.crm-s-cold { background:rgba(107,114,128,0.1); color:#9ca3af; }
+.crm-idle-g { color:#4ade80; font-weight:600; } /* ≤5d */
+.crm-idle-a { color:#f59e0b; font-weight:600; } /* 6-14d */
+.crm-idle-r { color:#ef4444; font-weight:600; } /* >14d or null */
+```
+
+## Gotchas
+- CRM div MUST be in main content area, NOT inside sidebar (see CLEARSKY_PLATFORM.md #160)
+- showPage('crm') must set display='flex' not 'block' (CRM is flex column layout)
+- Company name matching to Verra: strip legal suffixes before indexOf comparison
+- PRELOAD.crm must not block platform load on failure — catch and set to true
+- SheetJS CDN: cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js
+  Check typeof XLSX !== 'undefined' before calling — CDN may not have loaded yet
+- idle_days >= 999 means NULL in the DB — display as "—" not "999d"
+- Avatar initials: co.company.split(/\s+/).map(w => w[0]).join('').slice(0,2)
+- Avatar color: deterministic from charCodeAt(0) % palette.length

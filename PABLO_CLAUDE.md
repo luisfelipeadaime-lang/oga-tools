@@ -37,6 +37,60 @@ degrade simultaneously. Never let one API failure break a tool silently.
 presentations-v3.html specifically: three input paths — upload docs, paste text,
 degraded auto. Manual paste path accepts text from any source, bypasses all
 extraction and optionally all AI. See PLATFORM.md Section 8 Week 3b for full spec.
+
+STANDING RULE #29 — BENCHMARK BEFORE BUILDING
+Before writing any new feature, always search for:
+(1) Existing paid/freemium SaaS that solves this (subscribe if cheaper than building)
+(2) Open source library/tool that handles it (MIT preferred)
+(3) CDN-hosted JS library that can be dropped in (cdnjs.cloudflare.com allowlist)
+Only build custom if none of the above exist or if the domain-specific context
+(carbon market, HubSpot classification, Verra data) is the differentiator.
+
+Benchmark reference table (update as new tools are evaluated):
+| Need | Benchmark | Decision | Why |
+|------|-----------|----------|-----|
+| Personal agent OS | OpenClaw (open source) | USE | Handles WhatsApp/memory/skills — don't rebuild |
+| Excel export | SheetJS xlsx.js 0.18.5 (cdnjs) | USE | MIT, client-side, real .xlsx with column widths |
+| Sortable tables | Vanilla JS (15 lines) | BUILD | Simpler than any library for this use case |
+| Text extraction OCR | Mistral OCR API $0.002/page | USE | Best quality/price, replaces Document AI |
+| Contact/company view | Apollo.io (UX pattern) | COPY UX | Their data is generic; our HubSpot+Verra data is the moat |
+| Market intelligence | Bloomberg Terminal (UX) | COPY UX | Their data is generic; our VCU database is the moat |
+| PPTX generation | pptxgenjs 3.12.0 (cdnjs) | USE | MIT, client-side, no server needed |
+| Multi-tenant infra | Cloudflare Workers for Platforms | USE WHEN NEEDED | Native CF solution, no custom code |
+| Agent skills | OpenClaw skill format | ALIGN TO | Don't invent custom skill format |
+| Carbon registry data | Verra OData API (free) | USE | Official source, crawled not scraped |
+| Registry browser | Verra's own UI (benchmark) | BEAT | Slow + no commercial intel = our gap to fill |
+| PDF presentation | Gamma.app / Beautiful.ai | SKIP for now | ClearSky brand context justifies custom |
+| CRM view | Apollo.io (UX), HubSpot (data) | COPY UX + OWN DATA | Apollo UI on our HubSpot+Verra data = unique |
+
+Rule enforcement: In every new feature discussion, Claude must state which
+benchmark was checked before recommending a build. If no benchmark check is
+mentioned, reject the build proposal and research first.
+
+STANDING RULE #30 — SKILL-FIRST DEVELOPMENT
+Every technical problem solved in a session must be captured as a reusable skill
+before the session closes. No exceptions.
+
+Skill creation triggers (any of these = create/update a skill):
+- New API integration pattern established (e.g. HubSpot v3 pagination)
+- New UI component pattern built (e.g. sortable table, pill filters)
+- New extraction/processing pipeline solved (e.g. Mistral OCR chunking)
+- New deployment pattern discovered (e.g. Cloudflare cron multi-trigger)
+- Bug pattern fixed that could recur (e.g. CRM div in sidebar vs main)
+
+Skill update triggers:
+- Gotcha discovered that contradicts existing skill
+- Better pattern found that supersedes existing approach
+- New API version migration completed (v1→v3, etc.)
+
+Skill file location: C:\brand-presentations\repos\oga-tools\skills\
+Current skills (8): hubspot-api.skill, text-extraction.skill,
+registry-crawling.skill, cloudflare-worker-d1-r2.skill, clearsky-brand.skill,
+frontend-dark-ui.skill, carbon-market-domain.skill, presentations-skill.skill
+
+Post-session prompt template (add this to every session close):
+"Before closing: which new patterns were established this session that
+need to be captured in skill files? Update or create skills now."
 ---
 
 ## 1. IDENTITY & VISION

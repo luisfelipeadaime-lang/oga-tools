@@ -155,6 +155,56 @@ function exportCSV(data, filename) {
 }
 ```
 
+## Sortable table pattern (vanilla JS, no library)
+```javascript
+var SORT_COL = 'default_col';
+var SORT_DIR = -1; // -1=DESC, 1=ASC
+
+function sortBy(col) {
+  SORT_DIR = (SORT_COL === col) ? SORT_DIR * -1 : -1;
+  SORT_COL = col;
+  updateSortIndicators();
+  renderTable();
+}
+
+function updateSortIndicators() {
+  var cols = ['name','status','date','value','owner'];
+  cols.forEach(function(c) {
+    var el = document.getElementById('sort-' + c);
+    if (el) el.textContent = c === SORT_COL
+      ? (SORT_DIR === 1 ? ' ↑' : ' ↓') : '';
+  });
+}
+
+// In render: data.sort(function(a,b) { ... apply SORT_COL/SORT_DIR ... })
+// Sort string: a<b ? -SORT_DIR : a>b ? SORT_DIR : 0
+// Sort number: (a - b) * SORT_DIR
+// Sort date: a<b ? SORT_DIR : a>b ? -SORT_DIR : 0 (newest first = DESC)
+// Sort null-last: replace null with 9999 (numbers) or 'zzz' (strings)
+```
+
+## Excel export with SheetJS (real .xlsx, not CSV)
+```javascript
+// CDN: https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js
+function exportExcel(data, filename) {
+  if (typeof XLSX === 'undefined') {
+    alert('Excel loading... retry in 2s'); return;
+  }
+  var wsData = [['Col1','Col2','Col3']]; // headers
+  data.forEach(function(row) {
+    wsData.push([row.col1, row.col2, row.col3]);
+  });
+  var wb = XLSX.utils.book_new();
+  var ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws['!cols'] = [{wch:25},{wch:20},{wch:15}]; // column widths
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+  XLSX.writeFile(wb, filename + '-' +
+    new Date().toISOString().split('T')[0] + '.xlsx');
+}
+// Prefer over CSV: real .xlsx opens correctly in Excel,
+// preserves column widths, no encoding issues with special chars
+```
+
 ## Panel Expand/Collapse
 ```javascript
 function togglePanelExpand() {
