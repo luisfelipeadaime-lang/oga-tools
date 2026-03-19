@@ -8,9 +8,12 @@
 
 1. **Custódia** — execução impecável até sentença 18/05/2026
 2. **Saúde mental** — rotina pétrea, psicólogo semanal, não repetir padrão Moss
-3. **ClearSky** — modo manutenção, sem novo desenvolvimento desnecessário
+3. **🔴 Licitação Sierra Culebra (ZA-FOR-02/2026)** — PRIORIDADE 1 PROFISSIONAL até 28/03 (antes Semana Santa) / deadline 06/04
+   - Luis fora de todas reuniões plataforma/comerciais/demos até 07/04
+   - Mudança fim de semana 21-22/03: Nohemi sábado, empresa mudanças domingo — NÃO compromete licitação (trabalho remoto)
 4. **Mudança** — apartamento funcional antes de 20/04 (visita psicóloga)
-5. **Plano B** — activação Q4 2026 no mínimo
+5. **ClearSky** — SPRINT LICITAÇÃO até 06/04 (Emmanuel Mendoza = point of contact plataforma)
+6. **Plano B** — activação Q4 2026 no mínimo
 
 ---
 
@@ -21,14 +24,9 @@
 - Urbanização fechada, vigilância 24h, piscina, 3º andar, 106m², 2 quartos, garagem
 - Renda: €2.300/mês · Contrato assinado: 13/03/2026
 - **Mudança**: sábado 21/03 (Nohemi embala) + domingo 22/03 (empresa de mudanças)
-- IKEA ✅ ENCOMENDADO:
-  - MALM 180×200 + Valevåg colchão: €768
-  - 2× SLÄKT 90×200 (crianças): €278
-  - KIVIK chaise longue bege: €800
-  - **Entrega**: sábado 21/03
-  - **Montagem**: segunda 23/03
-  - Luis dorme no apt novo segunda à noite (primeira noite)
-  - Email à Helena (assistente social) a enviar segunda após montagem — apt pronto para visita domiciliar
+- IKEA: HEMNES king + MYDAL liteiras crianças + KIVIK sofá + colchões
+  - Comprar online com entrega + montagem (domingo ou segunda)
+  - Budget total ~€1.400 + €200 montagem
   - Quarto crianças montado ANTES de 20/04 (visita psicóloga do processo)
 - **Nohemi**: empregada doméstica, tem chaves, ajuda sábado a empacotar
 - **Empresa de mudanças**: reservar no Wallapop Madrid ~€150-200 para domingo
@@ -36,7 +34,7 @@
 
 ### Agenda hoje 19/03
 - ✅ Concerto Gabriel (manhã)
-- ✅ StoneX/Mario Campos 11h — Velázquez 34 (correu bem, detalhes pendentes)
+- StoneX/Mario Campos 11h — Velázquez 34 (interesse em MITECO)
 - Receber Amazon em casa (Pozuelo) depois
 - Crianças 16h-20h (buscar na escola, Dia do Pai)
 - Entregar crianças a Camila 20h
@@ -119,16 +117,17 @@
 **Contrato**: indefinido sin periodo de prueba desde 02/01/2026
 **ESOP**: autorizado por Brian email 8/03/2026, negociar Q3 2026
 
-**Modo actual**: MANUTENÇÃO
-- Sem novo desenvolvimento de ferramentas AI a menos que reduza carga directamente
-- Plataforma ClearSky em estado demonstrável (demo Ana hoje)
+**Modo actual**: 🔴 SPRINT LICITAÇÃO (até 06/04/2026)
+- Sem desenvolvimento plataforma, sem demos, sem CRM meetings
+- Emmanuel Mendoza: point of contact para tudo plataforma durante este período
 - Conversa comp: Q3 2026 após sentença
 
 **Projectos activos**:
+- 🔴 **Sierra Culebra ZA-FOR-02/2026**: licitação florestal, 2 lotes, deadline 06/04, janela útil até 28/03 (ver PACO_LOZANO_SIERRA_CULEBRA.md)
 - AMOEDO MITECO: 10/11 pontos resolvidos, bloqueio = Brian assinar Anexo II
 - Sierra Leone: $5M LOI (NatureBrain)
 - Microsoft ARR: offtake $43/crédito
-- StoneX/Mario Campos: reunião 19/03 correu bem — interesse em projectos MITECO espanhóis, potencial comprador portfolio ClearSky (detalhes pendentes)
+- StoneX/Mario Campos: reunião 19/03 correu bem — interesse projectos MITECO espanhóis
 - ClimeFi RFP: deadline 8/04, 100K-500Kt CDR
 
 **IP pessoal** (NUNCA expor à ClearSky):
