@@ -273,18 +273,15 @@ td{padding:5px 8px;vertical-align:middle}
 .crm-pill.active{background:rgba(74,222,128,0.12);border-color:#4ade80;color:#4ade80}
 .crm-th{color:#6b7280;font-size:10px;text-transform:uppercase;letter-spacing:0.5px}
 .crm-th:hover{color:#9ca3af}
-.crm-co-row{display:grid;grid-template-columns:28px minmax(0,2fr) 120px 100px 60px 100px 90px 110px;align-items:center;padding:8px 8px;border-radius:6px;cursor:pointer;border:1px solid transparent;margin-bottom:2px;transition:background 0.1s}
+.crm-co-row{display:grid;grid-template-columns:28px minmax(220px,2fr) 80px 55px 110px 100px 55px 160px 130px 120px 40px 80px 90px;align-items:center;padding:8px 12px;border-radius:0;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.04);margin-bottom:0;transition:background 0.1s;min-width:1280px}
 .crm-co-row:hover{background:rgba(255,255,255,0.03)}
-.crm-co-row.expanded{background:rgba(74,222,128,0.03);border-color:rgba(74,222,128,0.12)}
-.crm-ct-row{display:grid;grid-template-columns:28px minmax(0,2fr) 120px 100px 60px 100px 90px 110px;align-items:center;padding:5px 8px;border-top:1px solid rgba(255,255,255,0.04);transition:background 0.1s}
+.crm-co-row.expanded{background:rgba(74,222,128,0.03);border-bottom-color:rgba(74,222,128,0.12)}
+.crm-ct-row{display:grid;grid-template-columns:28px minmax(220px,2fr) 80px 55px 110px 100px 55px 160px 130px 120px 40px 80px 90px;align-items:center;padding:5px 12px;border-top:1px solid rgba(255,255,255,0.035);transition:background 0.1s;min-width:1280px}
 .crm-ct-row:hover{background:rgba(255,255,255,0.02)}
 .crm-cb{width:14px;height:14px;border:1.5px solid rgba(255,255,255,0.2);border-radius:3px;cursor:pointer;appearance:none;-webkit-appearance:none;background:transparent;position:relative;flex-shrink:0}
 .crm-cb:checked{background:#4ade80;border-color:#4ade80}
 .crm-cb:checked::after{content:'\2713';position:absolute;top:-2px;left:1px;font-size:10px;color:#0a0f1a;font-weight:700}
-.crm-sbadge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:500;white-space:nowrap}
-.crm-s-active{background:rgba(74,222,128,0.12);color:#4ade80;border:1px solid rgba(74,222,128,0.2)}
-.crm-s-warm{background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.2)}
-.crm-s-cold{background:rgba(107,114,128,0.1);color:#9ca3af;border:1px solid rgba(107,114,128,0.15)}
+.crm-scroll-wrap{overflow-x:auto}
 .crm-idle-g{color:#4ade80;font-weight:600;font-size:12px}
 .crm-idle-a{color:#f59e0b;font-weight:600;font-size:12px}
 .crm-idle-r{color:#ef4444;font-weight:600;font-size:12px}
@@ -363,12 +360,19 @@ td{padding:5px 8px;vertical-align:middle}
       <option value="all">All</option>
     </select>
 
-    <span style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-left:4px">Status:</span>
-    <div style="display:flex;gap:5px" id="crm-status-pills">
-      <button class="crm-pill active" onclick="setCRMStatus('all',this)">All</button>
-      <button class="crm-pill" onclick="setCRMStatus('active',this)">Active</button>
-      <button class="crm-pill" onclick="setCRMStatus('warm',this)">Warm</button>
-      <button class="crm-pill" onclick="setCRMStatus('cold',this)">Cold</button>
+    <span style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-left:4px">Tier:</span>
+    <div style="display:flex;gap:5px" id="crm-tier-pills">
+      <button class="crm-pill active" onclick="setCRMTier('all',this)">All</button>
+      <button class="crm-pill" onclick="setCRMTier('tier_1',this)">T1</button>
+      <button class="crm-pill" onclick="setCRMTier('tier_2',this)">T2</button>
+      <button class="crm-pill" onclick="setCRMTier('tier_3',this)">T3</button>
+    </div>
+
+    <span style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-left:4px">Type:</span>
+    <div style="display:flex;gap:5px" id="crm-type-pills">
+      <button class="crm-pill active" onclick="setCRMType('all',this)">All</button>
+      <button class="crm-pill" onclick="setCRMType('buyer',this)">Buyers</button>
+      <button class="crm-pill" onclick="setCRMType('supplier',this)">Suppliers</button>
     </div>
 
     <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
@@ -391,17 +395,24 @@ td{padding:5px 8px;vertical-align:middle}
   <!-- TABLE AREA -->
   <div style="flex:1;overflow-y:auto;padding:0 16px 40px">
     <!-- SORTABLE HEADER -->
-    <div id="crm-table-head" style="display:grid;grid-template-columns:28px minmax(0,2fr) 120px 100px 60px 100px 90px 110px;padding:6px 8px;color:#6b7280;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid rgba(255,255,255,0.06);position:sticky;top:0;background:#0a0f1a;z-index:5;margin-top:6px">
+    <div class="crm-scroll-wrap">
+    <div id="crm-table-head" style="display:grid;grid-template-columns:28px minmax(220px,2fr) 80px 55px 110px 100px 55px 160px 130px 120px 40px 80px 90px;padding:6px 12px;color:#6b7280;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid rgba(255,255,255,0.06);position:sticky;top:0;background:#0a0f1a;z-index:5;margin-top:6px;min-width:1280px">
       <div></div>
-      <div class="crm-th" onclick="sortCRM('name')" style="cursor:pointer;user-select:none">Company / Contact <span id="crm-sort-name"></span></div>
-      <div class="crm-th" onclick="sortCRM('status')" style="cursor:pointer;user-select:none">Status <span id="crm-sort-status"></span></div>
-      <div class="crm-th" onclick="sortCRM('last_touch')" style="cursor:pointer;user-select:none">Last Touch <span id="crm-sort-last_touch"></span></div>
-      <div class="crm-th" onclick="sortCRM('idle')" style="cursor:pointer;user-select:none;text-align:center">Idle <span id="crm-sort-idle"></span></div>
-      <div class="crm-th" onclick="sortCRM('threads')" style="cursor:pointer;user-select:none">Activity <span id="crm-sort-threads"></span></div>
+      <div class="crm-th" onclick="sortCRM('name')" style="cursor:pointer;user-select:none">Company <span id="crm-sort-name"></span></div>
+      <div class="crm-th" onclick="sortCRM('type')" style="cursor:pointer;user-select:none">Type <span id="crm-sort-type"></span></div>
+      <div class="crm-th" onclick="sortCRM('tier')" style="cursor:pointer;user-select:none">Tier <span id="crm-sort-tier"></span></div>
       <div class="crm-th" onclick="sortCRM('owner')" style="cursor:pointer;user-select:none">Owner <span id="crm-sort-owner"></span></div>
+      <div class="crm-th" onclick="sortCRM('last_touch')" style="cursor:pointer;user-select:none">Last Activity <span id="crm-sort-last_touch"></span></div>
+      <div class="crm-th" onclick="sortCRM('idle')" style="cursor:pointer;user-select:none;text-align:center">Idle <span id="crm-sort-idle"></span></div>
+      <div class="crm-th" onclick="sortCRM('domain')" style="cursor:pointer;user-select:none">Website <span id="crm-sort-domain"></span></div>
+      <div class="crm-th">Phone</div>
+      <div class="crm-th">Location</div>
+      <div class="crm-th" style="text-align:center">in</div>
+      <div class="crm-th" onclick="sortCRM('threads')" style="cursor:pointer;user-select:none">Activity <span id="crm-sort-threads"></span></div>
       <div>Actions</div>
     </div>
     <div id="crm-list"></div>
+    </div>
   </div>
 
 </div>
@@ -2891,17 +2902,19 @@ function checkScrollIndicator(){
 /* ===== CRM TAB — Apollo-style (v79z3-apollo) ===== */
 var CRM_DATA={};
 var CRM_FILTER_OWNER='all';
-var CRM_FILTER_STATUS='all';
+var CRM_FILTER_TIER='all';
+var CRM_FILTER_TYPE='all';
 var CRM_SEARCH_TERM='';
 var CRM_SELECTED={};
 var CRM_EXPANDED={};
-var CRM_SORT_COL='status';
+var CRM_SORT_COL='name';
 var CRM_SORT_DIR=1;
 
 function loadTeamDropdown(){
   fetch(API+'/api/hubspot/team').then(function(r){return r.json();}).then(function(d){
     var sel=document.getElementById('crm-owner-select');if(!sel)return;
-    (d.team||[]).forEach(function(m){
+    var team=Array.isArray(d)?d:(d.team||[]);
+    team.forEach(function(m){
       var opt=document.createElement('option');
       opt.value=m.name.split(' ')[0];opt.textContent=m.name.split(' ')[0];
       sel.appendChild(opt);
@@ -2967,12 +2980,23 @@ function setCRMOwner(o){
   renderCRM();
 }
 
-function setCRMStatus(s,el){
-  CRM_FILTER_STATUS=s;
+function setCRMTier(t,el){
+  CRM_FILTER_TIER=t;
   window._CRM_LIST_FILTER=null;
-  document.querySelectorAll('#crm-status-pills .crm-pill').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('#crm-tier-pills .crm-pill').forEach(function(p){p.classList.remove('active');});
   if(el)el.classList.add('active');
   renderCRM();
+}
+function setCRMType(t,el){
+  CRM_FILTER_TYPE=t;
+  window._CRM_LIST_FILTER=null;
+  document.querySelectorAll('#crm-type-pills .crm-pill').forEach(function(p){p.classList.remove('active');});
+  if(el)el.classList.add('active');
+  renderCRM();
+}
+function crmIsSupplier(co){
+  var s=(co.segment||'').toLowerCase();
+  return s.indexOf('supply')>=0||s.indexOf('developer')>=0;
 }
 
 function filterCRM(){
@@ -2983,8 +3007,8 @@ function filterCRM(){
 
 function sortCRM(col){
   if(CRM_SORT_COL===col){CRM_SORT_DIR*=-1;}
-  else{CRM_SORT_COL=col;CRM_SORT_DIR=col==='name'||col==='owner'?1:-1;}
-  ['name','status','last_touch','idle','threads','owner'].forEach(function(c){
+  else{CRM_SORT_COL=col;CRM_SORT_DIR=col==='name'||col==='owner'||col==='domain'?1:-1;}
+  ['name','type','tier','owner','last_touch','idle','threads','domain'].forEach(function(c){
     var el=document.getElementById('crm-sort-'+c);
     if(el)el.textContent=c===col?(CRM_SORT_DIR===1?' \u2191':' \u2193'):'';
   });
@@ -3000,19 +3024,23 @@ function getCRMVisible(){
       var hasMatch=(co.contacts||[]).some(function(c){return listFilter[(c.email||'').toLowerCase()];});
       if(!hasMatch)return false;
     }
-    var st=crmDeriveStatus(co);
     var owner=crmDeriveOwner(co);
     var matchOwner=CRM_FILTER_OWNER==='all'||(owner||'').toLowerCase()===CRM_FILTER_OWNER.toLowerCase();
-    var matchStatus=CRM_FILTER_STATUS==='all'||st.status===CRM_FILTER_STATUS;
+    var matchTier=CRM_FILTER_TIER==='all'||(co.tier||'')==CRM_FILTER_TIER;
+    var isSupp=crmIsSupplier(co);
+    var matchType=CRM_FILTER_TYPE==='all'||(CRM_FILTER_TYPE==='supplier'?isSupp:!isSupp);
     var q=CRM_SEARCH_TERM;
     var matchSearch=!q||
       co.company.toLowerCase().indexOf(q)>=0||
+      (co.domain||'').toLowerCase().indexOf(q)>=0||
+      (co.city||'').toLowerCase().indexOf(q)>=0||
+      (co.country||'').toLowerCase().indexOf(q)>=0||
       (co.contacts||[]).some(function(c){
         return((c.firstname||'')+' '+(c.lastname||'')).toLowerCase().indexOf(q)>=0||
                (c.jobtitle||'').toLowerCase().indexOf(q)>=0||
                (c.email||'').toLowerCase().indexOf(q)>=0;
       });
-    return matchOwner&&matchStatus&&matchSearch;
+    return matchOwner&&matchTier&&matchType&&matchSearch;
   });
   filtered.sort(function(a,b){
     /* Junk rows always at bottom (v79z5) */
@@ -3023,12 +3051,15 @@ function getCRMVisible(){
       case'name':
         av=a.company.toLowerCase();bv=b.company.toLowerCase();
         return av<bv?-CRM_SORT_DIR:av>bv?CRM_SORT_DIR:0;
-      case'status':
-        var sm={active:0,warm:1,cold:2};
-        av=sm[crmDeriveStatus(a).status]||2;bv=sm[crmDeriveStatus(b).status]||2;
+      case'type':
+        av=crmIsSupplier(a)?1:0;bv=crmIsSupplier(b)?1:0;
+        return(av-bv)*CRM_SORT_DIR;
+      case'tier':
+        var tm={tier_1:0,tier_2:1,tier_3:2};
+        av=tm[a.tier]!==undefined?tm[a.tier]:9;bv=tm[b.tier]!==undefined?tm[b.tier]:9;
         return(av-bv)*CRM_SORT_DIR;
       case'last_touch':
-        av=crmDeriveTouch(a)||'0000';bv=crmDeriveTouch(b)||'0000';
+        av=crmDeriveTouch(a)||a.last_activity||'0000';bv=crmDeriveTouch(b)||b.last_activity||'0000';
         return av<bv?CRM_SORT_DIR:av>bv?-CRM_SORT_DIR:0;
       case'idle':
         av=a.max_idle_days!==null&&a.max_idle_days!==undefined?a.max_idle_days:9999;
@@ -3038,6 +3069,9 @@ function getCRMVisible(){
         return((b.total_threads||0)-(a.total_threads||0))*CRM_SORT_DIR;
       case'owner':
         av=(crmDeriveOwner(a)||'zzz').toLowerCase();bv=(crmDeriveOwner(b)||'zzz').toLowerCase();
+        return av<bv?-CRM_SORT_DIR:av>bv?CRM_SORT_DIR:0;
+      case'domain':
+        av=(a.domain||'zzz').toLowerCase();bv=(b.domain||'zzz').toLowerCase();
         return av<bv?-CRM_SORT_DIR:av>bv?CRM_SORT_DIR:0;
       default:return 0;
     }
@@ -3069,10 +3103,63 @@ function crmLastActivityBadge(dt){
   return'<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:'+col+'18;color:'+col+';border:1px solid '+col+'30">'+label+'</span>';
 }
 
-function crmStatusBadge(co){
-  var st=crmDeriveStatus(co);
-  var cls=st.status==='active'?'crm-s-active':st.status==='warm'?'crm-s-warm':'crm-s-cold';
-  return'<span class="crm-sbadge '+cls+'">'+esc(st.label)+'</span>';
+var _ownerDDOpen=null;
+function openOwnerDD(coKey,e){
+  e.stopPropagation();
+  var existing=document.getElementById('owner-dd-float');
+  if(existing){existing.remove();_ownerDDOpen=null;}
+  if(_ownerDDOpen===coKey)return;
+  _ownerDDOpen=coKey;
+  var target=e.currentTarget||e.target;
+  var rect=target.getBoundingClientRect();
+  var dd=document.createElement('div');
+  dd.id='owner-dd-float';
+  dd.style.cssText='position:fixed;z-index:9999;background:#1e293b;border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:4px;min-width:140px;box-shadow:0 8px 24px rgba(0,0,0,0.6);top:'+(rect.bottom+4)+'px;left:'+rect.left+'px';
+  var team=[
+    {name:'Ana',color:'#a855f7'},{name:'Carolina',color:'#60a5fa'},
+    {name:'Luis',color:'#f59e0b'},{name:'Brian',color:'#22c55e'},
+    {name:'Bobbie',color:'#ec4899'},{name:'Keith',color:'#6366f1'},
+    {name:'Bart',color:'#2dd4bf'},{name:'Emmanuel',color:'#fb923c'},
+    {name:'\u2014',color:'#475569'}
+  ];
+  team.forEach(function(m){
+    var item=document.createElement('div');
+    item.style.cssText='padding:6px 10px;border-radius:5px;cursor:pointer;font-size:12px;color:#94a3b8;display:flex;align-items:center;gap:8px;transition:background 0.1s';
+    item.innerHTML='<div style="width:8px;height:8px;border-radius:50%;background:'+m.color+';flex-shrink:0"></div>'+m.name;
+    item.onmouseover=function(){this.style.background='rgba(255,255,255,0.06)';};
+    item.onmouseout=function(){this.style.background='';};
+    item.onclick=function(ev){
+      ev.stopPropagation();dd.remove();_ownerDDOpen=null;
+      assignOwnerCRM(coKey,m.name);
+    };
+    dd.appendChild(item);
+  });
+  document.body.appendChild(dd);
+  setTimeout(function(){
+    document.addEventListener('click',function removeDd(ev){
+      if(!dd.contains(ev.target)){dd.remove();_ownerDDOpen=null;document.removeEventListener('click',removeDd);}
+    });
+  },10);
+}
+function assignOwnerCRM(coKey,ownerName){
+  var co=CRM_DATA[coKey];
+  if(!co)return;
+  /* Update contacts owner locally for immediate re-render */
+  if(ownerName==='\u2014'){
+    (co.contacts||[]).forEach(function(c){c.assigned_rep_email='';c.owner_id='';});
+  }else{
+    var teamEmails={Ana:'ana.avramovic@clearskyltd.com',Carolina:'carolina.martinez@clearskyltd.com',Luis:'luis.adaime@clearskyltd.com',Brian:'brian.katz@clearskyltd.com',Bobbie:'bobbie.armstrong@leadingcarbon.com',Keith:'keith.driver@leadingcarbon.com',Bart:'bart.simmons@leadingcarbon.com',Emmanuel:'emmanuel.mendoza@clearskyltd.com'};
+    (co.contacts||[]).forEach(function(c){c.assigned_rep_email=teamEmails[ownerName]||'';});
+  }
+  renderCRM();
+  /* Write back to HubSpot */
+  if(!co.company_id||ownerName==='\u2014')return;
+  fetch(API+'/api/hubspot/assign-owner',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({company_hubspot_id:co.company_id,owner_name:ownerName})
+  }).then(function(r){return r.json();}).then(function(d){
+    if(!d.ok)console.warn('Owner assign failed:',d.error);
+  }).catch(function(e){console.warn('Owner assign error:',e);});
 }
 
 function crmActDots(n){
@@ -3103,8 +3190,10 @@ function renderCRM(){
 
   var visible=getCRMVisible();
   var totalCts=visible.reduce(function(s,co){return s+(co.contacts||[]).length;},0);
-  var active=visible.filter(function(co){return crmDeriveStatus(co).status==='active';}).length;
-  var cold=visible.filter(function(co){return crmDeriveStatus(co).status==='cold';}).length;
+  var t1=visible.filter(function(co){return co.tier==='tier_1';}).length;
+  var t2=visible.filter(function(co){return co.tier==='tier_2';}).length;
+  var buyers=visible.filter(function(co){return!crmIsSupplier(co);}).length;
+  var suppliers=visible.filter(function(co){return crmIsSupplier(co);}).length;
   var selN=Object.keys(CRM_SELECTED).length;
   var withDeals=visible.filter(function(co){return co.has_deal;}).length;
 
@@ -3112,8 +3201,9 @@ function renderCRM(){
     strip.innerHTML=
       '<span style="padding:0 12px;border-right:1px solid rgba(255,255,255,0.07)">Companies <b style="color:#f9fafb">'+visible.length+'</b></span>'+
       '<span style="padding:0 12px;border-right:1px solid rgba(255,255,255,0.07)">Contacts <b style="color:#f9fafb">'+totalCts+'</b></span>'+
-      '<span style="padding:0 12px;border-right:1px solid rgba(255,255,255,0.07)">Active <b style="color:#4ade80">'+active+'</b></span>'+
-      '<span style="padding:0 12px;border-right:1px solid rgba(255,255,255,0.07)">Going cold <b style="color:#ef4444">'+cold+'</b></span>'+
+      '<span style="padding:0 12px;border-right:1px solid rgba(255,255,255,0.07)">T1 <b style="color:#a855f7">'+t1+'</b></span>'+
+      '<span style="padding:0 12px;border-right:1px solid rgba(255,255,255,0.07)">T2 <b style="color:#60a5fa">'+t2+'</b></span>'+
+      '<span style="padding:0 12px;border-right:1px solid rgba(255,255,255,0.07)">Buyers <b style="color:#4ade80">'+buyers+'</b></span>'+
       '<span style="padding:0 12px">Deals <b style="color:#3b82f6">'+withDeals+'</b></span>'+
       (window._CRM_LIST_FILTER?'<span style="margin-left:8px;font-size:10px;padding:2px 8px;border-radius:10px;border:1px solid rgba(74,222,128,0.3);color:#4ade80;cursor:pointer" onclick="window._CRM_LIST_FILTER=null;renderCRM()">List active \u00D7</span>':'')+
       (selN>0?'<span style="margin-left:auto;color:#f59e0b;font-weight:600">'+selN+' selected</span>':'');
@@ -3136,40 +3226,90 @@ function renderCRM(){
     var exp=!!CRM_EXPANDED[co.company];
     var sel=!!CRM_SELECTED[co.company];
     var owner=crmDeriveOwner(co);
-    var touch=crmDeriveTouch(co);
     var ini=co.company.split(/\s+/).map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
     var avatarColors=['#4ade80','#3b82f6','#a855f7','#f59e0b','#ec4899','#2dd4bf','#f97316'];
     var aCol=avatarColors[co.company.charCodeAt(0)%avatarColors.length];
     var coKey=co.company.replace(/'/g,"\\'");
     var idleD=co.max_idle_days;
+    var isSupp=crmIsSupplier(co);
+
+    /* Type badge */
+    var typeBadge=isSupp
+      ?'<span style="display:inline-flex;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:500;background:rgba(251,146,60,0.08);color:#fb923c;border:1px solid rgba(251,146,60,0.15)">Supplier</span>'
+      :'<span style="display:inline-flex;padding:1px 7px;border-radius:8px;font-size:10px;font-weight:500;background:rgba(74,222,128,0.08);color:#4ade80;border:1px solid rgba(74,222,128,0.15)">Buyer</span>';
+
+    /* Tier badge */
+    var tierLabel=co.tier==='tier_1'?'T1':co.tier==='tier_2'?'T2':co.tier==='tier_3'?'T3':'';
+    var tierColor=co.tier==='tier_1'?'rgba(168,85,247,0.12);color:#a855f7;border:1px solid rgba(168,85,247,0.2)'
+      :co.tier==='tier_2'?'rgba(59,130,246,0.1);color:#60a5fa;border:1px solid rgba(59,130,246,0.15)'
+      :'rgba(148,163,184,0.08);color:#94a3b8;border:1px solid rgba(148,163,184,0.12)';
+    var tierBadge=tierLabel
+      ?'<span style="display:inline-flex;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:500;background:'+tierColor+'">'+tierLabel+'</span>'
+      :'<span style="color:#475569;font-size:11px">\u2014</span>';
+
+    /* Last activity — colored by recency */
+    var actDate=crmDeriveTouch(co)||co.last_activity||null;
+    var actColor='#475569';var actStr='\u2014';
+    if(actDate){
+      var ad=new Date(actDate);actStr=ad.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+      if(idleD!==null&&idleD!==undefined){
+        actColor=idleD<=5?'#4ade80':idleD<=14?'#f59e0b':idleD<=30?'#fb923c':'#f87171';
+      }
+    }
+
+    /* Domain link */
+    var domainHtml=co.domain
+      ?'<a href="https://'+esc(co.domain)+'" target="_blank" onclick="event.stopPropagation()" style="color:#64748b;font-size:11px;text-decoration:none;display:flex;align-items:center;gap:3px;transition:color 0.1s" onmouseover="this.style.color=\'#4ade80\'" onmouseout="this.style.color=\'#64748b\'">'+esc(co.domain)+'<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>'
+      :'<span style="color:#475569;font-size:11px">\u2014</span>';
+
+    /* Phone link */
+    var phoneHtml=co.phone
+      ?'<a href="tel:'+esc(co.phone)+'" onclick="event.stopPropagation()" style="color:#64748b;font-size:11px;text-decoration:none;transition:color 0.1s" onmouseover="this.style.color=\'#60a5fa\'" onmouseout="this.style.color=\'#64748b\'">'+esc(co.phone)+'</a>'
+      :'<span style="color:#475569;font-size:11px">\u2014</span>';
+
+    /* Location */
+    var locStr=[co.city,co.country].filter(Boolean).join(', ');
+    var locHtml=locStr?'<span style="font-size:11px;color:#475569">'+esc(locStr)+'</span>':'<span style="color:#374151;font-size:11px">\u2014</span>';
+
+    /* LinkedIn */
+    var liHtml=co.linkedin_url
+      ?'<a href="'+esc(co.linkedin_url)+'" target="_blank" onclick="event.stopPropagation()" style="display:inline-flex;width:22px;height:22px;border-radius:4px;background:rgba(10,102,194,0.12);border:1px solid rgba(10,102,194,0.25);align-items:center;justify-content:center;text-decoration:none"><svg width="11" height="11" viewBox="0 0 24 24" fill="#60a5fa"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>'
+      :'<span style="color:#374151;font-size:10px">\u2014</span>';
+
+    /* Owner */
+    var ownerColors={Ana:'#a855f7',Carolina:'#60a5fa',Luis:'#f59e0b',Brian:'#22c55e',Bobbie:'#ec4899',Keith:'#6366f1',Bart:'#2dd4bf',Emmanuel:'#fb923c'};
+    var ownerColor=ownerColors[owner]||'#475569';
+    var ownerHtml=owner
+      ?'<div style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:8px;cursor:pointer;border:1px solid transparent;transition:all 0.1s;font-size:11px;font-weight:500;color:'+ownerColor+'" onclick="openOwnerDD(\''+coKey+'\',event)" onmouseover="this.style.borderColor=\'rgba(255,255,255,0.15)\';this.style.background=\'rgba(255,255,255,0.04)\'" onmouseout="this.style.borderColor=\'transparent\';this.style.background=\'transparent\'">'+esc(owner)+'<span style="font-size:8px;opacity:0.5">\u25BE</span></div>'
+      :'<div style="display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:8px;cursor:pointer;border:1px solid rgba(255,255,255,0.06);font-size:11px;color:#475569" onclick="openOwnerDD(\''+coKey+'\',event)">Assign \u25BE</div>';
 
     var rows=
-      '<div class="crm-co-row'+(exp?' expanded':'')+'" onclick="toggleCRMCo(\''+coKey+'\',event)">'+
+      '<div class="crm-co-row'+(exp?' expanded':'')+'"'+(isSupp?' style="opacity:0.75"':'')+' onclick="toggleCRMCo(\''+coKey+'\',event)">'+
       '<input type="checkbox" class="crm-cb" '+(sel?'checked':'')+' onclick="toggleCRMSel(\''+coKey+'\',event)">'+
-      '<div style="display:flex;align-items:center;gap:8px;overflow:hidden">'+
+      /* Company name + meta */
+      '<div style="display:flex;align-items:center;gap:8px;overflow:hidden;min-width:0">'+
         '<div style="width:26px;height:26px;border-radius:5px;flex-shrink:0;background:'+aCol+'22;color:'+aCol+';display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">'+esc(ini)+'</div>'+
-        '<div style="overflow:hidden">'+
-          '<div style="display:flex;align-items:center;gap:6px">'+
-            '<span style="font-size:13px;font-weight:600;color:#f9fafb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(co.company)+'</span>'+
-            '<span style="font-size:10px;background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:8px;color:#9ca3af;white-space:nowrap">'+co.contacts.length+'</span>'+
-            '<span style="font-size:9px;color:#6b7280">'+(exp?'\u25BE':'\u25B8')+'</span>'+
+        '<div style="min-width:0;overflow:hidden">'+
+          '<div style="display:flex;align-items:center;gap:5px;flex-wrap:nowrap">'+
+            '<span style="font-size:13px;font-weight:600;color:#f1f5f9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(co.company)+'</span>'+
+            '<span style="font-size:10px;background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:8px;color:#94a3b8;flex-shrink:0">'+co.contacts.length+'</span>'+
+            (co.has_deal?'<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(59,130,246,0.1);color:#3b82f6;border:1px solid rgba(59,130,246,0.15);flex-shrink:0">Deal</span>':'')+
+            '<span style="font-size:9px;color:#475569;flex-shrink:0">'+(exp?'\u25BE':'\u25B8')+'</span>'+
           '</div>'+
-          '<div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">'+
-            (co.has_deal?'<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:rgba(59,130,246,0.12);color:#3b82f6;border:1px solid rgba(59,130,246,0.15)">Deal</span>':'')+
-            (co.tier?'<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(168,85,247,0.12);color:#a855f7;border:1px solid rgba(168,85,247,0.2)">'+esc(co.tier)+'</span>':'')+
-            (co.industry?'<span style="font-size:9px;padding:1px 5px;border-radius:8px;background:rgba(255,255,255,0.04);color:#6b7280">'+esc(co.industry.replace(/_/g,' '))+'</span>':'')+
-            (co.domain?'<span style="font-size:9px;color:#4b5563">'+esc(co.domain)+'</span>':'')+
-            crmLastActivityBadge(co.last_activity)+
-          '</div>'
-        +'</div>'+
-        '<button onclick="openBuyerFromCRM(\''+coKey+'\',event)" style="margin-left:auto;font-size:9px;padding:2px 7px;border-radius:4px;border:1px solid rgba(74,222,128,0.2);color:#4ade80;background:transparent;cursor:pointer;white-space:nowrap;flex-shrink:0">Market Intel \u2192</button>'+
+          '<div style="font-size:10px;color:#475569;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(co.industry?co.industry.replace(/_/g,' '):'')+'</div>'+
+        '</div>'+
       '</div>'+
-      crmStatusBadge(co)+
-      '<div style="font-size:11px;color:#9ca3af">'+crmFmtDate(touch)+'</div>'+
+      '<div>'+typeBadge+'</div>'+
+      '<div>'+tierBadge+'</div>'+
+      '<div style="position:relative">'+ownerHtml+'</div>'+
+      '<div style="font-size:11px;color:'+actColor+'">'+actStr+'</div>'+
       '<div style="text-align:center"><span class="'+crmIdleClass(idleD)+'">'+(idleD!==null&&idleD!==undefined&&idleD<999?idleD+'d':'\u2014')+'</span></div>'+
+      '<div>'+domainHtml+'</div>'+
+      '<div>'+phoneHtml+'</div>'+
+      '<div>'+locHtml+'</div>'+
+      '<div style="display:flex;justify-content:center">'+liHtml+'</div>'+
       crmActDots(co.total_threads||0)+
-      '<div>'+(owner?'<span class="'+crmRepClass(owner)+'">'+esc(owner)+'</span>':'<span style="color:#6b7280;font-size:11px">\u2014</span>')+'</div>'+
-      '<div></div>'+
+      '<div style="display:flex;gap:4px;align-items:center"><button onclick="openBuyerFromCRM(\''+coKey+'\',event)" style="font-size:9px;padding:2px 7px;border-radius:4px;border:1px solid rgba(74,222,128,0.2);color:#4ade80;background:transparent;cursor:pointer;white-space:nowrap;font-family:inherit">Intel \u2192</button></div>'+
       '</div>';
 
     if(exp&&co.contacts.length){
@@ -3178,8 +3318,12 @@ function renderCRM(){
           var cname=((c.firstname||'')+' '+(c.lastname||'')).trim()||c.email||'Unknown';
           var ci=cname.split(/\s+/).map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
           var crep=repName(c.assigned_rep_email||'')||repName(c.owner_id||'');
+          var cliHtml=c.linkedin_url
+            ?'<a href="'+esc(c.linkedin_url)+'" target="_blank" onclick="event.stopPropagation()" style="display:inline-flex;width:18px;height:18px;border-radius:3px;background:rgba(10,102,194,0.12);border:1px solid rgba(10,102,194,0.2);align-items:center;justify-content:center;text-decoration:none"><svg width="9" height="9" viewBox="0 0 24 24" fill="#60a5fa"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>'
+            :'';
           return'<div class="crm-ct-row">'+
             '<div></div>'+
+            /* Contact name + title */
             '<div style="display:flex;align-items:center;gap:8px;padding-left:34px;overflow:hidden">'+
               '<div style="width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:600;color:#9ca3af;flex-shrink:0">'+esc(ci)+'</div>'+
               '<div style="overflow:hidden">'+
@@ -3191,14 +3335,18 @@ function renderCRM(){
                 '</div>'+
               '</div>'+
             '</div>'+
-            '<div></div>'+
-            '<div title="'+esc(c.email||'')+'" style="font-size:11px;color:#9ca3af;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(c.email||'')+'</div>'+
-            '<div></div><div></div>'+
-            '<div>'+(crep?'<span class="'+crmRepClass(crep)+'">'+esc(crep)+'</span>':'')+'</div>'+
+            '<div></div>'+ /* type col */
+            '<div></div>'+ /* tier col */
+            '<div>'+(crep?'<span class="'+crmRepClass(crep)+'">'+esc(crep)+'</span>':'')+'</div>'+ /* owner col */
+            '<div title="'+esc(c.email||'')+'" style="font-size:10px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(c.email||'')+'</div>'+ /* last activity col → email */
+            '<div></div>'+ /* idle col */
+            '<div></div>'+ /* website col */
+            '<div>'+(c.phone?'<a href="tel:'+esc(c.phone)+'" onclick="event.stopPropagation()" style="color:#64748b;font-size:10px;text-decoration:none">'+esc(c.phone)+'</a>':'')+'</div>'+ /* phone col */
+            '<div></div>'+ /* location col */
+            '<div style="display:flex;justify-content:center">'+cliHtml+'</div>'+ /* linkedin col */
+            '<div></div>'+ /* activity col */
             '<div style="display:flex;gap:4px">'+
               (c.email?'<a href="mailto:'+esc(c.email)+'" onclick="event.stopPropagation()" style="font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid rgba(74,222,128,0.2);color:#4ade80;text-decoration:none">Email</a>':'')+
-              (c.phone?'<a href="tel:'+esc(c.phone)+'" onclick="event.stopPropagation()" style="font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid rgba(59,130,246,0.2);color:#3b82f6;text-decoration:none">Call</a>':'')+
-              (c.linkedin_url?'<a href="'+esc(c.linkedin_url)+'" target="_blank" onclick="event.stopPropagation()" style="font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid rgba(107,114,128,0.2);color:#9ca3af;text-decoration:none">in</a>':'')+
             '</div>'+
           '</div>';
         }).join('')+
@@ -3300,9 +3448,11 @@ function applyCRMList(emailsJson){
   if(input)input.value='';
   /* Temporarily override getCRMVisible to use list filter */
   CRM_FILTER_OWNER='all';
-  CRM_FILTER_STATUS='all';
+  CRM_FILTER_TIER='all';
+  CRM_FILTER_TYPE='all';
   var ownerSel=document.getElementById('crm-owner-select');if(ownerSel)ownerSel.value='all';
-  document.querySelectorAll('#crm-status-pills .crm-pill').forEach(function(p,i){p.classList.toggle('active',i===0);});
+  document.querySelectorAll('#crm-tier-pills .crm-pill').forEach(function(p,i){p.classList.toggle('active',i===0);});
+  document.querySelectorAll('#crm-type-pills .crm-pill').forEach(function(p,i){p.classList.toggle('active',i===0);});
   /* Use search term as a marker: set it to a special value and filter by email set */
   window._CRM_LIST_FILTER=emailSet;
   renderCRM();
