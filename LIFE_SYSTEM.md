@@ -150,7 +150,7 @@
 - Conversa comp: Q3 2026 após sentença
 
 **Active projects**:
-- 🔴 **Sierra Culebra ZA-FOR-02/2026**: forestry tender, 2 lots, deadline 06/04, useful window until 28/03 (see PACO_LOZANO_SIERRA_CULEBRA.md)
+- 🔴 **Sierra Culebra ZA-FOR-02/2026**: carbon rights CONCESSION (not service contract), 2 lots (239.54 ha), ClearSky bids directly, deadline 06/04, useful window until 28/03. Full context: `sierra-culebra/SIERRA_CULEBRA_CONTEXT.md`
 - AMOEDO MITECO: 10/11 subsanacion points resolved, blocker = Brian sign Annexe II
 - Sierra Leone: $5M LOI (NatureBrain)
 - Microsoft ARR: offtake $43/credit
@@ -160,7 +160,7 @@
 **MITECO projects in progress**:
 - **Enersol / Gustavo Diaz (Pontevedra)**: 35.31 ha, EUR 150/ha, contract v3 prepared. Pending: Gustavo confirm v3 -> sign -> forestry engineer
 - **Amoedo**: 10/11 subsanacion resolved. Blocker: Brian sign Annexe II. Ownership: awaits MITECO registration to transfer to Paco/Caja Rural
-- **Sierra Culebra**: see Priority 1 above
+- **Sierra Culebra**: carbon concession, 239.54 ha, EUR 670K capex, Paco/Caja Rural = offtaker at EUR 18/tCO2 + potential debt financer. See Priority 1 + `SIERRA_CULEBRA_CONTEXT.md`
 
 **IP pessoal** (NUNCA expor à ClearSky):
 - PABLO v79z7, clearskyplatform.html, revenue.html, dashboard.html, presentations-v3.html
