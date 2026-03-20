@@ -94,17 +94,41 @@
 
 ## SAÚDE E BEM-ESTAR
 
-**Medicação**: Escitalopram (diário), Rivotril (insónia aguda), anti-histamínico (pólen)
+**Medicação**: Escitalopram 20mg (diário, de manhã com Centrum), Rivotril (insónia aguda), anti-histamínico (pólen)
 **Psicólogo**: via Sanitas, semanal desde 09/03/2026 (objectivo 7+ sessões até 20/04)
 **Psiquiatra**: acompanhamento para insónia
+**Peso**: 103kg (subiu de 98 em nov/25 — 10 dias sem correr + stress + mudança + escitalopram. Meta: voltar a 98. Abordagem: retomar rotina, não dieta agressiva)
 
-**Rotina matinal pétrea** (7+ meses consecutivos):
-1. ~5:30 acordar
+**Rotina Pétrea** (7+ meses consecutivos) — sequência exacta:
+1. Fazer cama
 2. Passear Mickey (Yorkshire Terrier, 9 meses)
-3. Corrida 10-21km
-4. Duche + meditação (79+ dias streak)
-5. Lista de gratidão (5 itens)
-6. Trabalho
+3. Tomar 20mg Escitalopram + Centrum
+4. High five no espelho + 8 sentences Mel Robbins
+5. Duas colheres de vinagre de maçã
+6. Vitamina C efervescente (1 copo)
+7. Magnésio + Potássio (outro copo)
+8. Café preto
+9. Diário de gratidão + mantras
+10. Meditação 10 minutos
+11. Corrida Z2 (normalmente 6-10km)
+12. Igreja (passa sempre depois da corrida)
+
+**Sono 20/03/2026**: 8h46m total | Profundo 1h45m | REM 1h53m | Ligeiro 5h8m | Acordado 55m
+- Dormiu 21:26 → Acordou 7:07
+- Média semanal 14-20/03: 8h2m
+
+**Corrida 20/03/2026** — retorno após 10 dias parado:
+- 6.28km | 7:11/km | FC 159bpm | Training Effect 4.0 | Desnível +60m
+- Pace equivalente plano: ~6:55/km (desnível corrigido)
+- Splits: km1-2 em 6:33 (rápido demais) → quebrou km3 (7:49) → estabilizou
+- Diagnóstico: cardio bom, muscular enferrujado, base intacta. Nota: 7.5/10
+- Erro: começou no ritmo antigo — próximos treinos segurar ego, 7:10-7:30/km, FC <155
+
+**Plano de retorno (3 treinos)**:
+- Sex 21/03: 6km @ 7:15/km, FC <155
+- Seg 23/03: 7km @ 7:10/km, FC <155
+- Qua 25/03: 8km @ 7:00/km, FC <157
+- Em 3-4 treinos volta ao nível anterior (~6:35/km @ 155bpm)
 
 **Maior risco**: padrão Moss — sobrecarga/burnout. Sinais: acordar 2-4h, trabalhar sem parar.
 
