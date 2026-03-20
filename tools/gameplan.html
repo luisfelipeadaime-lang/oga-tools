@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sierra Culebra x Move Gameplan</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg0:#030810;--bg1:#080f1e;--bg2:#0d1628;--bg3:#111d35;--bg4:#16243f;
+  --border:rgba(99,130,191,0.12);--border-hi:rgba(99,130,191,0.22);
+  --text0:#e8eef8;--text1:#b8c8e4;--text2:#7a94b8;--text3:#4a6080;
+  --teal:#2dd4bf;--teal-dim:rgba(45,212,191,0.10);
+  --blue:#60a5fa;--blue-dim:rgba(96,165,250,0.09);
+  --green:#34d399;--green-dim:rgba(52,211,153,0.09);
+  --red:#f87171;--red-dim:rgba(248,113,113,0.09);
+  --amber:#fbbf24;--amber-dim:rgba(251,191,36,0.09);
+  --purple:#a78bfa;--purple-dim:rgba(167,139,250,0.09);
+  --pink:#f472b6;--pink-dim:rgba(244,114,182,0.09);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg0);color:var(--text0);font-family:'DM Sans',sans-serif;font-size:13px}
+body{display:flex;flex-direction:column;align-items:center;padding:28px 24px;overflow-y:auto}
+.container{width:100%;max-width:880px}
+
+h1{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px}
+.subtitle{font-size:13px;color:var(--text2);margin-bottom:20px}
+.subtitle code{font-family:'DM Mono',monospace;color:var(--teal);background:var(--teal-dim);padding:1px 6px;border-radius:4px;font-size:11px}
+
+/* Progress strip */
+.progress-strip{display:flex;gap:24px;padding:12px 16px;background:var(--bg1);border:1px solid var(--border);border-radius:10px;margin-bottom:20px;font-size:12px}
+.progress-strip .label{color:var(--text3)}
+.progress-strip .val{font-family:'DM Mono',monospace;font-weight:500;color:var(--teal)}
+.progress-strip .val-red{font-family:'DM Mono',monospace;font-weight:500;color:var(--red)}
+
+/* Week tabs */
+.tabs{display:flex;gap:6px;margin-bottom:20px}
+.tab{padding:7px 18px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);color:var(--text2);background:transparent;transition:all .15s}
+.tab:hover{border-color:var(--border-hi);color:var(--text1)}
+.tab.active{background:var(--teal-dim);border-color:var(--teal);color:var(--teal)}
+
+/* Week content */
+.week{display:none}
+.week.active{display:block}
+
+/* Day card */
+.day{background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:10px}
+.day.today{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal-dim)}
+.day.past{opacity:0.5}
+.day-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.day-date{font-family:'Syne',sans-serif;font-size:14px;font-weight:600}
+.day-name{font-size:11px;color:var(--text3);font-weight:400}
+.day-today-badge{font-size:10px;background:var(--teal);color:#030810;padding:2px 8px;border-radius:10px;font-weight:600;margin-left:auto}
+
+/* Badges */
+.badge{display:inline-flex;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;margin-right:4px}
+.b-move{background:var(--blue-dim);color:var(--blue)}
+.b-licit{background:var(--green-dim);color:var(--green)}
+.b-kids{background:var(--amber-dim);color:var(--amber)}
+.b-brian{background:var(--purple-dim);color:var(--purple)}
+.b-personal{background:var(--pink-dim);color:var(--pink)}
+.b-critical{background:var(--red-dim);color:var(--red);text-transform:uppercase}
+
+/* Tasks */
+.tasks{list-style:none;padding:0}
+.tasks li{padding:4px 0;font-size:12px;color:var(--text1);display:flex;align-items:flex-start;gap:8px}
+.tasks li::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.tasks li.t-move::before{background:var(--blue)}
+.tasks li.t-licit::before{background:var(--green)}
+.tasks li.t-kids::before{background:var(--amber)}
+.tasks li.t-brian::before{background:var(--purple)}
+.tasks li.t-personal::before{background:var(--pink)}
+.tasks li.t-critical::before{background:var(--red)}
+.tasks li.t-done{text-decoration:line-through;opacity:0.45}
+
+.divider{border:none;border-top:1px solid var(--border);margin:6px 0}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Sierra Culebra &times; Move Gameplan</h1>
+  <div class="subtitle"><code>ZA-FOR-02/2026</code> Deadline 06 April 2026 &mdash; Updated 20 March</div>
+
+  <div class="progress-strip">
+    <div><span class="label">Days to deadline</span><br><span class="val-red" id="daysLeft"></span></div>
+    <div><span class="label">Work days left</span><br><span class="val" id="workDays"></span></div>
+    <div><span class="label">Semana Santa</span><br><span class="val">30 Mar &ndash; 4 Apr</span></div>
+    <div><span class="label">Move</span><br><span class="val">21&ndash;23 Mar</span></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showWeek(1)">Week 1 &middot; Mar 20&ndash;26</div>
+    <div class="tab" onclick="showWeek(2)">Week 2 &middot; Mar 27 &ndash; Apr 2</div>
+    <div class="tab" onclick="showWeek(3)">Week 3 &middot; Apr 3&ndash;6</div>
+  </div>
+
+  <!-- WEEK 1 -->
+  <div class="week active" id="week1">
+
+    <div class="day today" id="day-0320">
+      <div class="day-head">
+        <span class="day-date">Thu 20 <span class="day-name">March</span></span>
+        <span class="badge b-licit">Licitacion</span>
+        <span class="badge b-personal">Personal</span>
+        <span class="day-today-badge">TODAY</span>
+      </div>
+      <ul class="tasks">
+        <li class="t-licit">Email Cuatrecasas follow-up (JC Hernanz + Suniva) &mdash; confirm DEUC + bilateral draft timeline</li>
+        <li class="t-licit">Emmanuel: start PLACSP registration (tramitacastillayleon.jcyl.es)</li>
+        <li class="t-licit">Review Anexo 3 completeness on PLACSP</li>
+        <li class="t-personal">Morning run 6.28km (done &mdash; base intact, ego check next time)</li>
+        <li class="t-personal">Church after run</li>
+      </ul>
+    </div>
+
+    <div class="day" id="day-0321">
+      <div class="day-head">
+        <span class="day-date">Fri 21 <span class="day-name">March</span></span>
+        <span class="badge b-move">Move</span>
+        <span class="badge b-licit">Licitacion</span>
+        <span class="badge b-personal">Personal</span>
+      </div>
+      <ul class="tasks">
+        <li class="t-move">Nohemi packs apartment (all day)</li>
+        <li class="t-move">IKEA delivery &mdash; MALM bed, 2x SLAKT kids beds, KIVIK chaise</li>
+        <li class="t-licit">Work remotely between move tasks</li>
+        <li class="t-licit">Target: Seguro RC professional research (Emmanuel)</li>
+        <li class="t-personal">Run plan: 6km @ 7:15/km, FC &lt;155</li>
+        <li class="t-personal">Cristina date &mdash; drinks + Maloka Lavapies (forro)</li>
+      </ul>
+    </div>
+
+    <div class="day" id="day-0322">
+      <div class="day-head">
+        <span class="day-date">Sat 22 <span class="day-name">March</span></span>
+        <span class="badge b-move">Move</span>
+      </div>
+      <ul class="tasks">
+        <li class="t-move">Moving company (Wallapop Madrid) &mdash; old apt to Avda Europa</li>
+        <li class="t-move">Unpack essentials: kitchen, bathroom, bedding</li>
+        <li class="t-move">Verify all utilities working (water, electricity, internet)</li>
+      </ul>
+    </div>
+
+    <div class="day" id="day-0323">
+      <div class="day-head">
+        <span class="day-date">Sun 23 <span class="day-name">March</span></span>
+        <span class="badge b-move">Move</span>
+        <span class="badge b-licit">Licitacion</span>
+      </div>
+      <ul class="tasks">
+        <li class="t-move">IKEA assembly day (scheduled montagem)</li>
+        <li class="t-move">Luis sleeps at new apartment (first night)</li>
+        <li class="t-licit">Run plan: 7km @ 7:10/km, FC &lt;155</li>
+        <li class="t-licit">Draft bilateral contract ClearSky/Caja Rural &mdash; JC Hernanz target Mon/Tue</li>
+      </ul>
+    </div>
+
+    <div class="day" id="day-0324">
+      <div class="day-head">
+        <span class="day-date">Mon 24 <span class="day-name">March</span></span>
+        <span class="badge b-move">Move</span>
+        <span class="badge b-licit">Licitacion</span>
+      </div>
+      <ul class="tasks">
+        <li class="t-move">Email Helena (social worker) &mdash; apartment ready for home visit</li>
+        <li class="t-licit">DEUC XML &mdash; expect JC Hernanz guidance</li>
+        <li class="t-licit">Bilateral contract draft review</li>
+        <li class="t-licit">Emmanuel: PLACSP registration must be done by today</li>
+        <li class="t-licit">Seguro RC professional &mdash; confirm quotes</li>
+      </ul>
+    </div>
+
+    <div class="day" id="day-0325">
+      <div class="day-head">
+        <span class="day-date">Tue 25 <span class="day-name">March</span></span>
+        <span class="badge b-brian">Brian</span>
+        <span class="badge b-licit">Licitacion</span>
+        <span class="badge b-kids">Kids</span>
+      </div>
+      <ul class="tasks">
+        <li class="t-brian">Brian meeting 10h&ndash;12h MAX &mdash; approve bids, confirm capex financing, sign Amoedo Annexe II</li>
+        <li class="t-licit">Finalize bilateral contract draft</li>
+        <li class="t-licit">Run plan: 8km @ 7:00/km, FC &lt;157</li>
+        <li class="t-kids">Children arrive 16:30 (normal Wed regime)</li>
+      </ul>
+    </div>
+
+    <div class="day" id="day-0326">
+      <div class="day-head">
+        <span class="day-date">Wed 26 <span class="day-name">March</span></span>
+        <span class="badge b-licit">Licitacion</span>
+        <span class="badge b-kids">Kids</span>
+        <span class="badge b-critical">Critical</span>
+      </div>
+      <ul class="tasks">
+        <li class="t-critical">LAST FULL WORK DAY before Semana Santa</li>
+        <li class="t-licit">All pending items must be resolved or delegated</li>
+        <li class="t-licit">Seguro RC: policy must be in hand</li>
+        <li class="t-licit">PLACSP registration confirmed</li>
+        <li class="t-licit">Bilateral contract: signed or near-final</li>
+        <li class="t-kids">Children start holidays 16:30 &mdash; stay with Luis at new apartment</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- WEEK 2 -->
+  <div class="week" id="week2">
+
+    <div class="day" id="day-0327">
+      <div class="day-head">
+        <span class="day-date">Thu 27 <span class="day-name">March</span></span>
+        <span class="badge b-licit">Licitacion</span>
+        <span class="badge b-kids">Kids</span>
+      </div>
+      <ul class="tasks">
+        <li class="t-kids">Children with Luis (Semana Santa begins)</li>
+        <li class="t-licit">Light work &mdash; review bid documents during nap time</li>
+        <li class="t-licit">Assemble technical offer narrative</li>
+      </ul>
+    </div>
+
+    <div class="day" id="day-0328">
+      <div class="day-head">
+        <span class="day-date">Fri 28 <span class="day-name">March</span></span>
+        <span class="badge b-licit">Licitacion</span>
+        <span class="badge b-kids">Kids</span>
+      </div>
+      <ul class="tasks">
+        <li class="t-kids">Children with Luis</li>
+        <li class="t-licit">Final review pass on all bid docs</li>
+        <li class="t-licit">Confirm Fran Abilleira / Redenor subcontracting agreement</li>
+      </ul>
+    </div>
+
+    <div class="day" id="day-0329">
+      <div class="day-head">
+        <span class="day-date">Sat 29 <span class="day-name">March</span></span>
+        <span class="badge b-kids">Kids</span>
+      </div>
+      <ul class="tasks">
+        <li class="t-kids">Weekend with children &mdash; explore new neighborhood (Pozuelo)</li>
+        <li class="t-kids">New apartment first full weekend</li>
+      </ul>
+    </div>
+
+    <div class="day" id="day-0330">
+      <div class="day-head">
+        <span class="day-date">Sun 30 <span class="day-name">March</span></span>
+        <span class="badge b-kids">Kids</span>
+        <span class="badge b-personal">Personal</span>
+      </div>
+      <ul class="tasks">
+        <li class="t-kids">Children with Luis</li>
+        <li class="t-personal">Church</li>
+        <li class="t-personal">Semana Santa &mdash; Spain largely shut down this week</li>
+      </ul>
+    </div>
+
+    <div class="day" id="day-0331">
+      <div class="day-head">
+        <span class="day-date">Mon 31 <span class="day-name">March</span></span>
+        <span class="badge b-kids">Kids</span>
+      </div>
+      <ul class="tasks">
+        <li class="t-kids">Children with Luis (Semana Santa holiday)</li>
+        <li class="t-licit">Light bid polish if needed &mdash; mornings only</li>
+      </ul>
+    </div>
+
+    <div class="day" id="day-0401">
+      <div class="day-head">
+        <span class="day-date">Tue 1 <span class="day-name">April</span></span>
+        <span class="badge b-kids">Kids</span>
+        <span class="badge b-licit">Licitacion</span>
+      </div>
+      <ul class="tasks">
+        <li class="t-kids">Children leave 9h</li>
+        <li class="t-licit">Full work day resumes &mdash; final bid assembly sprint</li>
+        <li class="t-licit">Technical narrative polish</li>
+        <li class="t-licit">Financial offer final numbers</li>
+      </ul>
+    </div>
+
+    <div class="day" id="day-0402">
+      <div class="day-head">
+        <span class="day-date">Wed 2 <span class="day-name">April</span></span>
+        <span class="badge b-licit">Licitacion</span>
+      </div>
+      <ul class="tasks">
+        <li class="t-licit">Bid document assembly &mdash; all sections compiled</li>
+        <li class="t-licit">Internal review with Emmanuel</li>
+        <li class="t-licit">Legal review (JC Hernanz final sign-off)</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- WEEK 3 -->
+  <div class="week" id="week3">
+
+    <div class="day" id="day-0403">
+      <div class="day-head">
+        <span class="day-date">Thu 3 <span class="day-name">April</span></span>
+        <span class="badge b-licit">Licitacion</span>
+      </div>
+      <ul class="tasks">
+        <li class="t-licit">Final bid review &mdash; all documents complete</li>
+        <li class="t-licit">Cross-check Lot 1 + Lot 2 requirements</li>
+        <li class="t-licit">Formatting and compliance check (PCAP requirements)</li>
+      </ul>
+    </div>
+
+    <div class="day" id="day-0404">
+      <div class="day-head">
+        <span class="day-date">Fri 4 <span class="day-name">April</span></span>
+        <span class="badge b-licit">Licitacion</span>
+      </div>
+      <ul class="tasks">
+        <li class="t-licit">Test submission on PLACSP portal (dry run)</li>
+        <li class="t-licit">Fix any formatting or portal issues</li>
+        <li class="t-licit">Emmanuel: verify all digital signatures</li>
+      </ul>
+    </div>
+
+    <div class="day" id="day-0405">
+      <div class="day-head">
+        <span class="day-date">Sat 5 <span class="day-name">April</span></span>
+        <span class="badge b-licit">Licitacion</span>
+        <span class="badge b-critical">Critical</span>
+      </div>
+      <ul class="tasks">
+        <li class="t-critical">TARGET: Submit bid (1 day buffer before deadline)</li>
+        <li class="t-licit">Upload to PLACSP portal &mdash; both lots</li>
+        <li class="t-licit">Verify submission confirmation receipt</li>
+        <li class="t-licit">Screenshot + PDF archive of submission</li>
+      </ul>
+    </div>
+
+    <div class="day" id="day-0406">
+      <div class="day-head">
+        <span class="day-date">Sun 6 <span class="day-name">April</span></span>
+        <span class="badge b-critical">Critical</span>
+      </div>
+      <ul class="tasks">
+        <li class="t-critical">DEADLINE: ZA-FOR-02/2026 &mdash; 23:59</li>
+        <li class="t-licit">Emergency buffer day only &mdash; bid should already be submitted</li>
+        <li class="t-personal">If submitted: celebrate. Church. Rest.</li>
+      </ul>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// Calculate days remaining
+const deadline = new Date(2026, 3, 6); // April 6
+const today = new Date();
+today.setHours(0,0,0,0);
+const daysLeft = Math.ceil((deadline - today) / 86400000);
+document.getElementById('daysLeft').textContent = daysLeft + ' days';
+
+// Work days (exclude weekends, rough estimate)
+let wd = 0;
+const d = new Date(today);
+while (d < deadline) {
+  const dow = d.getDay();
+  if (dow !== 0 && dow !== 6) wd++;
+  d.setDate(d.getDate() + 1);
+}
+document.getElementById('workDays').textContent = wd + ' days';
+
+// Highlight today / mark past
+const todayStr = today.toISOString().slice(5,10).replace('-','');
+document.querySelectorAll('.day').forEach(el => {
+  const dayId = el.id.replace('day-','');
+  if (dayId < todayStr) el.classList.add('past');
+  if (dayId === todayStr) el.classList.add('today');
+});
+
+// Tab switching
+function showWeek(n) {
+  document.querySelectorAll('.week').forEach(w => w.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('week' + n).classList.add('active');
+  document.querySelectorAll('.tab')[n-1].classList.add('active');
+}
+</script>
+</body>
+</html>
