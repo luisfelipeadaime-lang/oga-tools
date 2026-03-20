@@ -1,6 +1,7 @@
 # LIFE_SYSTEM.md — Luis Felipe Adaime
-*Última actualização: 19 de março de 2026*
-*Upload este ficheiro em QUALQUER sessão nova para contexto completo.*
+*Last updated: 20 March 2026*
+*Upload this file in ANY new session for full context.*
+*Language preference: ENGLISH. Born: 08/08/1980, Rio de Janeiro. Age: 45.*
 
 ---
 
@@ -32,47 +33,49 @@
 - **Empresa de mudanças**: reservar no Wallapop Madrid ~€150-200 para domingo
 - Luis comprou: 8 sacos grandes + trena
 
-### Agenda hoje 19/03
-- ✅ Concerto Gabriel (manhã)
-- StoneX/Mario Campos 11h — Velázquez 34 (interesse em MITECO)
-- Receber Amazon em casa (Pozuelo) depois
-- Crianças 16h-20h (buscar na escola, Dia do Pai)
-- Entregar crianças a Camila 20h
-- Demo Ana + Carolina 20h30 (clearskyplatform.html CRM)
+### Critical personal dates
+- 20/04/2026 — custody psychologist session
+- Late April/early May — home visit (psicossocial)
+- **18/05/2026 — CUSTODY TRIAL**
+
+### Brian in Madrid
+- Wednesday 25/03: meeting 10h-12h max
+- Agenda: approve bids, confirm capex financing, sign Amoedo Annexe II
+- He doesn't speak Spanish, doesn't add operationally — keep focused and short
+
+### Children — Semana Santa regime
+- Thu 26/03 16:30: children start holidays, stay with Luis at the new apartment
+- Wed 01/04 9h: children leave
+- Next time with children: Wed 25/03 from 16:30 (normal regime)
+
+### Date Saturday 21/03
+- Cristina Lopez Garcia (Iberdrola, sustainability)
+- Met through mutual contact (MA)
+- Was in Caraiva + Rio carnival 2026, learned forro
+- Plan: drinks + Maloka Lavapies (live forro)
+- First date since separation Jul/24
 
 ---
 
-## CUSTÓDIA — RESUMO EXECUTIVO
+## SEPARATION / CAMILA
 
-**Processo**: 759/2025, Plaza Nº 1 Pozuelo, Juíza García Clérigo
-**Placar**: 5×0 a favor de Luis
-**Vista principal**: 18/05/2026
-**Score posicional**: 8.5/10
+### Communication rule
+- Neutral, factual, cordial — write as if the judge will read it
+- Zero provocation
+- Respond only to what's necessary
 
-**Regime actual** (Auto 656/2025, 18/12/2025):
-- Fins de semana alternados Sexta-Segunda
-- Quarta overnight
-- Divisão feriados
-- Frase-chave juíza: "no existe ningún hecho que permita poner en duda la capacidad del padre"
+### Custody case status
+- Case 759/2025, Plaza No 1 Pozuelo, Judge Garcia Clerigo
+- Score: 5x0 Luis
+- Current regime (Auto 656/2025): alternate weekends Fri-Mon + Wednesday overnight
+- Psicossocial: Helena interviewed 3-4/03 — report weighs ~40% of sentence
+- Score: 8.5/10 | Probability shared custody: 65-70%
+- Civil lawyer: Alvaro Iraizoz | Criminal: Ana Bernaola Lorenzo (Molins Defensa Penal)
 
-**Variável decisiva**: relatório psicossocial (~40% peso sentença)
-- Helena entrevistou Luis 3/03 e Camila 4/03
-- Psicóloga do processo: sessão 20/04
-- Visita domiciliar: estimada final abril/início maio
-
-**Probabilidade custódia compartida**: 65-70% (sobe 80-85% se relatório recomendar)
-
-**Advogados**:
-- Civil: Álvaro Iráizoz
-- Penal: Ana Bernaola Lorenzo (Molins Defensa Penal)
-
-**Regra comunicação com Camila**: neutro, factual, cordial. Escrever como se a juíza fosse ler.
-
-**Datas críticas**:
-- 20/04/2026 — sessão psicóloga do processo
-- Final abril/início maio — visita domiciliar
-- **18/05/2026 — JULGAMENTO**
-- Jun-Jul 2026 — sentença estimada
+### Pending Camila issues
+- Luis pays Camila's rent: EUR 2,000/month
+- Luis pays Viviana: EUR 1,150/month
+- Amoedo: ownership question raised by Paco (pending Brian)
 
 ---
 
@@ -146,13 +149,18 @@
 - Emmanuel Mendoza: point of contact para tudo plataforma durante este período
 - Conversa comp: Q3 2026 após sentença
 
-**Projectos activos**:
-- 🔴 **Sierra Culebra ZA-FOR-02/2026**: licitação florestal, 2 lotes, deadline 06/04, janela útil até 28/03 (ver PACO_LOZANO_SIERRA_CULEBRA.md)
-- AMOEDO MITECO: 10/11 pontos resolvidos, bloqueio = Brian assinar Anexo II
+**Active projects**:
+- 🔴 **Sierra Culebra ZA-FOR-02/2026**: forestry tender, 2 lots, deadline 06/04, useful window until 28/03 (see PACO_LOZANO_SIERRA_CULEBRA.md)
+- AMOEDO MITECO: 10/11 subsanacion points resolved, blocker = Brian sign Annexe II
 - Sierra Leone: $5M LOI (NatureBrain)
-- Microsoft ARR: offtake $43/crédito
-- StoneX/Mario Campos: reunião 19/03 correu bem — interesse projectos MITECO espanhóis
+- Microsoft ARR: offtake $43/credit
+- StoneX/Mario Campos: meeting 19/03 went well — interest in Spanish MITECO projects
 - ClimeFi RFP: deadline 8/04, 100K-500Kt CDR
+
+**MITECO projects in progress**:
+- **Enersol / Gustavo Diaz (Pontevedra)**: 35.31 ha, EUR 150/ha, contract v3 prepared. Pending: Gustavo confirm v3 -> sign -> forestry engineer
+- **Amoedo**: 10/11 subsanacion resolved. Blocker: Brian sign Annexe II. Ownership: awaits MITECO registration to transfer to Paco/Caja Rural
+- **Sierra Culebra**: see Priority 1 above
 
 **IP pessoal** (NUNCA expor à ClearSky):
 - PABLO v79z7, clearskyplatform.html, revenue.html, dashboard.html, presentations-v3.html
@@ -215,18 +223,20 @@ npx wrangler deploy
 
 ---
 
-## COMO USAR ESTE FICHEIRO
+## HOW TO USE THIS FILE
 
-**Em qualquer sessão nova**:
-1. Upload LIFE_SYSTEM.md + PABLO_SESSION_HANDOFF_v79z5.md + CUSTODY_CASE_2.pdf
-2. Diz o que precisas
-3. Contexto completo disponível
+Upload alongside LIFE_SYSTEM.md in any new chat.
+Base prompt:
+"Read BOTH uploaded files completely before any action.
+I am Luis Felipe Adaime, 45 years old, Madrid. Respond always in English.
+Bullets for data, prose for judgment. Custody above everything until 18/05/2026.
+TASK: [describe what you need]"
 
-**Actualizar este ficheiro**: pede ao BP no fim de cada sessão relevante:
+**To update**: ask at the end of any relevant session:
 ```
 Update LIFE_SYSTEM.md with today's changes and save to C:\brand-presentations\LIFE_SYSTEM.md
 ```
 
 ---
 
-*Gerado: 19 de março de 2026 · Próxima actualização: após mudança + demo Ana*
+*Generated: 20 March 2026 · Next update: after move + licitacao progress*
