@@ -388,6 +388,24 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
 .dd-badge.review{background:var(--blue-dim);color:var(--blue)}
 .dd-badge.approved{background:var(--green-dim);color:var(--green)}
 .dd-badge.failed{background:var(--red-dim);color:var(--red)}
+.dd-badge.confirmed{background:var(--green-dim);color:var(--green)}
+.dd-badge.unconfirmed{background:var(--amber-dim);color:var(--amber)}
+.dd-badge.derived{background:rgba(120,120,200,.12);color:#8888cc}
+.dd-badge.stale{background:var(--red-dim);color:var(--red)}
+.dd-badge.ready{background:var(--green-dim);color:var(--green)}
+.dd-badge.generating{background:var(--amber-dim);color:var(--amber)}
+.dd-param-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.dd-param-tbl th{padding:6px 10px;text-align:left;font-family:'Syne',sans-serif;font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--border1);background:var(--bg1)}
+.dd-param-tbl td{padding:5px 10px;border-bottom:1px solid var(--border0);color:var(--txt1);font-family:'DM Mono',monospace;font-size:10.5px}
+.dd-param-tbl tr:hover{background:var(--bg2)}
+.dd-param-tbl .param-key{color:var(--txt0);font-weight:600;font-family:'DM Mono',monospace;font-size:10px}
+.dd-param-tbl .param-val{color:var(--teal);font-weight:500}
+.dd-param-cat{padding:8px 14px;font-family:'Syne',sans-serif;font-size:9.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;background:var(--bg1);border-bottom:1px solid var(--border1)}
+.dd-docgen-card{padding:12px 16px;border-bottom:1px solid var(--border0);display:flex;align-items:center;justify-content:space-between}
+.dd-docgen-card:last-child{border-bottom:none}
+.dd-docgen-name{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--txt0)}
+.dd-docgen-lang{font-size:9px;color:var(--txt3);margin-left:6px;font-family:'DM Mono',monospace}
+.dd-docgen-actions{display:flex;gap:6px;align-items:center}
 .dd-badge.queued{background:rgba(255,255,255,.06);color:var(--txt2)}
 .dd-vpng{width:100%;border-radius:6px;margin:10px 0;border:1px solid var(--border1);cursor:pointer}
 .dd-vpng:hover{border-color:var(--teal)}
@@ -647,6 +665,35 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
               </div>
             </div>
             <div class="dd-panel-body" id="dd-shapefiles-list"></div>
+          </div>
+
+          <!-- Parameter Registry panel (v79z14) -->
+          <div id="dd-params-panel" class="dd-panel" style="display:none">
+            <div class="dd-panel-head" style="justify-content:space-between">
+              <div style="display:flex;align-items:center;gap:10px">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <div>
+                  <div class="dd-panel-title">Parameter Registry</div>
+                  <div class="dd-panel-sub" id="dd-params-sub">Single source of truth for all project numbers</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:6px">
+                <button onclick="ddDeriveParams()" style="padding:4px 10px;background:var(--amber);color:#000;border:none;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer">Derive Financials</button>
+              </div>
+            </div>
+            <div class="dd-panel-body" id="dd-params-list" style="max-height:420px;overflow-y:auto"></div>
+          </div>
+
+          <!-- Document Generation panel (v79z14) -->
+          <div id="dd-docgen-panel" class="dd-panel" style="display:none">
+            <div class="dd-panel-head">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+              <div>
+                <div class="dd-panel-title">Document Generation</div>
+                <div class="dd-panel-sub" id="dd-docgen-sub">Generate counterparty documents from parameter registry</div>
+              </div>
+            </div>
+            <div class="dd-panel-body" id="dd-docgen-list"></div>
           </div>
         </div>
 
@@ -3363,6 +3410,9 @@ async function ddPreload() {
       ddRenderRecent(res.ingests);
     }
   } catch(e) { console.log('DD preload:', e.message); }
+  // Load parameter registry + documents (v79z14)
+  ddLoadParameters();
+  ddLoadDocuments();
 }
 
 function ddHandleDrop(e) {
@@ -3828,6 +3878,152 @@ async function ddLoadSession(ingestId) {
 
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+// ═══ PARAMETER REGISTRY (v79z14) ═══════════════════════════════
+const PARAM_CATEGORIES = {
+  'project_name,pliego_ref,location,ccaa,owner_entity,deal_type,licitacion_date': 'Identity',
+  'area_total_ha,mup_45_area_ha,mup_47_area_ha,area_type_a,area_type_b,bioclimatic_zone,altitude_range_m': 'Areas',
+  'species_primary,species_primary_pct,species_secondary,species_secondary_pct,species_tertiary,species_tertiary_pct,species_quaternary,species_quaternary_pct,density_primary,density_secondary,density_tertiary,density_quaternary': 'Species',
+  'project_life_years,available_credit_pct,issuance_frequency,growth_method,sell_all_offtaker': 'Planting',
+  'miteco_v7_mandatory,miteco_v7_date,absorption_factor_primary,fcc_type,soil_type,annual_rainfall_mm': 'MITECO V7',
+  'total_tco2_50yr,available_credits,credit_price_eur,offtaker_price_eur': 'CO2',
+  'capex_per_ha,registration_bid_cost,contingency_pct,annual_lease_per_ha,maintenance_yr2,maintenance_yr3,maintenance_yr10,mrv_per_ha,admin_per_ha,cs_commission_pct,cs_pct_after_pref,preferred_return': 'Financial ClearSky',
+  'zamora_margin_pct,zamora_maintenance_budget,zamora_payment_structure,fran_capex_quote,paco_entity,zamora_counterparty': 'Financial Paco/Zamora',
+  'capex_total,total_investment,gross_revenue,cs_revenue,paco_price_per_credit,zamora_total_payment,cs_pnl_estimate,moic,irr,break_even_year': 'Derived'
+};
+const PARAM_CAT_INDEX = {};
+Object.entries(PARAM_CATEGORIES).forEach(([keys, cat]) => keys.split(',').forEach(k => PARAM_CAT_INDEX[k] = cat));
+
+const DOC_TYPE_LABELS = {
+  brian_brief: 'Brian Investment Brief',
+  paco_memo: 'Paco Memo Tecnico',
+  paco_pptx: 'Paco Presentation',
+  fran_technical: 'Fran/REDENOR Technical Package',
+  jc_zamora_brief: 'JC Hernanz — Zamora Brief',
+  jc_redenor_brief: 'JC Hernanz — REDENOR Brief'
+};
+
+let DD_PARAMS = null; // { parameters, meta }
+let DD_DOCS = null;
+
+async function ddLoadParameters() {
+  const pid = DD.projectId || DD_PRELOAD_PROJECT;
+  try {
+    const res = await fetch(`${API}/api/pablo/projects/${pid}/parameters`).then(r=>r.json());
+    DD_PARAMS = res;
+    ddRenderParams(res);
+    document.getElementById('dd-params-panel').style.display = '';
+  } catch(e) { console.log('Load params:', e.message); }
+}
+
+function ddRenderParams(data) {
+  const el = document.getElementById('dd-params-list');
+  const { parameters: p, meta: m } = data;
+  const keys = Object.keys(p).sort((a,b) => {
+    const ca = PARAM_CAT_INDEX[a] || 'Other', cb = PARAM_CAT_INDEX[b] || 'Other';
+    if (ca !== cb) return ca.localeCompare(cb);
+    return a.localeCompare(b);
+  });
+
+  let html = '<table class="dd-param-tbl"><thead><tr><th>Parameter</th><th>Value</th><th>Unit</th><th>Source</th><th>Status</th></tr></thead><tbody>';
+  let lastCat = '';
+  let confirmed = 0, unconfirmed = 0;
+
+  for (const k of keys) {
+    const cat = PARAM_CAT_INDEX[k] || 'Other';
+    const mi = m[k] || {};
+    if (cat !== lastCat) {
+      html += `<tr><td colspan="5" class="dd-param-cat">${esc(cat)}</td></tr>`;
+      lastCat = cat;
+    }
+    const v = p[k];
+    const display = typeof v === 'object' ? JSON.stringify(v) : String(v ?? '');
+    const badge = mi.source === 'derived' ? '<span class="dd-badge derived">derived</span>'
+      : mi.confirmed ? '<span class="dd-badge confirmed">confirmed</span>'
+      : '<span class="dd-badge unconfirmed">unconfirmed</span>';
+    if (mi.confirmed) confirmed++; else unconfirmed++;
+    html += `<tr>
+      <td class="param-key">${esc(k)}</td>
+      <td class="param-val" title="${esc(mi.notes || '')}">${esc(display.length > 60 ? display.substring(0,57)+'...' : display)}</td>
+      <td style="color:var(--txt3);font-size:9.5px">${esc(mi.unit || '')}</td>
+      <td style="color:var(--txt3);font-size:9.5px">${esc(mi.source || '')}</td>
+      <td>${badge}</td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  el.innerHTML = html;
+  document.getElementById('dd-params-sub').textContent = `${data.count} parameters — ${confirmed} confirmed, ${unconfirmed} unconfirmed`;
+}
+
+async function ddDeriveParams() {
+  const pid = DD.projectId || DD_PRELOAD_PROJECT;
+  try {
+    const res = await fetch(`${API}/api/pablo/projects/${pid}/parameters/derive`, {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}'
+    }).then(r=>r.json());
+    if (res.ok) {
+      await ddLoadParameters();
+      ddLoadDocuments();
+    } else { alert('Derive failed: ' + (res.error || 'unknown')); }
+  } catch(e) { alert('Derive error: ' + e.message); }
+}
+
+async function ddLoadDocuments() {
+  const pid = DD.projectId || DD_PRELOAD_PROJECT;
+  try {
+    const res = await fetch(`${API}/api/pablo/projects/${pid}/documents`).then(r=>r.json());
+    DD_DOCS = res;
+    ddRenderDocGen(res);
+    document.getElementById('dd-docgen-panel').style.display = '';
+  } catch(e) { console.log('Load docs:', e.message); }
+}
+
+function ddRenderDocGen(data) {
+  const el = document.getElementById('dd-docgen-list');
+  let staleCount = 0;
+  el.innerHTML = data.documents.map(d => {
+    const label = DOC_TYPE_LABELS[d.document_type] || d.document_type;
+    const lang = d.language === 'es' ? 'ES' : 'EN';
+    let statusBadge = '';
+    if (d.status === 'not_generated') statusBadge = '<span class="dd-badge" style="background:var(--bg2);color:var(--txt3)">not generated</span>';
+    else if (d.status === 'generating') statusBadge = '<span class="dd-badge generating">generating...</span>';
+    else if (d.stale) { statusBadge = '<span class="dd-badge stale">stale</span>'; staleCount++; }
+    else statusBadge = '<span class="dd-badge ready">ready</span>';
+
+    const actions = d.status === 'generating'
+      ? '<span style="font-size:10px;color:var(--amber)">processing...</span>'
+      : `<button onclick="ddGenerateDoc('${d.document_type}')" style="padding:3px 10px;background:var(--teal);color:#000;border:none;border-radius:3px;font-size:9.5px;font-weight:700;cursor:pointer">${d.r2_key ? 'Regenerate' : 'Generate'}</button>`;
+
+    const download = d.r2_key ? `<button onclick="ddDownloadR2('${encodeURIComponent(d.r2_key)}','${d.document_type}')" style="padding:3px 8px;background:var(--bg2);color:var(--txt1);border:1px solid var(--border1);border-radius:3px;font-size:9.5px;cursor:pointer">Download</button>` : '';
+
+    return `<div class="dd-docgen-card">
+      <div>
+        <span class="dd-docgen-name">${esc(label)}</span>
+        <span class="dd-docgen-lang">${lang}</span>
+        ${statusBadge}
+      </div>
+      <div class="dd-docgen-actions">${download}${actions}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('dd-docgen-sub').textContent = `${data.documents.length} document types` + (staleCount ? ` — ${staleCount} stale` : '');
+}
+
+async function ddGenerateDoc(docType) {
+  const pid = DD.projectId || DD_PRELOAD_PROJECT;
+  try {
+    const res = await fetch(`${API}/api/pablo/projects/${pid}/documents/generate`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ document_type: docType })
+    }).then(r=>r.json());
+    if (res.ok) {
+      alert(`Job created: ${res.job_id}\nDocument: ${DOC_TYPE_LABELS[docType] || docType}`);
+      ddLoadDocuments();
+    } else {
+      if (res.missing) alert(`Missing parameters for ${docType}:\n${res.missing.join('\n')}`);
+      else alert('Generate failed: ' + (res.error || 'unknown'));
+    }
+  } catch(e) { alert('Generate error: ' + e.message); }
+}
+
 init();
 
 // ═══ STATUS BAR (v79z13) ═══════════════════════════════════════
@@ -3904,6 +4100,10 @@ const PABLO_TESTS = {
     await this.test('FE_QA_010', 'Status bar starts polling on load', () => typeof PSB.update === 'function' && PSB.pollInterval !== null);
     await this.test('FE_QA_011', 'Status bar warning class toggles', () => { const bar = document.getElementById('pablo-status-bar'); bar.classList.add('warning'); const has = bar.classList.contains('warning'); bar.classList.remove('warning'); return has; });
     await this.test('FE_QA_012', 'timeSince returns human readable string', () => { const ago = PSB.timeSince(new Date(Date.now()-65000).toISOString()); return ago.includes('m ago'); });
+    await this.test('FE_QA_013', 'Parameter Registry panel exists', () => !!document.getElementById('dd-params-panel'));
+    await this.test('FE_QA_014', 'Document Generation panel exists', () => !!document.getElementById('dd-docgen-panel'));
+    await this.test('FE_QA_015', 'ddLoadParameters function exists', () => typeof ddLoadParameters === 'function');
+    await this.test('FE_QA_016', 'DOC_TYPE_LABELS has 6 document types', () => Object.keys(DOC_TYPE_LABELS).length === 6);
     this.showResults();
   },
   async test(id, name, fn) {
