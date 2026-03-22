@@ -360,6 +360,62 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
 .fadein{animation:fadeup .26s ease forwards}
 .spinning{animation:spin 1s linear infinite}
 .blinking{animation:blink 1.4s ease infinite}
+
+/* ─── PROJECT DD ─────────────────────────────────────── */
+.dd-wrap{padding:22px;max-width:960px}
+.dd-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--txt0);margin-bottom:4px}
+.dd-sub{font-size:11px;color:var(--txt2);margin-bottom:18px}
+.dd-dzone{border:2px dashed var(--border2);border-radius:10px;padding:36px 24px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s}
+.dd-dzone.over{border-color:var(--teal);background:var(--teal-faint)}
+.dd-fields{display:flex;gap:10px;margin-top:14px}
+.dd-field{flex:1;display:flex;flex-direction:column;gap:3px}
+.dd-field label{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);font-family:'Syne',sans-serif}
+.dd-field input{background:var(--bg2);border:1px solid var(--border1);border-radius:5px;padding:8px 10px;font-size:12px;color:var(--txt0);font-family:'DM Mono',monospace}
+.dd-run{margin-top:14px;width:100%;padding:12px;background:var(--amber);color:#0D1B3E;border:none;border-radius:7px;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;letter-spacing:.04em;cursor:pointer;transition:all .15s}
+.dd-run:hover{background:#FFB940;box-shadow:0 0 18px rgba(245,166,35,.25)}
+.dd-run:disabled{opacity:.4;cursor:not-allowed}
+.dd-status{margin-top:16px;padding:14px 16px;border:1px solid var(--border1);border-radius:8px;background:var(--bg2)}
+.dd-panel{margin-top:18px;border:1px solid var(--border1);border-radius:8px;overflow:hidden}
+.dd-panel-head{padding:12px 16px;background:var(--bg2);border-bottom:1px solid var(--border1);display:flex;align-items:center;gap:10px}
+.dd-panel-title{font-family:'Syne',sans-serif;font-size:12.5px;font-weight:700;color:var(--txt0)}
+.dd-panel-sub{font-size:10px;color:var(--txt2)}
+.dd-panel-body{padding:0}
+.dd-map-card{padding:14px 16px;border-bottom:1px solid var(--border0)}
+.dd-map-card:last-child{border-bottom:none}
+.dd-map-fname{font-family:'DM Mono',monospace;font-size:11.5px;color:var(--txt0);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.dd-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;font-family:'Syne',sans-serif}
+.dd-badge.extracting{background:var(--amber-dim);color:var(--amber)}
+.dd-badge.review{background:var(--blue-dim);color:var(--blue)}
+.dd-badge.approved{background:var(--green-dim);color:var(--green)}
+.dd-badge.failed{background:var(--red-dim);color:var(--red)}
+.dd-badge.queued{background:rgba(255,255,255,.06);color:var(--txt2)}
+.dd-vpng{width:100%;border-radius:6px;margin:10px 0;border:1px solid var(--border1);cursor:pointer}
+.dd-vpng:hover{border-color:var(--teal)}
+.dd-qa{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0}
+.dd-qa-item{font-size:10.5px;color:var(--txt1);font-family:'DM Mono',monospace;display:flex;align-items:center;gap:4px}
+.dd-qa-item .ok{color:var(--green)}
+.dd-qa-item .warn{color:var(--amber)}
+.dd-qa-item .err{color:var(--red)}
+.dd-actions{display:flex;gap:8px;margin-top:10px}
+.dd-dl-btns{display:flex;gap:6px;margin-top:8px}
+.dd-dl-btn{padding:5px 12px;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;border:1px solid var(--border2);background:transparent;color:var(--txt1);transition:all .14s}
+.dd-dl-btn:hover{background:var(--bg3);color:var(--txt0)}
+.dd-approve{padding:7px 16px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;border:none;background:var(--green);color:#0D1B3E;transition:all .14s}
+.dd-approve:hover{box-shadow:0 0 14px rgba(46,213,115,.3)}
+.dd-reject{padding:7px 16px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;border:1px solid var(--red);background:transparent;color:var(--red);transition:all .14s}
+.dd-reject:hover{background:var(--red-dim)}
+.dd-rerun{padding:5px 12px;border-radius:5px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;border:1px solid var(--amber);background:transparent;color:var(--amber)}
+.dd-rerun:hover{background:var(--amber-dim)}
+.dd-doc-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border0);font-size:11px}
+.dd-doc-row:last-child{border-bottom:none}
+.dd-doc-name{flex:1;font-family:'DM Mono',monospace;color:var(--txt0)}
+.dd-doc-type{color:var(--txt2);font-size:10px;width:70px}
+.dd-doc-status{width:80px;text-align:center}
+.dd-doc-action{color:var(--teal);cursor:pointer;font-size:10px;font-weight:700;font-family:'Syne',sans-serif}
+.dd-doc-action:hover{text-decoration:underline}
+.dd-recent{margin-top:24px}
+.dd-recent-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:5px;cursor:pointer;transition:background .14s;font-size:11px}
+.dd-recent-row:hover{background:var(--bg3)}
 </style>
 </head>
 <body>
@@ -382,6 +438,10 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
   <div class="divln" style="margin:9px 0 0"></div>
   <div class="rsec">Platform</div>
   <div class="rnav">
+    <div class="rnavitem" id="nav-projectdd" onclick="showPlatform('projectdd')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      Project DD
+    </div>
     <div class="rnavitem on" id="nav-pipeline" onclick="showPlatform('pipeline')">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       Pipeline
@@ -406,6 +466,11 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
       HubSpot
     </div>
+    <a href="/tools/presentations-v3.html" class="rnavitem" style="text-decoration:none;position:relative">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      Presentations
+      <span style="position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:8px;background:var(--gold,#D4A843);color:#0D1B3E;padding:1px 5px;border-radius:3px;font-weight:700;letter-spacing:.3px">6 templates</span>
+    </a>
   </div>
 
   <!-- Agent bar always visible -->
@@ -476,6 +541,110 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
 
   <!-- Content area -->
   <div id="content">
+
+    <!-- Project DD -->
+    <div id="v-projectdd" class="view">
+      <div class="dd-wrap">
+        <div class="dd-title">Project Due Diligence</div>
+        <div class="dd-sub">Drop any project ZIP or files — PABLO extracts everything</div>
+
+        <!-- Section A: Upload -->
+        <div id="dd-upload-section">
+          <div class="dd-dzone" id="dd-dropzone"
+            ondrop="ddHandleDrop(event)" ondragover="event.preventDefault();this.classList.add('over')"
+            ondragleave="this.classList.remove('over')" ondragenter="this.classList.add('over')">
+            <div style="font-size:28px;margin-bottom:8px">📦</div>
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--txt0)">Drop ZIP, PDFs, DOCX, XLSX, SHP here</div>
+            <div style="font-size:10.5px;color:var(--txt2);margin-top:4px">Pliego packages, Verra PDDs, lease agreements, Catastro maps, any project documents</div>
+            <input type="file" id="dd-file-input" style="display:none" accept=".zip,.pdf,.docx,.xlsx,.shp,.kml,.kmz,.geojson,.csv,.txt" onchange="ddHandleFileSelect(event)">
+            <button onclick="document.getElementById('dd-file-input').click()" style="margin-top:12px;padding:6px 16px;background:var(--teal);color:#000;border:none;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer">Browse Files</button>
+          </div>
+          <div id="dd-file-preview" style="display:none;margin-top:10px;padding:10px 14px;background:var(--bg2);border:1px solid var(--border1);border-radius:6px">
+            <div style="font-size:10px;color:var(--txt2);font-family:'Syne',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Selected file</div>
+            <div id="dd-file-name" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--txt0)"></div>
+          </div>
+          <div class="dd-fields">
+            <div class="dd-field" style="flex:2">
+              <label>Project name (optional)</label>
+              <input id="dd-project-name" placeholder="e.g. Sierra Culebra ZA-FOR-02/2026">
+            </div>
+            <div class="dd-field">
+              <label>Project ID</label>
+              <input id="dd-project-id" placeholder="auto-generated">
+            </div>
+          </div>
+          <button class="dd-run" id="dd-run-btn" onclick="ddRunAnalysis()" disabled>Run DD Analysis</button>
+        </div>
+
+        <!-- Status -->
+        <div id="dd-status" class="dd-status" style="display:none">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="spinning" style="width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--amber);border-radius:50%"></div>
+            <div>
+              <div id="dd-status-text" style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--txt0)">Analysing project package...</div>
+              <div id="dd-status-sub" style="font-size:10px;color:var(--txt2);margin-top:2px"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section B: Results -->
+        <div id="dd-results" style="display:none">
+          <!-- Maps panel -->
+          <div id="dd-maps-panel" class="dd-panel" style="display:none">
+            <div class="dd-panel-head">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="1.6"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+              <div>
+                <div class="dd-panel-title">Geographic Boundaries</div>
+                <div class="dd-panel-sub">Shapefiles extracted from plano maps</div>
+              </div>
+            </div>
+            <div class="dd-panel-body" id="dd-maps-list"></div>
+          </div>
+
+          <!-- Documents panel -->
+          <div id="dd-docs-panel" class="dd-panel" style="display:none">
+            <div class="dd-panel-head">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.6"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <div>
+                <div class="dd-panel-title">Extracted Documents</div>
+                <div class="dd-panel-sub">Text and data extracted from project documents</div>
+              </div>
+            </div>
+            <div class="dd-panel-body" id="dd-docs-list"></div>
+          </div>
+
+          <!-- Models panel -->
+          <div id="dd-models-panel" class="dd-panel" style="display:none">
+            <div class="dd-panel-head">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.6"><rect x="2" y="3" width="20" height="18" rx="2"/><line x1="8" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="16" y2="21"/><line x1="2" y1="9" x2="22" y2="9"/><line x1="2" y1="15" x2="22" y2="15"/></svg>
+              <div>
+                <div class="dd-panel-title">Financial Models</div>
+                <div class="dd-panel-sub">Spreadsheets detected in package</div>
+              </div>
+            </div>
+            <div class="dd-panel-body" id="dd-models-list"></div>
+          </div>
+
+          <!-- Existing shapefiles panel -->
+          <div id="dd-shapefiles-panel" class="dd-panel" style="display:none">
+            <div class="dd-panel-head">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              <div>
+                <div class="dd-panel-title">Existing GIS Files</div>
+                <div class="dd-panel-sub">Shapefiles found directly in package</div>
+              </div>
+            </div>
+            <div class="dd-panel-body" id="dd-shapefiles-list"></div>
+          </div>
+        </div>
+
+        <!-- Section C: Recent sessions -->
+        <div class="dd-recent" id="dd-recent-section">
+          <div style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Recent DD Sessions</div>
+          <div id="dd-recent-list" style="color:var(--txt3);font-size:11px">No sessions yet</div>
+        </div>
+      </div>
+    </div>
 
     <!-- Pipeline view -->
     <div id="v-pipeline" class="view on">
@@ -557,6 +726,47 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
     <!-- Deliverables -->
     <div id="v-deliverables" class="view">
       <div class="dlwrap" id="dl-content"></div>
+      <div id="mfm-card" style="padding:16px 20px;max-width:780px">
+        <div class="dlsec" style="margin-bottom:0">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <div style="flex:1">
+              <div class="dlsect" style="margin-bottom:0">CARBON FINANCIAL MODEL</div>
+              <div style="font-size:10px;color:var(--txt2)">MITECO v15 template · Fill &amp; download XLSX</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <select id="mfm-preset" onchange="mfmLoadPreset()" style="flex:1;background:var(--bg3);border:1px solid var(--border1);border-radius:4px;color:var(--txt0);font-size:11px;padding:5px 8px;font-family:'DM Mono',monospace">
+              <option value="">— custom inputs —</option>
+            </select>
+            <button class="btn btn-g btn-s" onclick="mfmFetchPresets()">Refresh</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px 8px;margin-bottom:10px">
+            <div><label style="font-size:9px;color:var(--txt2);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:2px">Area (ha)</label><input type="number" id="mfm-area" step="0.01" style="width:100%;background:var(--bg3);border:1px solid var(--border1);border-radius:4px;color:var(--txt0);font-size:11px;padding:5px 8px;font-family:'DM Mono',monospace"></div>
+            <div><label style="font-size:9px;color:var(--txt2);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:2px">Zone</label><select id="mfm-zone" style="width:100%;background:var(--bg3);border:1px solid var(--border1);border-radius:4px;color:var(--txt0);font-size:11px;padding:5px 8px;font-family:'DM Mono',monospace"><option value="Zone: Atlantic">Atlantic</option><option value="Zone: Atlantic mountain">Atlantic mtn</option><option value="Zone: Eurosiberian">Eurosiberian</option><option value="Zone: Mesomediterranean">Mesomediterranean</option><option value="Zone: Thermomediterranean">Thermomediterranean</option><option value="Zone: Supramediterranean">Supramediterranean</option><option value="Zone: Subalpine">Subalpine</option></select></div>
+            <div><label style="font-size:9px;color:var(--txt2);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:2px">Deal</label><select id="mfm-deal" style="width:100%;background:var(--bg3);border:1px solid var(--border1);border-radius:4px;color:var(--txt0);font-size:11px;padding:5px 8px;font-family:'DM Mono',monospace"><option value="LEASE">LEASE</option><option value="ACQUISITION">ACQUISITION</option><option value="PARTNERSHIP">PARTNERSHIP</option></select></div>
+            <div><label style="font-size:9px;color:var(--txt2);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:2px">Offtaker EUR</label><input type="number" id="mfm-price" step="0.5" style="width:100%;background:var(--bg3);border:1px solid var(--border1);border-radius:4px;color:var(--txt0);font-size:11px;padding:5px 8px;font-family:'DM Mono',monospace"></div>
+            <div><label style="font-size:9px;color:var(--txt2);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:2px">Sell all?</label><select id="mfm-sellall" style="width:100%;background:var(--bg3);border:1px solid var(--border1);border-radius:4px;color:var(--txt0);font-size:11px;padding:5px 8px;font-family:'DM Mono',monospace"><option value="Y">Y</option><option value="N">N</option></select></div>
+            <div><label style="font-size:9px;color:var(--txt2);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:2px">Capex/ha</label><input type="number" id="mfm-capex" step="100" style="width:100%;background:var(--bg3);border:1px solid var(--border1);border-radius:4px;color:var(--txt0);font-size:11px;padding:5px 8px;font-family:'DM Mono',monospace"></div>
+          </div>
+          <div id="mfm-species-box" style="margin-bottom:10px;display:none">
+            <label style="font-size:9px;color:var(--txt2);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:4px">Species (from preset)</label>
+            <div id="mfm-species-list" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+          </div>
+          <div class="dlgenrow">
+            <button class="btn btn-p" onclick="mfmGenerate()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Generate Model</button>
+            <span id="mfm-status" style="font-size:11px;color:var(--txt2)"></span>
+          </div>
+          <div id="mfm-result" style="display:none;margin-top:12px;padding:12px;background:var(--bg3);border:1px solid var(--border1);border-radius:5px">
+            <div style="font-size:10px;color:var(--txt2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.1em">Result</div>
+            <div id="mfm-summary" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px"></div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <a id="mfm-download" class="btn btn-p btn-s" style="text-decoration:none" href="#" download>Download XLSX</a>
+              <span id="mfm-note" style="font-size:10px;color:var(--txt2)"></span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Agents -->
@@ -1396,6 +1606,75 @@ function renderDel(){
   `;
 }
 
+// ══ MITECO MODEL FILL (v79z8) ═════════════════════════════
+let MFM_PRESETS={}, MFM_SPECIES=[];
+async function mfmFetchPresets(){
+  try{
+    const r=await fetch(API+'/api/primitives/miteco-model/presets');
+    const d=await r.json();
+    const sel=document.getElementById('mfm-preset');
+    sel.innerHTML='<option value="">— custom inputs —</option>';
+    (d.presets||[]).forEach(p=>{sel.innerHTML+=`<option value="${p.key}">${p.name} (${p.area_ha}ha)</option>`;});
+    // Fetch full preset data for each
+    for(const p of d.presets||[]){
+      const r2=await fetch(API+'/api/primitives/miteco-model/presets/'+encodeURIComponent(p.key));
+      const d2=await r2.json();if(d2.preset)MFM_PRESETS[p.key]=d2.preset;
+    }
+  }catch(e){console.warn('mfmFetchPresets:',e);}
+}
+function mfmLoadPreset(){
+  const key=document.getElementById('mfm-preset').value;
+  const p=MFM_PRESETS[key];if(!p)return;
+  document.getElementById('mfm-area').value=p.area_ha||'';
+  document.getElementById('mfm-zone').value=p.bioclimatic_zone||'Zone: Supramediterranean';
+  document.getElementById('mfm-deal').value=p.deal_type||'LEASE';
+  document.getElementById('mfm-price').value=p.offtaker_price||18;
+  document.getElementById('mfm-sellall').value=p.sell_all_offtaker||'Y';
+  document.getElementById('mfm-capex').value=p.capex_per_ha||2500;
+  MFM_SPECIES=p.species||[];
+  const box=document.getElementById('mfm-species-box');
+  const list=document.getElementById('mfm-species-list');
+  if(MFM_SPECIES.length){
+    box.style.display='';
+    list.innerHTML=MFM_SPECIES.map(s=>`<span style="font-size:10px;padding:3px 8px;border-radius:3px;background:var(--teal-faint);color:var(--teal);font-family:'DM Mono',monospace">${s.name.split(' ').slice(0,2).join(' ')} ${(s.pct*100).toFixed(0)}%</span>`).join('');
+  }else{box.style.display='none';}
+}
+async function mfmGenerate(){
+  const st=document.getElementById('mfm-status');
+  const res=document.getElementById('mfm-result');
+  st.textContent='Generating...';st.style.color='var(--amber)';res.style.display='none';
+  try{
+    const preset=document.getElementById('mfm-preset').value;
+    const body={};
+    if(preset)body.preset=preset;
+    const area=parseFloat(document.getElementById('mfm-area').value);
+    if(area>0)body.area_ha=area;
+    body.bioclimatic_zone=document.getElementById('mfm-zone').value;
+    body.deal_type=document.getElementById('mfm-deal').value;
+    const price=parseFloat(document.getElementById('mfm-price').value);
+    if(price>0)body.offtaker_price=price;
+    body.sell_all_offtaker=document.getElementById('mfm-sellall').value;
+    const capex=parseFloat(document.getElementById('mfm-capex').value);
+    if(capex>0)body.capex_per_ha=capex;
+    if(MFM_SPECIES.length)body.species=MFM_SPECIES;
+    const r=await fetch(API+'/api/primitives/miteco-model/fill',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(!r.ok){st.textContent='Error: '+(d.errors||[d.error]).join(', ');st.style.color='var(--red)';return;}
+    st.textContent='Done';st.style.color='var(--green)';
+    const s=d.summary||{};
+    document.getElementById('mfm-summary').innerHTML=`
+      <div style="text-align:center"><div style="font-family:'DM Mono',monospace;font-size:16px;color:var(--teal);font-weight:700">${(s.total_tco2_50yr||0).toLocaleString()}</div><div style="font-size:9px;color:var(--txt2)">tCO2 (50yr)</div></div>
+      <div style="text-align:center"><div style="font-family:'DM Mono',monospace;font-size:16px;color:var(--teal);font-weight:700">${(s.credits_first_issue||0).toLocaleString()}</div><div style="font-size:9px;color:var(--txt2)">Credits 1st issue</div></div>
+      <div style="text-align:center"><div style="font-family:'DM Mono',monospace;font-size:16px;color:var(--teal);font-weight:700">\u20AC${(s.estimated_revenue_eur||0).toLocaleString()}</div><div style="font-size:9px;color:var(--txt2)">Est. revenue</div></div>`;
+    const dlBtn=document.getElementById('mfm-download');
+    dlBtn.href=API+(d.download_url||'');
+    document.getElementById('mfm-note').textContent=d.next_step||'Open in Excel \u2192 Ctrl+Alt+F9';
+    res.style.display='';
+  }catch(e){st.textContent='Error: '+e.message;st.style.color='var(--red)';}
+}
+// Auto-load presets on page load
+setTimeout(mfmFetchPresets,2000);
+
 // ══ AGENTS ════════════════════════════════════════════════
 function renderAgents(){
   const p=STATE.proj;
@@ -2101,11 +2380,11 @@ function renderAnalytics(){
 function showPlatform(v){
   STATE.proj=null;
   STATE.view=v;
-  ['pipeline','workflows','library','analytics','methodology','hubspot'].forEach(x=>document.getElementById('nav-'+x).classList.remove('on'));
+  ['projectdd','pipeline','workflows','library','analytics','methodology','hubspot'].forEach(x=>document.getElementById('nav-'+x).classList.remove('on'));
   document.getElementById('nav-'+v).classList.add('on');
   renderRail();
   document.getElementById('ptabs').style.display='none';
-  const labels={pipeline:'Project Pipeline',workflows:'Workflows',library:'Knowledge Library',analytics:'Analytics',methodology:'Methodology Library',hubspot:'HubSpot Inbox'};
+  const labels={projectdd:'Project Due Diligence',pipeline:'Project Pipeline',workflows:'Workflows',library:'Knowledge Library',analytics:'Analytics',methodology:'Methodology Library',hubspot:'HubSpot Inbox'};
   document.getElementById('crumb').innerHTML=`<span class="crumb-cur">${labels[v]||v}</span>`;
   document.getElementById('crmeta').innerHTML='';
   document.getElementById('topacts').innerHTML=`<button class="btn btn-g btn-s" onclick="openWiz()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New Project</button><button class="btn btn-p btn-s">Generate</button>`;
@@ -2116,6 +2395,7 @@ function showPlatform(v){
   if(v==='workflows') loadWorkflowHistory();
   if(v==='methodology') loadMethodologyTab();
   if(v==='hubspot') hsLoadInbox();
+  if(v==='projectdd') ddInit();
 }
 function goHome(){ showPlatform('pipeline'); setProjectStats(); }
 
@@ -3049,6 +3329,447 @@ async function hsCompleteTask(id) {
 }
 
 function hsCreateTaskFromThread() { hsShowAddTask(); }
+
+// ══ PROJECT DD ═══════════════════════════════════════════════
+const DD = { file: null, ingestId: null, projectId: null, pollTimer: null, files: [], sessions: [] };
+const DD_PRELOAD_PROJECT = 'sierra-culebra-za-for-02-2026';
+
+function ddInit() {
+  // Pre-load Sierra Culebra if no active session
+  if (!DD.ingestId) ddPreload();
+}
+
+async function ddPreload() {
+  try {
+    const res = await fetch(`${API}/api/primitives/project-ingest/by-project/${DD_PRELOAD_PROJECT}`).then(r=>r.json());
+    if (res.ok && res.ingests && res.ingests.length) {
+      const latest = res.ingests[0];
+      DD.ingestId = latest.ingest_id;
+      DD.projectId = res.project_id;
+      DD.files = latest.files;
+      ddRenderResults(latest.files);
+      ddRenderRecent(res.ingests);
+    }
+  } catch(e) { console.log('DD preload:', e.message); }
+}
+
+function ddHandleDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('over');
+  const files = e.dataTransfer.files;
+  if (files.length) ddSetFile(files[0]);
+}
+
+function ddHandleFileSelect(e) {
+  const files = e.target.files;
+  if (files.length) ddSetFile(files[0]);
+}
+
+function ddSetFile(file) {
+  DD.file = file;
+  document.getElementById('dd-file-preview').style.display = 'block';
+  document.getElementById('dd-file-name').textContent = `${file.name} (${(file.size/1024).toFixed(0)} KB)`;
+  document.getElementById('dd-run-btn').disabled = false;
+  // Auto-generate project ID from filename
+  const idField = document.getElementById('dd-project-id');
+  if (!idField.value) {
+    const stem = file.name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
+    const ts = Date.now().toString(36).slice(-4);
+    idField.value = `${stem}-${ts}`;
+  }
+}
+
+async function ddRunAnalysis() {
+  if (!DD.file) return;
+  const btn = document.getElementById('dd-run-btn');
+  btn.disabled = true;
+  btn.textContent = 'Uploading...';
+
+  const projectName = document.getElementById('dd-project-name').value.trim();
+  const projectId = document.getElementById('dd-project-id').value.trim() || null;
+  DD.projectId = projectId;
+
+  // Show status
+  document.getElementById('dd-status').style.display = 'block';
+  document.getElementById('dd-status-text').textContent = 'Analysing project package...';
+  document.getElementById('dd-status-sub').textContent = `Uploading ${DD.file.name}`;
+
+  try {
+    const fd = new FormData();
+    fd.append('file', DD.file);
+    if (projectId) fd.append('project_id', projectId);
+    if (projectName) fd.append('project_name', projectName);
+
+    const res = await fetch(`${API}/api/primitives/project-ingest`, { method: 'POST', body: fd }).then(r=>r.json());
+
+    if (res.error) {
+      ddShowError(res.error);
+      return;
+    }
+
+    DD.ingestId = res.ingest_id;
+    DD.files = res.files || [];
+
+    document.getElementById('dd-status-text').textContent = `Package ingested — ${DD.files.length} files detected`;
+    document.getElementById('dd-status-sub').textContent = `Ingest ID: ${DD.ingestId}`;
+
+    ddRenderResults(DD.files);
+
+    // Start polling if any jobs are pending
+    const hasJobs = DD.files.some(f => f.job_id && f.job_status && f.job_status.status !== 'complete' && f.job_status.status !== 'done' && f.job_status.status !== 'completed_by_runner' && f.job_status.status !== 'error');
+    if (hasJobs) ddStartPoll();
+
+  } catch(e) {
+    ddShowError(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Run DD Analysis';
+  }
+}
+
+function ddShowError(msg) {
+  document.getElementById('dd-status').style.display = 'block';
+  document.getElementById('dd-status-text').textContent = 'Error';
+  document.getElementById('dd-status-text').style.color = 'var(--red)';
+  document.getElementById('dd-status-sub').textContent = msg;
+}
+
+function ddStartPoll() {
+  if (DD.pollTimer) clearInterval(DD.pollTimer);
+  DD.pollTimer = setInterval(ddPollStatus, 15000);
+}
+
+function ddStopPoll() {
+  if (DD.pollTimer) { clearInterval(DD.pollTimer); DD.pollTimer = null; }
+}
+
+async function ddPollStatus() {
+  if (!DD.ingestId) { ddStopPoll(); return; }
+  try {
+    const res = await fetch(`${API}/api/primitives/project-ingest/${DD.ingestId}`).then(r=>r.json());
+    if (!res.ok) return;
+    DD.files = res.files;
+    ddRenderResults(DD.files);
+
+    // Check if all jobs complete
+    const pending = DD.files.filter(f => f.job_id && f.job_status && !['complete','done','completed_by_runner','error'].includes(f.job_status.status));
+    if (!pending.length) {
+      ddStopPoll();
+      document.getElementById('dd-status').style.display = 'none';
+    } else {
+      const count = DD.files.filter(f=>f.job_id).length;
+      const done = count - pending.length;
+      document.getElementById('dd-status-sub').textContent = `${done}/${count} jobs complete — polling every 15s`;
+    }
+  } catch(e) { console.log('DD poll error:', e.message); }
+}
+
+function ddRenderResults(files) {
+  document.getElementById('dd-results').style.display = 'block';
+
+  const maps = files.filter(f => f.file_type === 'map');
+  const docs = files.filter(f => f.file_type === 'document');
+  const data = files.filter(f => f.file_type === 'data');
+  const shapes = files.filter(f => f.file_type === 'shapefile');
+
+  // Maps panel
+  if (maps.length) {
+    document.getElementById('dd-maps-panel').style.display = 'block';
+    document.getElementById('dd-maps-list').innerHTML = maps.map(f => ddRenderMapCard(f)).join('');
+  }
+
+  // Documents panel
+  if (docs.length) {
+    document.getElementById('dd-docs-panel').style.display = 'block';
+    document.getElementById('dd-docs-list').innerHTML = docs.map(f => ddRenderDocRow(f)).join('');
+  }
+
+  // Models panel
+  if (data.length) {
+    document.getElementById('dd-models-panel').style.display = 'block';
+    document.getElementById('dd-models-list').innerHTML = data.map(f => `
+      <div class="dd-doc-row">
+        <div class="dd-doc-name">${esc(f.filename)}</div>
+        <div class="dd-doc-type">${(f.size_bytes/1024).toFixed(0)} KB</div>
+        <div class="dd-doc-action" onclick="ddDownloadFile('${f.id}','${esc(f.filename)}')">Download</div>
+      </div>
+    `).join('');
+  }
+
+  // Existing shapefiles panel
+  if (shapes.length) {
+    document.getElementById('dd-shapefiles-panel').style.display = 'block';
+    document.getElementById('dd-shapefiles-list').innerHTML = shapes.map(f => `
+      <div class="dd-doc-row">
+        <div class="dd-doc-name">${esc(f.filename)}</div>
+        <div class="dd-doc-type">${(f.size_bytes/1024).toFixed(0)} KB</div>
+        <div class="dd-doc-action" onclick="ddDownloadFile('${f.id}','${esc(f.filename)}')">Download</div>
+      </div>
+    `).join('');
+  }
+
+  // Check if polling needed
+  const pending = files.filter(f => f.job_id && f.job_status && !['complete','done','completed_by_runner','error'].includes(f.job_status.status));
+  if (pending.length && !DD.pollTimer) ddStartPoll();
+}
+
+function ddRenderMapCard(f) {
+  const js = f.job_status || {};
+  const status = js.status || 'unknown';
+  const result = js.result || {};
+  const er = result.extraction_result || {};
+  const pages = er.pages || [];
+  const isComplete = ['complete','done','completed_by_runner'].includes(status);
+  const isError = status === 'error';
+  const isApproved = result.approved === true;
+  const isRejected = result.approved === false && result.rejection_reason;
+
+  let badgeClass = 'queued';
+  let badgeText = 'QUEUED';
+  if (status === 'processing') { badgeClass = 'extracting'; badgeText = 'EXTRACTING'; }
+  else if (isError) { badgeClass = 'failed'; badgeText = 'FAILED'; }
+  else if (isApproved) { badgeClass = 'approved'; badgeText = '✓ APPROVED'; }
+  else if (isComplete) { badgeClass = 'review'; badgeText = 'REVIEW REQUIRED'; }
+
+  let html = `<div class="dd-map-card" id="dd-map-${f.job_id}">`;
+  html += `<div class="dd-map-fname">📄 ${esc(f.filename)} <span class="dd-badge ${badgeClass}">${badgeText}</span></div>`;
+
+  if (isComplete) {
+    // Verification PNGs
+    const vpngKeys = result.verification_png_r2_keys || [];
+    for (const vp of vpngKeys) {
+      html += `<img class="dd-vpng" src="${API}/api/files/r2/${encodeURIComponent(vp.r2_key)}" alt="Verification page ${vp.page}" onclick="window.open(this.src,'_blank')" loading="lazy">`;
+    }
+    // Fallback: check pages for r2 keys
+    if (!vpngKeys.length && pages.length) {
+      for (const pg of pages) {
+        if (pg.verification_png_r2_key) {
+          html += `<img class="dd-vpng" src="${API}/api/files/r2/${encodeURIComponent(pg.verification_png_r2_key)}" alt="Verification page ${pg.page_number}" onclick="window.open(this.src,'_blank')" loading="lazy">`;
+        }
+      }
+    }
+
+    // QA results
+    if (pages.length) {
+      html += '<div class="dd-qa">';
+      const pg = pages[0]; // Primary page
+      const area = er.total_area_hectares;
+      const polys = er.total_polygons;
+      const qaPassed = er.qa_passed;
+      const ic = qaPassed ? 'ok' : 'warn';
+      if (area != null) html += `<div class="dd-qa-item"><span class="${ic}">✓</span> Area: ${Number(area).toFixed(1)} ha</div>`;
+      if (polys != null) html += `<div class="dd-qa-item"><span class="${ic}">✓</span> Features: ${polys}</div>`;
+      html += `<div class="dd-qa-item"><span class="${ic}">✓</span> Pages: ${er.pages_processed || pages.length}</div>`;
+      if (pg.warnings && pg.warnings.length) {
+        for (const w of pg.warnings) html += `<div class="dd-qa-item"><span class="warn">⚠</span> ${esc(w)}</div>`;
+      }
+      if (pg.errors && pg.errors.length) {
+        for (const e of pg.errors) html += `<div class="dd-qa-item"><span class="err">✗</span> ${esc(e)}</div>`;
+      }
+      html += '</div>';
+    }
+
+    // Download buttons
+    html += '<div class="dd-dl-btns">';
+    if (result.shapefile_r2_key) {
+      html += `<button class="dd-dl-btn" onclick="ddDownloadShapefileZip('${f.job_id}')">⬇ Shapefile ZIP</button>`;
+    }
+    if (vpngKeys.length || pages.some(p=>p.verification_png_r2_key)) {
+      const pngKey = vpngKeys[0]?.r2_key || pages[0]?.verification_png_r2_key;
+      if (pngKey) html += `<button class="dd-dl-btn" onclick="ddDownloadR2('${encodeURIComponent(pngKey)}','verification.png')">⬇ PNG</button>`;
+    }
+    html += '</div>';
+
+    // Approve/Reject
+    if (!isApproved && !isRejected) {
+      html += `<div class="dd-actions">
+        <button class="dd-approve" onclick="ddApprove('${f.job_id}',true)">✓ APPROVE</button>
+        <button class="dd-reject" onclick="ddApprove('${f.job_id}',false)">✗ REJECT</button>
+      </div>`;
+    }
+    if (isRejected) {
+      html += `<div style="margin-top:8px;font-size:10px;color:var(--red)">Rejected: ${esc(result.rejection_reason||'')}</div>`;
+      html += `<button class="dd-rerun" style="margin-top:6px" onclick="ddRerun('${f.job_id}')">Re-run extraction</button>`;
+    }
+  }
+
+  if (isError) {
+    html += `<div style="font-size:10.5px;color:var(--red);margin-top:6px">${esc(js.error||'Extraction failed')}</div>`;
+    html += `<button class="dd-rerun" style="margin-top:8px" onclick="ddRerun('${f.job_id}')">Re-run extraction</button>`;
+  }
+
+  if (!isComplete && !isError) {
+    html += `<div style="font-size:10.5px;color:var(--amber);margin-top:6px">Processing — job queued for ForestEngineer</div>`;
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function ddRenderDocRow(f) {
+  const js = f.job_status || {};
+  const status = js.status || (f.extraction_status === 'complete' ? 'complete' : 'pending');
+  const isComplete = status === 'complete' || f.extraction_status === 'complete';
+  const words = f.word_count || 0;
+
+  let statusHtml = '<span class="dd-badge queued">PENDING</span>';
+  if (isComplete) statusHtml = `<span class="dd-badge approved">✓ ${words} words</span>`;
+  else if (status === 'processing') statusHtml = '<span class="dd-badge extracting">PROCESSING</span>';
+  else if (status === 'error') statusHtml = '<span class="dd-badge failed">ERROR</span>';
+
+  const ext = f.filename.split('.').pop().toUpperCase();
+  return `<div class="dd-doc-row">
+    <div class="dd-doc-name">${esc(f.filename)}</div>
+    <div class="dd-doc-type">${ext}</div>
+    <div class="dd-doc-status">${statusHtml}</div>
+    <div class="dd-doc-action" onclick="ddViewText('${f.id}')">${isComplete ? 'View text' : ''}</div>
+  </div>`;
+}
+
+async function ddApprove(jobId, approved) {
+  const reason = approved ? '' : (prompt('Rejection reason:') || 'Not specified');
+  if (!approved && reason === null) return; // cancelled
+  try {
+    await fetch(`${API}/api/primitives/map/approve/${jobId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ approved, reason, reviewed_by: 'luis' })
+    });
+    // Refresh
+    ddPollStatus();
+  } catch(e) { alert('Approve failed: ' + e.message); }
+}
+
+async function ddRerun(jobId) {
+  // Find the file associated with this job
+  const file = DD.files.find(f => f.job_id === jobId);
+  if (!file) { alert('File not found for job'); return; }
+  try {
+    await fetch(`${API}/api/primitives/jobs/${jobId}/requeue`, { method: 'POST' });
+    // Update card to show queued
+    const card = document.getElementById('dd-map-' + jobId);
+    if (card) {
+      const badge = card.querySelector('.dd-badge');
+      if (badge) { badge.className = 'dd-badge extracting'; badge.textContent = 'REQUEUED'; }
+    }
+    ddStartPoll();
+  } catch(e) { alert('Requeue failed: ' + e.message); }
+}
+
+async function ddDownloadR2(r2KeyEncoded, filename) {
+  try {
+    const res = await fetch(`${API}/api/files/r2/${r2KeyEncoded}`);
+    if (!res.ok) throw new Error('File not found');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) { alert('Download failed: ' + e.message); }
+}
+
+async function ddDownloadShapefileZip(jobId) {
+  const file = DD.files.find(f => f.job_id === jobId);
+  if (!file) return;
+  const js = file.job_status || {};
+  const result = js.result || {};
+  const shpKey = result.shapefile_r2_key;
+  if (!shpKey) { alert('No shapefile available'); return; }
+
+  // Collect all companion keys
+  const companions = result.shapefile_companion_keys || [];
+  const allKeys = [shpKey, ...companions];
+
+  try {
+    const zip = new JSZip();
+    for (const key of allKeys) {
+      const res = await fetch(`${API}/api/files/r2/${encodeURIComponent(key)}`);
+      if (res.ok) {
+        const blob = await res.blob();
+        const name = key.split('/').pop();
+        zip.file(name, blob);
+      }
+    }
+    const content = await zip.generateAsync({ type: 'blob' });
+    const stem = file.filename.replace(/\.[^.]+$/, '');
+    const url = URL.createObjectURL(content);
+    const a = document.createElement('a');
+    a.href = url; a.download = `${stem}_shapefile.zip`; a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) { alert('Shapefile ZIP download failed: ' + e.message); }
+}
+
+async function ddDownloadFile(fileId, filename) {
+  if (!DD.ingestId) return;
+  try {
+    const res = await fetch(`${API}/api/primitives/project-ingest/${DD.ingestId}/file/${fileId}`);
+    if (!res.ok) throw new Error('File not found');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) { alert('Download failed: ' + e.message); }
+}
+
+async function ddViewText(fileId) {
+  const file = DD.files.find(f => f.id === fileId);
+  if (!file) return;
+  // Check if extracted text is available inline
+  if (file.extracted_text) {
+    ddShowTextModal(file.filename, file.extracted_text);
+    return;
+  }
+  // Fetch from API if job has result
+  if (file.job_id && file.job_status && file.job_status.result) {
+    const r = file.job_status.result;
+    if (r.text_preview) { ddShowTextModal(file.filename, r.text_preview); return; }
+  }
+  alert('No extracted text available yet');
+}
+
+function ddShowTextModal(title, text) {
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;display:flex;align-items:center;justify-content:center;padding:30px';
+  ov.onclick = e => { if (e.target===ov) ov.remove(); };
+  ov.innerHTML = `<div style="background:var(--bg1);border:1px solid var(--border1);border-radius:10px;max-width:720px;width:100%;max-height:80vh;display:flex;flex-direction:column">
+    <div style="padding:14px 18px;border-bottom:1px solid var(--border1);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--txt0)">${esc(title)}</div>
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="background:none;border:none;color:var(--txt2);cursor:pointer;font-size:18px">&times;</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:18px;font-size:11.5px;line-height:1.7;color:var(--txt1);white-space:pre-wrap;font-family:'DM Mono',monospace">${esc(text)}</div>
+  </div>`;
+  document.body.appendChild(ov);
+}
+
+function ddRenderRecent(ingests) {
+  if (!ingests || !ingests.length) return;
+  const el = document.getElementById('dd-recent-list');
+  el.innerHTML = ingests.slice(0, 5).map(ing => {
+    const fcount = ing.files ? ing.files.length : '?';
+    const date = ing.uploaded_at ? new Date(ing.uploaded_at+'Z').toLocaleString() : '';
+    return `<div class="dd-recent-row" onclick="ddLoadSession('${ing.ingest_id}')">
+      <span style="font-family:'DM Mono',monospace;color:var(--teal);font-size:10px;width:130px">${ing.ingest_id}</span>
+      <span style="color:var(--txt1);flex:1">${fcount} files</span>
+      <span style="color:var(--txt3);font-size:10px">${date}</span>
+    </div>`;
+  }).join('');
+}
+
+async function ddLoadSession(ingestId) {
+  DD.ingestId = ingestId;
+  try {
+    const res = await fetch(`${API}/api/primitives/project-ingest/${ingestId}`).then(r=>r.json());
+    if (res.ok) {
+      DD.files = res.files;
+      DD.projectId = res.project_id;
+      ddRenderResults(DD.files);
+      document.getElementById('dd-status').style.display = 'none';
+    }
+  } catch(e) { console.log('Load session error:', e.message); }
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 init();
 </script>
