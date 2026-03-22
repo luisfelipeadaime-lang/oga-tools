@@ -150,7 +150,7 @@
 - Conversa comp: Q3 2026 após sentença
 
 **Active projects**:
-- 🔴 **Sierra Culebra ZA-FOR-02/2026**: carbon rights CONCESSION (not service contract), 2 lots (239.54 ha), ClearSky bids directly, deadline 06/04, useful window until 28/03. Full context: `sierra-culebra/SIERRA_CULEBRA_CONTEXT.md`
+- 🔴 **Sierra Culebra ZA-FOR-02/2026**: 239.54 ha concession, Lots 01+02, deadline 06/04. STRUCTURE CONFIRMED: ClearSky bids, plants, gets 100% CO₂ rights. PACO MANDATE: All 50yr credits, one payment at MITECO registration, €18/tCO₂. ECONOMICS: JCyL's credit estimate (26,279 tCO₂) too low — ClearSky can plant at higher density (800-1000/ha) and use SCIENTIFIC MITECO method (~60,000+ credits). At €18 break-even needs ~70,000 credits — feasible but tight. KEY OPEN QUESTION: Juan Carlos Hernanz must confirm SCIENTIFIC method allowed. KEY OPEN QUESTION: New MITECO calculator May 4, 2026 — impact on registration factors. Lawyer: Juan Carlos Hernanz (Cuatrecasas) — NOT Álvaro (Álvaro = custody only). Files: sierra-culebra\ folder in brand-presentations.
 - AMOEDO MITECO: 10/11 subsanacion points resolved, blocker = Brian sign Annexe II
 - Sierra Leone: $5M LOI (NatureBrain)
 - Microsoft ARR: offtake $43/credit

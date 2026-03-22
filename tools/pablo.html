@@ -98,7 +98,7 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
 .ptab.on{color:var(--teal);border-bottom-color:var(--teal)}
 
 /* ─── CONTENT ─────────────────────────────────────────── */
-#content{flex:1;overflow:hidden;position:relative}
+#content{flex:1;overflow:hidden;position:relative;padding-bottom:48px}
 .view{display:none;height:100%;overflow-y:auto}
 .view.on{display:block}
 .view.on#v-documents{display:flex;flex-direction:column}
@@ -416,6 +416,18 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
 .dd-recent{margin-top:24px}
 .dd-recent-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:5px;cursor:pointer;transition:background .14s;font-size:11px}
 .dd-recent-row:hover{background:var(--bg3)}
+
+/* ─── STATUS BAR (v79z13) ─────────────────────────────── */
+#pablo-status-bar{position:fixed;bottom:0;left:0;right:0;height:40px;background:var(--bg1);border-top:1px solid var(--border1);display:flex;align-items:center;justify-content:space-between;padding:0 20px;font-size:11px;color:var(--txt2);z-index:9999;transition:background .3s}
+#pablo-status-bar.warning{background:#3d2000;border-top-color:#d4a843}
+.psb-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;flex-shrink:0}
+.psb-dot.online{background:#22c55e}
+.psb-dot.offline{background:#ef4444;animation:psb-pulse 1.5s ease-in-out infinite}
+.psb-dot.unknown{background:#6b7280}
+@keyframes psb-pulse{0%,100%{opacity:1}50%{opacity:.2}}
+.psb-left{display:flex;align-items:center;min-width:160px}
+.psb-center{display:flex;gap:16px;align-items:center;font-variant-numeric:tabular-nums}
+.psb-right{min-width:200px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -3534,6 +3546,21 @@ function ddRenderMapCard(f) {
   let html = `<div class="dd-map-card" id="dd-map-${f.job_id}">`;
   html += `<div class="dd-map-fname">📄 ${esc(f.filename)} <span class="dd-badge ${badgeClass}">${badgeText}</span></div>`;
 
+  // Cartouche data from Mistral OCR structured extraction
+  const meta = f.metadata || (f.metadata_json ? (typeof f.metadata_json === 'string' ? JSON.parse(f.metadata_json) : f.metadata_json) : null);
+  const cart = meta?.structured;
+  if (cart && typeof cart === 'object') {
+    const parts = [];
+    if (cart.mup_number) parts.push(esc(String(cart.mup_number)));
+    if (cart.municipality) parts.push(esc(cart.municipality));
+    if (cart.area_ha) parts.push(`${cart.area_ha} ha`);
+    if (cart.crs_name) parts.push(esc(cart.crs_name));
+    if (cart.scale) parts.push(`1:${cart.scale}`);
+    if (parts.length) {
+      html += `<div style="font-size:10px;color:var(--teal);margin:4px 0;padding:4px 8px;background:var(--teal-faint);border-radius:4px">From map text: ${parts.join(' · ')}</div>`;
+    }
+  }
+
   if (isComplete) {
     // Verification PNGs
     const vpngKeys = result.verification_png_r2_keys || [];
@@ -3608,21 +3635,51 @@ function ddRenderMapCard(f) {
 
 function ddRenderDocRow(f) {
   const js = f.job_status || {};
-  const status = js.status || (f.extraction_status === 'complete' ? 'complete' : 'pending');
-  const isComplete = status === 'complete' || f.extraction_status === 'complete';
+  const meta = f.metadata || (f.metadata_json ? (typeof f.metadata_json === 'string' ? JSON.parse(f.metadata_json) : f.metadata_json) : null);
+  const status = js.status || (f.extraction_status === 'complete' ? 'complete' : f.extraction_status === 'extraction_warning' ? 'complete' : 'pending');
+  const isComplete = status === 'complete' || f.extraction_status === 'complete' || f.extraction_status === 'extraction_warning';
   const words = f.word_count || 0;
 
   let statusHtml = '<span class="dd-badge queued">PENDING</span>';
   if (isComplete) statusHtml = `<span class="dd-badge approved">✓ ${words} words</span>`;
-  else if (status === 'processing') statusHtml = '<span class="dd-badge extracting">PROCESSING</span>';
+  else if (status === 'processing' || status === 'running') statusHtml = '<span class="dd-badge extracting">PROCESSING</span>';
   else if (status === 'error') statusHtml = '<span class="dd-badge failed">ERROR</span>';
 
+  // Extraction method + cost
+  let metaLine = '';
+  if (meta) {
+    const parts = [];
+    if (meta.extraction_method) parts.push(meta.extraction_method);
+    if (meta.page_count) parts.push(`${meta.page_count} pages`);
+    if (meta.cost_usd !== undefined && meta.cost_usd !== null) parts.push(`$${meta.cost_usd.toFixed(3)}`);
+    if (meta.confidence) parts.push(meta.confidence);
+    if (parts.length) metaLine = `<div class="dd-doc-meta" style="font-size:10px;color:var(--txt2);margin-top:2px">${parts.join(' · ')}</div>`;
+  }
+
+  // Key facts from structured extraction
+  let factsHtml = '';
+  const structured = meta?.structured;
+  if (structured && typeof structured === 'object') {
+    const facts = Object.entries(structured)
+      .filter(([k,v]) => v !== null && v !== undefined && v !== '')
+      .slice(0, 6)
+      .map(([k,v]) => {
+        const label = k.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+        const val = Array.isArray(v) ? v.join(', ') : String(v);
+        return `<span style="color:var(--txt1)">${esc(label)}:</span> ${esc(val)}`;
+      });
+    if (facts.length) factsHtml = `<div class="dd-key-facts" style="font-size:10px;color:var(--txt0);margin-top:4px;display:flex;flex-wrap:wrap;gap:4px 12px">${facts.join('')}</div>`;
+  }
+
   const ext = f.filename.split('.').pop().toUpperCase();
-  return `<div class="dd-doc-row">
-    <div class="dd-doc-name">${esc(f.filename)}</div>
-    <div class="dd-doc-type">${ext}</div>
-    <div class="dd-doc-status">${statusHtml}</div>
-    <div class="dd-doc-action" onclick="ddViewText('${f.id}')">${isComplete ? 'View text' : ''}</div>
+  return `<div class="dd-doc-row" style="flex-direction:column;align-items:stretch;gap:2px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="dd-doc-name">${esc(f.filename)}</div>
+      <div class="dd-doc-type">${ext}</div>
+      <div class="dd-doc-status">${statusHtml}</div>
+      <div class="dd-doc-action">${isComplete ? `<span onclick="ddViewText('${f.id}')" style="cursor:pointer;color:var(--teal)">View text</span>` : ''}</div>
+    </div>
+    ${metaLine}${factsHtml}
   </div>`;
 }
 
@@ -3772,6 +3829,120 @@ async function ddLoadSession(ingestId) {
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 init();
+
+// ═══ STATUS BAR (v79z13) ═══════════════════════════════════════
+const PSB = {
+  pollInterval: null,
+  async update() {
+    try {
+      const res = await fetch(`${API}/api/pablo/jobs/runner-status`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const d = await res.json();
+      const dot = document.getElementById('psb-dot');
+      const runner = document.getElementById('psb-runner');
+      const bar = document.getElementById('pablo-status-bar');
+      const failed = document.getElementById('psb-failed');
+      if (d.runner_alive) {
+        dot.className = 'psb-dot online';
+        runner.textContent = 'Job Runner: ONLINE';
+        bar.classList.remove('warning');
+      } else {
+        dot.className = 'psb-dot offline';
+        runner.textContent = 'Job Runner: OFFLINE';
+        bar.classList.add('warning');
+      }
+      document.getElementById('psb-running').textContent = `⚙ ${d.jobs_running} running`;
+      document.getElementById('psb-queued').textContent = `⏳ ${d.jobs_queued} queued`;
+      document.getElementById('psb-done').textContent = `✓ ${d.jobs_done_today} today`;
+      if (d.jobs_failed_today > 0) {
+        failed.style.display = 'inline';
+        failed.textContent = `✗ ${d.jobs_failed_today} failed`;
+        bar.classList.add('warning');
+      } else {
+        failed.style.display = 'none';
+      }
+      if (d.last_job) {
+        const ago = PSB.timeSince(d.last_job.completed_at);
+        const icon = d.last_job.status === 'complete' ? '✓' : '✗';
+        const name = d.last_job.filename || d.last_job.type || 'unknown';
+        document.getElementById('psb-last').textContent = `${icon} ${name} (${ago})`;
+      }
+    } catch(e) {
+      const dot = document.getElementById('psb-dot');
+      if (dot) dot.className = 'psb-dot unknown';
+      const runner = document.getElementById('psb-runner');
+      if (runner) runner.textContent = 'Job Runner: UNKNOWN';
+    }
+  },
+  timeSince(iso) {
+    if (!iso) return '—';
+    const s = Math.floor((Date.now() - new Date(iso)) / 1000);
+    if (s < 60) return `${s}s ago`;
+    if (s < 3600) return `${Math.floor(s/60)}m ago`;
+    return `${Math.floor(s/3600)}h ago`;
+  },
+  start() { this.update(); this.pollInterval = setInterval(() => this.update(), 30000); }
+};
+PSB.start();
+
+// ═══ FRONTEND QA TEST SUITE (?test=true) ════════════════════════
+const PABLO_TESTS = {
+  results: [],
+  async run() {
+    if (!new URLSearchParams(window.location.search).has('test')) return;
+    console.log('🧪 Running PABLO frontend test suite...');
+    this.results = [];
+    await this.test('FE_QA_001', 'Status bar renders', () => !!document.getElementById('pablo-status-bar'));
+    await this.test('FE_QA_002', 'Status bar has required elements', () => !!document.getElementById('psb-dot') && !!document.getElementById('psb-runner') && !!document.getElementById('psb-running'));
+    await this.test('FE_QA_003', 'Runner status API returns 200', async () => { const r = await fetch(`${API}/api/pablo/jobs/runner-status`); return r.ok; });
+    await this.test('FE_QA_004', 'Runner status has required fields', async () => { const r = await fetch(`${API}/api/pablo/jobs/runner-status`); const d = await r.json(); return typeof d.runner_alive === 'boolean' && typeof d.jobs_queued === 'number'; });
+    await this.test('FE_QA_005', 'Project DD tab exists', () => !!document.getElementById('v-projectdd'));
+    await this.test('FE_QA_006', 'Project DD drop zone exists', () => !!document.querySelector('#v-projectdd .dd-dzone'));
+    await this.test('FE_QA_007', 'Health endpoint returns v79z13', async () => { const r = await fetch(`${API}/health`); const d = await r.json(); return d.version && d.version.startsWith('v79z13'); });
+    await this.test('FE_QA_008', 'GET /api/files/r2 returns 404 for missing key', async () => { const r = await fetch(`${API}/api/files/r2/does-not-exist-probe`); return r.status === 404; });
+    await this.test('FE_QA_009', 'Map approve endpoint exists', async () => { const r = await fetch(`${API}/api/primitives/map/approve/fake-job`, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({approved:true}) }); return r.status === 404 || r.status === 200; });
+    await this.test('FE_QA_010', 'Status bar starts polling on load', () => typeof PSB.update === 'function' && PSB.pollInterval !== null);
+    await this.test('FE_QA_011', 'Status bar warning class toggles', () => { const bar = document.getElementById('pablo-status-bar'); bar.classList.add('warning'); const has = bar.classList.contains('warning'); bar.classList.remove('warning'); return has; });
+    await this.test('FE_QA_012', 'timeSince returns human readable string', () => { const ago = PSB.timeSince(new Date(Date.now()-65000).toISOString()); return ago.includes('m ago'); });
+    this.showResults();
+  },
+  async test(id, name, fn) {
+    try {
+      const result = await fn();
+      this.results.push({ id, name, status: result ? 'PASS' : 'FAIL', error: null });
+      console.log(`${result?'✓':'✗'} ${id}: ${name}`);
+    } catch(e) {
+      this.results.push({ id, name, status: 'ERROR', error: e.message });
+      console.error(`✗ ${id}: ${name} — ${e.message}`);
+    }
+  },
+  showResults() {
+    const passed = this.results.filter(r => r.status === 'PASS').length;
+    const total = this.results.length;
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;font-family:monospace';
+    overlay.innerHTML = `<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:24px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto"><h2 style="color:${passed===total?'#22c55e':'#ef4444'};margin:0 0 16px">PABLO Test Suite: ${passed}/${total} passed</h2>${this.results.map(r=>`<div style="margin:4px 0;color:${r.status==='PASS'?'#22c55e':r.status==='FAIL'?'#ef4444':'#f59e0b'}">${r.status==='PASS'?'✓':'✗'} ${r.id}: ${r.name}${r.error?`<br><small style="color:#6b7280">${r.error}</small>`:''}</div>`).join('')}<button onclick="this.parentElement.parentElement.remove()" style="margin-top:16px;padding:8px 16px;background:#d4a843;border:none;border-radius:4px;cursor:pointer;font-weight:600">Close</button></div>`;
+    document.body.appendChild(overlay);
+  }
+};
+PABLO_TESTS.run();
 </script>
+
+<!-- Status Bar (v79z13) — always visible -->
+<div id="pablo-status-bar">
+  <div class="psb-left">
+    <span id="psb-dot" class="psb-dot unknown"></span>
+    <span id="psb-runner">Checking...</span>
+  </div>
+  <div class="psb-center">
+    <span id="psb-running">⚙ —</span>
+    <span id="psb-queued">⏳ —</span>
+    <span id="psb-done">✓ —</span>
+    <span id="psb-failed" style="display:none">✗ —</span>
+  </div>
+  <div class="psb-right">
+    <span id="psb-last">—</span>
+  </div>
+</div>
 </body>
 </html>
