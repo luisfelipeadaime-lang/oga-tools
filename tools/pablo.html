@@ -3462,10 +3462,25 @@ async function ddRunAnalysis() {
     if (projectId) fd.append('project_id', projectId);
     if (projectName) fd.append('project_name', projectName);
 
-    const res = await fetch(`${API}/api/primitives/project-ingest`, { method: 'POST', body: fd }).then(r=>r.json());
-
-    if (res.error) {
-      ddShowError(res.error);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 120000);
+    let resp;
+    try {
+      resp = await fetch(`${API}/api/primitives/project-ingest`, { method: 'POST', body: fd, signal: controller.signal });
+    } catch(fetchErr) {
+      clearTimeout(timeout);
+      ddShowError(fetchErr.name === 'AbortError' ? 'Upload timed out after 2 minutes. Try a smaller file.' : 'Network error — check connection and try again.');
+      return;
+    }
+    clearTimeout(timeout);
+    if (!resp.ok) {
+      const errBody = await resp.text().catch(() => '');
+      ddShowError(`Server error ${resp.status}: ${errBody.substring(0, 200)}`);
+      return;
+    }
+    const res = await resp.json().catch(() => null);
+    if (!res || res.error) {
+      ddShowError(res?.error || 'Invalid response from server');
       return;
     }
 
@@ -3473,12 +3488,15 @@ async function ddRunAnalysis() {
     DD.files = res.files || [];
 
     document.getElementById('dd-status-text').textContent = `Package ingested — ${DD.files.length} files detected`;
-    document.getElementById('dd-status-sub').textContent = `Ingest ID: ${DD.ingestId}`;
+    const jobCount = (res.jobs_created || []).length;
+    document.getElementById('dd-status-sub').textContent = jobCount
+      ? `Ingest ID: ${DD.ingestId} — ${jobCount} extraction jobs queued (polling every 15s)`
+      : `Ingest ID: ${DD.ingestId}`;
 
     ddRenderResults(DD.files);
 
-    // Start polling if any jobs are pending
-    const hasJobs = DD.files.some(f => f.job_id && f.job_status && f.job_status.status !== 'complete' && f.job_status.status !== 'done' && f.job_status.status !== 'completed_by_runner' && f.job_status.status !== 'error');
+    // Start polling if any jobs are pending (maps + document extractions)
+    const hasJobs = DD.files.some(f => f.job_id);
     if (hasJobs) ddStartPoll();
 
   } catch(e) {
