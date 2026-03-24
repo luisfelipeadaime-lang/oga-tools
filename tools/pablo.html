@@ -2266,6 +2266,12 @@ function guessMime(filename){
 
 function checkLibUploadReady(){
   const hasFile = STATE.libraryFile || (STATE.libraryFiles && STATE.libraryFiles.length > 0);
+  // ZIP files auto-classify server-side — only require file present
+  if(STATE.libraryIsZip){
+    document.getElementById('lib-upload-btn').disabled = !hasFile;
+    return;
+  }
+  // Single files require all metadata fields
   const ready = hasFile && document.getElementById('lib-reg').value && document.getElementById('lib-meth').value && document.getElementById('lib-type').value && document.getElementById('lib-dname').value.trim();
   document.getElementById('lib-upload-btn').disabled = !ready;
 }
@@ -2427,8 +2433,11 @@ async function uploadLibraryDoc(){
   const dname = document.getElementById('lib-dname').value.trim();
   const userTags = (document.getElementById('lib-tags')?.value || '').trim();
   const isCanonical = document.getElementById('lib-canonical')?.checked ? '1' : '0';
-  if(!file||!dname){ alert('Fill all fields and select a file'); return; }
+  // ZIP auto-classifies server-side — only require file. Single files need all metadata.
+  if(!file){ alert('Select a file first'); return; }
+  if(!isZip && !dname){ alert('Fill all fields and select a file'); return; }
 
+  const btn = document.getElementById('lib-upload-btn');
   const log = document.getElementById('lib-log');
   log.innerHTML='';
   const addRow = (msg, st='run') => {
@@ -2439,19 +2448,28 @@ async function uploadLibraryDoc(){
     return row;
   };
 
-  document.getElementById('lib-upload-btn').disabled=true;
+  btn.disabled=true;
+  const sizeMB = (file.size/1024/1024).toFixed(1);
 
   if(isZip){
     // ZIP → /api/knowledge/ingest-zip (server-side unzip + classify + extract)
-    const r0 = addRow(`Processing ZIP (${(file.size/1024/1024).toFixed(1)} MB)…`);
+    btn.textContent=`Uploading… ${file.name} (${sizeMB} MB)`;
+    const r0 = addRow(`Uploading ZIP (${sizeMB} MB)…`);
     try {
       const fd = new FormData();
       fd.append('file', file, file.name);
       fd.append('owner', 'clearsky');
       fd.append('uploaded_by', 'pablo_library');
+
+      btn.textContent='Processing… extracting files';
       const res = await fetch(`${API}/api/knowledge/ingest-zip`, {method:'POST', body:fd});
+      if(!res.ok){
+        const errText = await res.text().catch(()=>'');
+        let errMsg;
+        try { errMsg = JSON.parse(errText).error; } catch(e){ errMsg = errText; }
+        throw new Error(errMsg||`HTTP ${res.status}`);
+      }
       const data = await res.json();
-      if(!res.ok) throw new Error(data.error||`HTTP ${res.status}`);
       const ws0 = r0.querySelector('.gsst'); ws0.className='gsst ok'; ws0.textContent='✓';
       r0.querySelector('.gslbl').textContent=`ZIP processed · ${data.summary}`;
 
@@ -2488,11 +2506,13 @@ async function uploadLibraryDoc(){
     } catch(e){
       const ws0=r0.querySelector('.gsst'); ws0.className='gsst err'; ws0.textContent='✗';
       r0.querySelector('.gslbl').textContent=`ZIP upload failed: ${e.message}`;
-      document.getElementById('lib-upload-btn').disabled=false;
+      btn.disabled=false;
+      btn.textContent='Upload \u0026 Extract';
       return;
     }
   } else {
     // Single file → /api/knowledge/ingest (upload + extract + enrich in one call)
+    btn.textContent=`Uploading… ${file.name} (${sizeMB} MB)`;
     const r1 = addRow(`Uploading ${file.name}…`);
     try {
       const fd = new FormData();
@@ -2502,9 +2522,16 @@ async function uploadLibraryDoc(){
       if (dname) fd.append('title', dname);
       if (userTags) fd.append('tags', userTags);
       if (isCanonical === '1') fd.append('is_canonical', '1');
+
+      btn.textContent='Processing… extracting text';
       const res = await fetch(`${API}/api/knowledge/ingest`, {method:'POST', body:fd});
+      if(!res.ok){
+        const errText = await res.text().catch(()=>'');
+        let errMsg;
+        try { errMsg = JSON.parse(errText).error; } catch(e){ errMsg = errText; }
+        throw new Error(errMsg||`HTTP ${res.status}`);
+      }
       const data = await res.json();
-      if(!res.ok) throw new Error(data.error||`HTTP ${res.status}`);
       const ws = r1.querySelector('.gsst'); ws.className='gsst ok'; ws.textContent='✓';
       r1.querySelector('.gslbl').textContent=`Uploaded · ${data.extraction?.word_count||0} words extracted`;
       if(data.knowledge_doc?.id) addRow('AI enrichment complete — tags + summary generated', 'ok');
@@ -2517,7 +2544,8 @@ async function uploadLibraryDoc(){
     } catch(e){
       const ws=r1.querySelector('.gsst'); ws.className='gsst err'; ws.textContent='✗';
       r1.querySelector('.gslbl').textContent=`Upload failed: ${e.message}`;
-      document.getElementById('lib-upload-btn').disabled=false;
+      btn.disabled=false;
+      btn.textContent='Upload \u0026 Extract';
       return;
     }
   }
@@ -2528,7 +2556,8 @@ async function uploadLibraryDoc(){
   STATE.libraryFiles=[];
   STATE.libraryIsZip=false;
   document.getElementById('lib-dropzone').innerHTML='<span>Drop file or ZIP here, or click to browse</span><div style="font-size:10px;color:var(--txt3);margin-top:4px">PDF, DOCX, XLSX, TXT, ZIP</div>';
-  document.getElementById('lib-upload-btn').disabled=true;
+  btn.disabled=true;
+  btn.textContent='Upload \u0026 Extract';
   loadKnowledgeLibrary();
   updateLibraryStats();
 }
