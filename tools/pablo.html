@@ -919,6 +919,12 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
               <input type="file" id="lib-file-input" hidden accept=".pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx,.zip" onchange="libHandleFile(this)">
             </div>
             <button class="btn btn-p" id="lib-upload-btn" onclick="uploadLibraryDoc()" disabled style="width:100%;justify-content:center;margin-bottom:10px">Upload &amp; Extract</button>
+            <div style="border-top:1px solid var(--border0);margin:14px 0 10px;padding-top:12px">
+              <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--txt1);margin-bottom:8px">Sync Google Drive</div>
+              <div id="gdrive-section">
+                <div id="gdrive-loading" style="font-size:11px;color:var(--txt3)">Checking Drive status...</div>
+              </div>
+            </div>
             <div id="lib-log"></div>
           </div>
           <!-- Browse panel (v73) -->
@@ -2264,6 +2270,121 @@ function checkLibUploadReady(){
   document.getElementById('lib-upload-btn').disabled = !ready;
 }
 
+// ── Google Drive Sync ──────────────────────────
+let _gdriveAuthorized = false;
+let _gdrivePollTimer = null;
+
+async function initGDriveSection(){
+  const sec = document.getElementById('gdrive-section');
+  if(!sec) return;
+  try {
+    const res = await fetch(`${API}/api/gdrive/status`);
+    const data = await res.json();
+    _gdriveAuthorized = data.authorized;
+    renderGDriveUI();
+  } catch(e){
+    sec.innerHTML = `<div style="font-size:11px;color:var(--txt3)">Drive sync unavailable</div>`;
+  }
+}
+
+function renderGDriveUI(){
+  const sec = document.getElementById('gdrive-section');
+  if(!sec) return;
+  if(_gdriveAuthorized){
+    sec.innerHTML = `
+      <div style="font-size:11px;color:#059669;margin-bottom:8px;font-weight:600">Google Drive Connected</div>
+      <input type="text" id="gdrive-folder" class="fld" placeholder="Paste Google Drive folder URL or ID" style="font-size:11px;margin-bottom:6px">
+      <button class="btn btn-p" id="gdrive-sync-btn" onclick="syncGDriveFolder()" style="width:100%;justify-content:center;font-size:11px">Sync Folder</button>
+      <div id="gdrive-log" style="margin-top:8px"></div>`;
+  } else {
+    sec.innerHTML = `
+      <button class="btn" onclick="connectGDrive()" style="width:100%;justify-content:center;font-size:11px;border:1px solid var(--teal);color:var(--teal)">Connect Google Drive</button>
+      <div style="font-size:10px;color:var(--txt3);margin-top:4px;text-align:center">Read-only access. One-time authorization.</div>`;
+  }
+}
+
+async function connectGDrive(){
+  try {
+    const res = await fetch(`${API}/api/gdrive/auth`);
+    const data = await res.json();
+    if(data.auth_url){
+      window.open(data.auth_url, '_blank');
+      // Poll for authorization
+      if(_gdrivePollTimer) clearInterval(_gdrivePollTimer);
+      _gdrivePollTimer = setInterval(async ()=>{
+        try {
+          const sr = await fetch(`${API}/api/gdrive/status`);
+          const sd = await sr.json();
+          if(sd.authorized){
+            clearInterval(_gdrivePollTimer);
+            _gdrivePollTimer = null;
+            _gdriveAuthorized = true;
+            renderGDriveUI();
+            wfToast('Google Drive connected', 'ok');
+          }
+        } catch(e){}
+      }, 3000);
+    }
+  } catch(e){
+    wfToast('Failed to start authorization: '+e.message, 'err');
+  }
+}
+
+async function syncGDriveFolder(){
+  const input = document.getElementById('gdrive-folder');
+  const btn = document.getElementById('gdrive-sync-btn');
+  const log = document.getElementById('gdrive-log');
+  if(!input || !input.value.trim()) return wfToast('Paste a folder URL or ID', 'warn');
+
+  btn.disabled = true;
+  btn.textContent = 'Syncing...';
+  log.innerHTML = '<div class="genstep fadein"><span class="gsst spin"></span><span class="gslbl">Scanning folder and downloading files...</span></div>';
+
+  try {
+    const res = await fetch(`${API}/api/gdrive/sync`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ folder_id: input.value.trim() })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+    let html = `<div class="genstep fadein"><span class="gsst ok"></span><span class="gslbl">Folder synced: ${data.summary}</span></div>`;
+
+    for(const f of (data.ingested||[])){
+      const proj = f.project ? ` [${f.project}]` : '';
+      const dtype = f.doc_type ? ` (${f.doc_type})` : '';
+      const dup = f.duplicate ? ' (duplicate)' : '';
+      html += `<div class="genstep fadein"><span class="gsst ${f.duplicate?'warn':'ok'}"></span><span class="gslbl">${f.name}${proj}${dtype} · ${f.words||0} words${dup}</span></div>`;
+    }
+
+    for(const f of (data.errors||[])){
+      html += `<div class="genstep fadein"><span class="gsst err"></span><span class="gslbl">${f.name} — ${f.error}</span></div>`;
+    }
+
+    if((data.skipped||[]).length){
+      html += `<details style="margin-top:4px"><summary style="font-size:10px;color:var(--txt3);cursor:pointer">${data.skipped.length} files skipped</summary>`;
+      for(const f of data.skipped){
+        html += `<div style="font-size:10px;color:var(--txt3);padding:1px 0 1px 12px">${f.name} — ${f.reason}</div>`;
+      }
+      html += `</details>`;
+    }
+
+    log.innerHTML = html;
+    const ig = (data.ingested||[]).length, er = (data.errors||[]).length;
+    wfToast(`Drive sync: ${ig} ingested, ${(data.skipped||[]).length} skipped, ${er} errors`, er ? 'warn' : 'ok');
+
+    // Refresh knowledge library browse panel
+    if(typeof loadKnowledgeLibrary === 'function') loadKnowledgeLibrary();
+  } catch(e){
+    log.innerHTML = `<div class="genstep fadein"><span class="gsst err"></span><span class="gslbl">${e.message}</span></div>`;
+    wfToast('Drive sync failed: '+e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sync Folder';
+  }
+}
+
 async function uploadLibraryDoc(){
   const file = STATE.libraryFile;
   const isZip = STATE.libraryIsZip || false;
@@ -2442,7 +2563,7 @@ function showPlatform(v){
   document.getElementById('topacts').innerHTML=`<button class="btn btn-g btn-s" onclick="openWiz()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New Project</button><button class="btn btn-p btn-s">Generate</button>`;
   document.querySelectorAll('#content .view').forEach(x=>x.classList.remove('on'));
   document.getElementById('v-'+v).classList.add('on');
-  if(v==='library'){ loadKnowledgeLibrary(); updateLibraryStats(); }
+  if(v==='library'){ loadKnowledgeLibrary(); updateLibraryStats(); initGDriveSection(); }
   if(v==='pipeline') setProjectStats();
   if(v==='workflows') loadWorkflowHistory();
   if(v==='methodology') loadMethodologyTab();
