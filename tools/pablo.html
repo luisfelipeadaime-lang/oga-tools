@@ -1246,7 +1246,7 @@ const SCRIPTS = [
 const API = 'https://api-tools.oga.earth';
 
 // ══ STATE ══════════════════════════════════════════════════
-const STATE = {proj:null, tab:'overview', view:'pipeline', wizStep:1, wizReg:null, wizMeth:null, pendingFile:null, intakeProjectId:null, libraryFile:null, libraryFiles:[], libSearchTimer:null, intelFilter:'', libRegFilter:''};
+const STATE = {proj:null, tab:'overview', view:'pipeline', wizStep:1, wizReg:null, wizMeth:null, pendingFile:null, intakeProjectId:null, libraryFile:null, libraryFiles:[], libraryIsZip:false, libSearchTimer:null, intelFilter:'', libRegFilter:''};
 
 // ══ DB→FRONTEND MAPPER ═══════════════════════════════════
 const COUNTRY_FLAGS = {colombia:'🇨🇴',spain:'🇪🇸',españa:'🇪🇸',sierra_leone:'🇸🇱','sierra leone':'🇸🇱',brazil:'🇧🇷',brasil:'🇧🇷',bolivia:'🇧🇴',peru:'🇵🇪',chile:'🇨🇱',argentina:'🇦🇷',mexico:'🇲🇽',uk:'🇬🇧',portugal:'🇵🇹',usa:'🇺🇸',ghana:'🇬🇭',kenya:'🇰🇪',india:'🇮🇳',indonesia:'🇮🇩',australia:'🇦🇺',canada:'🇨🇦',germany:'🇩🇪',france:'🇫🇷',italy:'🇮🇹',japan:'🇯🇵',china:'🇨🇳',uruguay:'🇺🇾',paraguay:'🇵🇾',ecuador:'🇪🇨',mozambique:'🇲🇿',tanzania:'🇹🇿',costa_rica:'🇨🇷','costa rica':'🇨🇷'};
@@ -2235,34 +2235,17 @@ function libHandleFile(inp){
 
 async function processLibraryFile(file, dz){
   if(file.name.toLowerCase().endsWith('.zip')){
-    dz.innerHTML=`<span style="color:var(--amber);font-family:'Syne',sans-serif;font-size:12px">⏳ Extracting ZIP…</span>`;
-    try {
-      if(typeof JSZip==='undefined') throw new Error('JSZip not loaded');
-      const zip = await JSZip.loadAsync(file);
-      const files = [];
-      const promises = [];
-      zip.forEach((relativePath, entry) => {
-        if(entry.dir) return;
-        if(relativePath.startsWith('__MACOSX') || relativePath.startsWith('.')) return;
-        promises.push(entry.async('blob').then(blob => {
-          const name = relativePath.split('/').pop();
-          files.push(new File([blob], name, {type: guessMime(name)}));
-        }));
-      });
-      await Promise.all(promises);
-      STATE.libraryFiles = files;
-      STATE.libraryFile = null;
-      dz.innerHTML=`
-        <div style="color:var(--teal);font-family:'Syne',sans-serif;font-size:13px;font-weight:700">✓ ${file.name}</div>
-        <div style="font-size:11px;color:var(--txt2);margin-top:3px">${files.length} files · ${(file.size/1024/1024).toFixed(1)} MB</div>
-        <div style="font-size:10px;color:var(--txt2);margin-top:5px;line-height:1.6">${files.map(f=>f.name).join(' · ')}</div>`;
-      checkLibUploadReady();
-    } catch(err){
-      dz.innerHTML=`<span style="color:var(--red);font-size:11px">ZIP error: ${err.message}</span>`;
-    }
+    STATE.libraryFile = file;
+    STATE.libraryFiles = [];
+    STATE.libraryIsZip = true;
+    dz.innerHTML=`
+      <div style="color:var(--teal);font-family:'Syne',sans-serif;font-size:13px;font-weight:700">✓ ${file.name}</div>
+      <div style="font-size:11px;color:var(--txt2);margin-top:3px">${(file.size/1024/1024).toFixed(1)} MB ZIP · server-side processing</div>`;
+    checkLibUploadReady();
   } else {
     STATE.libraryFile = file;
     STATE.libraryFiles = [];
+    STATE.libraryIsZip = false;
     dz.innerHTML=`
       <div style="color:var(--teal);font-family:'Syne',sans-serif;font-size:13px;font-weight:700">✓ ${file.name}</div>
       <div style="font-size:11px;color:var(--txt2);margin-top:3px">${(file.size/1024/1024).toFixed(1)} MB · Ready</div>`;
@@ -2282,13 +2265,12 @@ function checkLibUploadReady(){
 }
 
 async function uploadLibraryDoc(){
-  const singleFile = STATE.libraryFile;
-  const zipFiles = STATE.libraryFiles || [];
-  const files = singleFile ? [singleFile] : zipFiles;
+  const file = STATE.libraryFile;
+  const isZip = STATE.libraryIsZip || false;
   const dname = document.getElementById('lib-dname').value.trim();
   const userTags = (document.getElementById('lib-tags')?.value || '').trim();
   const isCanonical = document.getElementById('lib-canonical')?.checked ? '1' : '0';
-  if(!files.length||!dname){ alert('Fill all fields and select a file'); return; }
+  if(!file||!dname){ alert('Fill all fields and select a file'); return; }
 
   const log = document.getElementById('lib-log');
   log.innerHTML='';
@@ -2302,9 +2284,58 @@ async function uploadLibraryDoc(){
 
   document.getElementById('lib-upload-btn').disabled=true;
 
-  if(files.length === 1){
+  if(isZip){
+    // ZIP → /api/knowledge/ingest-zip (server-side unzip + classify + extract)
+    const r0 = addRow(`Processing ZIP (${(file.size/1024/1024).toFixed(1)} MB)…`);
+    try {
+      const fd = new FormData();
+      fd.append('file', file, file.name);
+      fd.append('owner', 'clearsky');
+      fd.append('uploaded_by', 'pablo_library');
+      const res = await fetch(`${API}/api/knowledge/ingest-zip`, {method:'POST', body:fd});
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error||`HTTP ${res.status}`);
+      const ws0 = r0.querySelector('.gsst'); ws0.className='gsst ok'; ws0.textContent='✓';
+      r0.querySelector('.gslbl').textContent=`ZIP processed · ${data.summary}`;
+
+      // Show ingested files
+      for(const f of (data.ingested||[])){
+        const proj = f.project ? ` [${f.project}]` : '';
+        const dtype = f.doc_type ? ` (${f.doc_type})` : '';
+        const dup = f.duplicate ? ' (duplicate)' : '';
+        addRow(`${f.filename}${proj}${dtype} · ${f.words} words${dup}`, f.duplicate?'warn':'ok');
+      }
+
+      // Show failed files
+      for(const f of (data.failed||[])){
+        addRow(`${f.filename} — ${f.error}`, 'err');
+      }
+
+      // Show skipped files (collapsed)
+      const skipped = data.skipped||[];
+      if(skipped.length){
+        const skRow = document.createElement('div');
+        skRow.className='genstep fadein';
+        skRow.style.cursor='pointer';
+        skRow.innerHTML=`<span class="gslbl">${skipped.length} files skipped (click to expand)</span><span class="gsst warn">⚠</span>`;
+        const skDetail = document.createElement('div');
+        skDetail.style.cssText='display:none;padding:4px 0 4px 12px;font-size:10px;color:var(--txt3);line-height:1.8';
+        skDetail.innerHTML=skipped.map(s=>`${s.filename} — ${s.reason}${s.ext?' (.'+s.ext+')':''}`).join('<br>');
+        skRow.onclick=()=>{skDetail.style.display=skDetail.style.display==='none'?'block':'none'};
+        log.appendChild(skRow);
+        log.appendChild(skDetail);
+      }
+
+      const ig = (data.ingested||[]).length, fl = (data.failed||[]).length;
+      wfToast(`ZIP: ${ig} ingested, ${skipped.length} skipped, ${fl} failed`, fl?'warn':'ok');
+    } catch(e){
+      const ws0=r0.querySelector('.gsst'); ws0.className='gsst err'; ws0.textContent='✗';
+      r0.querySelector('.gslbl').textContent=`ZIP upload failed: ${e.message}`;
+      document.getElementById('lib-upload-btn').disabled=false;
+      return;
+    }
+  } else {
     // Single file → /api/knowledge/ingest (upload + extract + enrich in one call)
-    const file = files[0];
     const r1 = addRow(`Uploading ${file.name}…`);
     try {
       const fd = new FormData();
@@ -2332,51 +2363,13 @@ async function uploadLibraryDoc(){
       document.getElementById('lib-upload-btn').disabled=false;
       return;
     }
-  } else {
-    // Multiple files (from ZIP) → /api/wiki/upload-bulk then extract each
-    const r0 = addRow(`Uploading ${files.length} files…`);
-    try {
-      const fd = new FormData();
-      for(const f of files) fd.append('files', f, f.name);
-      fd.append('owner', 'clearsky');
-      const res = await fetch(`${API}/api/wiki/upload-bulk`, {method:'POST', body:fd});
-      const data = await res.json();
-      if(!res.ok) throw new Error(data.error||`HTTP ${res.status}`);
-      const uploaded = data.files || data.results || data;
-      const ws0 = r0.querySelector('.gsst'); ws0.className='gsst ok'; ws0.textContent='✓';
-      r0.querySelector('.gslbl').textContent=`${uploaded.length} files uploaded to R2`;
-
-      // Extract each sequentially to avoid rate limits
-      let extracted = 0;
-      for(const u of uploaded){
-        const docId = u.doc_id || u.id;
-        if(!docId) continue;
-        const rx = addRow(`Extracting ${u.name||'file'}…`);
-        try {
-          const eres = await fetch(`${API}/api/wiki/extract/${docId}`, {method:'POST'});
-          const edata = await eres.json();
-          if(!eres.ok) throw new Error(edata.error||`HTTP ${eres.status}`);
-          const wsx = rx.querySelector('.gsst'); wsx.className='gsst ok'; wsx.textContent='✓';
-          rx.querySelector('.gslbl').textContent=`${u.name||'file'} · ${edata.word_count||0} words`;
-          extracted++;
-        } catch(ex){
-          const wsx = rx.querySelector('.gsst'); wsx.className='gsst err'; wsx.textContent='✗';
-          rx.querySelector('.gslbl').textContent=`${u.name||'file'}: ${ex.message}`;
-        }
-      }
-      addRow(`${extracted}/${uploaded.length} files extracted · ${dname}`, 'ok');
-    } catch(e){
-      const ws0=r0.querySelector('.gsst'); ws0.className='gsst err'; ws0.textContent='✗';
-      r0.querySelector('.gslbl').textContent=`Bulk upload failed: ${e.message}`;
-      document.getElementById('lib-upload-btn').disabled=false;
-      return;
-    }
   }
 
   // Reset form
   document.getElementById('lib-dname').value='';
   STATE.libraryFile=null;
   STATE.libraryFiles=[];
+  STATE.libraryIsZip=false;
   document.getElementById('lib-dropzone').innerHTML='<span>Drop file or ZIP here, or click to browse</span><div style="font-size:10px;color:var(--txt3);margin-top:4px">PDF, DOCX, XLSX, TXT, ZIP</div>';
   document.getElementById('lib-upload-btn').disabled=true;
   loadKnowledgeLibrary();
