@@ -1898,7 +1898,7 @@ function filterIntel(q){
 }
 
 // ══ KNOWLEDGE LIBRARY (v73) ════════════════════════════════════
-const KLIB = { docs: [], q: '', filterCanonical: false, filterSupply: false, filterRegistered: false, sortCol: 'created_at', sortDir: 'desc' };
+const KLIB = { docs: [], q: '', filterCanonical: false, filterSupply: false, filterRegistered: false, filterSource: '', filterHasText: '', sortCol: 'created_at', sortDir: 'desc', extracting: false };
 
 function renderLibrary(){ loadKnowledgeLibrary(); }
 
@@ -1922,6 +1922,9 @@ function klibFilteredDocs() {
   if (KLIB.filterCanonical) docs = docs.filter(d => d.is_canonical == 1);
   if (KLIB.filterSupply) docs = docs.filter(d => d.source_type === 'rfp_supply');
   if (KLIB.filterRegistered) docs = docs.filter(d => d.is_registered_example == 1);
+  if (KLIB.filterSource) docs = docs.filter(d => d.source_type === KLIB.filterSource);
+  if (KLIB.filterHasText === '1') docs = docs.filter(d => d.word_count > 0);
+  if (KLIB.filterHasText === '0') docs = docs.filter(d => !d.word_count);
   return docs;
 }
 
@@ -1942,6 +1945,7 @@ function klibSourceBadge(sourceType) {
     rfp_supply: { label: 'RFP Supply', bg: 'rgba(245,166,35,0.15)', color: '#F5A623' },
     crawler: { label: 'Crawler', bg: 'rgba(0,212,170,0.12)', color: '#00D4AA' },
     direct_upload: { label: 'Uploaded', bg: 'rgba(91,156,246,0.15)', color: '#5B9CF6' },
+    gdrive: { label: 'Google Drive', bg: 'rgba(52,168,83,0.15)', color: '#34A853' },
     project_extract: { label: 'Project', bg: 'rgba(167,139,250,0.15)', color: '#A78BFA' },
     project_sync: { label: 'Project', bg: 'rgba(167,139,250,0.15)', color: '#A78BFA' },
     web_scrape: { label: 'Web', bg: 'rgba(255,255,255,0.07)', color: 'var(--txt2)' },
@@ -1969,7 +1973,20 @@ function klibRender() {
       <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:5px;cursor:pointer">
         <input type="checkbox" ${KLIB.filterRegistered?'checked':''} onchange="KLIB.filterRegistered=this.checked;klibRender()"> Registered Examples
       </label>
+      <select onchange="KLIB.filterSource=this.value;klibRender()" style="padding:4px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:var(--txt1);font-size:10px">
+        <option value="" ${!KLIB.filterSource?'selected':''}>All sources</option>
+        <option value="gdrive" ${KLIB.filterSource==='gdrive'?'selected':''}>Google Drive</option>
+        <option value="direct_upload" ${KLIB.filterSource==='direct_upload'?'selected':''}>Uploaded</option>
+        <option value="crawler" ${KLIB.filterSource==='crawler'?'selected':''}>Crawler</option>
+        <option value="project_extract" ${KLIB.filterSource==='project_extract'?'selected':''}>Project</option>
+      </select>
+      <select onchange="KLIB.filterHasText=this.value;klibRender()" style="padding:4px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:var(--txt1);font-size:10px">
+        <option value="" ${!KLIB.filterHasText?'selected':''}>All extraction</option>
+        <option value="1" ${KLIB.filterHasText==='1'?'selected':''}>Has text</option>
+        <option value="0" ${KLIB.filterHasText==='0'?'selected':''}>No text</option>
+      </select>
       <span style="font-size:10px;color:var(--txt3)">${docs.length} documents</span>
+      ${(()=>{const noText=KLIB.docs.filter(d=>!d.word_count).length; return noText>0?`<button onclick="klibExtractAll()" ${KLIB.extracting?'disabled':''} style="font-size:9px;padding:3px 10px;border-radius:3px;border:none;background:rgba(52,168,83,0.2);color:#34A853;cursor:pointer;white-space:nowrap">${KLIB.extracting?'Extracting...':'Extract All ('+noText+')'}</button>`:''})()}
     </div>
     <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse;font-size:11px">
@@ -1996,6 +2013,47 @@ function klibRender() {
         </tbody>
       </table>
     </div>`;
+}
+
+async function klibExtractAll() {
+  if (KLIB.extracting) return;
+  KLIB.extracting = true;
+  klibRender();
+  const log = document.getElementById('lib-log');
+  try {
+    if (log) log.innerHTML = `<div style="font-size:11px;color:var(--txt2);padding:6px 0">Queuing documents for extraction...</div>`;
+    const noTextDocs = KLIB.docs.filter(d => !d.word_count).length;
+    const res = await fetch(`${API}/api/knowledge/extract-batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ limit: noTextDocs }),
+    });
+    if (!res.ok) { const t = await res.text(); throw new Error(t); }
+    const data = await res.json();
+    const queued = (data.queued || []).length;
+    const errors = (data.errors || []).length;
+    if (log) log.innerHTML = `<div style="font-size:11px;color:#34A853;padding:6px 0">${queued} queued for extraction, ${errors} errors. Processing in background...</div>`;
+    // Poll for completion
+    let polls = 0;
+    const pollInterval = setInterval(async () => {
+      polls++;
+      await loadKnowledgeLibrary();
+      const remaining = KLIB.docs.filter(d => !d.word_count).length;
+      if (log) log.innerHTML = `<div style="font-size:11px;color:var(--txt2);padding:6px 0">Extracting... ${remaining} docs remaining (poll ${polls})</div>`;
+      if (remaining === 0 || polls > 60) {
+        clearInterval(pollInterval);
+        KLIB.extracting = false;
+        klibRender();
+        if (log) log.innerHTML = remaining === 0
+          ? `<div style="font-size:11px;color:#34A853;padding:6px 0">All documents extracted.</div>`
+          : `<div style="font-size:11px;color:var(--txt2);padding:6px 0">${remaining} still processing in background. Refresh later.</div>`;
+      }
+    }, 10000);
+  } catch (e) {
+    if (log) log.innerHTML = `<div style="font-size:11px;color:#F44;padding:6px 0">Error: ${e.message}</div>`;
+    KLIB.extracting = false;
+    klibRender();
+  }
 }
 
 function setProjectStats(){
