@@ -2338,46 +2338,82 @@ async function syncGDriveFolder(){
 
   btn.disabled = true;
   btn.textContent = 'Syncing...';
-  log.innerHTML = '<div class="genstep fadein"><span class="gsst spin"></span><span class="gslbl">Scanning folder and downloading files...</span></div>';
+  log.innerHTML = '';
+
+  const folderId = input.value.trim();
+  let pageToken = null;
+  let batchNum = 0;
+  let totalIngested = 0, totalSkipped = 0, totalErrors = 0;
 
   try {
-    const res = await fetch(`${API}/api/gdrive/sync`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ folder_id: input.value.trim() })
-    });
-    const data = await res.json();
-    if(!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    do {
+      batchNum++;
+      const batchLabel = `<div class="genstep fadein"><span class="gsst spin"></span><span class="gslbl">Batch ${batchNum}: scanning + downloading...</span></div>`;
+      log.insertAdjacentHTML('beforeend', batchLabel);
 
-    let html = `<div class="genstep fadein"><span class="gsst ok"></span><span class="gslbl">Folder synced: ${data.summary}</span></div>`;
+      const payload = { folder_id: folderId };
+      if(pageToken) payload.page_token = pageToken;
 
-    for(const f of (data.ingested||[])){
-      const proj = f.project ? ` [${f.project}]` : '';
-      const dtype = f.doc_type ? ` (${f.doc_type})` : '';
-      const dup = f.duplicate ? ' (duplicate)' : '';
-      html += `<div class="genstep fadein"><span class="gsst ${f.duplicate?'warn':'ok'}"></span><span class="gslbl">${f.name}${proj}${dtype} · ${f.words||0} words${dup}</span></div>`;
-    }
+      const res = await fetch(`${API}/api/gdrive/sync`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
-    for(const f of (data.errors||[])){
-      html += `<div class="genstep fadein"><span class="gsst err"></span><span class="gslbl">${f.name} — ${f.error}</span></div>`;
-    }
+      // Remove the spinner line, replace with summary
+      log.lastElementChild.remove();
+      let batchHtml = `<div class="genstep fadein"><span class="gsst ok"></span><span class="gslbl">Batch ${batchNum}: ${data.summary}</span></div>`;
 
-    if((data.skipped||[]).length){
-      html += `<details style="margin-top:4px"><summary style="font-size:10px;color:var(--txt3);cursor:pointer">${data.skipped.length} files skipped</summary>`;
-      for(const f of data.skipped){
-        html += `<div style="font-size:10px;color:var(--txt3);padding:1px 0 1px 12px">${f.name} — ${f.reason}</div>`;
+      for(const f of (data.ingested||[])){
+        const proj = f.project ? ` [${f.project}]` : '';
+        const dtype = f.doc_type ? ` (${f.doc_type})` : '';
+        batchHtml += `<div class="genstep fadein"><span class="gsst ok"></span><span class="gslbl">${f.name}${proj}${dtype}</span></div>`;
       }
-      html += `</details>`;
-    }
 
-    log.innerHTML = html;
-    const ig = (data.ingested||[]).length, er = (data.errors||[]).length;
-    wfToast(`Drive sync: ${ig} ingested, ${(data.skipped||[]).length} skipped, ${er} errors`, er ? 'warn' : 'ok');
+      const dedupCount = (data.skipped||[]).filter(s => s.reason === 'already_ingested').length;
+      const otherSkipped = (data.skipped||[]).filter(s => s.reason !== 'already_ingested');
 
-    // Refresh knowledge library browse panel
+      if(dedupCount > 0){
+        batchHtml += `<div class="genstep fadein"><span class="gsst warn"></span><span class="gslbl">${dedupCount} already ingested (skipped)</span></div>`;
+      }
+
+      for(const f of (data.errors||[])){
+        batchHtml += `<div class="genstep fadein"><span class="gsst err"></span><span class="gslbl">${f.name} — ${f.error}</span></div>`;
+      }
+
+      if(otherSkipped.length){
+        batchHtml += `<details style="margin-top:4px"><summary style="font-size:10px;color:var(--txt3);cursor:pointer">${otherSkipped.length} files skipped (type/size/age)</summary>`;
+        for(const f of otherSkipped){
+          batchHtml += `<div style="font-size:10px;color:var(--txt3);padding:1px 0 1px 12px">${f.name} — ${f.reason}</div>`;
+        }
+        batchHtml += `</details>`;
+      }
+
+      log.insertAdjacentHTML('beforeend', batchHtml);
+
+      totalIngested += (data.ingested||[]).length;
+      totalSkipped += (data.skipped||[]).length;
+      totalErrors += (data.errors||[]).length;
+
+      pageToken = data.next_page_token || null;
+
+      // If more pages, pause 500ms then continue automatically
+      if(pageToken){
+        log.insertAdjacentHTML('beforeend', `<div class="genstep fadein"><span class="gsst spin"></span><span class="gslbl">More files remaining, continuing...</span></div>`);
+        await new Promise(r => setTimeout(r, 500));
+        log.lastElementChild.remove();
+      }
+    } while(pageToken);
+
+    // Final summary
+    log.insertAdjacentHTML('beforeend', `<div class="genstep fadein" style="margin-top:6px;border-top:1px solid var(--brd);padding-top:6px"><span class="gsst ok"></span><span class="gslbl" style="font-weight:600">Complete: ${totalIngested} ingested, ${totalSkipped} skipped, ${totalErrors} errors across ${batchNum} batch${batchNum>1?'es':''}</span></div>`);
+    wfToast(`Drive sync complete: ${totalIngested} ingested`, totalErrors ? 'warn' : 'ok');
+
     if(typeof loadKnowledgeLibrary === 'function') loadKnowledgeLibrary();
   } catch(e){
-    log.innerHTML = `<div class="genstep fadein"><span class="gsst err"></span><span class="gslbl">${e.message}</span></div>`;
+    log.insertAdjacentHTML('beforeend', `<div class="genstep fadein"><span class="gsst err"></span><span class="gslbl">${e.message}</span></div>`);
     wfToast('Drive sync failed: '+e.message, 'err');
   } finally {
     btn.disabled = false;
