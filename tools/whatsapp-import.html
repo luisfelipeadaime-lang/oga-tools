@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsApp Import</title>
+<link rel="stylesheet" href="pablo-system.css">
+<style>
+body{background:var(--bg0,#030810);color:var(--text0,#e8eef8);font-family:'DM Sans',system-ui,sans-serif;font-size:13px;margin:0;padding:0}
+:root{--bg0:#030810;--bg1:#080f1e;--bg2:#0d1628;--bg3:#111d35;--bg4:#16243f;--border:rgba(99,130,191,0.12);--border-hi:rgba(99,130,191,0.22);--text0:#e8eef8;--text1:#b8c8e4;--text2:#7a94b8;--text3:#4a6080;--teal:#2dd4bf;--teal-dim:rgba(45,212,191,0.10);--amber:#fbbf24;--red:#f87171;--green:#34d399;--blue:#60a5fa}
+.app{max-width:680px;margin:0 auto;padding:24px}
+.topbar{display:flex;align-items:center;gap:12px;margin-bottom:24px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.topbar h1{font-size:16px;font-weight:700;margin:0}
+.topbar .ver{font-size:10px;color:var(--text3);font-family:monospace}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:16px}
+.card-title{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin-bottom:12px}
+.btn{padding:8px 16px;border:none;border-radius:6px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-teal{background:var(--teal);color:var(--bg0)}.btn-teal:hover{opacity:.85}
+.btn-ghost{background:transparent;border:1px solid var(--border-hi);color:var(--text1)}.btn-ghost:hover{border-color:var(--teal);color:var(--teal)}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.hidden{display:none}
+.auth-row{display:flex;gap:8px;align-items:center}
+.auth-row input{background:var(--bg0);border:1px solid var(--border-hi);border-radius:6px;padding:8px 12px;color:var(--text0);font-family:inherit;font-size:13px;flex:1;outline:none}
+.auth-row input:focus{border-color:var(--teal)}
+
+/* Drop zone */
+.drop-zone{border:2px dashed var(--border-hi);border-radius:12px;padding:48px 24px;text-align:center;cursor:pointer;transition:all .2s}
+.drop-zone:hover,.drop-zone.over{border-color:var(--teal);background:var(--teal-dim)}
+.drop-zone h2{font-size:15px;margin:0 0 6px;font-weight:600}
+.drop-zone p{color:var(--text2);margin:0;font-size:12px}
+.drop-zone .icon{font-size:32px;margin-bottom:12px;opacity:.6}
+
+/* Results */
+.result{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:10px}
+.result-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.result-header .name{font-weight:700;font-size:14px}
+.result-header .badge{display:inline-block;font-size:9px;padding:2px 8px;border-radius:99px;font-weight:600}
+.badge-ok{background:rgba(52,211,153,.15);color:var(--green)}
+.badge-err{background:rgba(248,113,113,.15);color:var(--red)}
+.badge-skip{background:rgba(251,191,36,.15);color:var(--amber)}
+.badge-load{background:var(--teal-dim);color:var(--teal)}
+.stats{display:flex;gap:16px;font-size:11px;color:var(--text2);margin-bottom:8px}
+.stats span{display:flex;align-items:center;gap:4px}
+.stats .num{color:var(--text0);font-weight:600;font-family:monospace}
+
+/* Match phone row */
+.match-row{display:flex;gap:6px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.match-row input{background:var(--bg0);border:1px solid var(--border-hi);border-radius:5px;padding:5px 8px;color:var(--text0);font-family:monospace;font-size:12px;width:160px;outline:none}
+.match-row input:focus{border-color:var(--teal)}
+.match-row .label{font-size:11px;color:var(--text3)}
+.match-row .status{font-size:10px;margin-left:4px}
+.match-ok{color:var(--green)}
+.match-err{color:var(--red)}
+
+/* Progress */
+.progress-bar{height:3px;background:var(--bg0);border-radius:2px;margin-top:6px;overflow:hidden}
+.progress-bar .fill{height:100%;background:var(--teal);transition:width .3s;border-radius:2px}
+
+/* Luis name setting */
+.setting-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.setting-row label{font-size:11px;color:var(--text2);white-space:nowrap}
+.setting-row input{background:var(--bg0);border:1px solid var(--border);border-radius:5px;padding:5px 8px;color:var(--text0);font-size:12px;width:120px;outline:none}
+
+/* Queue */
+.queue-info{font-size:11px;color:var(--text2);margin-top:8px;text-align:center}
+
+/* Instructions */
+.instructions{font-size:12px;color:var(--text2);line-height:1.6}
+.instructions ol{margin:8px 0;padding-left:20px}
+.instructions li{margin-bottom:4px}
+.instructions strong{color:var(--text1)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <h1>WhatsApp Import</h1>
+    <span class="ver">v1</span>
+  </div>
+
+  <!-- Auth -->
+  <div class="card" id="authCard">
+    <div class="card-title">Authentication</div>
+    <div class="auth-row">
+      <input type="password" id="tokenInput" placeholder="Bearer token" onkeydown="if(event.key==='Enter')authenticate()">
+      <button class="btn btn-teal" onclick="authenticate()">Connect</button>
+    </div>
+    <div id="authStatus" style="margin-top:6px;font-size:11px"></div>
+  </div>
+
+  <!-- Main content (hidden until auth) -->
+  <div id="main" class="hidden">
+
+    <!-- Instructions -->
+    <div class="card">
+      <div class="card-title">How to export</div>
+      <div class="instructions">
+        <ol>
+          <li>Open <strong>WhatsApp</strong> on your phone</li>
+          <li>Open a conversation</li>
+          <li>Tap <strong>... > More > Export chat</strong></li>
+          <li>Select <strong>"Without media"</strong></li>
+          <li>Send the .zip to yourself, then <strong>drag it here</strong></li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="card">
+      <div class="card-title">Settings</div>
+      <div class="setting-row">
+        <label>Your name in exports:</label>
+        <input type="text" id="luisName" value="Luis" placeholder="e.g. Luis, Luis Adaime, Yo">
+      </div>
+    </div>
+
+    <!-- Drop zone -->
+    <div class="card">
+      <div class="card-title">Upload exports</div>
+      <div class="drop-zone" id="dropZone" onclick="fileInput.click()">
+        <div class="icon">+</div>
+        <h2>Drop WhatsApp exports here</h2>
+        <p>.zip or .txt files — drop multiple at once</p>
+      </div>
+      <input type="file" id="fileInput" multiple accept=".zip,.txt" style="display:none">
+      <div class="queue-info" id="queueInfo"></div>
+    </div>
+
+    <!-- Results -->
+    <div id="results"></div>
+  </div>
+</div>
+
+<script>
+const API = 'https://api-tools.oga.earth';
+let TOKEN = '';
+const fileInput = document.getElementById('fileInput');
+const dropZone = document.getElementById('dropZone');
+const results = document.getElementById('results');
+
+// Auth
+function authenticate() {
+  TOKEN = document.getElementById('tokenInput').value.trim();
+  if (!TOKEN) return;
+  // Quick test — try listing conversations
+  fetch(API + '/api/whatsapp/import', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + TOKEN },
+  }).then(r => {
+    // 400 = auth ok (missing file), 401 = bad token
+    if (r.status === 401) {
+      document.getElementById('authStatus').innerHTML = '<span style="color:var(--red)">Invalid token</span>';
+    } else {
+      document.getElementById('authStatus').innerHTML = '<span style="color:var(--green)">Connected</span>';
+      document.getElementById('authCard').classList.add('hidden');
+      document.getElementById('main').classList.remove('hidden');
+      // Save token for convenience
+      try { localStorage.setItem('wa_import_token', TOKEN); } catch(e) {}
+    }
+  }).catch(() => {
+    document.getElementById('authStatus').innerHTML = '<span style="color:var(--red)">Connection error</span>';
+  });
+}
+
+// Auto-load saved token
+try {
+  const saved = localStorage.getItem('wa_import_token');
+  if (saved) {
+    document.getElementById('tokenInput').value = saved;
+    TOKEN = saved;
+    // Auto-authenticate
+    setTimeout(() => authenticate(), 100);
+  }
+} catch(e) {}
+
+// Drag and drop
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('over');
+  handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', () => {
+  handleFiles(fileInput.files);
+  fileInput.value = '';
+});
+
+// Process files
+async function handleFiles(fileList) {
+  const files = Array.from(fileList).filter(f =>
+    f.name.endsWith('.zip') || f.name.endsWith('.txt')
+  );
+  if (!files.length) return;
+
+  const luisName = document.getElementById('luisName').value.trim() || 'Luis';
+  const qi = document.getElementById('queueInfo');
+  qi.textContent = `Uploading ${files.length} file${files.length > 1 ? 's' : ''}...`;
+
+  for (let i = 0; i < files.length; i++) {
+    qi.textContent = `Uploading ${i + 1} of ${files.length}: ${files[i].name}`;
+    await uploadFile(files[i], luisName);
+  }
+  qi.textContent = `Done. ${files.length} file${files.length > 1 ? 's' : ''} processed.`;
+}
+
+async function uploadFile(file, luisName) {
+  // Create result card immediately
+  const card = document.createElement('div');
+  card.className = 'result';
+  card.innerHTML = `
+    <div class="result-header">
+      <span class="name">${esc(file.name)}</span>
+      <span class="badge badge-load">uploading...</span>
+    </div>
+    <div class="progress-bar"><div class="fill" style="width:30%"></div></div>
+  `;
+  results.prepend(card);
+
+  try {
+    const form = new FormData();
+    form.append('file', file);
+    form.append('luis_name', luisName);
+
+    card.querySelector('.fill').style.width = '60%';
+
+    const resp = await fetch(API + '/api/whatsapp/import', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN },
+      body: form,
+    });
+
+    card.querySelector('.fill').style.width = '100%';
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      card.innerHTML = `
+        <div class="result-header">
+          <span class="name">${esc(file.name)}</span>
+          <span class="badge badge-err">error</span>
+        </div>
+        <div style="font-size:11px;color:var(--red);margin-top:4px">${esc(data.error || 'Unknown error')}</div>
+      `;
+      return;
+    }
+
+    if (data.note && data.messages_imported === 0) {
+      // Privacy filtered
+      card.innerHTML = `
+        <div class="result-header">
+          <span class="name">${esc(data.contact_name || file.name)}</span>
+          <span class="badge badge-skip">privacy filtered</span>
+        </div>
+        <div style="font-size:11px;color:var(--amber);margin-top:4px">${esc(data.note)}</div>
+      `;
+      return;
+    }
+
+    // Success — show stats + match phone input
+    const dr = data.date_range;
+    const from = dr ? new Date(dr.first * 1000).toLocaleDateString() : '?';
+    const to = dr ? new Date(dr.last * 1000).toLocaleDateString() : '?';
+
+    card.innerHTML = `
+      <div class="result-header">
+        <span class="name">${esc(data.contact_name)}</span>
+        <span class="badge badge-ok">imported</span>
+      </div>
+      <div class="stats">
+        <span>Messages: <span class="num">${data.messages_imported}</span></span>
+        <span>Range: <span class="num">${from} — ${to}</span></span>
+        ${data.messages_skipped_privacy > 0 ? `<span>Filtered: <span class="num">${data.messages_skipped_privacy}</span></span>` : ''}
+      </div>
+      <div class="match-row">
+        <span class="label">Phone:</span>
+        <input type="text" class="phone-input" placeholder="+34612345678" data-conv="${esc(data.conversation_id)}">
+        <button class="btn btn-teal btn-sm" onclick="matchPhone(this)">Link</button>
+        <span class="match-status"></span>
+      </div>
+    `;
+  } catch (err) {
+    card.innerHTML = `
+      <div class="result-header">
+        <span class="name">${esc(file.name)}</span>
+        <span class="badge badge-err">failed</span>
+      </div>
+      <div style="font-size:11px;color:var(--red);margin-top:4px">${esc(err.message)}</div>
+    `;
+  }
+}
+
+// Match phone
+async function matchPhone(btn) {
+  const row = btn.closest('.match-row');
+  const input = row.querySelector('.phone-input');
+  const status = row.querySelector('.match-status');
+  const phone = input.value.trim();
+  const convId = input.dataset.conv;
+
+  if (!phone) { status.innerHTML = '<span class="match-err">enter phone</span>'; return; }
+
+  btn.disabled = true;
+  status.innerHTML = '<span style="color:var(--teal)">linking...</span>';
+
+  try {
+    const resp = await fetch(API + '/api/whatsapp/match-phone', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + TOKEN,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ conversation_id: convId, phone: phone }),
+    });
+    const data = await resp.json();
+
+    if (!resp.ok) {
+      status.innerHTML = `<span class="match-err">${esc(data.error)}</span>`;
+      btn.disabled = false;
+      return;
+    }
+
+    let extra = '';
+    if (data.hubspot_match) {
+      extra = ` (HubSpot: ${esc(data.hubspot_match.company || data.hubspot_match.contact_id)})`;
+    }
+    if (data.merge_warning) {
+      extra += ` <span class="match-err">${esc(data.merge_warning)}</span>`;
+    }
+
+    status.innerHTML = `<span class="match-ok">linked to ${esc(data.phone)}${extra}</span>`;
+    input.disabled = true;
+    btn.textContent = 'Done';
+    btn.disabled = true;
+  } catch (err) {
+    status.innerHTML = `<span class="match-err">${esc(err.message)}</span>`;
+    btn.disabled = false;
+  }
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+</script>
+</body>
+</html>
