@@ -285,6 +285,101 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
 .lib-sel option{background:var(--bg2);color:var(--txt0)}
 .lib-dzone{border:1.5px dashed var(--border2);border-radius:5px;padding:18px 12px;text-align:center;cursor:pointer;transition:all .18s;font-size:11px;color:var(--txt2)}
 .lib-dzone:hover,.lib-dzone.drag{border-color:var(--teal);background:var(--teal-faint)}
+
+/* ─── KNOWLEDGE LIBRARY v2 (three-panel) ─────────────── */
+.kl-shell{display:flex;flex-direction:column;height:calc(100vh - 120px);min-height:500px}
+.kl-pipe{display:flex;align-items:center;gap:0;padding:6px 14px;background:rgba(26,138,110,0.06);border-bottom:1px solid rgba(26,138,110,0.15);flex-shrink:0}
+.kl-ps{display:flex;align-items:center;gap:5px;padding:0 12px;border-right:1px solid rgba(255,255,255,0.06);font-size:11px;color:var(--txt2)}
+.kl-ps:first-child{padding-left:0}
+.kl-ps:last-child{border-right:none}
+.kl-ps b{color:var(--txt0);font-weight:600}
+.kl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.kl-dot-green{background:#1A8A6E}
+.kl-dot-amber{background:#D4A843}
+.kl-dot-gray{background:var(--txt3)}
+.kl-extract-all{margin-left:auto;background:#1A8A6E;color:#fff;border:none;border-radius:6px;padding:5px 13px;font-size:11px;font-weight:600;cursor:pointer}
+.kl-extract-all:hover{background:#147a5e}
+.kl-body{display:flex;flex:1;overflow:hidden}
+.kl-sidebar{width:196px;flex-shrink:0;background:var(--bg0);overflow-y:auto;display:flex;flex-direction:column;border-right:1px solid var(--border1)}
+.kl-shead{padding:10px 11px 4px;font-size:10px;font-weight:700;letter-spacing:.9px;color:var(--txt3);text-transform:uppercase}
+.kl-si{display:flex;align-items:center;gap:5px;padding:6px 11px 6px 13px;cursor:pointer;color:var(--txt2);font-size:11px;border-left:2px solid transparent;user-select:none;transition:background .1s}
+.kl-si:hover{background:rgba(255,255,255,0.04);color:var(--txt1)}
+.kl-si.kl-on{background:rgba(91,155,213,0.12);color:#5B9BD5;border-left-color:#5B9BD5}
+.kl-si .kl-ct{margin-left:auto;background:rgba(255,255,255,0.06);color:var(--txt3);font-size:10px;padding:1px 5px;border-radius:8px}
+.kl-si.kl-on .kl-ct{background:rgba(91,155,213,0.2);color:#5B9BD5}
+.kl-sub{padding-left:22px}
+.kl-sico{font-size:10px;opacity:.5;width:11px;text-align:center;flex-shrink:0}
+.kl-sfilt{padding:8px 10px 10px;border-top:1px solid rgba(255,255,255,0.06);margin-top:auto}
+.kl-sfh{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.9px;font-weight:700;margin-bottom:5px}
+.kl-sf{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:5px;overflow:hidden;margin-bottom:4px}
+.kl-sf select{background:transparent;border:none;outline:none;color:var(--txt2);font-size:11px;padding:5px 8px;cursor:pointer;width:100%}
+.kl-sf select option{background:var(--bg2);color:var(--txt0)}
+.kl-center{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.kl-tbar{display:flex;align-items:center;padding:7px 12px;border-bottom:1px solid var(--border1);gap:7px;flex-shrink:0}
+.kl-tbar-t{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:var(--txt0)}
+.kl-tbar-c{font-size:11px;color:var(--txt3);margin-left:2px}
+.kl-search{flex:1;max-width:240px;margin-left:8px;padding:5px 9px;background:rgba(255,255,255,0.05);border:1px solid var(--border1);border-radius:5px;color:var(--txt1);font-size:11px;outline:none}
+.kl-search:focus{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-glow)}
+.kl-search::placeholder{color:var(--txt3)}
+.kl-fbts{display:flex;gap:5px;margin-left:auto}
+.kl-fbt{padding:4px 9px;border:1px solid var(--border1);border-radius:5px;font-size:11px;color:var(--txt2);background:transparent;cursor:pointer}
+.kl-fbt:hover{border-color:#5B9BD5;color:var(--txt0)}
+.kl-fbt.kl-fbt-on{background:rgba(212,164,67,0.12);border-color:rgba(212,164,67,0.3);color:#D4A843}
+.kl-bbar{display:flex;align-items:center;padding:6px 12px;background:rgba(91,155,213,0.07);border-bottom:1px solid rgba(91,155,213,0.2);gap:8px;font-size:11px;color:#5B9BD5;flex-shrink:0}
+.kl-bbar b{font-weight:600}
+.kl-bbts{display:flex;gap:5px;margin-left:auto}
+.kl-bbt{padding:4px 10px;border-radius:5px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid}
+.kl-bbe{background:#1A8A6E;border-color:#1A8A6E;color:#fff}
+.kl-bbr{background:var(--bg3);border-color:var(--border1);color:var(--txt1)}
+.kl-bbd{background:rgba(255,71,87,0.08);border-color:rgba(255,71,87,0.25);color:var(--red)}
+.kl-notice{display:flex;align-items:center;gap:6px;margin:7px 12px 0;padding:6px 10px;background:rgba(212,164,67,0.06);border:1px solid rgba(212,164,67,0.18);border-radius:5px;font-size:11px;color:var(--amber);flex-shrink:0}
+.kl-tw{overflow-y:auto;flex:1}
+.kl-table{width:100%;border-collapse:collapse}
+.kl-table thead tr{background:var(--bg2);position:sticky;top:0;z-index:2}
+.kl-table th{padding:6px 10px;text-align:left;font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border1);white-space:nowrap;cursor:pointer}
+.kl-table th:first-child{width:30px;cursor:default}
+.kl-table td{padding:6px 10px;border-bottom:1px solid var(--border0);color:var(--txt1);font-size:11px;vertical-align:middle}
+.kl-table tr:hover td{background:rgba(255,255,255,0.02)}
+.kl-table tr.kl-sel td{background:rgba(91,155,213,0.06)}
+.kl-table tr.kl-cur td{background:rgba(91,155,213,0.1)!important}
+.kl-fn{font-weight:500;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;color:var(--txt1)}
+.kl-fn:hover{color:#5B9BD5}
+.kl-tb{display:inline-block;padding:2px 7px;border-radius:9px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap}
+.kl-tl{background:rgba(91,155,213,0.13);color:#5B9BD5}
+.kl-tm{background:rgba(26,138,110,0.13);color:#1A8A6E}
+.kl-ty{background:rgba(212,164,67,0.14);color:#D4A843}
+.kl-tr{background:rgba(167,139,250,0.13);color:#A78BFA}
+.kl-td{background:rgba(255,71,87,0.1);color:#FF4757}
+.kl-tk{background:rgba(245,166,35,0.12);color:#F5A623}
+.kl-to{background:rgba(255,255,255,0.06);color:var(--txt3)}
+.kl-fp{font-size:10px;color:var(--txt3);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kl-wc{font-size:11px;color:var(--txt2)}
+.kl-wc.kl-none{color:var(--amber);font-weight:600}
+.kl-star{font-size:13px;cursor:pointer}
+.kl-al{color:#5B9BD5;font-size:11px;cursor:pointer}
+.kl-al:hover{text-decoration:underline}
+.kl-rp{width:272px;flex-shrink:0;border-left:1px solid var(--border1);display:flex;flex-direction:column;background:var(--bg1);overflow:hidden}
+.kl-rph{padding:10px 12px;border-bottom:1px solid var(--border1);display:flex;align-items:center;justify-content:space-between}
+.kl-rpht{font-family:'Syne',sans-serif;font-size:11px;font-weight:600;color:var(--txt0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px;line-height:1.4}
+.kl-rpc{padding:10px 12px;border-bottom:1px solid var(--border1);display:flex;flex-direction:column;gap:5px}
+.kl-mr{display:flex;justify-content:space-between;align-items:flex-start;font-size:11px;gap:8px}
+.kl-ml{color:var(--txt3);flex-shrink:0}
+.kl-mv{font-weight:500;color:var(--txt1);text-align:right;font-size:11px}
+.kl-rpas{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-bottom:1px solid var(--border1)}
+.kl-rpb{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:5px;font-size:11px;border:1px solid var(--border1);background:var(--bg2);color:var(--txt1);cursor:pointer;font-weight:500}
+.kl-rpb:hover{border-color:#5B9BD5;color:#5B9BD5}
+.kl-rpb-ask{background:rgba(91,155,213,0.08);border-color:rgba(91,155,213,0.25);color:#5B9BD5}
+.kl-rppv{flex:1;overflow-y:auto;padding:12px}
+.kl-pvl{font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.kl-pvt{font-family:'DM Mono',monospace;font-size:11px;line-height:1.65;color:var(--txt2);white-space:pre-wrap;word-break:break-word}
+.kl-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--txt3);font-size:12px;gap:8px;text-align:center;padding:24px}
+.kl-ei{font-size:32px;opacity:.3}
+.kl-upload-toggle{position:absolute;top:8px;right:8px;padding:5px 11px;background:#5B9BD5;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;z-index:3}
+.kl-upload-toggle:hover{background:#4a8bc4}
+.kl-upload-wrap{border-top:1px solid var(--border1);padding:16px;background:var(--bg2);display:none;flex-shrink:0}
+.kl-upload-inner{display:flex;gap:16px;flex-wrap:wrap}
+.kl-upload-inner .lib-upload{width:auto;min-width:280px;flex:1;background:transparent;border:none;padding:0}
+
 .intel-answer{padding:12px 15px;border-top:1px solid var(--border1);background:var(--bg1);max-height:280px;overflow-y:auto;font-size:12px;line-height:1.6}
 
 /* ─── WIZARD ──────────────────────────────────────────── */
@@ -864,72 +959,191 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
       <div id="meth-container" style="padding:16px;flex:1;overflow:hidden"></div>
     </div>
 
-    <!-- Platform: Library -->
-    <div id="v-library" class="view">
-      <div style="padding:20px">
-        <div style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--txt0);margin-bottom:14px">Knowledge Library</div>
-        <div class="lib-layout">
-          <!-- Upload panel -->
-          <div class="lib-upload">
-            <div style="font-family:'Syne',sans-serif;font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--txt3);margin-bottom:12px">Upload Document</div>
-            <div class="fgrp"><label class="flabel">Registry</label>
-              <select class="lib-sel" id="lib-reg" onchange="updateLibMethods();checkLibUploadReady()">
-                <option value="">Select…</option>
-                <option value="puro">Puro.earth</option>
-                <option value="verra">Verra VCS</option>
-                <option value="miteco">MITECO España</option>
-                <option value="isometric">Isometric</option>
-                <option value="general">General</option>
-              </select>
-            </div>
-            <div class="fgrp"><label class="flabel">Methodology</label>
-              <select class="lib-sel" id="lib-meth" disabled onchange="checkLibUploadReady()">
-                <option value="">Select registry first…</option>
-              </select>
-            </div>
-            <div class="fgrp"><label class="flabel">Document Type</label>
-              <select class="lib-sel" id="lib-type" onchange="checkLibUploadReady()">
-                <option value="">Select…</option>
-                <option value="methodology">Methodology</option>
-                <option value="pdd_example">PDD Example</option>
-                <option value="mrv_plan">MRV Plan</option>
-                <option value="audit_report">Audit Report</option>
-                <option value="benchmark">Benchmark</option>
-                <option value="heuristic">Heuristic</option>
-                <option value="guidance">Guidance</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-            <div class="fgrp"><label class="flabel">Display Name</label>
-              <input class="finput" id="lib-dname" placeholder="e.g. TSB Methodology Edition 2023" oninput="checkLibUploadReady()">
-            </div>
-            <div class="fgrp"><label class="flabel">Tags <span style="font-weight:400;color:var(--txt3)">(comma-separated)</span></label>
-              <input class="finput" id="lib-tags" placeholder="e.g. miteco, spain, forestry">
-            </div>
-            <div class="fgrp" style="margin-bottom:4px">
-              <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);cursor:pointer">
-                <input type="checkbox" id="lib-canonical"> Add to Methodology Library
-              </label>
-            </div>
-            <div class="fgrp">
-              <div class="lib-dzone" id="lib-dropzone" onclick="document.getElementById('lib-file-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="libHandleDrop(event)">
-                <span>Drop file or ZIP here, or click to browse</span>
-                <div style="font-size:10px;color:var(--txt3);margin-top:4px">PDF, DOCX, XLSX, TXT, ZIP</div>
-              </div>
-              <input type="file" id="lib-file-input" hidden accept=".pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx,.zip" onchange="libHandleFile(this)">
-            </div>
-            <button class="btn btn-p" id="lib-upload-btn" onclick="uploadLibraryDoc()" disabled style="width:100%;justify-content:center;margin-bottom:10px">Upload &amp; Extract</button>
-            <div style="border-top:1px solid var(--border0);margin:14px 0 10px;padding-top:12px">
-              <div style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--txt1);margin-bottom:8px">Sync Google Drive</div>
-              <div id="gdrive-section">
-                <div id="gdrive-loading" style="font-size:11px;color:var(--txt3)">Checking Drive status...</div>
+    <!-- Platform: Library (v2 three-panel) -->
+    <div id="v-library" class="view" style="position:relative">
+      <button class="kl-upload-toggle" onclick="klToggleUpload()">+ Upload document</button>
+      <div class="kl-shell">
+        <!-- Pipeline status bar -->
+        <div class="kl-pipe">
+          <div class="kl-ps"><div class="kl-dot kl-dot-green"></div><b id="kl-extracted-count">0</b>&nbsp;extracted</div>
+          <div class="kl-ps"><div class="kl-dot kl-dot-amber"></div><b id="kl-pending-count">0</b>&nbsp;pending</div>
+          <div class="kl-ps"><div class="kl-dot kl-dot-gray"></div><b id="kl-total-count">0</b>&nbsp;total</div>
+          <button class="kl-extract-all" id="kl-extract-all-btn" onclick="klExtractAll()">Extract all pending (0)</button>
+        </div>
+        <div class="kl-body">
+          <!-- Left sidebar -->
+          <div class="kl-sidebar">
+            <div class="kl-shead">Projects</div>
+            <div class="kl-si kl-on" onclick="klSetProject(this,'')" data-project=""><span class="kl-sico">&#9672;</span>All documents<span class="kl-ct" id="kl-all-count">0</span></div>
+            <div id="kl-project-tree"></div>
+            <div class="kl-sfilt">
+              <div class="kl-sfh">Filters</div>
+              <div class="kl-sf"><select id="kl-type-filter" onchange="klRender()">
+                <option value="">All types</option>
+                <option value="legal_agreement">Legal / Contract</option>
+                <option value="financial_model">Financial model</option>
+                <option value="core_methodology">Methodology</option>
+                <option value="technical_report">Technical report</option>
+                <option value="presentation">Presentation</option>
+                <option value="market_intelligence">Market intel</option>
+                <option value="policy_document">Policy doc</option>
+                <option value="budget">Budget</option>
+                <option value="correspondence">Correspondence</option>
+                <option value="gis_data">GIS data</option>
+              </select></div>
+              <div class="kl-sf"><select id="kl-status-filter" onchange="klRender()">
+                <option value="">All statuses</option>
+                <option value="extracted">Extracted</option>
+                <option value="pending">Pending</option>
+              </select></div>
+              <div class="kl-sf"><select id="kl-registry-filter" onchange="klRender()">
+                <option value="">All registries</option>
+                <option value="miteco">MITECO</option>
+                <option value="verra">Verra</option>
+                <option value="gold_standard">Gold Standard</option>
+                <option value="puro_earth">Puro.earth</option>
+              </select></div>
+              <div class="kl-sf"><select id="kl-source-filter" onchange="klRender()">
+                <option value="">All sources</option>
+                <option value="gdrive">Google Drive</option>
+                <option value="direct_upload">Manual upload</option>
+                <option value="crawler">Crawler</option>
+                <option value="project_extract">Project</option>
+              </select></div>
+              <div style="margin-top:10px;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px">
+                <div class="kl-sfh">Google Drive</div>
+                <div id="gdrive-section"><div id="gdrive-loading" style="font-size:11px;color:var(--txt3)">Checking...</div></div>
               </div>
             </div>
-            <div id="lib-log"></div>
           </div>
-          <!-- Browse panel (v73) -->
-          <div class="lib-browse">
-            <div id="klib-container"></div>
+          <!-- Center panel -->
+          <div class="kl-center">
+            <div class="kl-tbar">
+              <span class="kl-tbar-t">Knowledge Library</span>
+              <span class="kl-tbar-c" id="kl-visible-count">0 documents</span>
+              <input type="text" class="kl-search" id="kl-search" placeholder="Search documents..." oninput="klRender()">
+              <div class="kl-fbts">
+                <button class="kl-fbt" id="kl-canonical-btn" onclick="klToggleCanonical()">&#9733; Canonical</button>
+                <button class="kl-fbt" onclick="klToggleSort()">&#8597; <span id="kl-sort-label">Date</span></button>
+              </div>
+            </div>
+            <div class="kl-bbar" id="kl-bbar" style="display:none">
+              <b id="kl-sel-count">0 selected</b>
+              <div class="kl-bbts">
+                <button class="kl-bbt kl-bbe" onclick="klBatchExtract()">Extract</button>
+                <button class="kl-bbt kl-bbr" onclick="klBatchReclassify()">Re-classify</button>
+                <button class="kl-bbt kl-bbd" onclick="klBatchDelete()">Delete</button>
+                <button class="kl-bbt kl-bbr" onclick="klClearSel()">&#10005; Clear</button>
+              </div>
+            </div>
+            <div class="kl-notice" id="kl-notice" style="display:none">
+              &#9888; <span id="kl-notice-text">0 documents</span> synced but not yet extracted. Click "Extract all pending" to process.
+            </div>
+            <div class="kl-tw">
+              <table class="kl-table">
+                <thead><tr>
+                  <th><input type="checkbox" id="kl-sa" onchange="klSelAll(this)" style="cursor:pointer;accent-color:#5B9BD5"></th>
+                  <th>St.</th>
+                  <th onclick="klSortBy('title')">Title</th>
+                  <th>Type</th>
+                  <th>Project</th>
+                  <th>Source</th>
+                  <th onclick="klSortBy('word_count')">Words</th>
+                  <th>Registry</th>
+                  <th style="cursor:default">&#9733;</th>
+                  <th style="cursor:default"></th>
+                </tr></thead>
+                <tbody id="kl-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <!-- Right preview panel -->
+          <div class="kl-rp">
+            <div class="kl-empty" id="kl-panel-empty">
+              <div class="kl-ei">&#9707;</div>
+              <div>Click any document<br>to preview</div>
+            </div>
+            <div id="kl-panel-content" style="display:none;flex-direction:column;height:100%;overflow:hidden">
+              <div class="kl-rph">
+                <span class="kl-rpht" id="kl-panel-title">&mdash;</span>
+                <span style="color:var(--txt3);cursor:pointer;font-size:14px;line-height:1;flex-shrink:0;margin-left:6px" onclick="klClosePanel()">&#10005;</span>
+              </div>
+              <div class="kl-rpc">
+                <div class="kl-mr"><span class="kl-ml">Type</span><span class="kl-mv" id="kl-panel-type">&mdash;</span></div>
+                <div class="kl-mr"><span class="kl-ml">Project</span><span class="kl-mv" id="kl-panel-project">&mdash;</span></div>
+                <div class="kl-mr"><span class="kl-ml">Source</span><span style="font-size:10px;color:var(--txt3);text-align:right" id="kl-panel-source">&mdash;</span></div>
+                <div class="kl-mr"><span class="kl-ml">Words</span><span class="kl-mv" id="kl-panel-words">&mdash;</span></div>
+                <div class="kl-mr"><span class="kl-ml">Synced</span><span class="kl-mv" id="kl-panel-date">&mdash;</span></div>
+                <div class="kl-mr"><span class="kl-ml">Registry</span><span class="kl-mv" id="kl-panel-registry">&mdash;</span></div>
+              </div>
+              <div class="kl-rpas">
+                <button class="kl-rpb kl-rpb-ask" onclick="klAskAbout()">&#8599; Ask PABLO about this document</button>
+                <button class="kl-rpb" onclick="klReExtract()">&#8634; Re-extract text</button>
+                <button class="kl-rpb" id="kl-gdrive-btn" onclick="klOpenDrive()" style="display:none">&#8599; Open in Google Drive</button>
+                <button class="kl-rpb" onclick="klDownloadOriginal()">&#11015; Download original (R2)</button>
+                <button class="kl-rpb" onclick="klViewFullText()">&#128196; View full text</button>
+              </div>
+              <div class="kl-rppv">
+                <div class="kl-pvl">Extracted text preview</div>
+                <div class="kl-pvt" id="kl-panel-preview">&mdash;</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Upload form (collapsed) -->
+        <div class="kl-upload-wrap" id="kl-upload-wrap">
+          <div class="kl-upload-inner">
+            <div class="lib-upload">
+              <div style="font-family:'Syne',sans-serif;font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--txt3);margin-bottom:12px">Upload Document</div>
+              <div class="fgrp"><label class="flabel">Registry</label>
+                <select class="lib-sel" id="lib-reg" onchange="updateLibMethods();checkLibUploadReady()">
+                  <option value="">Select...</option>
+                  <option value="puro">Puro.earth</option>
+                  <option value="verra">Verra VCS</option>
+                  <option value="miteco">MITECO</option>
+                  <option value="isometric">Isometric</option>
+                  <option value="general">General</option>
+                </select>
+              </div>
+              <div class="fgrp"><label class="flabel">Methodology</label>
+                <select class="lib-sel" id="lib-meth" disabled onchange="checkLibUploadReady()">
+                  <option value="">Select registry first...</option>
+                </select>
+              </div>
+              <div class="fgrp"><label class="flabel">Document Type</label>
+                <select class="lib-sel" id="lib-type" onchange="checkLibUploadReady()">
+                  <option value="">Select...</option>
+                  <option value="methodology">Methodology</option>
+                  <option value="pdd_example">PDD Example</option>
+                  <option value="mrv_plan">MRV Plan</option>
+                  <option value="audit_report">Audit Report</option>
+                  <option value="benchmark">Benchmark</option>
+                  <option value="heuristic">Heuristic</option>
+                  <option value="guidance">Guidance</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="fgrp"><label class="flabel">Display Name</label>
+                <input class="finput" id="lib-dname" placeholder="e.g. TSB Methodology Edition 2023" oninput="checkLibUploadReady()">
+              </div>
+              <div class="fgrp"><label class="flabel">Tags <span style="font-weight:400;color:var(--txt3)">(comma-separated)</span></label>
+                <input class="finput" id="lib-tags" placeholder="e.g. miteco, spain, forestry">
+              </div>
+              <div class="fgrp" style="margin-bottom:4px">
+                <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);cursor:pointer">
+                  <input type="checkbox" id="lib-canonical"> Add to Methodology Library
+                </label>
+              </div>
+              <div class="fgrp">
+                <div class="lib-dzone" id="lib-dropzone" onclick="document.getElementById('lib-file-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="libHandleDrop(event)">
+                  <span>Drop file or ZIP here, or click to browse</span>
+                  <div style="font-size:10px;color:var(--txt3);margin-top:4px">PDF, DOCX, XLSX, TXT, ZIP</div>
+                </div>
+                <input type="file" id="lib-file-input" hidden accept=".pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx,.zip" onchange="libHandleFile(this)">
+              </div>
+              <button class="btn btn-p" id="lib-upload-btn" onclick="uploadLibraryDoc()" disabled style="width:100%;justify-content:center;margin-bottom:10px">Upload &amp; Extract</button>
+              <div id="lib-log"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -1897,164 +2111,368 @@ function filterIntel(q){
   loadIntelDocs(STATE.proj);
 }
 
-// ══ KNOWLEDGE LIBRARY (v73) ════════════════════════════════════
-const KLIB = { docs: [], q: '', filterCanonical: false, filterSupply: false, filterRegistered: false, filterSource: '', filterHasText: '', sortCol: 'created_at', sortDir: 'desc', extracting: false };
+// ══ KNOWLEDGE LIBRARY v2 (three-panel) ════════════════════════
+let klDocs = [];
+let klSel = new Set();
+let klCurDoc = null;
+let klProject = '';
+let klCanonical = false;
+let klSort = 'date';
+let klExtracting = false;
 
-function renderLibrary(){ loadKnowledgeLibrary(); }
+function renderLibrary(){ klInit(); }
 
-async function loadKnowledgeLibrary() {
-  const res = await fetch(`${API}/api/primitives/taxonomy/search?limit=500`);
-  const data = await res.json();
-  KLIB.docs = data.docs || [];
-  klibRender();
-}
-
-function klibFilteredDocs() {
-  let docs = KLIB.docs;
-  if (KLIB.q) {
-    const q = KLIB.q.toLowerCase();
-    docs = docs.filter(d =>
-      (d.title||'').toLowerCase().includes(q) ||
-      (d.registry_doc_type||'').toLowerCase().includes(q) ||
-      (d.registry||'').toLowerCase().includes(q)
-    );
-  }
-  if (KLIB.filterCanonical) docs = docs.filter(d => d.is_canonical == 1);
-  if (KLIB.filterSupply) docs = docs.filter(d => d.source_type === 'rfp_supply');
-  if (KLIB.filterRegistered) docs = docs.filter(d => d.is_registered_example == 1);
-  if (KLIB.filterSource) docs = docs.filter(d => d.source_type === KLIB.filterSource);
-  if (KLIB.filterHasText === '1') docs = docs.filter(d => d.word_count > 0);
-  if (KLIB.filterHasText === '0') docs = docs.filter(d => !d.word_count);
-  return docs;
-}
-
-function klibSort(col) {
-  if (KLIB.sortCol === col) { KLIB.sortDir = KLIB.sortDir === 'asc' ? 'desc' : 'asc'; }
-  else { KLIB.sortCol = col; KLIB.sortDir = 'desc'; }
-  KLIB.docs.sort((a, b) => {
-    const va = a[col] ?? '';
-    const vb = b[col] ?? '';
-    const cmp = typeof va === 'number' && typeof vb === 'number' ? va - vb : String(va).localeCompare(String(vb), undefined, {numeric: true});
-    return KLIB.sortDir === 'asc' ? cmp : -cmp;
-  });
-  klibRender();
-}
-
-function klibSourceBadge(sourceType) {
-  const map = {
-    rfp_supply: { label: 'RFP Supply', bg: 'rgba(245,166,35,0.15)', color: '#F5A623' },
-    crawler: { label: 'Crawler', bg: 'rgba(0,212,170,0.12)', color: '#00D4AA' },
-    direct_upload: { label: 'Uploaded', bg: 'rgba(91,156,246,0.15)', color: '#5B9CF6' },
-    gdrive: { label: 'Google Drive', bg: 'rgba(52,168,83,0.15)', color: '#34A853' },
-    project_extract: { label: 'Project', bg: 'rgba(167,139,250,0.15)', color: '#A78BFA' },
-    project_sync: { label: 'Project', bg: 'rgba(167,139,250,0.15)', color: '#A78BFA' },
-    web_scrape: { label: 'Web', bg: 'rgba(255,255,255,0.07)', color: 'var(--txt2)' },
-    workflow: { label: 'Workflow', bg: 'rgba(255,255,255,0.07)', color: 'var(--txt2)' },
-  };
-  const s = map[sourceType] || { label: sourceType || '—', bg: 'rgba(255,255,255,0.05)', color: 'var(--txt3)' };
-  return `<span style="font-size:9px;background:${s.bg};color:${s.color};padding:2px 5px;border-radius:3px;white-space:nowrap">${s.label}</span>`;
-}
-
-function klibRender() {
-  const container = document.getElementById('klib-container');
-  if (!container) return;
-  const docs = klibFilteredDocs();
-
-  container.innerHTML = `
-    <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
-      <input type="text" placeholder="Search title, type, registry…" value="${escHtml(KLIB.q)}" oninput="KLIB.q=this.value;klibRender()"
-        style="flex:1;min-width:200px;max-width:300px;padding:6px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:var(--txt1);font-size:11px">
-      <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:5px;cursor:pointer">
-        <input type="checkbox" ${KLIB.filterCanonical?'checked':''} onchange="KLIB.filterCanonical=this.checked;klibRender()"> ★ Canonical only
-      </label>
-      <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:5px;cursor:pointer">
-        <input type="checkbox" ${KLIB.filterSupply?'checked':''} onchange="KLIB.filterSupply=this.checked;klibRender()"> Supply Docs
-      </label>
-      <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:5px;cursor:pointer">
-        <input type="checkbox" ${KLIB.filterRegistered?'checked':''} onchange="KLIB.filterRegistered=this.checked;klibRender()"> Registered Examples
-      </label>
-      <select onchange="KLIB.filterSource=this.value;klibRender()" style="padding:4px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:var(--txt1);font-size:10px">
-        <option value="" ${!KLIB.filterSource?'selected':''}>All sources</option>
-        <option value="gdrive" ${KLIB.filterSource==='gdrive'?'selected':''}>Google Drive</option>
-        <option value="direct_upload" ${KLIB.filterSource==='direct_upload'?'selected':''}>Uploaded</option>
-        <option value="crawler" ${KLIB.filterSource==='crawler'?'selected':''}>Crawler</option>
-        <option value="project_extract" ${KLIB.filterSource==='project_extract'?'selected':''}>Project</option>
-      </select>
-      <select onchange="KLIB.filterHasText=this.value;klibRender()" style="padding:4px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:4px;color:var(--txt1);font-size:10px">
-        <option value="" ${!KLIB.filterHasText?'selected':''}>All extraction</option>
-        <option value="1" ${KLIB.filterHasText==='1'?'selected':''}>Has text</option>
-        <option value="0" ${KLIB.filterHasText==='0'?'selected':''}>No text</option>
-      </select>
-      <span style="font-size:10px;color:var(--txt3)">${docs.length} documents</span>
-      ${(()=>{const noText=KLIB.docs.filter(d=>!d.word_count).length; return noText>0?`<button onclick="klibExtractAll()" ${KLIB.extracting?'disabled':''} style="font-size:9px;padding:3px 10px;border-radius:3px;border:none;background:rgba(52,168,83,0.2);color:#34A853;cursor:pointer;white-space:nowrap">${KLIB.extracting?'Extracting...':'Extract All ('+noText+')'}</button>`:''})()}
-    </div>
-    <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.08)">
-          ${[['title','Title'],['registry_doc_type','Type'],['source_type','Source'],['registry','Registry'],['version','Ver'],['word_count','Words'],['is_canonical','★']].map(([col,label])=>`
-            <th onclick="klibSort('${col}')" style="text-align:left;padding:6px 8px;color:var(--txt3);font-weight:500;cursor:pointer;white-space:nowrap;font-size:9px;text-transform:uppercase;letter-spacing:.06em">${label}${KLIB.sortCol===col?(KLIB.sortDir==='asc'?' ↑':' ↓'):''}</th>`).join('')}
-          <th style="padding:6px 8px"></th>
-        </tr></thead>
-        <tbody>
-          ${!docs.length ? '<tr><td colspan="8" style="padding:20px;color:var(--txt3);text-align:center">No documents found</td></tr>' :
-            docs.map(d=>`
-              <tr style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background .1s" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
-                <td style="padding:7px 8px;color:var(--txt1);max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(d.title||'')}">${escHtml(d.title||'—')}</td>
-                <td style="padding:7px 8px">${(d.registry_doc_type||d.doc_type)?`<span style="font-size:9px;background:rgba(180,100,255,0.2);color:#B464FF;padding:2px 5px;border-radius:3px;white-space:nowrap">${REGISTRY_DOC_TYPE_LABELS[d.registry_doc_type||d.doc_type]||(d.registry_doc_type||d.doc_type)}</span>`:'<span style="color:var(--txt3)">—</span>'}</td>
-                <td style="padding:7px 8px">${klibSourceBadge(d.source_type)}</td>
-                <td style="padding:7px 8px;color:var(--txt2);white-space:nowrap">${REG_LABELS[d.registry]||d.registry||'—'}</td>
-                <td style="padding:7px 8px;color:var(--txt3);white-space:nowrap">${d.version||'—'}</td>
-                <td style="padding:7px 8px;color:var(--txt3);text-align:right;white-space:nowrap">${d.word_count?Number(d.word_count).toLocaleString():'—'}</td>
-                <td style="padding:7px 8px;text-align:center">${d.is_registered_example==1?'<span style="color:#F5A623;font-size:10px" title="Registered Example">★ Example</span>':(d.is_canonical==1?'<span style="color:#E8A020;font-size:10px" title="Canonical Methodology">★ Method</span>':'')}</td>
-                <td style="padding:7px 8px">
-                  <button onclick="viewLibText('${d.id}','${escHtml(d.title||'doc').replace(/'/g,"\\'")}')" style="font-size:9px;padding:3px 8px;border-radius:3px;border:none;background:rgba(255,255,255,0.07);color:var(--txt2);cursor:pointer">Preview</button>
-                </td>
-              </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>`;
-}
-
-async function klibExtractAll() {
-  if (KLIB.extracting) return;
-  KLIB.extracting = true;
-  klibRender();
-  const log = document.getElementById('lib-log');
+async function klInit() {
   try {
-    if (log) log.innerHTML = `<div style="font-size:11px;color:var(--txt2);padding:6px 0">Queuing documents for extraction...</div>`;
-    const noTextDocs = KLIB.docs.filter(d => !d.word_count).length;
+    const res = await fetch(`${API}/api/primitives/taxonomy/search?limit=500`);
+    const data = await res.json();
+    klDocs = data.docs || [];
+    klBuildProjectTree();
+    klUpdatePipelineBar();
+    klRender();
+  } catch(e) { console.error('KL init error:', e); }
+}
+
+function klUpdatePipelineBar() {
+  const extracted = klDocs.filter(d => d.word_count > 0).length;
+  const pending = klDocs.filter(d => !d.word_count || d.word_count === 0).length;
+  const total = klDocs.length;
+  const el = id => document.getElementById(id);
+  if(el('kl-extracted-count')) el('kl-extracted-count').textContent = extracted;
+  if(el('kl-pending-count')) el('kl-pending-count').textContent = pending;
+  if(el('kl-total-count')) el('kl-total-count').textContent = total;
+  if(el('kl-all-count')) el('kl-all-count').textContent = total;
+  const btn = el('kl-extract-all-btn');
+  if(btn) btn.textContent = klExtracting ? 'Extracting...' : 'Extract all pending (' + pending + ')';
+  if(btn) btn.disabled = klExtracting;
+  const notice = el('kl-notice');
+  if(notice) {
+    if(pending > 0) { notice.style.display='flex'; if(el('kl-notice-text')) el('kl-notice-text').textContent = pending + ' documents'; }
+    else { notice.style.display='none'; }
+  }
+}
+
+const KL_PROJECT_NAMES = {
+  'sierra_culebra_za_for_02_2026': 'Sierra Culebra',
+  'amoedo': 'Amoedo',
+  'naturebrain_el_guindo': 'NatureBrain',
+  'bosquia': 'Bosquia',
+  'marakoa': 'Marakoa',
+  'clearsky_internal': 'Internal',
+  'woodcache': 'WoodCache',
+  'lagreca_blue_carbon': 'LaGreca Blue Carbon',
+  'gs_bcfw_mangroves': 'GS Mangroves',
+  'enersol_tsb': 'Enersol TSB',
+  'global': 'Global / Reference',
+  'registry_reference': 'Registry Reference',
+};
+
+function klFormatProject(slug) {
+  if(!slug) return 'Unassigned';
+  return KL_PROJECT_NAMES[slug] || slug.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+}
+
+function klBuildProjectTree() {
+  const projects = {};
+  klDocs.forEach(d => { const p = d.project || ''; if(!projects[p]) projects[p] = 0; projects[p]++; });
+  const tree = document.getElementById('kl-project-tree');
+  if(!tree) return;
+  tree.innerHTML = '';
+  Object.entries(projects).sort((a,b) => b[1]-a[1]).forEach(([proj, count]) => {
+    const el = document.createElement('div');
+    el.className = 'kl-si' + (klProject === proj ? ' kl-on' : '');
+    el.setAttribute('data-project', proj);
+    el.onclick = function(){ klSetProject(this, proj); };
+    el.innerHTML = '<span class="kl-sico">&#9656;</span>' + escHtml(klFormatProject(proj)) + '<span class="kl-ct">' + count + '</span>';
+    tree.appendChild(el);
+  });
+}
+
+function klSetProject(el, project) {
+  document.querySelectorAll('.kl-si').forEach(e => e.classList.remove('kl-on'));
+  el.classList.add('kl-on');
+  klProject = project;
+  klRender();
+}
+
+function klToggleCanonical() {
+  klCanonical = !klCanonical;
+  const btn = document.getElementById('kl-canonical-btn');
+  if(btn) btn.classList.toggle('kl-fbt-on', klCanonical);
+  klRender();
+}
+
+function klToggleSort() {
+  klSort = klSort === 'date' ? 'words' : klSort === 'words' ? 'title' : 'date';
+  const lbl = document.getElementById('kl-sort-label');
+  if(lbl) lbl.textContent = klSort.charAt(0).toUpperCase() + klSort.slice(1);
+  klRender();
+}
+
+function klSortBy(col) {
+  if(col === 'title') klSort = 'title';
+  else if(col === 'word_count') klSort = 'words';
+  else klSort = 'date';
+  const lbl = document.getElementById('kl-sort-label');
+  if(lbl) lbl.textContent = klSort.charAt(0).toUpperCase() + klSort.slice(1);
+  klRender();
+}
+
+function klGetFiltered() {
+  const q = (document.getElementById('kl-search')?.value || '').toLowerCase();
+  const tf = document.getElementById('kl-type-filter')?.value || '';
+  const sf = document.getElementById('kl-status-filter')?.value || '';
+  const rf = document.getElementById('kl-registry-filter')?.value || '';
+  const src = document.getElementById('kl-source-filter')?.value || '';
+  return klDocs.filter(d => {
+    if(klProject !== '' && (d.project||'') !== klProject) return false;
+    if(q && !(d.title||'').toLowerCase().includes(q) && !(d.project||'').toLowerCase().includes(q) && !(d.registry||'').toLowerCase().includes(q)) return false;
+    const dtype = d.doc_type || d.document_type || '';
+    if(tf && dtype !== tf) return false;
+    if(sf === 'extracted' && !(d.word_count > 0)) return false;
+    if(sf === 'pending' && d.word_count > 0) return false;
+    if(rf && (d.registry||'') !== rf) return false;
+    if(src && (d.source_type||'') !== src) return false;
+    if(klCanonical && d.is_canonical != 1) return false;
+    return true;
+  }).sort((a,b) => {
+    if(klSort === 'words') return (b.word_count||0) - (a.word_count||0);
+    if(klSort === 'title') return (a.title||'').localeCompare(b.title||'');
+    return new Date(b.created_at||0) - new Date(a.created_at||0);
+  });
+}
+
+const KL_TYPE_MAP = {
+  'legal_agreement':['kl-tl','Legal'],'financial_model':['kl-tm','Model'],'core_methodology':['kl-ty','Methodology'],
+  'technical_report':['kl-tr','Report'],'presentation':['kl-td','Deck'],'market_intelligence':['kl-tk','Market'],
+  'policy_document':['kl-ty','Policy'],'correspondence':['kl-to','Corresp'],'project_description':['kl-tm','Project'],
+  'gis_data':['kl-tr','GIS'],'budget':['kl-tk','Budget'],'methodology':['kl-ty','Methodology'],
+  'pdd_example':['kl-tm','PDD'],'audit_report':['kl-tr','Audit'],'benchmark':['kl-tk','Benchmark'],
+  'guidance':['kl-ty','Guidance'],'heuristic':['kl-to','Heuristic'],'cuaderno-zona':['kl-to','Cuaderno'],
+  'contact_intelligence':['kl-tl','Contact'],
+};
+const KL_SOURCE_MAP = {
+  gdrive:{label:'GDrive',bg:'rgba(52,168,83,0.15)',color:'#34A853'},
+  direct_upload:{label:'Upload',bg:'rgba(91,156,246,0.15)',color:'#5B9CF6'},
+  crawler:{label:'Crawler',bg:'rgba(0,212,170,0.12)',color:'#00D4AA'},
+  project_extract:{label:'Project',bg:'rgba(167,139,250,0.15)',color:'#A78BFA'},
+  project_sync:{label:'Project',bg:'rgba(167,139,250,0.15)',color:'#A78BFA'},
+  rfp_supply:{label:'RFP',bg:'rgba(245,166,35,0.15)',color:'#F5A623'},
+  workflow:{label:'Workflow',bg:'rgba(255,255,255,0.07)',color:'var(--txt2)'},
+  web_scrape:{label:'Web',bg:'rgba(255,255,255,0.07)',color:'var(--txt2)'},
+  contact_intelligence:{label:'Intel',bg:'rgba(91,155,213,0.12)',color:'#5B9BD5'},
+};
+
+function klTypeBadge(type) {
+  const [cls, label] = KL_TYPE_MAP[type] || ['kl-to', type || 'Other'];
+  return '<span class="kl-tb ' + cls + '">' + escHtml(label) + '</span>';
+}
+
+function klSourceBadge(sourceType) {
+  const s = KL_SOURCE_MAP[sourceType] || {label:sourceType||'—',bg:'rgba(255,255,255,0.05)',color:'var(--txt3)'};
+  return '<span style="font-size:9px;background:'+s.bg+';color:'+s.color+';padding:2px 5px;border-radius:3px;white-space:nowrap">'+escHtml(s.label)+'</span>';
+}
+
+function klRender() {
+  const rows = klGetFiltered();
+  const vc = document.getElementById('kl-visible-count');
+  if(vc) vc.textContent = rows.length + ' document' + (rows.length !== 1 ? 's' : '');
+  const tbody = document.getElementById('kl-tbody');
+  if(!tbody) return;
+  tbody.innerHTML = '';
+  if(!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="10" style="padding:20px;color:var(--txt3);text-align:center">No documents found</td></tr>';
+    return;
+  }
+  rows.forEach(d => {
+    const tr = document.createElement('tr');
+    if(klSel.has(d.id)) tr.classList.add('kl-sel');
+    if(d.id === klCurDoc) tr.classList.add('kl-cur');
+    const isPending = !d.word_count || d.word_count === 0;
+    const dotColor = isPending ? '#D4A843' : '#1A8A6E';
+    const dotTitle = isPending ? 'Pending extraction' : 'Extracted';
+    const dtype = d.doc_type || d.document_type || d.registry_doc_type || '';
+    const words = isPending
+      ? '<span class="kl-wc kl-none">&#9203; &mdash;</span>'
+      : '<span class="kl-wc">' + Number(d.word_count).toLocaleString() + '</span>';
+    const starChar = (d.is_canonical==1||d.is_registered_example==1) ? '<span style="color:#D4A843">&#9733;</span>' : '<span style="color:var(--txt3);cursor:pointer">&#9734;</span>';
+    const safeId = JSON.stringify(d.id);
+    const safeTitle = escHtml(d.title||'doc').replace(/'/g,"\\'");
+    tr.innerHTML =
+      '<td><input type="checkbox" ' + (klSel.has(d.id)?'checked':'') + ' onchange="klTog('+safeId+',this)" style="cursor:pointer;accent-color:#5B9BD5"></td>' +
+      '<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+dotColor+'" title="'+dotTitle+'"></span></td>' +
+      '<td><div class="kl-fn" onclick="klOpenDoc('+safeId+')" title="'+escHtml(d.title||'')+'">' + escHtml(d.title||'Untitled') + '</div></td>' +
+      '<td>' + klTypeBadge(dtype) + '</td>' +
+      '<td style="font-size:11px;color:var(--txt2);white-space:nowrap">' + escHtml(klFormatProject(d.project||'')) + '</td>' +
+      '<td>' + klSourceBadge(d.source_type) + '</td>' +
+      '<td>' + words + '</td>' +
+      '<td style="font-size:10px;color:var(--txt3)">' + escHtml(d.registry||'—') + '</td>' +
+      '<td><span class="kl-star" onclick="klTogStar('+safeId+')">' + starChar + '</span></td>' +
+      '<td><a class="kl-al" onclick="klOpenDoc('+safeId+')">Preview</a></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+/* ── KL Selection ── */
+function klTog(id, cb) { cb.checked ? klSel.add(id) : klSel.delete(id); klUpdateBbar(); klRender(); }
+function klSelAll(cb) { klGetFiltered().forEach(d => cb.checked ? klSel.add(d.id) : klSel.delete(d.id)); klUpdateBbar(); klRender(); }
+function klClearSel() { klSel.clear(); const sa = document.getElementById('kl-sa'); if(sa) sa.checked = false; klUpdateBbar(); klRender(); }
+function klUpdateBbar() {
+  const bb = document.getElementById('kl-bbar');
+  if(bb) bb.style.display = klSel.size > 0 ? 'flex' : 'none';
+  const sc = document.getElementById('kl-sel-count');
+  if(sc) sc.textContent = klSel.size + ' selected';
+}
+
+/* ── KL Preview Panel ── */
+function klOpenDoc(id) {
+  klCurDoc = id;
+  const d = klDocs.find(x => x.id === id);
+  if(!d) return;
+  document.getElementById('kl-panel-empty').style.display = 'none';
+  const pc = document.getElementById('kl-panel-content');
+  pc.style.display = 'flex';
+  document.getElementById('kl-panel-title').textContent = d.title || 'Untitled';
+  document.getElementById('kl-panel-type').textContent = (KL_TYPE_MAP[d.doc_type||d.document_type||'']||['','Other'])[1] || d.doc_type || d.registry_doc_type || '—';
+  document.getElementById('kl-panel-project').textContent = klFormatProject(d.project || '');
+  document.getElementById('kl-panel-source').innerHTML = klSourceBadge(d.source_type);
+  document.getElementById('kl-panel-words').textContent = d.word_count > 0 ? d.word_count.toLocaleString() + ' words' : 'Not yet extracted';
+  document.getElementById('kl-panel-date').textContent = d.created_at ? new Date(d.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+  document.getElementById('kl-panel-registry').textContent = d.registry || 'Unspecified';
+  // Fetch full text for preview
+  fetch(`${API}/api/knowledge/docs/${d.id}`).then(r=>r.json()).then(data=>{
+    const txt = data.markdown || data.summary || '';
+    document.getElementById('kl-panel-preview').textContent = txt ? txt.substring(0,800) + (txt.length>800?'...':'') : 'Text not yet extracted. Click "Re-extract text" to process.';
+  }).catch(()=>{
+    document.getElementById('kl-panel-preview').textContent = 'Could not load preview.';
+  });
+  // GDrive button
+  const driveBtn = document.getElementById('kl-gdrive-btn');
+  if(d.source_type === 'gdrive' && d.source_id) {
+    driveBtn.style.display = 'flex';
+    driveBtn.setAttribute('data-fileid', d.source_id);
+  } else { driveBtn.style.display = 'none'; }
+  klRender();
+}
+
+function klClosePanel() {
+  klCurDoc = null;
+  document.getElementById('kl-panel-empty').style.display = 'flex';
+  document.getElementById('kl-panel-content').style.display = 'none';
+  klRender();
+}
+
+/* ── KL Actions ── */
+function klAskAbout() {
+  const d = klDocs.find(x => x.id === klCurDoc);
+  if(!d) return;
+  // Switch to intel/ask section and prefill
+  const ragInput = document.getElementById('raginput');
+  if(ragInput) {
+    ragInput.value = 'Summarize "' + (d.title||'') + '" and give me the key numbers and dates';
+    ragInput.focus();
+  }
+}
+
+function klReExtract() {
+  if(!klCurDoc) return;
+  fetch(`${API}/api/knowledge/extract-batch`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ doc_ids: [klCurDoc] })
+  }).then(() => { setTimeout(klInit, 3000); });
+}
+
+function klOpenDrive() {
+  const btn = document.getElementById('kl-gdrive-btn');
+  const fileId = btn?.getAttribute('data-fileid');
+  if(fileId) window.open('https://drive.google.com/file/d/' + fileId + '/view', '_blank');
+}
+
+function klDownloadOriginal() {
+  if(!klCurDoc) return;
+  const d = klDocs.find(x => x.id === klCurDoc);
+  if(d) downloadLibOriginal(d.id, d.title || 'document');
+}
+
+function klViewFullText() {
+  if(!klCurDoc) return;
+  const d = klDocs.find(x => x.id === klCurDoc);
+  if(d) viewLibText(d.id, d.title || 'document');
+}
+
+function klTogStar(id) {
+  const d = klDocs.find(x => x.id === id);
+  if(!d) return;
+  const newVal = d.is_canonical == 1 ? 0 : 1;
+  d.is_canonical = newVal;
+  fetch(`${API}/api/primitives/taxonomy/assign`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ doc_id: id, is_canonical: newVal })
+  }).catch(()=>{});
+  klRender();
+}
+
+async function klExtractAll() {
+  if(klExtracting) return;
+  klExtracting = true;
+  klUpdatePipelineBar();
+  try {
+    const noTextCount = klDocs.filter(d => !d.word_count).length;
     const res = await fetch(`${API}/api/knowledge/extract-batch`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ limit: noTextDocs }),
+      body: JSON.stringify({ limit: noTextCount })
     });
-    if (!res.ok) { const t = await res.text(); throw new Error(t); }
-    const data = await res.json();
-    const queued = (data.queued || []).length;
-    const errors = (data.errors || []).length;
-    if (log) log.innerHTML = `<div style="font-size:11px;color:#34A853;padding:6px 0">${queued} queued for extraction, ${errors} errors. Processing in background...</div>`;
+    if(!res.ok) throw new Error(await res.text());
     // Poll for completion
     let polls = 0;
     const pollInterval = setInterval(async () => {
       polls++;
-      await loadKnowledgeLibrary();
-      const remaining = KLIB.docs.filter(d => !d.word_count).length;
-      if (log) log.innerHTML = `<div style="font-size:11px;color:var(--txt2);padding:6px 0">Extracting... ${remaining} docs remaining (poll ${polls})</div>`;
-      if (remaining === 0 || polls > 60) {
+      await klInit();
+      const remaining = klDocs.filter(d => !d.word_count).length;
+      if(remaining === 0 || polls > 60) {
         clearInterval(pollInterval);
-        KLIB.extracting = false;
-        klibRender();
-        if (log) log.innerHTML = remaining === 0
-          ? `<div style="font-size:11px;color:#34A853;padding:6px 0">All documents extracted.</div>`
-          : `<div style="font-size:11px;color:var(--txt2);padding:6px 0">${remaining} still processing in background. Refresh later.</div>`;
+        klExtracting = false;
+        klUpdatePipelineBar();
       }
     }, 10000);
-  } catch (e) {
-    if (log) log.innerHTML = `<div style="font-size:11px;color:#F44;padding:6px 0">Error: ${e.message}</div>`;
-    KLIB.extracting = false;
-    klibRender();
+  } catch(e) {
+    console.error('Extract all error:', e);
+    klExtracting = false;
+    klUpdatePipelineBar();
   }
 }
+
+function klBatchExtract() {
+  if(!klSel.size) return;
+  fetch(`${API}/api/knowledge/extract-batch`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ doc_ids: [...klSel] })
+  }).then(() => { klClearSel(); setTimeout(klInit, 3000); });
+}
+
+function klBatchDelete() {
+  if(!klSel.size) return;
+  if(!confirm('Delete ' + klSel.size + ' documents? This cannot be undone.')) return;
+  Promise.all([...klSel].map(id =>
+    fetch(`${API}/api/wiki/docs/${id}`, { method: 'DELETE' })
+  )).then(() => { klClearSel(); klInit(); });
+}
+
+function klBatchReclassify() {
+  alert('Re-classify ' + klSel.size + ' documents via AI taxonomy. Coming soon.');
+}
+
+function klToggleUpload() {
+  const el = document.getElementById('kl-upload-wrap');
+  if(el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+// Keep backward compat for code that calls loadKnowledgeLibrary
+async function loadKnowledgeLibrary() { await klInit(); }
 
 function setProjectStats(){
   const s = (id,l,v,c) => { document.getElementById(id+'l').textContent=l; const ve=document.getElementById(id+'v'); ve.textContent=v; ve.style.color=c||'var(--txt0)'; };
@@ -2182,8 +2600,7 @@ async function deleteLibDoc(id, btn){
   try {
     const res = await fetch(`${API}/api/wiki/docs/${id}`,{method:'DELETE'});
     if(!res.ok) throw new Error('Delete failed');
-    loadKnowledgeLibrary();
-    updateLibraryStats();
+    klInit();
   } catch(e){ alert('Delete failed: '+e.message); btn.disabled=false; btn.textContent='🗑'; }
 }
 
@@ -2616,8 +3033,7 @@ async function uploadLibraryDoc(){
   document.getElementById('lib-dropzone').innerHTML='<span>Drop file or ZIP here, or click to browse</span><div style="font-size:10px;color:var(--txt3);margin-top:4px">PDF, DOCX, XLSX, TXT, ZIP</div>';
   btn.disabled=true;
   btn.textContent='Upload \u0026 Extract';
-  loadKnowledgeLibrary();
-  updateLibraryStats();
+  klInit();
 }
 
 // ══ RAG ═══════════════════════════════════════════════════
@@ -2686,7 +3102,7 @@ function showPlatform(v){
   document.getElementById('topacts').innerHTML=`<button class="btn btn-g btn-s" onclick="openWiz()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New Project</button><button class="btn btn-p btn-s">Generate</button>`;
   document.querySelectorAll('#content .view').forEach(x=>x.classList.remove('on'));
   document.getElementById('v-'+v).classList.add('on');
-  if(v==='library'){ loadKnowledgeLibrary(); updateLibraryStats(); initGDriveSection(); }
+  if(v==='library'){ klInit(); updateLibraryStats(); initGDriveSection(); }
   if(v==='pipeline') setProjectStats();
   if(v==='workflows') loadWorkflowHistory();
   if(v==='methodology') loadMethodologyTab();
