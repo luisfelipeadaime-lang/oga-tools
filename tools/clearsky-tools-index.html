@@ -321,6 +321,7 @@ var user=null;
 async function api(path,opts){
   opts=opts||{};opts.headers=opts.headers||{};
   if(token)opts.headers['Authorization']='Bearer '+token;
+  opts.headers['X-Pablo-Caller']='CGaGvKcPOkYvumsGdSxEdKJ8vpAioHfiv3ppqf3WzVs';
   if(!(opts.body instanceof FormData)&&opts.body)opts.headers['Content-Type']='application/json';
   var r=await fetch(API+path,opts);
   if(r.status===401){logout();throw new Error('Session expired')}

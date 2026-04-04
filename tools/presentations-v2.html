@@ -405,6 +405,7 @@ document.addEventListener('paste',function(e){
 async function apiCall(path,opts){
   opts=opts||{};opts.headers=opts.headers||{};
   if(token)opts.headers['Authorization']='Bearer '+token;
+  opts.headers['X-Pablo-Caller']='CGaGvKcPOkYvumsGdSxEdKJ8vpAioHfiv3ppqf3WzVs';
   if(!(opts.body instanceof FormData)&&opts.body&&!opts.headers['Content-Type'])opts.headers['Content-Type']='application/json';
   var r=await fetch(API+path,opts);
   if(!r.ok){var err=await r.json().catch(function(){return{error:'Request failed'}});throw new Error(err.error||'Request failed')}
