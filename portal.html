@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClearSky Team Portal</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect fill='%230A1628' width='32' height='32' rx='6'/><text x='6' y='23' fill='%23C8A951' font-size='18' font-weight='bold'>CS</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --navy:#0A1628;--navy-mid:#0F2140;--navy-light:#1A3155;
+  --gold:#C8A951;--gold-light:#E8D49A;--gold-dim:rgba(200,169,81,.15);
+  --bg:#060E1A;--card:#0C1829;--card-hover:#101E33;
+  --border:rgba(200,169,81,.12);--border-bright:rgba(200,169,81,.25);
+  --text:#E8ECF2;--muted:#7A8BA0;--faint:#4A5568;
+}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
+
+/* noise */
+body::before{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.65' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0}
+
+/* glow */
+.glow{position:fixed;top:-200px;left:50%;width:800px;height:800px;transform:translateX(-50%);background:radial-gradient(ellipse,rgba(200,169,81,.06),transparent 70%);pointer-events:none;z-index:0}
+
+.wrap{position:relative;z-index:1;width:100%;max-width:640px;padding:40px 24px;text-align:center}
+
+/* logo */
+.logo{width:180px;margin:0 auto 24px;display:block;opacity:.95}
+
+/* headings */
+.brand{font-family:'Playfair Display',serif;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:8px;font-weight:600}
+h1{font-family:'Playfair Display',serif;font-size:36px;color:#fff;margin-bottom:8px;font-weight:700}
+.sub{font-size:14px;color:var(--muted);margin-bottom:40px}
+
+/* primary CTA */
+.cta{display:inline-block;padding:16px 48px;background:var(--gold);color:var(--navy);font-size:16px;font-weight:700;border-radius:10px;text-decoration:none;font-family:inherit;transition:all .2s;cursor:pointer;border:none;margin-bottom:48px}
+.cta:hover{background:var(--gold-light);transform:translateY(-2px);box-shadow:0 8px 24px rgba(200,169,81,.25)}
+
+/* grid */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:36px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px 16px;text-decoration:none;color:var(--text);transition:all .2s}
+.card:hover{background:var(--card-hover);border-color:var(--border-bright);transform:translateY(-2px)}
+.card-icon{font-size:24px;margin-bottom:8px;display:block}
+.card-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.card-desc{font-size:11px;color:var(--muted);line-height:1.4}
+
+/* beta section */
+.beta-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--faint);margin-bottom:12px;font-weight:600}
+.beta-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:48px}
+.beta-card{background:rgba(12,24,41,.6);border:1px solid rgba(74,85,104,.25);border-radius:8px;padding:14px 12px;text-decoration:none;color:var(--faint);transition:all .2s;font-size:12px;font-weight:500}
+.beta-card:hover{color:var(--muted);border-color:rgba(74,85,104,.5);background:rgba(12,24,41,.9)}
+
+/* footer */
+.foot{font-size:11px;color:var(--faint);padding-top:24px;border-top:1px solid rgba(74,85,104,.15)}
+
+@media(max-width:520px){
+  .grid,.beta-grid{grid-template-columns:1fr}
+  h1{font-size:28px}
+  .cta{padding:14px 36px;font-size:15px}
+}
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div class="wrap">
+  <img src="assets/logos/clearsky-logo-white.png" alt="ClearSky" class="logo">
+  <div class="brand">ClearSky Limited</div>
+  <h1>Team Portal</h1>
+  <p class="sub">Carbon Market Intelligence Platform</p>
+
+  <a class="cta" href="/tools/clearskyplatform.html">Open Platform &rarr;</a>
+
+  <div class="grid">
+    <a href="/tools/rfp-screener.html" class="card">
+      <span class="card-icon">&#9776;</span>
+      <div class="card-title">RFP Screener</div>
+      <div class="card-desc">Supply evaluation and project scoring</div>
+    </a>
+    <a href="/tools/miteco.html" class="card">
+      <span class="card-icon">&#127794;</span>
+      <div class="card-title">MITECO</div>
+      <div class="card-desc">Spanish forest carbon analysis</div>
+    </a>
+    <a href="/tools/rfp-tracker.html" class="card">
+      <span class="card-icon">&#128203;</span>
+      <div class="card-title">RFP Tracker</div>
+      <div class="card-desc">Active RFP pipeline management</div>
+    </a>
+  </div>
+
+  <div class="beta-label">Beta</div>
+  <div class="beta-grid">
+    <a href="/tools/registry.html" class="beta-card">Registry Explorer</a>
+    <a href="/tools/file-librarian.html" class="beta-card">File Librarian</a>
+    <a href="/tools/wiki.html" class="beta-card">Knowledge Wiki</a>
+  </div>
+
+  <div class="foot">ClearSky Carbono S.L. &middot; Internal use only</div>
+</div>
+</body>
+</html>
