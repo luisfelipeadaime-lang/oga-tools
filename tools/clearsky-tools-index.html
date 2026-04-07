@@ -375,6 +375,7 @@ async function doLogin(){
     var d=await r.json();
     if(d.error){showErr('l-err',d.error);btn.disabled=false;btn.textContent='Sign In';return}
     token=d.token;user=d.user;localStorage.setItem('cs_token',token);
+    document.cookie='cs_auth=1; path=/; max-age=86400; SameSite=Lax; Secure';
     showDashboard();
   }catch(e){showErr('l-err','Connection failed — check network');btn.disabled=false;btn.textContent='Sign In'}
 }
@@ -390,12 +391,13 @@ async function doSetup(){
     var d=await r.json();
     if(d.error){showErr('s-err',d.error);return}
     token=d.token;user=d.user;localStorage.setItem('cs_token',token);
+    document.cookie='cs_auth=1; path=/; max-age=86400; SameSite=Lax; Secure';
     showDashboard();
   }catch(e){showErr('s-err','Connection failed')}
 }
 
 function showErr(id,msg){var el=document.getElementById(id);el.textContent=msg;el.classList.add('show');setTimeout(function(){el.classList.remove('show')},4000)}
-function logout(){token=null;user=null;localStorage.removeItem('cs_token');showLogin()}
+function logout(){token=null;user=null;localStorage.removeItem('cs_token');document.cookie='cs_auth=; path=/; max-age=0';showLogin()}
 
 // Enter key on login
 document.getElementById('l-pass').addEventListener('keydown',function(e){if(e.key==='Enter')doLogin()});
