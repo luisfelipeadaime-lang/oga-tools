@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClearSky · Presentation Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:#0D1B3E; --midNavy:#1B2A4A; --lightBlue:#5B9BD5;
+  --gold:#D4A843; --white:#FFFFFF; --offWhite:#F5F7FA;
+  --midGray:#8A8F9A; --borderGray:#D0D7DE; --green:#1A8A6E; --red:#C0392B;
+  --font:'DM Sans',sans-serif; --mono:'DM Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--offWhite);color:var(--navy);min-height:100vh;display:flex;flex-direction:column;}
+
+/* NAV */
+.topnav{background:var(--navy);padding:0 28px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;flex-shrink:0;}
+.topnav-brand{display:flex;align-items:center;gap:10px;}
+.topnav-logo-text{font-size:16px;font-weight:600;color:var(--white);letter-spacing:-0.3px;}
+.topnav-logo-dot{color:var(--gold);}
+.topnav-sep{color:rgba(255,255,255,0.2);margin:0 6px;}
+.topnav-subtitle{font-size:12px;color:var(--midGray);font-weight:400;}
+.topnav-links{display:flex;gap:20px;align-items:center;}
+.topnav-links a{color:var(--midGray);text-decoration:none;font-size:12px;transition:color .15s;}
+.topnav-links a:hover{color:var(--white);}
+.topnav-cost{font-size:10px;color:var(--green);font-weight:600;letter-spacing:.3px;padding:3px 10px;border:1px solid rgba(26,138,110,.3);border-radius:20px;}
+
+/* PROGRESS */
+.progress-bar{background:var(--midNavy);padding:0 28px;height:40px;display:flex;align-items:center;gap:0;flex-shrink:0;}
+.prog-step{display:flex;align-items:center;gap:7px;opacity:.35;transition:opacity .3s;}
+.prog-step.active{opacity:1;}
+.prog-step.done{opacity:.65;}
+.prog-step.done .snum{background:var(--green);}
+.snum{width:20px;height:20px;border-radius:50%;background:var(--midGray);color:var(--white);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.prog-step.active .snum{background:var(--gold);color:var(--navy);}
+.slabel{font-size:11px;color:var(--white);white-space:nowrap;}
+.sarr{flex:1;height:2px;background:var(--borderGray);margin:0 6px;min-width:12px;max-width:36px;transition:background .3s;}
+.sarr.done{background:var(--green);}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;align-items:center;padding:36px 20px 72px;overflow-y:auto;}
+.screen{display:none;width:100%;max-width:680px;}
+.screen.active{display:block;animation:fadein .22s ease;}
+@keyframes fadein{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* HEADERS */
+.eyebrow{font-size:10px;font-weight:600;letter-spacing:2.5px;text-transform:uppercase;color:var(--lightBlue);margin-bottom:6px;}
+.stitle{font-size:26px;font-weight:300;color:var(--navy);margin-bottom:7px;line-height:1.2;}
+.stitle strong{font-weight:600;}
+.ssub{font-size:14px;color:var(--midGray);margin-bottom:28px;line-height:1.55;}
+
+/* PATH CARDS */
+.path-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:24px;}
+.pcard{background:var(--white);border:2px solid var(--borderGray);border-radius:14px;padding:28px 20px;cursor:pointer;transition:all .18s;text-align:center;}
+.pcard:hover{border-color:var(--lightBlue);box-shadow:0 6px 20px rgba(13,27,62,.1);transform:translateY(-2px);}
+.pcard-icon{font-size:36px;margin-bottom:14px;display:block;}
+.pcard h3{font-size:16px;font-weight:600;color:var(--navy);margin-bottom:6px;}
+.pcard p{font-size:12px;color:var(--midGray);line-height:1.5;margin-bottom:12px;}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:.3px;}
+.badge-g{background:#E6F7F3;color:var(--green);}
+.badge-b{background:#EEF4FC;color:var(--lightBlue);}
+.badge-a{background:#FFF8E6;color:#856404;}
+
+/* FIELDS */
+.field{margin-bottom:20px;}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--navy);margin-bottom:5px;}
+.field input,.field textarea{width:100%;padding:11px 14px;font-size:15px;font-family:var(--font);border:2px solid var(--borderGray);border-radius:7px;outline:none;transition:border-color .15s;color:var(--navy);resize:vertical;}
+.field input:focus,.field textarea:focus{border-color:var(--lightBlue);}
+.field input::placeholder,.field textarea::placeholder{color:var(--midGray);}
+.field-hint{font-size:11px;color:var(--midGray);margin-top:4px;}
+.field.err input,.field.err textarea{border-color:var(--red);animation:shake .3s;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+/* UPLOAD ZONE */
+.dz{border:2px dashed var(--borderGray);border-radius:9px;padding:24px;text-align:center;cursor:pointer;transition:all .18s;background:var(--offWhite);}
+.dz:hover{border-color:var(--lightBlue);background:#F0F7FF;}
+.dz.ok{border-color:var(--green);background:#F0FBF7;border-style:solid;}
+.dz input{display:none;}
+.dz-icon{font-size:24px;margin-bottom:6px;}
+.dz-text{font-size:13px;color:var(--navy);font-weight:500;margin-bottom:3px;}
+.dz-sub{font-size:11px;color:var(--midGray);}
+.dz-file{font-size:11px;color:var(--navy);padding:3px 7px;background:var(--white);border-radius:3px;margin-top:6px;display:inline-flex;align-items:center;gap:5px;}
+
+/* PHOTO GRID */
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
+.photo-slot{background:var(--white);border:2px dashed var(--borderGray);border-radius:9px;padding:14px 10px;cursor:pointer;transition:all .18s;text-align:center;min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.photo-slot:hover{border-color:var(--lightBlue);background:#F8FBFF;}
+.photo-slot.filled{border-style:solid;border-color:var(--green);background:#F0FBF7;}
+.photo-slot .ps-icon{font-size:20px;margin-bottom:4px;}
+.photo-slot .ps-label{font-size:10px;color:var(--midGray);line-height:1.3;word-break:break-word;}
+.photo-slot .ps-thumb{width:100%;height:60px;object-fit:cover;border-radius:4px;margin-bottom:4px;}
+
+/* PREVIEW TABLE */
+.prev-table{width:100%;border-collapse:collapse;margin-bottom:18px;}
+.prev-table th{text-align:left;font-size:10px;font-weight:600;color:var(--midGray);text-transform:uppercase;letter-spacing:1px;padding:6px 8px;border-bottom:2px solid var(--borderGray);}
+.prev-table td{font-size:13px;color:var(--navy);padding:10px 8px;border-bottom:1px solid var(--borderGray);}
+.prev-table tr:last-child td{border-bottom:none;}
+.prev-type{font-size:10px;padding:2px 7px;border-radius:3px;font-weight:600;letter-spacing:.3px;}
+.prev-type-title{background:var(--navy);color:var(--white);}
+.prev-type-content{background:var(--offWhite);color:var(--navy);}
+.prev-type-close{background:var(--gold);color:var(--navy);}
+.prev-photo{color:var(--green);font-size:12px;}
+
+/* BRAND SPEC */
+.brand-spec{background:var(--white);border:1.5px solid var(--borderGray);border-radius:9px;padding:14px 18px;margin-bottom:18px;}
+.brand-spec h4{font-size:12px;font-weight:600;color:var(--navy);margin-bottom:8px;}
+.brand-row{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;}
+.brand-key{color:var(--midGray);}
+.brand-val{color:var(--navy);font-weight:500;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 24px;border-radius:7px;font-family:var(--font);font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all .18s;text-decoration:none;white-space:nowrap;}
+.btn-primary{background:var(--navy);color:var(--white);}
+.btn-primary:hover{background:var(--midNavy);transform:translateY(-1px);box-shadow:0 4px 10px rgba(13,27,62,.25);}
+.btn-primary:disabled,.btn-gold:disabled{background:var(--midGray);cursor:not-allowed;transform:none;box-shadow:none;opacity:.6;}
+.btn-gold{background:var(--gold);color:var(--navy);font-weight:600;}
+.btn-gold:hover:not(:disabled){background:#C49835;transform:translateY(-1px);box-shadow:0 4px 10px rgba(212,168,67,.35);}
+.btn-ghost{background:transparent;color:var(--navy);border:1.5px solid var(--borderGray);}
+.btn-ghost:hover{border-color:var(--navy);background:var(--offWhite);}
+.btn-lg{padding:14px 32px;font-size:16px;border-radius:9px;}
+.isp{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* BOTTOM NAV */
+.bnav{display:flex;align-items:center;justify-content:space-between;margin-top:28px;padding-top:20px;border-top:1px solid var(--borderGray);}
+
+/* CALLOUTS */
+.callout{border-radius:7px;padding:12px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start;font-size:12px;line-height:1.5;}
+.callout-b{background:#EEF4FC;border-left:3px solid var(--lightBlue);color:#1A3F6F;}
+.ci{font-size:15px;flex-shrink:0;margin-top:1px;}
+
+/* LOADING */
+.lscreen{text-align:center;padding:56px 20px;}
+.spinner{width:48px;height:48px;border:3px solid var(--borderGray);border-top-color:var(--lightBlue);border-radius:50%;animation:spin .9s linear infinite;margin:0 auto 24px;}
+.ltitle{font-size:20px;font-weight:300;color:var(--navy);margin-bottom:6px;}
+
+/* DONE */
+.done-wrap{text-align:center;padding:0 0 32px;}
+.done-icon{width:64px;height:64px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 20px;color:var(--white);}
+.done-title{font-size:24px;font-weight:300;margin-bottom:6px;}
+.done-title strong{font-weight:600;}
+.done-sub{font-size:14px;color:var(--midGray);margin-bottom:28px;line-height:1.5;}
+.done-fname{font-family:var(--mono);font-size:13px;background:var(--offWhite);border:1px solid var(--borderGray);border-radius:5px;padding:6px 12px;display:inline-block;margin-bottom:18px;color:var(--navy);}
+
+/* ERRBOX */
+.errbox{background:#FEE9E8;border:1.5px solid var(--red);border-radius:7px;padding:12px 14px;font-size:12px;color:var(--red);margin-bottom:14px;display:none;}
+
+/* HINT */
+.mode-hint{font-size:12px;color:var(--midGray);text-align:center;line-height:1.5;}
+
+@media(max-width:700px){
+  .path-grid{grid-template-columns:1fr;}
+  .photo-grid{grid-template-columns:repeat(2,1fr);}
+  .topnav{padding:0 14px;}
+  .main{padding:20px 14px 60px;}
+  .progress-bar{display:none;}
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="topnav">
+  <div class="topnav-brand">
+    <div class="topnav-logo-text">Clear<span class="topnav-logo-dot">Sky</span></div>
+    <span class="topnav-sep">|</span>
+    <span class="topnav-subtitle">Presentation Builder</span>
+  </div>
+  <div class="topnav-links">
+    <span class="topnav-cost" id="cost-label">Choose your path</span>
+    <a href="/tools/clearsky-tools-index.html">&larr; Tools Home</a>
+  </div>
+</nav>
+
+<!-- PROGRESS BAR (Path B only) -->
+<div class="progress-bar" id="pbar" style="display:none;">
+  <div class="prog-step" id="p1"><div class="snum">1</div><div class="slabel">Outline</div></div>
+  <div class="sarr"></div>
+  <div class="prog-step" id="p2"><div class="snum">2</div><div class="slabel">Photos</div></div>
+  <div class="sarr"></div>
+  <div class="prog-step" id="p3"><div class="snum">3</div><div class="slabel">Preview</div></div>
+  <div class="sarr"></div>
+  <div class="prog-step" id="p4"><div class="snum">4</div><div class="slabel">Generate</div></div>
+</div>
+
+<main class="main">
+
+<!-- ── LANDING: PATH FORK ── -->
+<div class="screen active" id="landing">
+  <div style="text-align:center;margin-bottom:36px;">
+    <div class="eyebrow" style="text-align:center;">ClearSky Presentation Builder</div>
+    <div class="stitle" style="text-align:center;">How do you want to <strong>build your deck?</strong></div>
+    <div class="ssub" style="text-align:center;margin-bottom:0;">Three paths. Same branded output. Pick what fits your situation.</div>
+  </div>
+  <div class="path-grid">
+    <div class="pcard" onclick="window.location.href='presentations-v3.html'">
+      <span class="pcard-icon">&#x2728;</span>
+      <h3>Start from a document</h3>
+      <p>Upload a PD or PDD and the AI reads it, builds a slide outline, and generates a branded deck for you.</p>
+      <span class="badge badge-b">AI-assisted</span>
+    </div>
+    <div class="pcard" onclick="startOutlinePath()">
+      <span class="pcard-icon">&#x1F4DD;</span>
+      <h3>Start from an outline</h3>
+      <p>Paste your own outline with headings and bullets. Zero API calls. Instant PowerPoint download.</p>
+      <span class="badge badge-g">Zero cost &middot; instant</span>
+    </div>
+    <div class="pcard" onclick="window.location.href='presentations-v3.html'">
+      <span class="pcard-icon">&#x1F4CB;</span>
+      <h3>Use a template</h3>
+      <p>Start from a pre-built ClearSky template and customise the content in PowerPoint.</p>
+      <span class="badge badge-a">Coming soon</span>
+    </div>
+  </div>
+  <p class="mode-hint">Not sure? <strong>If you have a project PDF, choose option 1.</strong> If you already know what slides you want, choose option 2.</p>
+</div>
+
+<!-- ── STEP 1: OUTLINE INPUT ── -->
+<div class="screen" id="step1">
+  <div class="eyebrow">Step 1 of 4 &middot; Content</div>
+  <div class="stitle">Write your <strong>outline</strong></div>
+  <div class="ssub">Use <code style="background:var(--offWhite);padding:1px 5px;border-radius:3px;font-family:var(--mono);font-size:13px;border:1px solid var(--borderGray);">## Headings</code> for slide titles. Lines below each heading become bullet points.</div>
+
+  <div class="field" id="f-title">
+    <label for="deck-title">Deck title <span style="color:var(--red)">*</span></label>
+    <input type="text" id="deck-title" placeholder="e.g. Sierra Culebra Reforestation Overview" maxlength="120" oninput="checkStep1()">
+  </div>
+
+  <div class="field">
+    <label for="deck-cp">Counterparty name <span style="color:var(--midGray);font-weight:400;">(optional)</span></label>
+    <input type="text" id="deck-cp" placeholder="e.g. Caja Rural Zamora" maxlength="100">
+    <div class="field-hint">Appears on the title slide below your deck title.</div>
+  </div>
+
+  <div class="field" id="f-outline">
+    <label for="deck-outline">Outline <span style="color:var(--red)">*</span></label>
+    <textarea id="deck-outline" rows="12" placeholder="## Introduction
+ClearSky overview
+Spain reforestation focus
+
+## The Opportunity
+239 hectares in Zamora
+118,000 tCO2 projected credits
+EUR 18 per credit floor price
+
+## Project Details
+Four native species replanted
+20-year crediting period
+MITECO V7 methodology
+
+## Next Steps
+Site visit scheduled
+Financial model shared" oninput="checkStep1()"></textarea>
+    <div class="field-hint">Use ## for slide titles. Lines below become bullets. Or just paste plain text and we'll split on blank lines.</div>
+  </div>
+
+  <div style="text-align:center;margin-bottom:14px;">
+    <span style="color:var(--midGray);font-size:11px;">or</span>
+  </div>
+  <div class="dz" id="dz-outline" onclick="document.getElementById('fi-outline').click()">
+    <input type="file" id="fi-outline" accept=".txt,.md" onchange="handleOutlineFile(this.files[0])">
+    <div class="dz-icon">&#x1F4C4;</div>
+    <div class="dz-text">Upload a .txt or .md file</div>
+    <div class="dz-sub">We'll read it as your outline</div>
+  </div>
+  <div id="dz-outline-badge" style="display:none;"></div>
+
+  <div class="errbox" id="e-step1">Please enter a deck title and outline before continuing.</div>
+
+  <div class="bnav">
+    <button class="btn btn-ghost" onclick="goTo('landing')">&larr; Back</button>
+    <button class="btn btn-primary" id="btn-step1" onclick="goToStep2()" disabled>Continue &rarr;</button>
+  </div>
+</div>
+
+<!-- ── STEP 2: PHOTOS ── -->
+<div class="screen" id="step2">
+  <div class="eyebrow">Step 2 of 4 &middot; Photos</div>
+  <div class="stitle">Add <strong>photos</strong> to your slides</div>
+  <div class="ssub">Click a slot to upload a photo for that slide. Photos appear in the right panel of content slides. This step is optional.</div>
+
+  <div class="photo-grid" id="photo-grid"></div>
+
+  <div class="callout callout-b">
+    <span class="ci">&#x1F4A1;</span>
+    <div><strong>Best results:</strong> Landscape photos of the project site, technology in action, or nature. JPG or PNG.</div>
+  </div>
+
+  <div class="bnav">
+    <button class="btn btn-ghost" onclick="goTo('step1')">&larr; Back</button>
+    <div style="display:flex;gap:9px;">
+      <button class="btn btn-ghost" onclick="goTo('step3')">Skip photos &rarr;</button>
+      <button class="btn btn-primary" onclick="goTo('step3')">Continue &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 3: PREVIEW ── -->
+<div class="screen" id="step3">
+  <div class="eyebrow">Step 3 of 4 &middot; Preview</div>
+  <div class="stitle">Review your <strong>slide structure</strong></div>
+  <div class="ssub">Check the outline below. When ready, click Generate to build the PowerPoint file.</div>
+
+  <table class="prev-table" id="prev-table">
+    <thead><tr><th>#</th><th>Slide title</th><th>Type</th><th>Photo</th></tr></thead>
+    <tbody id="prev-tbody"></tbody>
+  </table>
+
+  <div class="brand-spec">
+    <h4>Brand specification</h4>
+    <div class="brand-row"><span class="brand-key">Template</span><span class="brand-val">ClearSky standard</span></div>
+    <div class="brand-row"><span class="brand-key">Colors</span><span class="brand-val">Dark navy / gold / light blue</span></div>
+    <div class="brand-row"><span class="brand-key">Font</span><span class="brand-val">Roboto</span></div>
+    <div class="brand-row"><span class="brand-key">Layout</span><span class="brand-val">10.0" &times; 5.625" (16:9)</span></div>
+  </div>
+
+  <div class="errbox" id="e-step3"></div>
+
+  <div class="bnav">
+    <button class="btn btn-ghost" onclick="goTo('step2')">&larr; Back</button>
+    <button class="btn btn-gold btn-lg" id="btn-generate" onclick="doGenerate()">Generate PPTX &rarr;</button>
+  </div>
+</div>
+
+<!-- ── STEP 4: GENERATING + DONE ── -->
+<div class="screen" id="step4">
+  <!-- spinner state -->
+  <div id="gen-loading" class="lscreen">
+    <div class="spinner"></div>
+    <div class="ltitle">Building your presentation...</div>
+    <div style="margin-top:14px;font-size:12px;color:var(--midGray);">Applying ClearSky branding and layout. This takes a few seconds.</div>
+  </div>
+  <!-- success state -->
+  <div id="gen-done" class="done-wrap" style="display:none;">
+    <div class="done-icon">&#x2713;</div>
+    <div class="done-title">Your presentation is <strong>ready!</strong></div>
+    <div class="done-sub" id="done-sub">Your branded PowerPoint file has been built successfully.</div>
+    <div class="done-fname" id="done-fname"></div><br>
+    <div style="font-size:12px;color:var(--midGray);margin-bottom:18px;" id="done-count"></div>
+    <button class="btn btn-gold btn-lg" onclick="doDownload()">&#x2B07; Download again</button>
+    <div style="margin-top:18px;">
+      <button class="btn btn-ghost" onclick="resetAll()">&#x21BA; Build another</button>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ── STATE ──
+var state = {
+  path: null,
+  title: '',
+  counterparty: '',
+  outlineText: '',
+  slides: [],
+  photos: {},
+  pptxBuf: null,
+  fileName: ''
+};
+
+// ── PARSE OUTLINE ──
+function parseOutline(text, docTitle) {
+  var slides = [];
+  // Try ## heading split first
+  var sections = text.split(/\n(?=##\s)/);
+  for (var si = 0; si < sections.length; si++) {
+    var section = sections[si];
+    var lines = section.split('\n').filter(function(l){return l.trim();});
+    if (!lines.length) continue;
+    var heading = lines[0].replace(/^#+\s*/, '').trim();
+    var bullets = lines.slice(1)
+      .filter(function(l){return l.trim();})
+      .map(function(l){return l.replace(/^[\u2022\-\*]\s*/, '').trim();})
+      .filter(function(l){return l.length > 0;})
+      .slice(0, 5);
+    if (heading) slides.push({ title: heading, bullets: bullets });
+  }
+  // Fallback: no ## headings found -> split on blank lines
+  if (slides.length === 0) {
+    var paragraphs = text.split(/\n\n+/).map(function(p){return p.trim();}).filter(function(p){return p;});
+    for (var pi = 0; pi < paragraphs.length; pi++) {
+      var plines = paragraphs[pi].split('\n').filter(function(l){return l.trim();});
+      slides.push({
+        title: plines[0] || 'Slide',
+        bullets: plines.slice(1).map(function(l){return l.replace(/^[\u2022\-\*]\s*/, '').trim();}).slice(0, 5)
+      });
+    }
+  }
+  // Ensure at least one slide
+  if (slides.length === 0) {
+    slides.push({ title: docTitle || 'Presentation', bullets: [] });
+  }
+  return slides;
+}
+
+// ── NAVIGATION ──
+var STEP_MAP = { step1: 1, step2: 2, step3: 3, step4: 4 };
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+
+  var step = STEP_MAP[id] || 0;
+  var pbar = document.getElementById('pbar');
+  var costLabel = document.getElementById('cost-label');
+
+  if (!step) {
+    pbar.style.display = 'none';
+    costLabel.textContent = 'Choose your path';
+  } else {
+    pbar.style.display = 'flex';
+    costLabel.textContent = 'Zero API cost \u00b7 instant';
+    [1,2,3,4].forEach(function(i){
+      var el = document.getElementById('p'+i);
+      if (!el) return;
+      el.classList.remove('active','done');
+      if (i < step) el.classList.add('done');
+      else if (i === step) el.classList.add('active');
+    });
+    pbar.querySelectorAll('.sarr').forEach(function(a,i){a.classList.toggle('done',i+1<step);});
+  }
+
+  if (id === 'step2') buildPhotoGrid();
+  if (id === 'step3') buildPreview();
+}
+
+// ── LANDING ──
+function startOutlinePath() {
+  state.path = 'outline';
+  goTo('step1');
+}
+
+// ── STEP 1 ──
+function checkStep1() {
+  var title = document.getElementById('deck-title').value.trim();
+  var outline = document.getElementById('deck-outline').value.trim();
+  var btn = document.getElementById('btn-step1');
+  btn.disabled = !(title && outline);
+}
+
+function handleOutlineFile(file) {
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    document.getElementById('deck-outline').value = ev.target.result;
+    var dz = document.getElementById('dz-outline');
+    dz.classList.add('ok');
+    dz.querySelector('.dz-text').textContent = '\u2713 ' + file.name;
+    var badge = document.getElementById('dz-outline-badge');
+    badge.style.display = 'block';
+    badge.innerHTML = '<div class="dz-file">\uD83D\uDCC4 ' + esc(file.name) + '</div>';
+    checkStep1();
+  };
+  reader.readAsText(file);
+}
+
+function goToStep2() {
+  var title = document.getElementById('deck-title').value.trim();
+  var outline = document.getElementById('deck-outline').value.trim();
+  var err = document.getElementById('e-step1');
+
+  if (!title || !outline) {
+    err.style.display = 'block';
+    if (!title) document.getElementById('f-title').classList.add('err');
+    if (!outline) document.getElementById('f-outline').classList.add('err');
+    setTimeout(function(){
+      document.getElementById('f-title').classList.remove('err');
+      document.getElementById('f-outline').classList.remove('err');
+    }, 600);
+    return;
+  }
+  err.style.display = 'none';
+
+  state.title = title;
+  state.counterparty = document.getElementById('deck-cp').value.trim();
+  state.outlineText = outline;
+  state.slides = parseOutline(outline, title);
+  goTo('step2');
+}
+
+// ── STEP 2: PHOTOS ──
+function buildPhotoGrid() {
+  var grid = document.getElementById('photo-grid');
+  grid.innerHTML = '';
+  var max = Math.min(state.slides.length, 6);
+  for (var i = 0; i < max; i++) {
+    (function(idx){
+      var slot = document.createElement('div');
+      slot.className = 'photo-slot' + (state.photos[idx] ? ' filled' : '');
+      var label = state.slides[idx].title;
+      if (label.length > 14) label = label.substring(0, 14) + '\u2026';
+
+      if (state.photos[idx]) {
+        slot.innerHTML = '<img class="ps-thumb" src="' + state.photos[idx].dataUrl + '" alt=""><div class="ps-label">' + esc(label) + '</div>';
+      } else {
+        slot.innerHTML = '<div class="ps-icon">\uD83D\uDCF7</div><div class="ps-label">' + esc(label) + '</div>';
+      }
+
+      var inp = document.createElement('input');
+      inp.type = 'file';
+      inp.accept = 'image/jpeg,image/png,image/webp';
+      inp.style.display = 'none';
+      inp.onchange = function() {
+        if (!this.files[0]) return;
+        var f = this.files[0];
+        var rd = new FileReader();
+        rd.onload = function(ev) {
+          state.photos[idx] = {
+            dataUrl: ev.target.result,
+            base64: ev.target.result.split(',')[1],
+            ext: f.type === 'image/png' ? 'png' : 'jpeg'
+          };
+          buildPhotoGrid();
+        };
+        rd.readAsDataURL(f);
+      };
+      slot.appendChild(inp);
+      slot.onclick = function(){ inp.click(); };
+      grid.appendChild(slot);
+    })(i);
+  }
+}
+
+// ── STEP 3: PREVIEW ──
+function buildPreview() {
+  var tbody = document.getElementById('prev-tbody');
+  tbody.innerHTML = '';
+  state.slides.forEach(function(s, i) {
+    var tr = document.createElement('tr');
+    var typeLabel, typeCls;
+    if (i === 0) { typeLabel = 'Title slide'; typeCls = 'prev-type-title'; }
+    else if (i === state.slides.length - 1 && state.slides.length > 1) { typeLabel = 'Closing slide'; typeCls = 'prev-type-close'; }
+    else { typeLabel = 'Content slide'; typeCls = 'prev-type-content'; }
+    var photoInd = state.photos[i] ? '<span class="prev-photo">\u2713 Photo</span>' : '<span style="color:var(--midGray);">\u2014</span>';
+    tr.innerHTML = '<td style="font-weight:600;color:var(--lightBlue);">' + (i+1) + '</td>'
+      + '<td>' + esc(s.title) + '</td>'
+      + '<td><span class="prev-type ' + typeCls + '">' + typeLabel + '</span></td>'
+      + '<td>' + photoInd + '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+// ── STEP 4: GENERATE ──
+async function doGenerate() {
+  var btn = document.getElementById('btn-generate');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="isp"></span> Generating...';
+  goTo('step4');
+  document.getElementById('gen-loading').style.display = 'block';
+  document.getElementById('gen-done').style.display = 'none';
+
+  try {
+    state.pptxBuf = await buildOutlinePPTX(state.slides, state.title, state.counterparty, state.photos);
+    state.fileName = (state.title || 'ClearSky').replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_') + '.pptx';
+
+    // Auto-download
+    triggerDownload();
+
+    // Show done
+    document.getElementById('gen-loading').style.display = 'none';
+    document.getElementById('gen-done').style.display = 'block';
+    document.getElementById('done-fname').textContent = state.fileName;
+    document.getElementById('done-count').textContent = state.slides.length + ' slides \u00b7 ClearSky branded';
+  } catch(ex) {
+    document.getElementById('gen-loading').style.display = 'none';
+    var err = document.getElementById('e-step3');
+    err.textContent = 'Build failed: ' + (ex.message || ex);
+    err.style.display = 'block';
+    goTo('step3');
+  }
+  btn.disabled = false;
+  btn.innerHTML = 'Generate PPTX &rarr;';
+}
+
+function triggerDownload() {
+  if (!state.pptxBuf) return;
+  var blob = new Blob([state.pptxBuf], {type:'application/vnd.openxmlformats-officedocument.presentationml.presentation'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = state.fileName;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function doDownload() { triggerDownload(); }
+
+function resetAll() {
+  state = { path:null, title:'', counterparty:'', outlineText:'', slides:[], photos:{}, pptxBuf:null, fileName:'' };
+  document.getElementById('deck-title').value = '';
+  document.getElementById('deck-cp').value = '';
+  document.getElementById('deck-outline').value = '';
+  document.getElementById('btn-step1').disabled = true;
+  var dz = document.getElementById('dz-outline');
+  dz.classList.remove('ok');
+  dz.querySelector('.dz-text').textContent = 'Upload a .txt or .md file';
+  document.getElementById('dz-outline-badge').style.display = 'none';
+  goTo('landing');
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ── PPTX BRAND CONSTANTS (identical to v3) ──
+var C = {
+  navy:'0D1B3E', midNavy:'1B2A4A', lightBlue:'5B9BD5',
+  gold:'D4A843', white:'FFFFFF', offWhite:'F5F7FA',
+  darkText:'0D1B3E', midGray:'8A8F9A', borderGray:'D0D7DE',
+  green:'1A8A6E', red:'C0392B'
+};
+
+// Logo preload
+var LW = null, LD = null;
+async function fetchB64(url){
+  try {
+    var r = await fetch(url);
+    if (!r.ok) throw new Error(r.status);
+    var b = await r.blob();
+    return new Promise(function(res,rej){
+      var fr = new FileReader();
+      fr.onloadend = function(){ res(fr.result.split(',')[1]); };
+      fr.onerror = rej;
+      fr.readAsDataURL(b);
+    });
+  } catch(e) { return null; }
+}
+
+async function preloadLogos() {
+  var base = 'https://tools.oga.earth/assets/logos/';
+  var rs = await Promise.all([fetchB64(base+'clearsky-logo-white.png'), fetchB64(base+'clearsky-logo-darkblue.png')]);
+  LW = rs[0]; LD = rs[1];
+}
+
+function addChrome(sl, pptx, darkBg) {
+  var lb = darkBg ? LW : LD;
+  if (lb) sl.addImage({data:'data:image/png;base64,'+lb, x:.35, y:.12, w:1.6, h:.37});
+  else sl.addText('ClearSky',{x:.35,y:.12,w:1.6,h:.37,fontSize:18,color:darkBg?C.white:C.navy,fontFace:'Roboto Bold',bold:true});
+  sl.addText('CONFIDENTIAL',{x:7.8,y:.18,w:1.5,h:.18,fontSize:7,color:C.red,fontFace:'Roboto Medium',charSpacing:2,align:'right'});
+  sl.addShape('rect',{x:0,y:5.15,w:10,h:.01,fill:{color:C.borderGray}});
+  sl.addText('ClearSky Limited  \u00b7  103 Cannon Street, London, EC4N 5AG',{x:.35,y:5.2,w:6,h:.2,fontSize:7,color:darkBg?C.white:C.midGray,fontFace:'Roboto Light'});
+}
+
+// ── BUILD PPTX FROM OUTLINE ──
+async function buildOutlinePPTX(slides, deckTitle, counterparty, photos) {
+  await preloadLogos();
+
+  var pptx = new PptxGenJS();
+  pptx.defineLayout({ name:'CS_16x9', width:10, height:5.625 });
+  pptx.layout = 'CS_16x9';
+
+  // ── TITLE SLIDE (slide 0 from parsed array) ──
+  var titleSl = pptx.addSlide();
+  titleSl.background = { color: C.navy };
+
+  // Gold accent strip left
+  titleSl.addShape('rect',{x:0, y:0, w:.12, h:5.625, fill:{color:C.gold}});
+
+  // Counterparty eyebrow
+  if (counterparty) {
+    titleSl.addText(counterparty.toUpperCase(),{x:.35, y:.65, w:9.3, h:.3, fontSize:9, color:C.gold, fontFace:'Roboto Medium', charSpacing:3});
+  }
+
+  // Deck title
+  var t0 = slides[0] ? slides[0].title : deckTitle;
+  var tLen = (t0||'').length, tFz = tLen > 100 ? 22 : tLen > 60 ? 26 : 34;
+  titleSl.addText(t0 || deckTitle,{x:.35, y:1.0, w:9.3, h:1.6, fontSize:tFz, color:C.white, fontFace:'Roboto Light', shrinkText:true});
+
+  // Gold accent bar
+  titleSl.addShape('rect',{x:.35, y:2.7, w:.6, h:.04, fill:{color:C.gold}});
+
+  // Date pill
+  var dateStr = new Date().toLocaleDateString('en-GB',{month:'long',year:'numeric'}).toUpperCase();
+  titleSl.addShape('roundRect',{x:.35,y:3.1,w:2.4,h:.3,fill:{type:'none'},line:{color:C.white,width:.75},rectRadius:.05});
+  titleSl.addText(dateStr,{x:.35,y:3.1,w:2.4,h:.3,fontSize:9,color:C.white,fontFace:'Roboto Light',align:'center',valign:'middle',charSpacing:3});
+
+  // Bullets from slide 0 if any
+  if (slides[0] && slides[0].bullets.length > 0) {
+    var bText = slides[0].bullets.map(function(b){return {text:b,options:{bullet:{type:'bullet'},color:C.white}};});
+    titleSl.addText(bText,{x:.35,y:3.6,w:9,h:1.3,fontSize:12,fontFace:'Roboto',valign:'top',shrinkText:true});
+  }
+
+  addChrome(titleSl, pptx, true);
+
+  // ── CONTENT SLIDES (slides 1 .. N-2) ──
+  var lastIdx = slides.length - 1;
+  for (var i = 1; i < slides.length; i++) {
+    var s = slides[i];
+    var isLast = (i === lastIdx && slides.length > 1);
+    if (isLast) break; // closing slide handled separately
+
+    var sl = pptx.addSlide();
+    sl.background = { color: C.white };
+    var hasPhoto = photos && photos[i] && photos[i].base64;
+    var contentW = hasPhoto ? 4.9 : 9.0;
+
+    // Slide title
+    sl.addText(s.title,{x:.35, y:.6, w:contentW, h:.5, fontSize:22, color:C.navy, fontFace:'Roboto Light', shrinkText:true});
+
+    // Gold accent under title
+    sl.addShape('rect',{x:.35, y:1.08, w:.5, h:.025, fill:{color:C.gold}});
+
+    // Bullets
+    if (s.bullets.length > 0) {
+      var bulletText = s.bullets.map(function(b){return {text:b, options:{bullet:{type:'bullet'}}};});
+      sl.addText(bulletText,{x:.35, y:1.2, w:contentW, h:3.7, fontSize:13, color:C.navy, fontFace:'Roboto', valign:'top'});
+    }
+
+    // Right dark panel (always present on content slides)
+    sl.addShape('rect',{x:5.5, y:.55, w:4.5, h:4.6, fill:{color:C.midNavy}});
+
+    // Photo in panel if available
+    if (hasPhoto) {
+      sl.addImage({data:'data:image/'+(photos[i].ext==='png'?'png':'jpeg')+';base64,'+photos[i].base64, x:5.55, y:.6, w:4.4, h:4.5, sizing:{type:'cover',w:4.4,h:4.5}});
+    } else {
+      // Summary bullets in navy panel
+      if (s.bullets.length > 0) {
+        var panelText = s.bullets.slice(0,3).map(function(b){return {text:'\u2022 '+b+'\n', options:{color:C.white,fontSize:11}};});
+        sl.addText(panelText,{x:5.75, y:1.2, w:4, h:3.5, fontFace:'Roboto', valign:'top', shrinkText:true});
+      }
+    }
+
+    addChrome(sl, pptx, false);
+    sl.addText('Page '+String(i+1).padStart(2,'0'),{x:8.8,y:5.2,w:.8,h:.2,fontSize:7,color:C.midGray,fontFace:'Roboto Light',align:'right'});
+  }
+
+  // ── CLOSING SLIDE ──
+  var closeSl = pptx.addSlide();
+  closeSl.background = { color: C.navy };
+
+  // Gold strip left
+  closeSl.addShape('rect',{x:0, y:0, w:.12, h:5.625, fill:{color:C.gold}});
+
+  // Closing text
+  var closeTitle = (slides.length > 2 && slides[lastIdx]) ? slides[lastIdx].title : 'Thank you';
+  closeSl.addText(closeTitle,{x:1, y:1.5, w:8, h:1, fontSize:36, color:C.white, fontFace:'Roboto Light', align:'center'});
+
+  // Contact info
+  closeSl.addText('luis.adaime@clearskyltd.com',{x:1, y:2.8, w:8, h:.35, fontSize:13, color:C.lightBlue, fontFace:'Roboto Light', align:'center'});
+  closeSl.addText('www.clearskyltd.com',{x:1, y:3.2, w:8, h:.35, fontSize:13, color:C.gold, fontFace:'Roboto Light', align:'center'});
+
+  // Closing bullets if last slide had them
+  if (slides.length > 1 && slides[lastIdx] && slides[lastIdx].bullets.length > 0) {
+    var cBullets = slides[lastIdx].bullets.map(function(b){return {text:b, options:{bullet:{type:'bullet'},color:C.white}};});
+    closeSl.addText(cBullets,{x:1, y:3.7, w:8, h:1.2, fontSize:11, fontFace:'Roboto', valign:'top', shrinkText:true});
+  }
+
+  addChrome(closeSl, pptx, true);
+
+  // Generate buffer
+  var buf = await pptx.write({outputType:'arraybuffer'});
+  return buf;
+}
+
+// ── INIT ──
+window.addEventListener('DOMContentLoaded', function(){
+  preloadLogos();
+});
+</script>
+</body>
+</html>
