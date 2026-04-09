@@ -196,6 +196,31 @@
   .welcome-card h3 { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
   .welcome-card p { font-size: 12px; color: var(--muted); }
   .shimmer { background: linear-gradient(90deg, var(--bg) 25%, var(--border) 50%, var(--bg) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; height: 16px; }
+
+  /* Manifest & progress panel */
+  .manifest-panel { background: var(--canvas); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-top: 12px; }
+  .manifest-hdr { padding: 12px 16px; font-size: 12px; font-weight: 600; background: var(--bg); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .manifest-tbl { font-size: 12px; }
+  .manifest-tbl th { font-size: 11px; font-weight: 600; color: var(--muted); background: var(--bg); }
+  .manifest-tbl td { padding: 6px 12px; }
+  .route-pill { display: inline-block; padding: 1px 7px; border-radius: 8px; font-size: 10px; font-weight: 600; }
+  .route-pill.ingest { background: rgba(16,185,129,0.12); color: var(--success); }
+  .route-pill.async_extract { background: rgba(59,130,246,0.12); color: var(--info); }
+  .route-pill.gis_metadata { background: rgba(245,158,11,0.12); color: var(--warning); }
+  .route-pill.nested_zip { background: rgba(239,68,68,0.12); color: var(--error); }
+  .route-pill.skip { background: rgba(107,114,128,0.1); color: #6b7280; }
+  .prog-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin: 8px 0; }
+  .prog-fill { height: 100%; background: var(--gold); border-radius: 3px; transition: width 0.3s ease; }
+  .stage-dots { display: inline-flex; gap: 3px; }
+  .stage-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--border); }
+  .stage-dot.done { background: var(--success); }
+  .stage-dot.active { background: var(--info); animation: pulse 1s infinite; }
+  .stage-dot.err { background: var(--error); }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .manifest-actions { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--border); }
+  .verify-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; font-size: 12px; border-bottom: 1px solid var(--border); }
+  .verify-row:last-child { border-bottom: none; }
+  .verify-flag { color: var(--error); font-weight: 600; font-size: 10px; margin-left: 6px; }
 }
 
 @layer utilities {
@@ -616,35 +641,255 @@ async function ingestFiles(files) {
   var proj = S.activeProject ? S.activeProject.id : '';
   var vis = $('#ingest-visibility').value;
 
-  for (var i = 0; i < files.length; i++) {
-    var file = files[i];
+  // Non-ZIP: simple upload (unchanged)
+  var nonZip = files.filter(f => !f.name.toLowerCase().endsWith('.zip'));
+  for (var i = 0; i < nonZip.length; i++) {
+    var file = nonZip[i];
     var card = document.createElement('div');
     card.className = 'ingest-result';
     card.innerHTML = '<span class="filename">' + esc(file.name) + '</span><span class="pill pill-info">uploading...</span>';
     results.prepend(card);
-
     try {
-      var isZip = file.name.toLowerCase().endsWith('.zip');
-      var endpoint = isZip ? '/api/knowledge/ingest-zip' : '/api/knowledge/ingest';
       var fd = new FormData();
       fd.append('file', file);
       if (proj) fd.append('project', proj);
       fd.append('visibility', vis);
-
-      var res = await api(endpoint, { method: 'POST', body: fd });
-      var docId = res.doc_id || res.id || (res.results && res.results[0] && res.results[0].doc_id) || '?';
-      var count = res.results ? res.results.length : 1;
-
+      var res = await api('/api/knowledge/ingest', { method: 'POST', body: fd });
+      var docId = res.doc_id || res.id || '?';
       if (isGIS(file.name)) {
         card.innerHTML = '<span class="filename">' + esc(file.name) + '</span><span class="pill pill-warning">GIS metadata</span><span class="text-xs text-muted">doc ' + docId + '</span>';
       } else {
-        card.innerHTML = '<span class="filename">' + esc(file.name) + '</span><span class="pill pill-success">' + (isZip ? count + ' files' : 'ingested') + '</span><span class="text-xs text-muted">doc ' + docId + '</span>';
+        card.innerHTML = '<span class="filename">' + esc(file.name) + '</span><span class="pill pill-success">ingested</span><span class="text-xs text-muted">doc ' + docId + '</span>';
       }
       toast(file.name + ' ingested', 'success');
     } catch (e) {
       card.innerHTML = '<span class="filename">' + esc(file.name) + '</span><span class="pill pill-error">failed</span>';
     }
   }
+
+  // ZIP files: gold standard manifest flow
+  var zips = files.filter(f => f.name.toLowerCase().endsWith('.zip'));
+  for (var z = 0; z < zips.length; z++) {
+    await ingestZipGoldStandard(zips[z], proj, vis, results);
+  }
+}
+
+function humanSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(0) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function routePill(route) {
+  var labels = { ingest: 'Ingest', async_extract: 'Async', gis_metadata: 'GIS', nested_zip: 'Nested ZIP', skip: 'Skip' };
+  return '<span class="route-pill ' + route + '">' + (labels[route] || route) + '</span>';
+}
+
+function stageDots(stages) {
+  return '<span class="stage-dots" title="R2 / Extract / Enrich / Vector">' +
+    stages.map(function(s, i) {
+      var titles = ['R2', 'Extract', 'Enrich', 'Vector'];
+      return '<span class="stage-dot ' + s + '" title="' + titles[i] + '"></span>';
+    }).join('') + '</span>';
+}
+
+async function ingestZipGoldStandard(zipFile, proj, vis, resultsEl) {
+  // ── Phase 1: Manifest ──
+  var panel = document.createElement('div');
+  panel.className = 'manifest-panel';
+  panel.innerHTML = '<div class="manifest-hdr"><span>' + esc(zipFile.name) + '</span><span class="pill pill-info">scanning...</span></div>';
+  resultsEl.prepend(panel);
+
+  var manifest;
+  try {
+    var fd = new FormData();
+    fd.append('file', zipFile);
+    manifest = await api('/api/knowledge/ingest-zip/manifest', { method: 'POST', body: fd });
+  } catch (e) {
+    panel.innerHTML = '<div class="manifest-hdr"><span>' + esc(zipFile.name) + '</span><span class="pill pill-error">manifest failed</span></div>';
+    return;
+  }
+
+  var mf = manifest.files || [];
+  var sm = manifest.summary || {};
+  var summaryLine = sm.total + ' files: ' +
+    (sm.ingest ? sm.ingest + ' ingest' : '') +
+    (sm.async_extract ? (sm.ingest ? ', ' : '') + sm.async_extract + ' async' : '') +
+    (sm.gis_metadata ? ', ' + sm.gis_metadata + ' GIS' : '') +
+    (sm.nested_zip ? ', ' + sm.nested_zip + ' nested' : '') +
+    (sm.skip ? ', ' + sm.skip + ' skip' : '');
+
+  var tableRows = mf.map(function(f) {
+    return '<tr><td class="truncate" style="max-width:220px" title="' + esc(f.name) + '">' + esc(f.name) + '</td>' +
+      '<td>' + humanSize(f.size) + '</td>' +
+      '<td>' + routePill(f.route) + '</td>' +
+      '<td class="text-muted">' + esc(f.project || '-') + '</td>' +
+      '<td class="text-muted">' + esc(f.doc_type || '-') + '</td></tr>';
+  }).join('');
+
+  panel.innerHTML =
+    '<div class="manifest-hdr"><span>' + esc(zipFile.name) + ' &mdash; ' + humanSize(manifest.zip_size || 0) + '</span><span class="text-xs text-muted">' + summaryLine + '</span></div>' +
+    '<table class="manifest-tbl"><thead><tr><th>File</th><th>Size</th><th>Route</th><th>Project</th><th>Type</th></tr></thead>' +
+    '<tbody>' + tableRows + '</tbody></table>' +
+    '<div class="manifest-actions"><button class="btn btn-primary btn-sm" id="manifest-confirm">Confirm Ingest</button><button class="btn btn-ghost btn-sm" id="manifest-cancel">Cancel</button></div>';
+
+  // Wait for user confirmation
+  var confirmed = await new Promise(function(resolve) {
+    panel.querySelector('#manifest-confirm').onclick = function() { resolve(true); };
+    panel.querySelector('#manifest-cancel').onclick = function() { resolve(false); };
+  });
+
+  if (!confirmed) {
+    panel.remove();
+    toast('ZIP ingest cancelled', 'info');
+    return;
+  }
+
+  // ── Phase 2: Upload + Progress ──
+  var processable = mf.filter(function(f) { return f.route !== 'skip'; });
+  var totalTrack = processable.length;
+  var doneCount = 0;
+
+  // Build progress rows
+  var fileStates = {};
+  mf.forEach(function(f) {
+    var stages = f.route === 'skip' ? ['err','err','err','err'] :
+                 f.route === 'nested_zip' ? ['pending','pending','pending','pending'] :
+                 f.route === 'gis_metadata' ? ['done','pending','pending','pending'] :
+                 ['active','pending','pending','pending'];
+    fileStates[f.name] = { route: f.route, stages: stages };
+  });
+
+  function renderProgress() {
+    var pct = totalTrack > 0 ? Math.round((doneCount / totalTrack) * 100) : 0;
+    var rows = mf.map(function(f) {
+      var st = fileStates[f.name];
+      return '<tr><td class="truncate" style="max-width:220px">' + esc(f.name) + '</td>' +
+        '<td>' + routePill(st.route) + '</td>' +
+        '<td>' + stageDots(st.stages) + '</td></tr>';
+    }).join('');
+    panel.innerHTML =
+      '<div class="manifest-hdr"><span>' + esc(zipFile.name) + '</span><span class="text-xs text-muted">' + doneCount + ' / ' + totalTrack + ' complete</span></div>' +
+      '<div style="padding:0 16px"><div class="prog-bar"><div class="prog-fill" style="width:' + pct + '%"></div></div></div>' +
+      '<table class="manifest-tbl"><thead><tr><th>File</th><th>Route</th><th>Pipeline</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table>';
+  }
+  renderProgress();
+
+  // Send actual ingest
+  var ingestResult;
+  try {
+    var fd2 = new FormData();
+    fd2.append('file', zipFile);
+    if (proj) fd2.append('project', proj);
+    fd2.append('visibility', vis);
+    ingestResult = await api('/api/knowledge/ingest-zip', { method: 'POST', body: fd2 });
+  } catch (e) {
+    panel.querySelector('.manifest-hdr span:last-child').textContent = 'ingest failed';
+    toast('ZIP ingest failed: ' + (e.message || ''), 'error');
+    return;
+  }
+
+  // Update states from ingest response
+  var ingested = ingestResult.ingested || [];
+  var skippedResp = ingestResult.skipped || [];
+  var failedResp = ingestResult.failed || [];
+  var asyncJobs = [];
+
+  ingested.forEach(function(r) {
+    var st = fileStates[r.filename];
+    if (!st) return;
+    if (r.gis_metadata_only) {
+      st.stages = ['done', 'pending', 'pending', 'pending'];
+      doneCount++;
+    } else if (r.words > 0) {
+      st.stages = ['done', 'done', 'done', 'done'];
+      doneCount++;
+    } else if (r.doc_id) {
+      // Ingested to R2 but extraction pending/failed — might need async
+      st.stages = ['done', 'active', 'pending', 'pending'];
+      doneCount++;
+    }
+  });
+
+  skippedResp.forEach(function(r) {
+    var st = fileStates[r.filename];
+    if (!st) return;
+    if (r.reason === 'nested_zip') {
+      st.stages = ['pending', 'pending', 'pending', 'pending'];
+      st.route = 'nested_zip';
+    } else {
+      st.stages = ['err', 'err', 'err', 'err'];
+      st.route = 'skip';
+    }
+  });
+
+  failedResp.forEach(function(r) {
+    var st = fileStates[r.filename];
+    if (!st) return;
+    st.stages = ['err', 'err', 'err', 'err'];
+  });
+
+  renderProgress();
+
+  // ── Phase 3: Post-Ingest Verification ──
+  if (!proj) {
+    toast(ingested.length + ' files ingested from ' + zipFile.name, 'success');
+    return;
+  }
+
+  // Brief delay then verify
+  await new Promise(function(r) { setTimeout(r, 1500); });
+  try {
+    var verifyRes = await api('/api/primitives/taxonomy/search?project=' + encodeURIComponent(proj) + '&limit=200');
+    var verifyDocs = verifyRes.docs || [];
+    // Match by filename to find our ingested docs
+    var ingestedNames = new Set(ingested.map(function(r) { return r.filename; }));
+    var matched = verifyDocs.filter(function(d) { return ingestedNames.has(d.title); });
+    var anomalies = matched.filter(function(d) {
+      return d.word_count === 0 || d.visibility !== vis || !d.doc_type || d.doc_type === 'unknown';
+    });
+
+    if (anomalies.length > 0) {
+      var verifyRows = anomalies.map(function(d) {
+        var flags = [];
+        if (d.word_count === 0) flags.push('no text');
+        if (d.visibility !== vis) flags.push('vis:' + d.visibility);
+        if (!d.doc_type || d.doc_type === 'unknown') flags.push('no type');
+        return '<div class="verify-row"><span class="truncate" style="max-width:200px">' + esc(d.title) + '</span>' +
+          '<span>' + stageDots(fileStates[d.title] ? fileStates[d.title].stages : ['done','pending','pending','pending']) + '</span>' +
+          '<span class="verify-flag">' + flags.join(', ') + '</span></div>';
+      }).join('');
+
+      panel.innerHTML += '<div style="padding:12px 16px;border-top:1px solid var(--border)">' +
+        '<div class="text-xs fw-500" style="margin-bottom:8px">' + anomalies.length + ' anomalies detected</div>' +
+        verifyRows +
+        '<button class="btn btn-ghost btn-sm mt-sm" onclick="patchAnomalies(\'' + encodeURIComponent(proj) + '\',\'' + vis + '\')">Patch Anomalies</button></div>';
+    }
+  } catch (e) { /* verification is best-effort */ }
+
+  toast(ingested.length + ' files ingested, ' + skippedResp.length + ' skipped from ' + zipFile.name, 'success');
+}
+
+async function patchAnomalies(encodedProj, vis) {
+  var proj = decodeURIComponent(encodedProj);
+  try {
+    var res = await api('/api/primitives/taxonomy/search?project=' + encodeURIComponent(proj) + '&limit=200');
+    var docs = (res.docs || []).filter(function(d) {
+      return d.word_count === 0 || d.visibility !== vis || !d.doc_type || d.doc_type === 'unknown';
+    });
+    var patched = 0;
+    for (var i = 0; i < docs.length; i++) {
+      var d = docs[i];
+      var body = {};
+      if (d.visibility !== vis) body.visibility = vis;
+      if (Object.keys(body).length) {
+        await api('/api/primitives/taxonomy/assign', { method: 'PATCH', body: { doc_id: d.id, ...body } });
+        patched++;
+      }
+    }
+    toast(patched + ' docs patched', 'success');
+  } catch (e) { /* toast by api() */ }
 }
 
 async function ingestText() {
