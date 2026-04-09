@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PABLO 2</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%230D1B3E'/><text x='16' y='22' text-anchor='middle' fill='%23D4A843' font-family='sans-serif' font-size='18' font-weight='700'>P</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+@layer reset, tokens, components, utilities;
+
+@layer reset {
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; line-height: 1.5; }
+  a { color: inherit; text-decoration: none; }
+  button { cursor: pointer; border: none; background: none; color: inherit; font: inherit; }
+  input, select, textarea { border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 13px; background: var(--canvas); color: var(--text); font: inherit; font-size: 13px; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 2px rgba(212,168,67,0.15); }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  th { font-weight: 500; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+}
+
+@layer tokens {
+  :root {
+    --bg: #F5F7FA;
+    --rail: #0D1B3E;
+    --canvas: #ffffff;
+    --gold: #D4A843;
+    --navy: #0D1B3E;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --info: #3b82f6;
+    --font: 'Roboto', sans-serif;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,0.12);
+  }
+}
+
+@layer components {
+  #app { display: grid; grid-template-columns: 56px 1fr; height: 100vh; overflow: hidden; }
+
+  /* Rail */
+  #rail { background: var(--rail); display: flex; flex-direction: column; color: rgba(255,255,255,0.7); overflow: hidden; user-select: none; }
+  .rail-brand { height: 48px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; color: var(--gold); flex-shrink: 0; letter-spacing: -1px; }
+  .rail-nav { display: flex; flex-direction: column; gap: 2px; padding: 4px 8px; flex-shrink: 0; }
+  .rail-btn { width: 40px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; opacity: 0.55; transition: all 0.15s; }
+  .rail-btn:hover { opacity: 0.85; background: rgba(255,255,255,0.08); }
+  .rail-btn.active { opacity: 1; color: var(--gold); background: rgba(212,168,67,0.12); }
+  .rail-btn svg { width: 18px; height: 18px; }
+  .rail-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 4px 10px; flex-shrink: 0; }
+  .rail-projects { flex: 1; overflow-y: auto; padding: 4px 6px; }
+  .rail-proj { padding: 5px 7px; border-radius: 5px; font-size: 10px; cursor: pointer; opacity: 0.5; transition: all 0.15s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+  .rail-proj:hover { opacity: 0.8; background: rgba(255,255,255,0.05); }
+  .rail-proj.active { opacity: 1; color: var(--gold); background: rgba(212,168,67,0.08); }
+  .rail-footer { padding: 6px 4px; font-size: 9px; text-align: center; flex-shrink: 0; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; gap: 4px; }
+  .runner-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); display: inline-block; flex-shrink: 0; }
+  .runner-dot.alive { background: var(--success); }
+  .runner-dot.dead { background: var(--error); }
+
+  /* Workspace */
+  #workspace { display: flex; flex-direction: column; overflow: hidden; }
+  #ws-header { height: 48px; background: var(--canvas); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
+  #hdr-left { display: flex; align-items: center; gap: 12px; }
+  #hdr-right { display: flex; align-items: center; gap: 8px; }
+  #hdr-title { font-size: 15px; font-weight: 500; }
+  #hdr-sub { font-size: 11px; color: var(--muted); }
+
+  /* Wizard tabs */
+  #wizard-bar { background: var(--canvas); border-bottom: 1px solid var(--border); display: flex; padding: 0 20px; flex-shrink: 0; }
+  .wiz-tab { padding: 10px 16px; font-size: 12px; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; opacity: 0.55; transition: all 0.15s; cursor: pointer; }
+  .wiz-tab:hover { opacity: 0.8; }
+  .wiz-tab.active { opacity: 1; color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* Content */
+  #content { flex: 1; overflow-y: auto; padding: 20px; }
+  .view { animation: fadeIn 0.2s ease; }
+  .view-inner { max-width: 1100px; }
+
+  /* Cards */
+  .card { background: var(--canvas); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+  .card-title { font-size: 11px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .card-value { font-size: 24px; font-weight: 700; color: var(--text); }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: 500; transition: all 0.15s; }
+  .btn-primary { background: var(--navy); color: #fff; }
+  .btn-primary:hover { background: #162a52; }
+  .btn-gold { background: var(--gold); color: #fff; }
+  .btn-gold:hover { background: #c49a3a; }
+  .btn-ghost { border: 1px solid var(--border); color: var(--text); }
+  .btn-ghost:hover { background: var(--bg); }
+  .btn-sm { padding: 4px 10px; font-size: 11px; }
+  .btn-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; color: var(--muted); font-size: 13px; }
+  .btn-icon:hover { background: var(--bg); color: var(--text); }
+
+  /* Drop zone */
+  .drop-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--canvas); }
+  .drop-zone:hover, .drop-zone.drag-over { border-color: var(--gold); background: rgba(212,168,67,0.03); }
+  .drop-zone p { color: var(--muted); font-size: 14px; margin-bottom: 8px; }
+  .drop-zone-hint { font-size: 11px; color: var(--muted); opacity: 0.7; }
+  .drop-zone-meta { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
+  .drop-zone-meta select { font-size: 11px; padding: 4px 8px; }
+
+  /* Pipeline indicator */
+  .pipeline { display: flex; gap: 3px; align-items: center; }
+  .pip { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+  .pip.done { background: var(--success); }
+  .pip.pending { background: var(--warning); }
+  .pip.err { background: var(--error); }
+
+  /* Pills */
+  .pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 500; background: var(--bg); color: var(--muted); }
+  .pill-success { background: rgba(16,185,129,0.1); color: var(--success); }
+  .pill-warning { background: rgba(245,158,11,0.1); color: var(--warning); }
+  .pill-error { background: rgba(239,68,68,0.1); color: var(--error); }
+  .pill-info { background: rgba(59,130,246,0.1); color: var(--info); }
+  .pill-gold { background: rgba(212,168,67,0.1); color: var(--gold); }
+
+  /* Tables */
+  .doc-table { background: var(--canvas); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
+  .doc-table table { margin: 0; }
+  .doc-table th { background: var(--bg); }
+  .doc-table tr:hover td { background: rgba(0,0,0,0.01); }
+  .doc-table tr:last-child td { border-bottom: none; }
+
+  /* Toolbar */
+  .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .toolbar input[type="text"], .toolbar input[type="search"] { min-width: 200px; }
+
+  /* Param inline edit */
+  .param-row { display: flex; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--border); gap: 12px; font-size: 13px; }
+  .param-row:last-child { border-bottom: none; }
+  .param-key { width: 200px; font-weight: 500; flex-shrink: 0; }
+  .param-val { flex: 1; cursor: pointer; padding: 4px 8px; border-radius: 4px; min-height: 28px; display: flex; align-items: center; }
+  .param-val:hover { background: var(--bg); }
+  .param-unit { width: 60px; color: var(--muted); font-size: 11px; flex-shrink: 0; }
+  .param-source { width: 100px; flex-shrink: 0; }
+  .param-confirmed { width: 24px; flex-shrink: 0; text-align: center; }
+  .param-val input { width: 100%; border: 1px solid var(--gold); padding: 4px 8px; border-radius: 4px; font-size: 13px; }
+
+  /* Toast */
+  #toasts { position: fixed; bottom: 16px; right: 16px; display: flex; flex-direction: column-reverse; gap: 8px; z-index: 9999; pointer-events: none; }
+  .toast { background: var(--canvas); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 16px; font-size: 13px; box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 8px; max-width: 360px; pointer-events: auto; animation: slideIn 0.2s ease; }
+  .toast-icon { font-size: 16px; flex-shrink: 0; }
+  .toast.success { border-left: 3px solid var(--success); }
+  .toast.warning { border-left: 3px solid var(--warning); }
+  .toast.error { border-left: 3px solid var(--error); }
+  .toast.info { border-left: 3px solid var(--info); }
+
+  /* Cmd+K */
+  #cmdk-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 9990; display: flex; align-items: flex-start; justify-content: center; padding-top: 120px; }
+  .cmdk-box { background: var(--canvas); border-radius: 12px; box-shadow: var(--shadow-lg); width: 480px; max-height: 400px; overflow: hidden; display: flex; flex-direction: column; }
+  .cmdk-box input { border: none; border-bottom: 1px solid var(--border); border-radius: 0; padding: 14px 16px; font-size: 15px; }
+  .cmdk-box input:focus { box-shadow: none; }
+  #cmdk-results { overflow-y: auto; max-height: 320px; }
+  .cmdk-item { padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; font-size: 13px; }
+  .cmdk-item:hover, .cmdk-item.sel { background: var(--bg); }
+  .cmdk-item-label { font-weight: 500; }
+  .cmdk-item-sub { font-size: 11px; color: var(--muted); margin-left: 8px; }
+  .cmdk-item-type { font-size: 10px; color: var(--muted); background: var(--bg); padding: 2px 6px; border-radius: 4px; }
+
+  /* Ask */
+  .ask-box { display: flex; gap: 8px; margin-bottom: 16px; }
+  .ask-box input { flex: 1; }
+  .ask-answer { background: var(--canvas); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
+  .ask-sources { margin-top: 8px; font-size: 11px; color: var(--muted); }
+
+  /* Mode toggle */
+  .mode-toggle { display: flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .mode-toggle button { padding: 6px 14px; font-size: 12px; background: var(--canvas); border-right: 1px solid var(--border); }
+  .mode-toggle button:last-child { border-right: none; }
+  .mode-toggle button.active { background: var(--navy); color: #fff; }
+
+  /* Misc */
+  .section-title { font-size: 13px; font-weight: 600; color: var(--text); margin: 20px 0 10px; }
+  .section-title:first-child { margin-top: 0; }
+  .empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13px; }
+  .ingest-result { background: var(--canvas); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; }
+  .ingest-result .filename { font-weight: 500; }
+  .text-ingest { margin-top: 12px; }
+  .text-ingest textarea { width: 100%; height: 120px; resize: vertical; font-size: 12px; padding: 10px; }
+  .text-ingest-row { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+  .welcome-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 16px; }
+  .welcome-card { background: var(--canvas); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; cursor: pointer; transition: all 0.15s; }
+  .welcome-card:hover { border-color: var(--gold); box-shadow: var(--shadow); }
+  .welcome-card h3 { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+  .welcome-card p { font-size: 12px; color: var(--muted); }
+  .shimmer { background: linear-gradient(90deg, var(--bg) 25%, var(--border) 50%, var(--bg) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; height: 16px; }
+}
+
+@layer utilities {
+  .hidden { display: none; }
+  .mt-sm { margin-top: 8px; }
+  .mt-md { margin-top: 16px; }
+  .mb-md { margin-bottom: 16px; }
+  .text-muted { color: var(--muted); }
+  .text-sm { font-size: 12px; }
+  .text-xs { font-size: 11px; }
+  .fw-500 { font-weight: 500; }
+  .truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <nav id="rail">
+    <div class="rail-brand">P</div>
+    <div class="rail-nav" id="rail-nav"></div>
+    <div class="rail-divider"></div>
+    <div class="rail-projects" id="rail-projects"></div>
+    <div class="rail-footer" id="rail-footer">
+      <span class="runner-dot" id="runner-dot"></span>
+      <span id="runner-label">...</span>
+    </div>
+  </nav>
+  <main id="workspace">
+    <header id="ws-header">
+      <div id="hdr-left">
+        <button id="btn-back" class="btn-icon hidden" title="Previous tab">&#8592;</button>
+        <div><div id="hdr-title">PABLO 2</div><div id="hdr-sub" class="text-xs text-muted"></div></div>
+      </div>
+      <div id="hdr-right">
+        <button id="btn-next" class="btn-icon hidden" title="Next tab">&#8594;</button>
+        <button class="btn-icon" onclick="openCmdK()" title="Ctrl+K">&#8984;K</button>
+      </div>
+    </header>
+    <div id="wizard-bar" class="hidden"></div>
+    <div id="content">
+      <div id="view-welcome" class="view"><div class="view-inner" id="welcome-inner"></div></div>
+      <div id="view-intake" class="view hidden"><div class="view-inner" id="intake-inner"></div></div>
+      <div id="view-analysis" class="view hidden"><div class="view-inner" id="analysis-inner"></div></div>
+      <div id="view-documents" class="view hidden"><div class="view-inner" id="documents-inner"></div></div>
+      <div id="view-deliverables" class="view hidden"><div class="view-inner" id="deliverables-inner"></div></div>
+      <div id="view-commercial" class="view hidden"><div class="view-inner" id="commercial-inner"></div></div>
+      <div id="view-klib" class="view hidden"><div class="view-inner" id="klib-inner"></div></div>
+      <div id="view-mlib" class="view hidden"><div class="view-inner" id="mlib-inner"></div></div>
+      <div id="view-jobs" class="view hidden"><div class="view-inner" id="jobs-inner"></div></div>
+      <div id="view-crm" class="view hidden"><div class="view-inner" id="crm-inner"></div></div>
+      <div id="view-registry" class="view hidden"><div class="view-inner" id="registry-inner"></div></div>
+    </div>
+  </main>
+</div>
+<div id="toasts"></div>
+<div id="cmdk-overlay" class="hidden" onclick="if(event.target===this)closeCmdK()">
+  <div class="cmdk-box">
+    <input id="cmdk-input" type="text" placeholder="Search projects, views, actions..." oninput="filterCmdK(this.value)">
+    <div id="cmdk-results"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ═══════════════════════════════════════════════
+   PABLO 2 — Next-generation admin shell
+   ClearSky Carbono S.L.
+   ═══════════════════════════════════════════════ */
+
+// ── Constants ──────────────────────────────────
+const API = 'https://api-tools.oga.earth';
+const WIZARD_TABS = ['Intake', 'Analysis', 'Documents', 'Deliverables', 'Commercial'];
+const PLAT_VIEWS = [
+  { id: 'klib', label: 'Knowledge Library', icon: 'book' },
+  { id: 'mlib', label: 'Methodology Library', icon: 'flask' },
+  { id: 'jobs', label: 'Job Queue', icon: 'cog' },
+  { id: 'crm', label: 'CRM', icon: 'users' },
+  { id: 'registry', label: 'Registry Intel', icon: 'globe' },
+];
+const GIS_EXTS = ['.shp','.kml','.kmz','.geojson','.gpx','.gml','.tif','.tiff'];
+const ICONS = {
+  book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+  flask: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 3h6m-5 0v7L4 20h16L14 10V3"/></svg>',
+  cog: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>',
+  users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+  globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+};
+
+// ── State ──────────────────────────────────────
+const S = {
+  projects: [],
+  activeProject: null,
+  activeTab: 0,
+  activeView: 'welcome',
+  vocab: { doc_types: [], registries: [] },
+  runner: { alive: false, running: 0 },
+  params: [],
+  projectDocs: [],
+  klib: { docs: [], mode: 'browse', query: '', answer: null },
+  mlib: { docs: [] },
+  crm: { companies: [], contacts: [] },
+  registry: { results: [] },
+  cmdkSel: 0,
+};
+
+// ── Helpers ────────────────────────────────────
+const $ = (sel, ctx) => (ctx || document).querySelector(sel);
+const $$ = (sel, ctx) => [...(ctx || document).querySelectorAll(sel)];
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function fmtNum(n) {
+  if (n == null) return '';
+  return Number(n).toLocaleString('en-US');
+}
+
+function isGIS(name) {
+  const low = (name || '').toLowerCase();
+  return GIS_EXTS.some(ext => low.endsWith(ext));
+}
+
+function esc(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = String(s);
+  return d.innerHTML;
+}
+
+function pipelinePips(doc) {
+  if (!doc) return '';
+  const r2 = 'done';
+  const ext = doc.word_count > 0 ? 'done' : 'pending';
+  const enr = doc.doc_type && doc.doc_type !== 'unknown' ? 'done' : 'pending';
+  const vec = ext === 'done' ? 'done' : 'pending';
+  return '<div class="pipeline" title="R2 / Extracted / Enriched / Vectorized">' +
+    '<span class="pip ' + r2 + '" title="R2"></span>' +
+    '<span class="pip ' + ext + '" title="Extracted"></span>' +
+    '<span class="pip ' + enr + '" title="Enriched"></span>' +
+    '<span class="pip ' + vec + '" title="Vectorized"></span></div>';
+}
+
+// ── API wrapper ────────────────────────────────
+async function api(path, opts = {}) {
+  const url = path.startsWith('http') ? path : API + path;
+  const cfg = { ...opts };
+  if (cfg.body && typeof cfg.body === 'object' && !(cfg.body instanceof FormData)) {
+    cfg.headers = { 'Content-Type': 'application/json', ...(cfg.headers || {}) };
+    cfg.body = JSON.stringify(cfg.body);
+  }
+  try {
+    const res = await fetch(url, cfg);
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error('HTTP ' + res.status + ': ' + text.slice(0, 200));
+    }
+    return await res.json();
+  } catch (e) {
+    toast(e.message || 'Network error', 'error');
+    throw e;
+  }
+}
+
+// ── SmartPoller ────────────────────────────────
+class SmartPoller {
+  constructor(fn, ms) {
+    this.fn = fn;
+    this.ms = ms || 30000;
+    this.timer = null;
+    this._vis = () => { document.hidden ? this.stop() : this.start(); };
+    document.addEventListener('visibilitychange', this._vis);
+  }
+  start() { this.stop(); this.fn(); this.timer = setInterval(() => this.fn(), this.ms); }
+  stop() { if (this.timer) { clearInterval(this.timer); this.timer = null; } }
+}
+
+// ── Toast ──────────────────────────────────────
+const TOAST_ICONS = { success: '&#10003;', warning: '&#9888;', error: '&#10007;', info: '&#8505;' };
+function toast(msg, type) {
+  type = type || 'info';
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.innerHTML = '<span class="toast-icon">' + (TOAST_ICONS[type] || '') + '</span><span>' + esc(msg) + '</span>';
+  const c = $('#toasts');
+  c.appendChild(el);
+  while (c.children.length > 3) c.removeChild(c.firstChild);
+  setTimeout(() => { if (el.parentNode) el.remove(); }, 4000);
+}
+
+// ── Navigation ─────────────────────────────────
+function showView(id) {
+  $$('.view', $('#content')).forEach(v => v.classList.add('hidden'));
+  const el = $('#view-' + id);
+  if (el) el.classList.remove('hidden');
+}
+
+let _intakeRendered = false;
+
+function selProj(id) {
+  const proj = S.projects.find(p => p.id === id);
+  if (!proj) return;
+  S.activeProject = proj;
+  S.activeTab = 0;
+  S.activeView = 'project';
+  _intakeRendered = false;
+
+  $$('.rail-proj').forEach(p => p.classList.toggle('active', p.dataset.id === id));
+  $$('.rail-btn').forEach(b => b.classList.remove('active'));
+
+  $('#hdr-title').textContent = proj.name;
+  $('#hdr-sub').textContent = [proj.country, proj.registry, proj.methodology].filter(Boolean).join(' \u00b7 ');
+
+  renderWizard();
+  goTab(0);
+}
+
+function goTab(idx) {
+  if (idx < 0 || idx >= WIZARD_TABS.length) return;
+  S.activeTab = idx;
+  S.activeView = 'project';
+
+  $$('.wiz-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  $('#btn-back').classList.toggle('hidden', idx === 0);
+  $('#btn-next').classList.toggle('hidden', idx === WIZARD_TABS.length - 1);
+
+  const views = ['intake', 'analysis', 'documents', 'deliverables', 'commercial'];
+  showView(views[idx]);
+
+  const loaders = [loadIntake, loadAnalysis, loadDocuments, loadDeliverables, loadCommercial];
+  loaders[idx]();
+}
+
+function selPlat(viewId) {
+  S.activeProject = null;
+  S.activeView = viewId;
+
+  $$('.rail-proj').forEach(p => p.classList.remove('active'));
+  $$('.rail-btn').forEach(b => b.classList.toggle('active', b.dataset.view === viewId));
+
+  const v = PLAT_VIEWS.find(x => x.id === viewId);
+  $('#hdr-title').textContent = v ? v.label : 'PABLO 2';
+  $('#hdr-sub').textContent = 'Platform';
+  $('#btn-back').classList.add('hidden');
+  $('#btn-next').classList.add('hidden');
+  $('#wizard-bar').classList.add('hidden');
+
+  showView(viewId);
+  const loaders = { klib: loadKLib, mlib: loadMLib, jobs: loadJobs, crm: loadCRM, registry: loadRegistry };
+  if (loaders[viewId]) loaders[viewId]();
+}
+
+function renderWizard() {
+  const bar = $('#wizard-bar');
+  bar.classList.remove('hidden');
+  bar.innerHTML = WIZARD_TABS.map((t, i) =>
+    '<div class="wiz-tab ' + (i === S.activeTab ? 'active' : '') + '" onclick="goTab(' + i + ')">' + t + '</div>'
+  ).join('');
+}
+
+// ── Cmd+K ──────────────────────────────────────
+function getCmdKItems() {
+  const items = [];
+  S.projects.forEach(p => items.push({
+    type: 'Project', label: p.name, sub: p.country || '',
+    action: function() { closeCmdK(); selProj(p.id); }
+  }));
+  if (S.activeProject) {
+    WIZARD_TABS.forEach((t, i) => items.push({
+      type: 'Tab', label: t, sub: S.activeProject.name,
+      action: function() { closeCmdK(); goTab(i); }
+    }));
+  }
+  PLAT_VIEWS.forEach(v => items.push({
+    type: 'View', label: v.label, sub: 'Platform',
+    action: function() { closeCmdK(); selPlat(v.id); }
+  }));
+  return items;
+}
+
+function openCmdK() {
+  S.cmdkSel = 0;
+  $('#cmdk-overlay').classList.remove('hidden');
+  const input = $('#cmdk-input');
+  input.value = '';
+  input.focus();
+  filterCmdK('');
+}
+
+function closeCmdK() { $('#cmdk-overlay').classList.add('hidden'); }
+
+function filterCmdK(q) {
+  const items = getCmdKItems();
+  const low = q.toLowerCase();
+  const filtered = q ? items.filter(it => it.label.toLowerCase().includes(low) || it.sub.toLowerCase().includes(low)) : items;
+  S.cmdkSel = Math.min(S.cmdkSel, Math.max(0, filtered.length - 1));
+
+  const results = $('#cmdk-results');
+  results.innerHTML = filtered.map((it, i) =>
+    '<div class="cmdk-item ' + (i === S.cmdkSel ? 'sel' : '') + '" data-idx="' + i + '">' +
+    '<div><span class="cmdk-item-label">' + esc(it.label) + '</span><span class="cmdk-item-sub">' + esc(it.sub) + '</span></div>' +
+    '<span class="cmdk-item-type">' + it.type + '</span></div>'
+  ).join('') || '<div class="empty">No results</div>';
+
+  $$('.cmdk-item', results).forEach(el => {
+    el.onclick = function() { filtered[+this.dataset.idx].action(); };
+  });
+  results._items = filtered;
+}
+
+document.addEventListener('keydown', function(e) {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); openCmdK(); return; }
+  if ($('#cmdk-overlay').classList.contains('hidden')) return;
+  var items = ($('#cmdk-results')._items) || [];
+  if (e.key === 'Escape') { closeCmdK(); return; }
+  if (e.key === 'ArrowDown') { e.preventDefault(); S.cmdkSel = Math.min(S.cmdkSel + 1, items.length - 1); filterCmdK($('#cmdk-input').value); }
+  if (e.key === 'ArrowUp') { e.preventDefault(); S.cmdkSel = Math.max(S.cmdkSel - 1, 0); filterCmdK($('#cmdk-input').value); }
+  if (e.key === 'Enter') { e.preventDefault(); if (items[S.cmdkSel]) items[S.cmdkSel].action(); }
+});
+
+// ── Boot ───────────────────────────────────────
+async function boot() {
+  renderRailNav();
+  renderWelcome();
+
+  const [projRes, vocabRes] = await Promise.all([
+    api('/api/pablo/projects').catch(() => ({ projects: [] })),
+    api('/api/primitives/taxonomy/vocab').catch(() => ({ doc_types: [], registries: [] })),
+  ]);
+
+  S.projects = projRes.projects || [];
+  S.vocab = { doc_types: vocabRes.doc_types || [], registries: vocabRes.registries || [] };
+
+  renderRailProjects();
+  renderWelcome();
+
+  new SmartPoller(pollRunner, 30000).start();
+}
+
+function renderRailNav() {
+  $('#rail-nav').innerHTML = PLAT_VIEWS.map(v =>
+    '<button class="rail-btn" data-view="' + v.id + '" onclick="selPlat(\'' + v.id + '\')" title="' + v.label + '">' + ICONS[v.icon] + '</button>'
+  ).join('');
+}
+
+function renderRailProjects() {
+  $('#rail-projects').innerHTML = S.projects.map(p =>
+    '<div class="rail-proj" data-id="' + p.id + '" onclick="selProj(\'' + p.id + '\')" title="' + esc(p.name) + '">' + esc(p.name) + '</div>'
+  ).join('') || '<div class="text-xs text-muted" style="padding:8px;text-align:center">No projects</div>';
+}
+
+async function pollRunner() {
+  try {
+    const r = await fetch(API + '/api/pablo/jobs/runner-status').then(res => res.json());
+    S.runner = r;
+    $('#runner-dot').className = 'runner-dot ' + (r.runner_alive ? 'alive' : 'dead');
+    $('#runner-label').textContent = r.runner_alive ? (r.jobs_running || 0) + ' jobs' : 'offline';
+  } catch(e) { /* silent */ }
+}
+
+function renderWelcome() {
+  $('#welcome-inner').innerHTML =
+    '<h2 style="font-size:20px;font-weight:300;margin-bottom:4px">PABLO 2</h2>' +
+    '<p class="text-sm text-muted">Select a project from the rail or browse platform views.</p>' +
+    '<div class="welcome-grid">' +
+      PLAT_VIEWS.map(v => '<div class="welcome-card" onclick="selPlat(\'' + v.id + '\')"><h3>' + v.label + '</h3><p>Open ' + v.label.toLowerCase() + '</p></div>').join('') +
+    '</div>' +
+    (S.projects.length ? '<div class="section-title mt-md">Projects (' + S.projects.length + ')</div><div class="welcome-grid">' +
+      S.projects.slice(0, 8).map(p => '<div class="welcome-card" onclick="selProj(\'' + p.id + '\')"><h3>' + esc(p.name) + '</h3><p>' + esc([p.country, p.registry].filter(Boolean).join(' \u00b7 ') || 'No metadata') + '</p></div>').join('') +
+    '</div>' : '');
+}
+
+// ── Phase 2: Intake ────────────────────────────
+function loadIntake() {
+  if (_intakeRendered && S.activeView === 'project') return;
+  _intakeRendered = true;
+  var projName = S.activeProject ? esc(S.activeProject.name) : 'No project';
+  $('#intake-inner').innerHTML =
+    '<div class="section-title">Upload Documents <span class="text-xs text-muted">(' + projName + ')</span></div>' +
+    '<div class="drop-zone" id="drop-zone">' +
+      '<p>Drop files here or click to browse</p>' +
+      '<div class="drop-zone-hint">ZIP files auto-classified. GIS files indexed as metadata only.</div>' +
+      '<div class="drop-zone-meta">' +
+        '<select id="ingest-visibility"><option value="private" selected>Private</option><option value="team">Team</option><option value="public">Public</option></select>' +
+      '</div>' +
+      '<input type="file" id="file-input" multiple hidden>' +
+    '</div>' +
+    '<div id="ingest-results" class="mt-md"></div>' +
+    '<div class="section-title mt-md">Paste Text</div>' +
+    '<div class="text-ingest">' +
+      '<input type="text" id="text-title" placeholder="Document title" style="width:100%;margin-bottom:8px">' +
+      '<textarea id="text-content" placeholder="Paste document content here..."></textarea>' +
+      '<div class="text-ingest-row">' +
+        '<select id="text-visibility"><option value="private" selected>Private</option><option value="team">Team</option><option value="public">Public</option></select>' +
+        '<button class="btn btn-primary" onclick="ingestText()">Ingest Text</button>' +
+      '</div>' +
+    '</div>';
+  setupDropZone();
+}
+
+function setupDropZone() {
+  var zone = $('#drop-zone'), input = $('#file-input');
+  if (!zone || !input) return;
+  zone.onclick = function() { input.click(); };
+  input.onchange = function() { var f = Array.from(input.files); input.value = ''; if (f.length) ingestFiles(f); };
+  zone.ondragover = function(e) { e.preventDefault(); zone.classList.add('drag-over'); };
+  zone.ondragleave = function() { zone.classList.remove('drag-over'); };
+  zone.ondrop = function(e) { e.preventDefault(); zone.classList.remove('drag-over'); var f = Array.from(e.dataTransfer.files); if (f.length) ingestFiles(f); };
+}
+
+async function ingestFiles(files) {
+  var results = $('#ingest-results');
+  var proj = S.activeProject ? S.activeProject.id : '';
+  var vis = $('#ingest-visibility').value;
+
+  for (var i = 0; i < files.length; i++) {
+    var file = files[i];
+    var card = document.createElement('div');
+    card.className = 'ingest-result';
+    card.innerHTML = '<span class="filename">' + esc(file.name) + '</span><span class="pill pill-info">uploading...</span>';
+    results.prepend(card);
+
+    try {
+      var isZip = file.name.toLowerCase().endsWith('.zip');
+      var endpoint = isZip ? '/api/knowledge/ingest-zip' : '/api/knowledge/ingest';
+      var fd = new FormData();
+      fd.append('file', file);
+      if (proj) fd.append('project', proj);
+      fd.append('visibility', vis);
+
+      var res = await api(endpoint, { method: 'POST', body: fd });
+      var docId = res.doc_id || res.id || (res.results && res.results[0] && res.results[0].doc_id) || '?';
+      var count = res.results ? res.results.length : 1;
+
+      if (isGIS(file.name)) {
+        card.innerHTML = '<span class="filename">' + esc(file.name) + '</span><span class="pill pill-warning">GIS metadata</span><span class="text-xs text-muted">doc ' + docId + '</span>';
+      } else {
+        card.innerHTML = '<span class="filename">' + esc(file.name) + '</span><span class="pill pill-success">' + (isZip ? count + ' files' : 'ingested') + '</span><span class="text-xs text-muted">doc ' + docId + '</span>';
+      }
+      toast(file.name + ' ingested', 'success');
+    } catch (e) {
+      card.innerHTML = '<span class="filename">' + esc(file.name) + '</span><span class="pill pill-error">failed</span>';
+    }
+  }
+}
+
+async function ingestText() {
+  var title = $('#text-title').value.trim();
+  var content = $('#text-content').value.trim();
+  var vis = $('#text-visibility').value;
+  if (!title || !content) { toast('Title and content required', 'warning'); return; }
+
+  try {
+    var res = await api('/api/pablo/ingest-text', {
+      method: 'POST',
+      body: { title: title, content: content, project: S.activeProject ? S.activeProject.id : 'clearsky_internal', visibility: vis }
+    });
+    toast('"' + title + '" ingested (' + (res.action || 'ok') + ')', 'success');
+    $('#text-title').value = '';
+    $('#text-content').value = '';
+    var card = document.createElement('div');
+    card.className = 'ingest-result';
+    card.innerHTML = '<span class="filename">' + esc(title) + '</span><span class="pill pill-success">' + (res.action || 'ok') + '</span><span class="text-xs text-muted">doc ' + (res.doc_id || '?') + '</span>';
+    $('#ingest-results').prepend(card);
+  } catch(e) { /* toast by api() */ }
+}
+
+// ── Phase 3: Analysis ──────────────────────────
+async function loadAnalysis() {
+  var el = $('#analysis-inner');
+  if (!S.activeProject) { el.innerHTML = '<div class="empty">Select a project</div>'; return; }
+  el.innerHTML = '<div class="shimmer" style="height:80px"></div>';
+
+  try {
+    var res = await api('/api/primitives/taxonomy/search?project=' + encodeURIComponent(S.activeProject.id) + '&limit=500');
+    var docs = res.docs || [];
+    var total = docs.length;
+    var extracted = docs.filter(function(d) { return d.word_count > 0; }).length;
+    var gis = docs.filter(function(d) { return isGIS(d.title); }).length;
+    var words = docs.reduce(function(s, d) { return s + (d.word_count || 0); }, 0);
+    var pending = docs.filter(function(d) { return d.word_count === 0 && !isGIS(d.title); });
+
+    el.innerHTML =
+      '<div class="card-grid">' +
+        '<div class="card"><div class="card-title">Total Documents</div><div class="card-value">' + total + '</div></div>' +
+        '<div class="card"><div class="card-title">Extracted</div><div class="card-value">' + extracted + '</div></div>' +
+        '<div class="card"><div class="card-title">GIS Files</div><div class="card-value">' + gis + '</div></div>' +
+        '<div class="card"><div class="card-title">Total Words</div><div class="card-value">' + fmtNum(words) + '</div></div>' +
+      '</div>' +
+      '<div class="section-title">Documents</div>' +
+      '<div class="doc-table"><table>' +
+        '<thead><tr><th>Title</th><th>Type</th><th>Words</th><th>Pipeline</th><th>Source</th><th>Date</th></tr></thead>' +
+        '<tbody>' + docs.map(function(d) {
+          return '<tr>' +
+            '<td class="truncate" style="max-width:300px" title="' + esc(d.title) + '">' + esc(d.title) + '</td>' +
+            '<td><span class="pill">' + esc(d.doc_type || '') + '</span></td>' +
+            '<td>' + fmtNum(d.word_count) + '</td>' +
+            '<td>' + pipelinePips(d) + '</td>' +
+            '<td class="text-xs text-muted">' + esc(d.source_type || '') + '</td>' +
+            '<td class="text-xs text-muted">' + fmtDate(d.created_at) + '</td></tr>';
+        }).join('') + '</tbody></table></div>' +
+      (pending.length ? '<div class="mt-md"><button class="btn btn-primary" onclick="extractPending(\'' + S.activeProject.id + '\')">Extract ' + pending.length + ' Pending</button></div>' : '');
+  } catch(e) {
+    el.innerHTML = '<div class="empty">Failed to load analysis</div>';
+  }
+}
+
+async function extractPending(projectId) {
+  try {
+    var res = await api('/api/primitives/taxonomy/search?project=' + encodeURIComponent(projectId) + '&limit=500');
+    var pending = (res.docs || []).filter(function(d) { return d.word_count === 0 && !isGIS(d.title); });
+    if (!pending.length) { toast('No pending documents', 'info'); return; }
+    var ids = pending.slice(0, 20).map(function(d) { return d.id; });
+    await api('/api/knowledge/extract-batch', { method: 'POST', body: { doc_ids: ids } });
+    toast('Queued ' + ids.length + ' documents for extraction', 'success');
+  } catch(e) { /* toast */ }
+}
+
+// ── Phase 4: Documents ─────────────────────────
+async function loadDocuments() {
+  var el = $('#documents-inner');
+  if (!S.activeProject) { el.innerHTML = '<div class="empty">Select a project</div>'; return; }
+  el.innerHTML = '<div class="shimmer" style="height:80px"></div>';
+
+  try {
+    var res = await api('/api/primitives/taxonomy/search?project=' + encodeURIComponent(S.activeProject.id) + '&limit=500');
+    var docs = res.docs || [];
+    var typeMap = {};
+    docs.forEach(function(d) { var t = d.doc_type || 'unknown'; typeMap[t] = (typeMap[t] || 0) + 1; });
+    var types = Object.entries(typeMap).sort(function(a, b) { return b[1] - a[1]; });
+
+    el.innerHTML =
+      '<div class="toolbar">' +
+        '<input type="search" id="doc-search" placeholder="Search documents..." oninput="filterDocTable(this.value)">' +
+        '<select id="doc-type-filter" onchange="filterDocTable($(\'#doc-search\').value)"><option value="">All types</option>' +
+          types.map(function(t) { return '<option value="' + t[0] + '">' + t[0] + ' (' + t[1] + ')</option>'; }).join('') +
+        '</select>' +
+        '<button class="btn btn-sm btn-ghost" onclick="extractPending(\'' + S.activeProject.id + '\')">Extract Pending</button>' +
+      '</div>' +
+      '<div class="doc-table"><table>' +
+        '<thead><tr><th>Title</th><th>Type</th><th>Words</th><th>Pipeline</th><th>Visibility</th><th>Date</th></tr></thead>' +
+        '<tbody id="doc-table-body">' + docs.map(function(d) {
+          return '<tr data-type="' + esc(d.doc_type || '') + '" data-title="' + esc((d.title || '').toLowerCase()) + '">' +
+            '<td class="truncate" style="max-width:280px" title="' + esc(d.title) + '">' + esc(d.title) + '</td>' +
+            '<td><span class="pill">' + esc(d.doc_type || '') + '</span></td>' +
+            '<td>' + fmtNum(d.word_count) + '</td>' +
+            '<td>' + pipelinePips(d) + '</td>' +
+            '<td><span class="pill ' + (d.visibility === 'private' ? 'pill-warning' : d.visibility === 'public' ? 'pill-success' : '') + '">' + (d.visibility || 'team') + '</span></td>' +
+            '<td class="text-xs text-muted">' + fmtDate(d.created_at) + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+  } catch(e) {
+    el.innerHTML = '<div class="empty">Failed to load documents</div>';
+  }
+}
+
+function filterDocTable(q) {
+  var type = ($('#doc-type-filter') || {}).value || '';
+  var low = q.toLowerCase();
+  $$('#doc-table-body tr').forEach(function(tr) {
+    var matchType = !type || tr.dataset.type === type;
+    var matchQ = !low || tr.dataset.title.includes(low);
+    tr.classList.toggle('hidden', !(matchType && matchQ));
+  });
+}
+
+// ── Phase 5: Deliverables ──────────────────────
+async function loadDeliverables() {
+  var el = $('#deliverables-inner');
+  if (!S.activeProject) { el.innerHTML = '<div class="empty">Select a project</div>'; return; }
+  el.innerHTML = '<div class="shimmer" style="height:80px"></div>';
+
+  try {
+    var results = await Promise.all([
+      api('/api/pablo/projects/' + encodeURIComponent(S.activeProject.id) + '/parameters').catch(function() { return { parameters: [] }; }),
+      api('/api/pablo/projects/' + encodeURIComponent(S.activeProject.id) + '/documents').catch(function() { return { documents: [] }; }),
+      api('/api/pablo/projects/' + encodeURIComponent(S.activeProject.id) + '/parameters/stale').catch(function() { return { stale: [] }; }),
+    ]);
+    S.params = results[0].parameters || [];
+    S.projectDocs = results[1].documents || [];
+    var staleDocs = results[2].stale || [];
+
+    el.innerHTML =
+      '<div class="section-title">Parameter Registry (' + S.params.length + ')</div>' +
+      '<div class="toolbar">' +
+        '<input type="search" id="param-search" placeholder="Search parameters..." oninput="filterParams(this.value)">' +
+        '<button class="btn btn-sm btn-ghost" onclick="deriveParams()">Derive Values</button>' +
+      '</div>' +
+      '<div class="card" id="param-list" style="padding:0">' +
+        (S.params.length ? S.params.map(renderParamRow).join('') : '<div class="empty">No parameters</div>') +
+      '</div>' +
+      '<div class="section-title mt-md">Documents (' + S.projectDocs.length + ')</div>' +
+      '<div class="doc-table"><table>' +
+        '<thead><tr><th>Type</th><th>Status</th><th>Generated</th><th>Stale</th><th>Actions</th></tr></thead>' +
+        '<tbody>' + S.projectDocs.map(function(d) {
+          var isStale = staleDocs.some(function(s) { return s.document_type === d.document_type; });
+          return '<tr>' +
+            '<td class="fw-500">' + esc(d.document_type) + '</td>' +
+            '<td><span class="pill ' + (d.status === 'generated' ? 'pill-success' : 'pill-warning') + '">' + (d.status || 'pending') + '</span></td>' +
+            '<td class="text-xs text-muted">' + fmtDate(d.last_generated_at) + '</td>' +
+            '<td>' + (isStale ? '<span class="pill pill-warning">stale</span>' : '') + '</td>' +
+            '<td><button class="btn btn-sm btn-ghost" onclick="generateDoc(\'' + esc(d.document_type) + '\')">Generate</button></td></tr>';
+        }).join('') + '</tbody></table></div>';
+  } catch(e) {
+    el.innerHTML = '<div class="empty">Failed to load deliverables</div>';
+  }
+}
+
+function renderParamRow(p) {
+  return '<div class="param-row" data-key="' + esc(p.parameter_key) + '" data-search="' + esc((p.parameter_key || '').toLowerCase()) + '">' +
+    '<div class="param-key truncate" title="' + esc(p.parameter_key) + '">' + esc(p.parameter_key) + '</div>' +
+    '<div class="param-val" onclick="inlineEdit(this,\'' + esc(p.parameter_key) + '\')">' + esc(p.value != null ? p.value : '') + '</div>' +
+    '<div class="param-unit text-xs text-muted">' + esc(p.unit || '') + '</div>' +
+    '<div class="param-source"><span class="pill text-xs">' + esc(p.source || '') + '</span></div>' +
+    '<div class="param-confirmed">' + (p.confirmed ? '<span title="Confirmed" style="color:var(--success)">&#10003;</span>' : '<span title="Unconfirmed" style="color:var(--muted)">?</span>') + '</div>' +
+  '</div>';
+}
+
+function inlineEdit(el, key) {
+  if (el.querySelector('input')) return;
+  var original = el.textContent.trim();
+  el.innerHTML = '<input type="text" value="' + esc(original) + '">';
+  var input = el.querySelector('input');
+  input.focus();
+  input.select();
+
+  var save = async function() {
+    var val = input.value.trim();
+    if (val === original) { el.textContent = original; return; }
+    el.textContent = val;
+    try {
+      await api('/api/pablo/projects/' + encodeURIComponent(S.activeProject.id) + '/parameters', {
+        method: 'POST', body: { parameter_key: key, value: val, source: 'user_input', confirmed: 1 }
+      });
+      toast(key + ' updated', 'success');
+    } catch(e) { el.textContent = original; }
+  };
+  input.onblur = save;
+  input.onkeydown = function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    if (e.key === 'Escape') { el.textContent = original; }
+  };
+}
+
+function filterParams(q) {
+  var low = q.toLowerCase();
+  $$('.param-row').forEach(function(r) { r.classList.toggle('hidden', low && !r.dataset.search.includes(low)); });
+}
+
+async function deriveParams() {
+  if (!S.activeProject) return;
+  try {
+    var res = await api('/api/pablo/projects/' + encodeURIComponent(S.activeProject.id) + '/parameters/derive', { method: 'POST' });
+    toast('Derived ' + Object.keys(res.derived || {}).length + ' values', 'success');
+    loadDeliverables();
+  } catch(e) { /* toast */ }
+}
+
+async function generateDoc(docType) {
+  if (!S.activeProject) return;
+  try {
+    await api('/api/pablo/projects/' + encodeURIComponent(S.activeProject.id) + '/documents', {
+      method: 'POST', body: { document_type: docType }
+    });
+    toast(docType + ' generation started', 'success');
+    loadDeliverables();
+  } catch(e) { /* toast */ }
+}
+
+// ── Phase 6: Commercial ────────────────────────
+async function loadCommercial() {
+  var el = $('#commercial-inner');
+  if (!S.activeProject) { el.innerHTML = '<div class="empty">Select a project</div>'; return; }
+  el.innerHTML = '<div class="shimmer" style="height:80px"></div>';
+
+  var client = S.activeProject.client;
+  if (!client) { el.innerHTML = '<div class="empty">No client associated with this project</div>'; return; }
+
+  try {
+    var res = await api('/api/hubspot/contacts-view');
+    var companies = (res.companies || []).filter(function(c) { return c.name && c.name.toLowerCase().includes(client.toLowerCase()); });
+    var contacts = res.contacts || [];
+    var companyIds = companies.map(function(c) { return c.id; });
+    var relContacts = contacts.filter(function(ct) { return companyIds.indexOf(ct.associated_company_id) >= 0; });
+
+    el.innerHTML =
+      '<div class="section-title">Client: ' + esc(client) + '</div>' +
+      (companies.length ?
+        '<div class="doc-table"><table>' +
+          '<thead><tr><th>Company</th><th>Domain</th><th>Industry</th><th>Tier</th><th>Country</th></tr></thead>' +
+          '<tbody>' + companies.map(function(c) {
+            return '<tr><td class="fw-500">' + esc(c.name) + '</td><td class="text-xs">' + esc(c.domain || '') + '</td><td class="text-xs">' + esc(c.industry || '') + '</td><td><span class="pill">' + esc(c.tier || '') + '</span></td><td class="text-xs">' + esc(c.country || '') + '</td></tr>';
+          }).join('') + '</tbody></table></div>' +
+        '<div class="section-title mt-md">Contacts (' + relContacts.length + ')</div>' +
+        '<div class="doc-table"><table>' +
+          '<thead><tr><th>Name</th><th>Email</th><th>Role</th></tr></thead>' +
+          '<tbody>' + (relContacts.length ? relContacts.map(function(ct) {
+            return '<tr><td class="fw-500">' + esc([ct.firstname, ct.lastname].filter(Boolean).join(' ')) + '</td><td class="text-xs">' + esc(ct.email || '') + '</td><td class="text-xs">' + esc(ct.buying_role || '') + '</td></tr>';
+          }).join('') : '<tr><td colspan="3" class="text-muted">No contacts found</td></tr>') + '</tbody></table></div>'
+      : '<div class="empty">No CRM data for this client</div>');
+  } catch(e) {
+    el.innerHTML = '<div class="empty">Failed to load commercial data</div>';
+  }
+}
+
+// ── Phase 7A: Knowledge Library ────────────────
+async function loadKLib() {
+  var el = $('#klib-inner');
+  el.innerHTML =
+    '<div class="toolbar">' +
+      '<div class="mode-toggle">' +
+        '<button class="' + (S.klib.mode === 'browse' ? 'active' : '') + '" onclick="setKLibMode(\'browse\')">Browse</button>' +
+        '<button class="' + (S.klib.mode === 'ask' ? 'active' : '') + '" onclick="setKLibMode(\'ask\')">Ask</button>' +
+      '</div>' +
+      '<input type="search" id="klib-search" placeholder="Search documents..." oninput="filterKLib(this.value)" value="' + esc(S.klib.query) + '">' +
+      '<select id="klib-type" onchange="filterKLib($(\'#klib-search\').value)"><option value="">All types</option>' +
+        S.vocab.doc_types.map(function(t) { return '<option value="' + t.id + '">' + esc(t.label || t.id) + '</option>'; }).join('') +
+      '</select>' +
+      '<select id="klib-vis" onchange="filterKLib($(\'#klib-search\').value)">' +
+        '<option value="">All visibility</option><option value="private">Private</option><option value="team">Team</option><option value="public">Public</option>' +
+      '</select>' +
+    '</div>' +
+    '<div id="klib-content"></div>';
+
+  if (S.klib.mode === 'browse') await loadKLibBrowse();
+  else renderKLibAsk();
+}
+
+function setKLibMode(mode) { S.klib.mode = mode; loadKLib(); }
+
+async function loadKLibBrowse() {
+  var content = $('#klib-content');
+  if (!content) return;
+  content.innerHTML = '<div class="shimmer" style="height:200px"></div>';
+  try {
+    var res = await api('/api/primitives/taxonomy/search?limit=500');
+    S.klib.docs = res.docs || [];
+    renderKLibTable();
+  } catch(e) { content.innerHTML = '<div class="empty">Failed to load knowledge library</div>'; }
+}
+
+function renderKLibTable() {
+  var content = $('#klib-content');
+  if (!content) return;
+  var docs = S.klib.docs;
+  content.innerHTML =
+    '<div class="text-xs text-muted mb-md">' + docs.length + ' documents</div>' +
+    '<div class="doc-table"><table>' +
+      '<thead><tr><th>Title</th><th>Type</th><th>Project</th><th>Words</th><th>Pipeline</th><th>Visibility</th><th>Date</th></tr></thead>' +
+      '<tbody id="klib-table-body">' + docs.map(function(d) {
+        return '<tr data-type="' + esc(d.doc_type || '') + '" data-vis="' + esc(d.visibility || '') + '" data-title="' + esc((d.title || '').toLowerCase()) + '" data-project="' + esc((d.project || '').toLowerCase()) + '">' +
+          '<td class="truncate" style="max-width:240px" title="' + esc(d.title) + '">' + esc(d.title) + (d.is_canonical ? ' <span class="pill pill-gold">canonical</span>' : '') + '</td>' +
+          '<td><span class="pill">' + esc(d.doc_type || '') + '</span></td>' +
+          '<td class="text-xs">' + esc(d.project || '') + '</td>' +
+          '<td>' + fmtNum(d.word_count) + '</td>' +
+          '<td>' + pipelinePips(d) + '</td>' +
+          '<td><span class="pill ' + (d.visibility === 'private' ? 'pill-warning' : d.visibility === 'public' ? 'pill-success' : '') + '">' + (d.visibility || 'team') + '</span></td>' +
+          '<td class="text-xs text-muted">' + fmtDate(d.created_at) + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+}
+
+function filterKLib(q) {
+  var type = ($('#klib-type') || {}).value || '';
+  var vis = ($('#klib-vis') || {}).value || '';
+  var low = q.toLowerCase();
+  S.klib.query = q;
+  $$('#klib-table-body tr').forEach(function(tr) {
+    var ok = (!type || tr.dataset.type === type) && (!vis || tr.dataset.vis === vis) && (!low || tr.dataset.title.includes(low) || tr.dataset.project.includes(low));
+    tr.classList.toggle('hidden', !ok);
+  });
+}
+
+function renderKLibAsk() {
+  var content = $('#klib-content');
+  if (!content) return;
+  content.innerHTML =
+    '<div class="ask-box">' +
+      '<input type="text" id="klib-ask-input" placeholder="Ask a question about the knowledge base..." value="' + esc(S.klib.query) + '">' +
+      '<button class="btn btn-primary" onclick="askKLib()">Ask</button>' +
+    '</div>' +
+    '<div id="klib-ask-result">' + (S.klib.answer ? '<div class="ask-answer">' + esc(S.klib.answer) + '</div>' : '') + '</div>';
+  var input = $('#klib-ask-input');
+  if (input) input.onkeydown = function(e) { if (e.key === 'Enter') askKLib(); };
+}
+
+async function askKLib() {
+  var input = $('#klib-ask-input'), result = $('#klib-ask-result');
+  if (!input || !result) return;
+  var q = input.value.trim();
+  if (!q) { toast('Enter a question', 'warning'); return; }
+  S.klib.query = q;
+  result.innerHTML = '<div class="shimmer" style="height:60px"></div>';
+  try {
+    var body = { question: q };
+    if (S.activeProject) body.project_filter = S.activeProject.id;
+    var res = await api('/api/wiki/ask', { method: 'POST', body: body });
+    S.klib.answer = res.answer || 'No answer returned.';
+    var sources = res.sources || [];
+    result.innerHTML = '<div class="ask-answer">' + esc(S.klib.answer) + '</div>' +
+      (sources.length ? '<div class="ask-sources">Sources: ' + sources.map(function(s) { return esc(s.title || s.id || ''); }).join(', ') + '</div>' : '');
+  } catch(e) { result.innerHTML = '<div class="empty">Failed to get answer</div>'; }
+}
+
+// ── Phase 7B: Methodology Library ──────────────
+async function loadMLib() {
+  var el = $('#mlib-inner');
+  el.innerHTML = '<div class="shimmer" style="height:200px"></div>';
+  try {
+    var res = await api('/api/primitives/taxonomy/search?canonical=1&limit=500');
+    S.mlib.docs = res.docs || [];
+    var byReg = {};
+    S.mlib.docs.forEach(function(d) { var r = d.registry || 'unknown'; if (!byReg[r]) byReg[r] = []; byReg[r].push(d); });
+
+    el.innerHTML =
+      '<div class="toolbar"><input type="search" id="mlib-search" placeholder="Search methodologies..." oninput="filterMLib(this.value)"></div>' +
+      '<div class="text-xs text-muted mb-md">' + S.mlib.docs.length + ' canonical documents</div>' +
+      Object.entries(byReg).map(function(entry) {
+        var reg = entry[0], regDocs = entry[1];
+        return '<div class="section-title">' + esc(reg) + ' (' + regDocs.length + ')</div>' +
+          '<div class="doc-table mb-md"><table>' +
+            '<thead><tr><th>Title</th><th>Type</th><th>Methodology</th><th>Words</th></tr></thead>' +
+            '<tbody class="mlib-tbody">' + regDocs.map(function(d) {
+              return '<tr data-title="' + esc((d.title || '').toLowerCase()) + '">' +
+                '<td class="truncate" style="max-width:300px" title="' + esc(d.title) + '">' + esc(d.title) +
+                  (d.is_registered_example ? ' <span class="pill pill-info">example</span>' : '') +
+                  (d.canonical_type === 'methodology' ? ' <span class="pill pill-gold">methodology</span>' : '') +
+                '</td>' +
+                '<td><span class="pill">' + esc(d.registry_doc_type || d.doc_type || '') + '</span></td>' +
+                '<td class="text-xs">' + esc(d.methodology_code || '') + '</td>' +
+                '<td>' + fmtNum(d.word_count) + '</td></tr>';
+            }).join('') + '</tbody></table></div>';
+      }).join('');
+  } catch(e) { el.innerHTML = '<div class="empty">Failed to load methodology library</div>'; }
+}
+
+function filterMLib(q) {
+  var low = q.toLowerCase();
+  $$('.mlib-tbody tr').forEach(function(tr) { tr.classList.toggle('hidden', low && !tr.dataset.title.includes(low)); });
+}
+
+// ── Phase 7C: Job Queue ────────────────────────
+async function loadJobs() {
+  var el = $('#jobs-inner');
+  el.innerHTML = '<div class="shimmer" style="height:80px"></div>';
+  try {
+    var r = await api('/api/pablo/jobs/runner-status');
+    el.innerHTML =
+      '<div class="card-grid">' +
+        '<div class="card"><div class="card-title">Runner</div><div class="card-value"><span class="runner-dot ' + (r.runner_alive ? 'alive' : 'dead') + '" style="width:10px;height:10px;vertical-align:middle;margin-right:6px"></span>' + (r.runner_alive ? 'Online' : 'Offline') + '</div></div>' +
+        '<div class="card"><div class="card-title">Running</div><div class="card-value">' + (r.jobs_running || 0) + '</div></div>' +
+        '<div class="card"><div class="card-title">Queued</div><div class="card-value">' + (r.jobs_queued || 0) + '</div></div>' +
+        '<div class="card"><div class="card-title">Last Heartbeat</div><div class="card-value text-sm">' + (r.last_heartbeat ? fmtDate(r.last_heartbeat) : 'Never') + '</div></div>' +
+      '</div>' +
+      (r.last_job ? '<div class="section-title">Last Job</div><div class="card"><div style="display:flex;gap:16px;align-items:center">' +
+        '<span class="fw-500">' + esc(r.last_job.type || '') + '</span>' +
+        '<span class="pill ' + (r.last_job.status === 'completed' ? 'pill-success' : r.last_job.status === 'failed' ? 'pill-error' : 'pill-info') + '">' + esc(r.last_job.status || '') + '</span>' +
+        '<span class="text-xs text-muted">' + esc(r.last_job.filename || '') + '</span>' +
+        '<span class="text-xs text-muted">' + fmtDate(r.last_job.completed_at) + '</span>' +
+      '</div></div>' : '');
+  } catch(e) { el.innerHTML = '<div class="empty">Failed to load job queue</div>'; }
+}
+
+// ── Phase 7D: CRM Dashboard ───────────────────
+async function loadCRM() {
+  var el = $('#crm-inner');
+  el.innerHTML = '<div class="shimmer" style="height:200px"></div>';
+  try {
+    var results = await Promise.all([
+      api('/api/hubspot/contacts-view'),
+      api('/api/hubspot/team').catch(function() { return []; }),
+    ]);
+    S.crm.companies = results[0].companies || [];
+    S.crm.contacts = results[0].contacts || [];
+    var team = Array.isArray(results[1]) ? results[1] : [];
+
+    var tierCounts = {};
+    S.crm.companies.forEach(function(c) { var t = c.tier || 'none'; tierCounts[t] = (tierCounts[t] || 0) + 1; });
+
+    el.innerHTML =
+      '<div class="card-grid">' +
+        '<div class="card"><div class="card-title">Companies</div><div class="card-value">' + S.crm.companies.length + '</div></div>' +
+        '<div class="card"><div class="card-title">Contacts</div><div class="card-value">' + S.crm.contacts.length + '</div></div>' +
+        Object.entries(tierCounts).slice(0, 3).map(function(e) { return '<div class="card"><div class="card-title">' + esc(e[0]) + '</div><div class="card-value">' + e[1] + '</div></div>'; }).join('') +
+      '</div>' +
+      '<div class="toolbar">' +
+        '<input type="search" id="crm-search" placeholder="Search companies..." oninput="filterCRM(this.value)">' +
+        '<select id="crm-owner" onchange="filterCRM($(\'#crm-search\').value)"><option value="">All owners</option>' +
+          team.map(function(m) { return '<option value="' + esc(m.name) + '">' + esc(m.name) + '</option>'; }).join('') +
+        '</select>' +
+        '<select id="crm-tier" onchange="filterCRM($(\'#crm-search\').value)"><option value="">All tiers</option>' +
+          Object.keys(tierCounts).map(function(t) { return '<option value="' + t + '">' + esc(t) + '</option>'; }).join('') +
+        '</select>' +
+      '</div>' +
+      '<div class="doc-table"><table>' +
+        '<thead><tr><th>Company</th><th>Domain</th><th>Industry</th><th>Tier</th><th>Country</th><th>Owner</th><th>#</th></tr></thead>' +
+        '<tbody id="crm-table-body">' + S.crm.companies.map(function(c) {
+          var cc = S.crm.contacts.filter(function(ct) { return ct.associated_company_id === c.id; }).length;
+          return '<tr data-name="' + esc((c.name || '').toLowerCase()) + '" data-owner="' + esc((c.owner_name || '').toLowerCase()) + '" data-tier="' + esc(c.tier || '') + '">' +
+            '<td class="fw-500 truncate" style="max-width:200px">' + esc(c.name) + '</td>' +
+            '<td class="text-xs">' + esc(c.domain || '') + '</td>' +
+            '<td class="text-xs">' + esc(c.industry || '') + '</td>' +
+            '<td><span class="pill">' + esc(c.tier || '') + '</span></td>' +
+            '<td class="text-xs">' + esc(c.country || '') + '</td>' +
+            '<td class="text-xs">' + esc(c.owner_name || '') + '</td>' +
+            '<td class="text-xs">' + (cc || '') + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+  } catch(e) { el.innerHTML = '<div class="empty">Failed to load CRM</div>'; }
+}
+
+function filterCRM(q) {
+  var owner = ($('#crm-owner') || {}).value || '';
+  var tier = ($('#crm-tier') || {}).value || '';
+  var low = (q || '').toLowerCase();
+  $$('#crm-table-body tr').forEach(function(tr) {
+    var ok = (!low || tr.dataset.name.includes(low)) && (!owner || tr.dataset.owner.includes(owner.toLowerCase())) && (!tier || tr.dataset.tier === tier);
+    tr.classList.toggle('hidden', !ok);
+  });
+}
+
+// ── Phase 7E: Registry Intel ───────────────────
+function loadRegistry() {
+  var el = $('#registry-inner');
+  el.innerHTML =
+    '<div class="toolbar">' +
+      '<input type="search" id="reg-search" placeholder="Search registry projects...">' +
+      '<button class="btn btn-primary btn-sm" onclick="searchRegistry()">Search</button>' +
+    '</div>' +
+    '<div id="reg-results"><div class="empty">Enter a search term to find registry projects</div></div>';
+  var input = $('#reg-search');
+  if (input) input.onkeydown = function(e) { if (e.key === 'Enter') searchRegistry(); };
+}
+
+async function searchRegistry() {
+  var q = ($('#reg-search') || {}).value || '';
+  var el = $('#reg-results');
+  if (!el) return;
+  el.innerHTML = '<div class="shimmer" style="height:200px"></div>';
+  try {
+    var params = new URLSearchParams({ limit: '100' });
+    if (q.trim()) params.set('q', q.trim());
+    var res = await api('/api/primitives/registry-index/search?' + params);
+    var results = res.results || res.projects || [];
+    if (!results.length) { el.innerHTML = '<div class="empty">No results found</div>'; return; }
+    el.innerHTML =
+      '<div class="text-xs text-muted mb-md">' + results.length + ' projects</div>' +
+      '<div class="doc-table"><table>' +
+        '<thead><tr><th>ID</th><th>Name</th><th>Status</th><th>Country</th><th>Methodology</th><th>VCUs</th></tr></thead>' +
+        '<tbody>' + results.map(function(p) {
+          return '<tr>' +
+            '<td class="text-xs">' + (p.registry_project_id || p.id || '') + '</td>' +
+            '<td class="truncate fw-500" style="max-width:280px" title="' + esc(p.resource_name || p.name || '') + '">' + esc(p.resource_name || p.name || '') + '</td>' +
+            '<td><span class="pill ' + (p.status === 'Registered' ? 'pill-success' : '') + '">' + esc(p.status || '') + '</span></td>' +
+            '<td class="text-xs">' + esc(p.country || '') + '</td>' +
+            '<td class="text-xs truncate" style="max-width:120px">' + esc(p.methodology || '') + '</td>' +
+            '<td class="text-xs">' + fmtNum(p.total_vcus || p.estimated_annual_reductions || 0) + '</td></tr>';
+        }).join('') + '</tbody></table></div>';
+  } catch(e) { el.innerHTML = '<div class="empty">Failed to search registry</div>'; }
+}
+
+// ── Back/Next ──────────────────────────────────
+$('#btn-back').onclick = function() { goTab(S.activeTab - 1); };
+$('#btn-next').onclick = function() { goTab(S.activeTab + 1); };
+
+// ── Init ───────────────────────────────────────
+document.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>
