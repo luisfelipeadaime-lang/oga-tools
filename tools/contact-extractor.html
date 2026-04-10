@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact Extractor — ClearSky</title>
+<link rel="stylesheet" href="pablo-system.css">
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="lib/pablo-ingest.js"></script>
+<style>
+  body { margin: 0; padding: 0; font-family: var(--font-ui); background: var(--surface-bg); color: var(--text-primary); }
+  .app { max-width: 960px; margin: 0 auto; padding: 24px 20px; }
+  h1 { font-size: var(--text-xl); font-weight: 600; margin: 0 0 4px; }
+  .subtitle { font-size: var(--text-sm); color: var(--text-tertiary); margin-bottom: 20px; }
+
+  /* Drop zone */
+  .drop-zone {
+    border: 2px dashed var(--border-panel); border-radius: 12px; padding: 40px 20px;
+    text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    margin-bottom: 16px; position: relative;
+  }
+  .drop-zone.over { border-color: var(--accent-blue); background: var(--surface-selected); }
+  .drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .drop-zone h3 { margin: 0 0 4px; font-size: var(--text-md); font-weight: 500; }
+  .drop-zone p { margin: 0; font-size: var(--text-sm); color: var(--text-tertiary); }
+  .file-list { font-size: var(--text-sm); color: var(--text-secondary); margin-top: 8px; }
+
+  /* Options */
+  .opts { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .opts label { font-size: var(--text-sm); color: var(--text-secondary); }
+  .opts input[type=text], .opts select { font-size: var(--text-sm); padding: 4px 8px; border: 1px solid var(--border-panel); border-radius: 6px; }
+  .opts input[type=text] { width: 200px; }
+
+  /* Buttons */
+  .btn { padding: 8px 16px; border: none; border-radius: 8px; font-size: var(--text-sm); font-weight: 500; cursor: pointer; }
+  .btn-primary { background: var(--accent-blue); color: #fff; }
+  .btn-primary:hover { filter: brightness(0.9); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary { background: var(--surface-sidebar); color: var(--text-primary); border: 1px solid var(--border-panel); }
+  .btn-secondary:hover { background: var(--surface-hover); }
+  .actions { display: flex; gap: 8px; margin: 16px 0; flex-wrap: wrap; }
+
+  /* Status */
+  .status { padding: 12px 16px; border-radius: 8px; font-size: var(--text-sm); margin-bottom: 16px; display: none; }
+  .status.info { display: block; background: #EBF5FB; color: #1A5276; }
+  .status.success { display: block; background: #E8F8F5; color: #117A65; }
+  .status.error { display: block; background: #FDEDEC; color: #922B21; }
+  .status.warning { display: block; background: #FEF9E7; color: #7D6608; }
+
+  /* Text area for paste */
+  .text-input { width: 100%; min-height: 120px; padding: 12px; border: 1px solid var(--border-panel); border-radius: 8px; font-family: var(--font-mono); font-size: var(--text-sm); resize: vertical; box-sizing: border-box; margin-bottom: 12px; }
+
+  /* Results table */
+  .results { overflow-x: auto; margin-top: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+  th { background: var(--surface-sidebar); padding: 8px 10px; text-align: left; font-weight: 500; border-bottom: 1px solid var(--border-divider); position: sticky; top: 0; }
+  td { padding: 6px 10px; border-bottom: 1px solid var(--border-subtle); }
+  td input { border: none; background: transparent; font-size: var(--text-sm); width: 100%; padding: 2px 0; font-family: var(--font-ui); }
+  td input:focus { outline: none; background: var(--surface-selected); border-radius: 3px; }
+  tr.new-contact td { background: #FFFDE7; }
+  tr.found-contact td { background: #E8F5E9; }
+
+  /* Progress */
+  .progress-list { font-size: var(--text-sm); margin-bottom: 12px; }
+  .progress-item { padding: 4px 0; color: var(--text-secondary); }
+  .progress-item .done { color: var(--semantic-success); }
+  .progress-item .fail { color: var(--semantic-error); }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border-divider); margin-bottom: 16px; }
+  .tab { padding: 8px 16px; font-size: var(--text-sm); cursor: pointer; border-bottom: 2px solid transparent; color: var(--text-secondary); }
+  .tab.active { color: var(--accent-blue); border-bottom-color: var(--accent-blue); font-weight: 500; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Contact Extractor</h1>
+  <p class="subtitle">Extract structured contacts from photos, PDFs, or pasted text</p>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('paste')">Paste Text</div>
+    <div class="tab" onclick="switchTab('upload')">Upload Files</div>
+  </div>
+
+  <!-- Paste panel -->
+  <div id="panel-paste" class="panel active">
+    <textarea class="text-input" id="text-input" placeholder="Paste conference participant list, business card text, email signatures, or any text containing contact information..."></textarea>
+  </div>
+
+  <!-- Upload panel -->
+  <div id="panel-upload" class="panel">
+    <div class="drop-zone" id="drop-zone">
+      <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.heic,.webp,.pdf,.docx,.txt,.csv">
+      <h3>Drop files here or click to browse</h3>
+      <p>Images, PDFs, DOCX, CSV, TXT</p>
+      <div class="file-list" id="file-list"></div>
+    </div>
+    <div class="progress-list" id="progress-list"></div>
+  </div>
+
+  <!-- Options -->
+  <div class="opts">
+    <label>Event: <input type="text" id="event-name" placeholder="e.g. Carbon Forward 2026"></label>
+    <label>Visibility:
+      <select id="vis-select">
+        <option value="private" selected>Private</option>
+        <option value="team">Team</option>
+      </select>
+    </label>
+    <button class="btn btn-primary" id="btn-extract" onclick="runExtraction()">Extract Contacts</button>
+  </div>
+
+  <!-- Status -->
+  <div class="status" id="status"></div>
+
+  <!-- Results -->
+  <div class="actions" id="actions" style="display:none">
+    <button class="btn btn-primary" onclick="downloadXLSX()">Download XLSX</button>
+    <button class="btn btn-secondary" onclick="copyJSON()">Copy JSON</button>
+  </div>
+  <div class="results" id="results"></div>
+</div>
+
+<script>
+const API = 'https://api-tools.oga.earth';
+let CONTACTS = [];
+let FILES = [];
+
+// ── Tab switching ────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.tab[onclick*="${tab}"]`).classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+}
+
+// ── File handling ────────────────────────────────────────────
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('over');
+  FILES = Array.from(e.dataTransfer.files);
+  showFileList();
+});
+fileInput.addEventListener('change', () => {
+  FILES = Array.from(fileInput.files);
+  showFileList();
+});
+
+function showFileList() {
+  const el = document.getElementById('file-list');
+  if (!FILES.length) { el.textContent = ''; return; }
+  const totalMB = FILES.reduce((s, f) => s + f.size, 0) / 1048576;
+  el.textContent = FILES.length + ' file' + (FILES.length > 1 ? 's' : '') + ' (' + totalMB.toFixed(1) + ' MB)';
+}
+
+// ── Status helper ────────────────────────────────────────────
+function setStatus(msg, type) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status ' + (type || 'info');
+}
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+// ── Main extraction pipeline ─────────────────────────────────
+async function runExtraction() {
+  const btn = document.getElementById('btn-extract');
+  btn.disabled = true;
+  CONTACTS = [];
+  document.getElementById('results').innerHTML = '';
+  document.getElementById('actions').style.display = 'none';
+
+  try {
+    const activeTab = document.querySelector('.tab.active').textContent.trim();
+    let combinedText = '';
+
+    if (activeTab === 'Paste Text') {
+      combinedText = document.getElementById('text-input').value.trim();
+      if (!combinedText) { setStatus('Please paste some text first.', 'warning'); return; }
+    } else {
+      if (!FILES.length) { setStatus('Please select files first.', 'warning'); return; }
+      setStatus('Uploading and extracting text from ' + FILES.length + ' file(s)...', 'info');
+
+      const progressEl = document.getElementById('progress-list');
+      progressEl.innerHTML = '';
+      const texts = [];
+
+      for (const file of FILES) {
+        const item = document.createElement('div');
+        item.className = 'progress-item';
+        item.textContent = 'Uploading ' + file.name + '...';
+        progressEl.appendChild(item);
+
+        try {
+          const result = await PabloIngest.ingestFile(file, {
+            project: 'clearsky_internal',
+            visibility: document.getElementById('vis-select').value,
+            docType: 'contact_photo',
+            onProgress: e => { item.textContent = file.name + ': ' + (e.type || '...'); },
+          });
+
+          // Fetch extracted text from the doc
+          const docId = result.doc_id || result.id;
+          if (docId) {
+            const docResp = await fetch(API + '/api/knowledge/docs/' + docId, {
+              headers: { 'Origin': 'https://tools.oga.earth' },
+            });
+            const docData = await docResp.json();
+            const txt = docData.markdown || docData.content || docData.text || '';
+            if (txt.trim()) texts.push(txt);
+          }
+          item.innerHTML = '<span class="done">' + esc(file.name) + ' — extracted</span>';
+        } catch (err) {
+          item.innerHTML = '<span class="fail">' + esc(file.name) + ' — ' + esc(err.message) + '</span>';
+        }
+      }
+
+      if (!texts.length) { setStatus('No text extracted from files.', 'error'); return; }
+      combinedText = texts.join('\n\n---\n\n');
+    }
+
+    setStatus('Structuring contacts (' + combinedText.length + ' chars)...', 'info');
+
+    // Call worker endpoint for AI structuring
+    const structured = await PabloIngest.structureContacts(combinedText);
+    CONTACTS = structured.contacts || [];
+
+    if (!CONTACTS.length) {
+      setStatus('No contacts found in the text.', 'warning');
+      return;
+    }
+
+    setStatus(CONTACTS.length + ' contact(s) extracted.', 'success');
+    renderTable();
+    document.getElementById('actions').style.display = 'flex';
+
+  } catch (err) {
+    setStatus('Error: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── Render results table ─────────────────────────────────────
+function renderTable() {
+  const cols = ['name', 'title', 'company', 'email', 'phone', 'linkedin', 'notes'];
+  const labels = { name: 'Name', title: 'Title', company: 'Company', email: 'Email', phone: 'Phone', linkedin: 'LinkedIn', notes: 'Notes' };
+
+  let html = '<table><thead><tr>';
+  html += '<th>#</th>';
+  for (const c of cols) html += '<th>' + labels[c] + '</th>';
+  html += '</tr></thead><tbody>';
+
+  CONTACTS.forEach((contact, i) => {
+    const cls = contact.hs_status === 'found' ? 'found-contact' : (contact.hs_status === 'new' ? 'new-contact' : '');
+    html += '<tr class="' + cls + '">';
+    html += '<td>' + (i + 1) + '</td>';
+    for (const c of cols) {
+      html += '<td><input value="' + esc(contact[c] || '') + '" onchange="updateContact(' + i + ',\'' + c + '\',this.value)"></td>';
+    }
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  document.getElementById('results').innerHTML = html;
+}
+
+function updateContact(idx, field, value) {
+  if (CONTACTS[idx]) CONTACTS[idx][field] = value;
+}
+
+// ── Download XLSX ────────────────────────────────────────────
+function downloadXLSX() {
+  const eventName = document.getElementById('event-name').value.trim() || 'contacts';
+  const date = new Date().toISOString().slice(0, 10);
+  const filename = 'contacts_' + eventName.replace(/[^a-zA-Z0-9]/g, '_') + '_' + date + '.xlsx';
+
+  const rows = CONTACTS.map(c => ({
+    'Name': c.name || '', 'First Name': c.first_name || '', 'Last Name': c.last_name || '',
+    'Title': c.title || '', 'Company': c.company || '', 'Email': c.email || '',
+    'Phone': c.phone || '', 'LinkedIn': c.linkedin || '', 'Notes': c.notes || '',
+    'Source': 'ClearSky Contact Extractor', 'Event': eventName, 'Date': date,
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [25, 15, 15, 30, 30, 35, 20, 40, 40, 30, 25, 12].map(w => ({ wch: w }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Contacts');
+  XLSX.writeFile(wb, filename);
+}
+
+// ── Copy JSON ────────────────────────────────────────────────
+function copyJSON() {
+  navigator.clipboard.writeText(JSON.stringify(CONTACTS, null, 2))
+    .then(() => setStatus('JSON copied to clipboard.', 'success'))
+    .catch(() => setStatus('Failed to copy.', 'error'));
+}
+</script>
+</body>
+</html>

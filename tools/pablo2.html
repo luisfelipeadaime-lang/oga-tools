@@ -238,6 +238,7 @@
   @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 }
 </style>
+<script src="lib/pablo-ingest.js"></script>
 </head>
 <body>
 <div id="app">
@@ -344,10 +345,7 @@ function fmtNum(n) {
   return Number(n).toLocaleString('en-US');
 }
 
-function isGIS(name) {
-  const low = (name || '').toLowerCase();
-  return GIS_EXTS.some(ext => low.endsWith(ext));
-}
+function isGIS(name) { return PabloIngest.isGIS(name); }
 
 function esc(s) {
   if (!s) return '';
@@ -641,7 +639,7 @@ async function ingestFiles(files) {
   var proj = S.activeProject ? S.activeProject.id : '';
   var vis = $('#ingest-visibility').value;
 
-  // Non-ZIP: simple upload (unchanged)
+  // Non-ZIP: simple upload via PabloIngest
   var nonZip = files.filter(f => !f.name.toLowerCase().endsWith('.zip'));
   for (var i = 0; i < nonZip.length; i++) {
     var file = nonZip[i];
@@ -650,11 +648,7 @@ async function ingestFiles(files) {
     card.innerHTML = '<span class="filename">' + esc(file.name) + '</span><span class="pill pill-info">uploading...</span>';
     results.prepend(card);
     try {
-      var fd = new FormData();
-      fd.append('file', file);
-      if (proj) fd.append('project', proj);
-      fd.append('visibility', vis);
-      var res = await api('/api/knowledge/ingest', { method: 'POST', body: fd });
+      var res = await PabloIngest.ingestFile(file, { project: proj, visibility: vis });
       var docId = res.doc_id || res.id || '?';
       if (isGIS(file.name)) {
         card.innerHTML = '<span class="filename">' + esc(file.name) + '</span><span class="pill pill-warning">GIS metadata</span><span class="text-xs text-muted">doc ' + docId + '</span>';
@@ -674,11 +668,7 @@ async function ingestFiles(files) {
   }
 }
 
-function humanSize(bytes) {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1048576) return (bytes / 1024).toFixed(0) + ' KB';
-  return (bytes / 1048576).toFixed(1) + ' MB';
-}
+function humanSize(bytes) { return PabloIngest.humanSize(bytes); }
 
 function routePill(route) {
   var labels = { ingest: 'Ingest', async_extract: 'Async', gis_metadata: 'GIS', nested_zip: 'Nested ZIP', skip: 'Skip' };
@@ -702,9 +692,7 @@ async function ingestZipGoldStandard(zipFile, proj, vis, resultsEl) {
 
   var manifest;
   try {
-    var fd = new FormData();
-    fd.append('file', zipFile);
-    manifest = await api('/api/knowledge/ingest-zip/manifest', { method: 'POST', body: fd });
+    manifest = await PabloIngest.inspect(zipFile);
   } catch (e) {
     panel.innerHTML = '<div class="manifest-hdr"><span>' + esc(zipFile.name) + '</span><span class="pill pill-error">manifest failed</span></div>';
     return;
@@ -776,14 +764,10 @@ async function ingestZipGoldStandard(zipFile, proj, vis, resultsEl) {
   }
   renderProgress();
 
-  // Send actual ingest
+  // Send actual ingest via PabloIngest
   var ingestResult;
   try {
-    var fd2 = new FormData();
-    fd2.append('file', zipFile);
-    if (proj) fd2.append('project', proj);
-    fd2.append('visibility', vis);
-    ingestResult = await api('/api/knowledge/ingest-zip', { method: 'POST', body: fd2 });
+    ingestResult = await PabloIngest.ingestZip(zipFile, { project: proj, visibility: vis });
   } catch (e) {
     panel.querySelector('.manifest-hdr span:last-child').textContent = 'ingest failed';
     toast('ZIP ingest failed: ' + (e.message || ''), 'error');
@@ -899,9 +883,9 @@ async function ingestText() {
   if (!title || !content) { toast('Title and content required', 'warning'); return; }
 
   try {
-    var res = await api('/api/pablo/ingest-text', {
-      method: 'POST',
-      body: { title: title, content: content, project: S.activeProject ? S.activeProject.id : 'clearsky_internal', visibility: vis }
+    var res = await PabloIngest.ingestText(title, content, {
+      project: S.activeProject ? S.activeProject.id : 'clearsky_internal',
+      visibility: vis,
     });
     toast('"' + title + '" ingested (' + (res.action || 'ok') + ')', 'success');
     $('#text-title').value = '';
