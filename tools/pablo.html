@@ -591,6 +591,10 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
       HubSpot
     </div>
+    <div class="rnavitem" id="nav-librarian" onclick="showPlatform('librarian')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      Librarian
+    </div>
     <a href="/tools/presentations-v3.html" class="rnavitem" style="text-decoration:none;position:relative">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
       Presentations
@@ -1294,6 +1298,22 @@ body{background:var(--bg0);color:var(--txt0);font-family:'Literata',Georgia,seri
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- ═══ LIBRARIAN TAB (S48) ═══ -->
+    <div id="v-librarian" class="view">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 22px;background:var(--bg2);border-bottom:1px solid var(--border1)">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--txt0)">LIBRARIAN</div>
+          <div style="font-size:10px;color:var(--txt3)">autoDream proposals · Rule #152</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span id="lib-count" style="font-size:10px;color:var(--txt3);font-family:'IBM Plex Mono',monospace"></span>
+          <button class="btn btn-g btn-s" id="lib-trigger-btn" onclick="libTrigger()" style="font-size:10px">Trigger autoDream</button>
+          <button class="btn btn-g btn-s" onclick="libLoad()" style="font-size:10px">Refresh</button>
+        </div>
+      </div>
+      <div id="lib-proposals" style="padding:16px 22px;overflow-y:auto;height:calc(100vh - 140px)"></div>
     </div>
 
   </div><!-- /content -->
@@ -3092,11 +3112,11 @@ function renderAnalytics(){
 function showPlatform(v){
   STATE.proj=null;
   STATE.view=v;
-  ['projectdd','pipeline','workflows','library','analytics','methodology','hubspot'].forEach(x=>document.getElementById('nav-'+x).classList.remove('on'));
+  ['projectdd','pipeline','workflows','library','analytics','methodology','hubspot','librarian'].forEach(x=>document.getElementById('nav-'+x).classList.remove('on'));
   document.getElementById('nav-'+v).classList.add('on');
   renderRail();
   document.getElementById('ptabs').style.display='none';
-  const labels={projectdd:'Project Due Diligence',pipeline:'Project Pipeline',workflows:'Workflows',library:'Knowledge Library',analytics:'Analytics',methodology:'Methodology Library',hubspot:'HubSpot Inbox'};
+  const labels={projectdd:'Project Due Diligence',pipeline:'Project Pipeline',workflows:'Workflows',library:'Knowledge Library',analytics:'Analytics',methodology:'Methodology Library',hubspot:'HubSpot Inbox',librarian:'Librarian'};
   document.getElementById('crumb').innerHTML=`<span class="crumb-cur">${labels[v]||v}</span>`;
   document.getElementById('crmeta').innerHTML='';
   document.getElementById('topacts').innerHTML=`<button class="btn btn-g btn-s" onclick="openWiz()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> New Project</button><button class="btn btn-p btn-s">Generate</button>`;
@@ -3107,6 +3127,7 @@ function showPlatform(v){
   if(v==='workflows') loadWorkflowHistory();
   if(v==='methodology') loadMethodologyTab();
   if(v==='hubspot') hsLoadInbox();
+  if(v==='librarian') libLoad();
   if(v==='projectdd') ddInit();
 }
 function goHome(){ showPlatform('pipeline'); setProjectStats(); }
@@ -4797,6 +4818,109 @@ const PABLO_TESTS = {
   }
 };
 PABLO_TESTS.run();
+
+// ══ LIBRARIAN (S48) ══════════════════════════════════════
+const LIB_API = 'https://api-tools.oga.earth';
+async function libFetch(path, opts={}){
+  const r = await fetch(LIB_API+path, {headers:{'Origin':'https://tools.oga.earth',...(opts.headers||{})}, method:opts.method||'GET', body:opts.body});
+  return r.json();
+}
+async function libLoad(){
+  const el=document.getElementById('lib-proposals');
+  el.innerHTML='<div style="color:var(--txt3);font-size:12px;padding:20px">Loading proposals...</div>';
+  try{
+    const d=await libFetch('/api/librarian/proposals');
+    const items=d.proposals||[];
+    document.getElementById('lib-count').textContent=items.length+' pending';
+    if(!items.length){
+      el.innerHTML='<div style="color:var(--txt3);font-size:12px;padding:40px 0;text-align:center">No pending proposals. autoDream runs every 4 hours.</div>';
+      return;
+    }
+    el.innerHTML=items.map(p=>{
+      const actionColor=p.action==='CREATE'?'var(--green,#22c55e)':'var(--amber,#f59e0b)';
+      const prioColor=p.priority==='HIGH'?'var(--red,#ef4444)':'var(--txt3)';
+      return `<div class="lib-card" id="lc-${p.id}" style="background:var(--bg2);border:1px solid var(--border1);border-radius:6px;padding:14px 16px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--txt0)">${escHtml(p.target_source_id||p.signal)}</span>
+          <span style="font-size:9px;padding:2px 6px;border-radius:3px;background:${actionColor};color:#000;font-weight:700">${p.action}</span>
+          <span style="font-size:9px;padding:2px 6px;border-radius:3px;border:1px solid ${prioColor};color:${prioColor};font-weight:600">${p.priority}</span>
+          <span style="font-size:9px;color:var(--txt3);margin-left:auto;font-family:'IBM Plex Mono',monospace">${p.created_at?.slice(0,16)||''}</span>
+        </div>
+        <div style="font-size:11px;color:var(--txt2);line-height:1.5;margin-bottom:8px" id="lcp-${p.id}">${escHtml(p.content_preview||'')}</div>
+        <div id="lce-${p.id}" style="display:none;margin-bottom:8px">
+          <textarea style="width:100%;min-height:80px;background:var(--bg0);color:var(--txt1);border:1px solid var(--border1);border-radius:4px;padding:8px;font-size:11px;font-family:'IBM Plex Mono',monospace;resize:vertical" id="lcet-${p.id}">${escHtml(p.content_summary||'')}</textarea>
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <button class="btn btn-p btn-s" style="font-size:10px" onclick="libSaveEdit('${p.id}')">Save</button>
+            <button class="btn btn-g btn-s" style="font-size:10px" onclick="libCancelEdit('${p.id}')">Cancel</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px" id="lcb-${p.id}">
+          <button class="btn btn-p btn-s" style="font-size:10px;background:var(--green,#22c55e);border-color:var(--green,#22c55e)" onclick="libApprove('${p.id}')">Approve</button>
+          <button class="btn btn-g btn-s" style="font-size:10px" onclick="libEdit('${p.id}')">Edit</button>
+          <button class="btn btn-g btn-s" style="font-size:10px;color:var(--red,#ef4444);border-color:var(--red,#ef4444)" onclick="libReject('${p.id}')">Reject</button>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    el.innerHTML='<div style="color:var(--red);font-size:12px;padding:20px">Error: '+escHtml(e.message)+'</div>';
+  }
+}
+function libEdit(id){
+  document.getElementById('lcp-'+id).style.display='none';
+  document.getElementById('lcb-'+id).style.display='none';
+  document.getElementById('lce-'+id).style.display='block';
+}
+function libCancelEdit(id){
+  document.getElementById('lcp-'+id).style.display='';
+  document.getElementById('lcb-'+id).style.display='flex';
+  document.getElementById('lce-'+id).style.display='none';
+}
+async function libSaveEdit(id){
+  const txt=document.getElementById('lcet-'+id).value;
+  try{
+    await libFetch('/api/librarian/proposals/'+id,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({content_summary:txt})});
+    document.getElementById('lcp-'+id).textContent=txt.slice(0,200);
+    libCancelEdit(id);
+  }catch(e){alert('Save failed: '+e.message);}
+}
+async function libApprove(id){
+  const card=document.getElementById('lc-'+id);
+  card.style.opacity='0.5';card.style.pointerEvents='none';
+  try{
+    const r=await libFetch('/api/librarian/proposals/'+id+'/approve',{method:'POST'});
+    if(r.ok){
+      card.style.background='rgba(34,197,94,0.1)';card.style.borderColor='var(--green,#22c55e)';
+      card.style.opacity='1';
+      setTimeout(()=>{card.remove();libUpdateCount();},1500);
+    }else{alert('Approve failed: '+(r.error||'unknown'));card.style.opacity='1';card.style.pointerEvents='';}
+  }catch(e){alert('Approve error: '+e.message);card.style.opacity='1';card.style.pointerEvents='';}
+}
+async function libReject(id){
+  const card=document.getElementById('lc-'+id);
+  card.style.opacity='0.5';card.style.pointerEvents='none';
+  try{
+    const r=await libFetch('/api/librarian/proposals/'+id+'/reject',{method:'POST'});
+    if(r.ok){
+      card.style.background='rgba(107,114,128,0.1)';card.style.borderColor='var(--txt3)';
+      card.style.opacity='0.4';
+      setTimeout(()=>{card.remove();libUpdateCount();},1500);
+    }else{alert('Reject failed: '+(r.error||'unknown'));card.style.opacity='1';card.style.pointerEvents='';}
+  }catch(e){alert('Reject error: '+e.message);card.style.opacity='1';card.style.pointerEvents='';}
+}
+function libUpdateCount(){
+  const cards=document.querySelectorAll('.lib-card');
+  document.getElementById('lib-count').textContent=cards.length+' pending';
+  if(!cards.length) document.getElementById('lib-proposals').innerHTML='<div style="color:var(--txt3);font-size:12px;padding:40px 0;text-align:center">No pending proposals. autoDream runs every 4 hours.</div>';
+}
+async function libTrigger(){
+  const btn=document.getElementById('lib-trigger-btn');
+  btn.disabled=true;btn.textContent='Running...';
+  try{
+    const r=await libFetch('/api/admin/trigger-phase6',{method:'POST'});
+    btn.textContent=`Done (${r.proposals_created||0} new)`;
+    setTimeout(()=>{btn.textContent='Trigger autoDream';btn.disabled=false;libLoad();},2000);
+  }catch(e){btn.textContent='Failed';setTimeout(()=>{btn.textContent='Trigger autoDream';btn.disabled=false;},2000);}
+}
 </script>
 
 <!-- Status Bar (v79z13) — always visible -->
