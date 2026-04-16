@@ -4854,6 +4854,8 @@ async function libLoad(){
             <button class="btn btn-g btn-s" style="font-size:10px" onclick="libCancelEdit('${p.id}')">Cancel</button>
           </div>
         </div>
+        ${(p.has_binary||p.text_download_url)?`<div style="display:flex;gap:8px;margin-bottom:8px">`+(p.download_url?`<a href="${p.download_url}" target="_blank" rel="noopener" style="font-size:10px;color:var(--blue,#3b82f6);text-decoration:none;display:inline-flex;align-items:center;gap:3px;padding:2px 0">&#11015; Original file</a>`:'')+
+          (p.text_download_url?`<a href="#" onclick="libDownloadText('${p.doc_id}');return false" style="font-size:10px;color:var(--blue,#3b82f6);text-decoration:none;display:inline-flex;align-items:center;gap:3px;padding:2px 0">&#11015; Extracted text</a>`:'')+`</div>`:''}
         <div style="display:flex;gap:6px" id="lcb-${p.id}">
           <button class="btn btn-p btn-s" style="font-size:10px;background:var(--green,#22c55e);border-color:var(--green,#22c55e)" onclick="libApprove('${p.id}')">Approve</button>
           <button class="btn btn-g btn-s" style="font-size:10px" onclick="libEdit('${p.id}')">Edit</button>
@@ -4906,6 +4908,17 @@ async function libReject(id){
       setTimeout(()=>{card.remove();libUpdateCount();},1500);
     }else{alert('Reject failed: '+(r.error||'unknown'));card.style.opacity='1';card.style.pointerEvents='';}
   }catch(e){alert('Reject error: '+e.message);card.style.opacity='1';card.style.pointerEvents='';}
+}
+async function libDownloadText(docId){
+  try{
+    const r=await fetch(LIB_API+'/api/knowledge/docs/'+docId+'/text',{headers:{'Origin':'https://tools.oga.earth'}});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const blob=await r.blob();
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    const cd=r.headers.get('Content-Disposition')||'';
+    const fn=cd.match(/filename="?([^"]+)"?/)?.[1]||'document.txt';
+    a.download=fn;a.click();URL.revokeObjectURL(a.href);
+  }catch(e){alert('Text download failed: '+e.message);}
 }
 function libUpdateCount(){
   const cards=document.querySelectorAll('.lib-card');
